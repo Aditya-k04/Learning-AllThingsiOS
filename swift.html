@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swift · Learning All things Apple</title>
+<meta name="description" content="The language properly: optionals, value semantics, generics, concurrency, ARC.">
+<meta property="og:title" content="Swift · Learning All things Apple">
+<meta property="og:description" content="The language properly: optionals, value semantics, generics, concurrency, ARC.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 <link rel="stylesheet" href="assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 </head>
@@ -2203,7 +2210,7 @@ let sum = numbers.reduce(0, +)                 // 21
 <li>[x] I know what <code>@Sendable</code> closures are</li>
 <li>[x] I can use closures with map, filter, and reduce</li>
 </ul><div class="pager"><a href="#06-functions"><span>Prev</span>← 06 — Functions</a><a href="#08-optionals"><span>Next</span>Optionals →</a></div></section>
-<section class="page" id="08-optionals" data-title="Optionals" data-num="08" data-hasdemo="0"><h1>Optionals</h1>
+<section class="page" id="08-optionals" data-title="Optionals" data-num="08" data-hasdemo="1"><h1>Optionals</h1><div class="demo-mount" data-demo="sw-optionals"></div>
 <p>Swift uses optionals to handle the absence of a value. Unlike languages that use <code>null</code> or <code>nil</code> implicitly, Swift makes the possibility of "no value" explicit in the type system. This eliminates an entire class of bugs at compile time rather than at runtime.</p>
 <hr />
 <h2>What Is nil?</h2>
@@ -4960,7 +4967,7 @@ class UserTests: XCTestCase {
 <li>[x] Use <code>@testable import</code> to test internal code</li>
 <li>[x] Follow the principle: start private, open up as needed</li>
 </ul><div class="pager"><a href="#16-error-handling"><span>Prev</span>← Error Handling</a><a href="#18-memory-management"><span>Next</span>Memory Management →</a></div></section>
-<section class="page" id="18-memory-management" data-title="Memory Management" data-num="18" data-hasdemo="1"><h1>Memory Management</h1><div class="demo-mount" data-demo="sw-arc"></div>
+<section class="page" id="18-memory-management" data-title="Memory Management" data-num="18" data-hasdemo="1"><h1>Memory Management</h1><div class="demo-mount" data-demo="sw-arc"></div><div class="demo-mount" data-demo="sw-arc-cycle"></div>
 <p>Swift uses Automatic Reference Counting (ARC) to manage memory for class instances. ARC is deterministic -- objects are deallocated the instant their reference count hits zero. Understanding ARC is essential because reference cycles can cause memory leaks that silently degrade your app.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/07-closures.md">07-closures</a> for closure capture semantics and <a href="../Learning-Swift/10-structs-vs-classes.md">10-structs-vs-classes</a> for why this only applies to reference types.</p>
@@ -6474,6 +6481,7 @@ for child in m.children { print(&quot;\(child.label!): \(child.value)&quot;) }
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
 <script src="assets/demos.js"></script>
 <script src="assets/app.js"></script>
 </body>

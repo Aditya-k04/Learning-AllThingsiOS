@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SwiftUI · Learning All things Apple</title>
+<meta name="description" content="Views, layout, state, animation, gestures — declarative UI end to end.">
+<meta property="og:title" content="SwiftUI · Learning All things Apple">
+<meta property="og:description" content="Views, layout, state, animation, gestures — declarative UI end to end.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 <link rel="stylesheet" href="assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 </head>
@@ -977,7 +984,7 @@ Image(systemName: &quot;chevron.right&quot;)
 - [x] <code>.scaledToFit()</code> preserves aspect ratio; <code>.scaledToFill()</code> may crop
 - [x] <code>AsyncImage</code> loads remote images with support for loading, success, and failure states
 - [x] Use <code>Image(decorative:)</code> and <code>.accessibilityLabel()</code> for proper accessibility</p><div class="pager"><a href="#02-views-and-modifiers"><span>Prev</span>← 02 — Views and Modifiers: Building Blocks of SwiftUI</a><a href="#04-layout-fundamentals"><span>Next</span>04 — Layout Fundamentals: Stacks, Spacers, and Frames →</a></div></section>
-<section class="page" id="04-layout-fundamentals" data-title="04 — Layout Fundamentals: Stacks, Spacers, and Frames" data-num="04" data-hasdemo="0"><h1>04 — Layout Fundamentals: Stacks, Spacers, and Frames</h1>
+<section class="page" id="04-layout-fundamentals" data-title="04 — Layout Fundamentals: Stacks, Spacers, and Frames" data-num="04" data-hasdemo="1"><h1>04 — Layout Fundamentals: Stacks, Spacers, and Frames</h1><div class="demo-mount" data-demo="su-layout"></div>
 <p>SwiftUI uses a stack-based layout system. Instead of Auto Layout constraints, you compose views using horizontal, vertical, and layered stacks. Understanding how SwiftUI negotiates size between parent and child is the key to mastering layout.</p>
 <hr />
 <h2>VStack: Vertical Layout</h2>
@@ -4988,7 +4995,7 @@ struct RadialDemo: View {
 <li>[x] Understand the <code>Layout</code> protocol for fully custom layouts</li>
 <li>[x] Adapt layouts for iPhone vs iPad using <code>horizontalSizeClass</code></li>
 </ul><div class="pager"><a href="#16-data-flow"><span>Prev</span>← Data Flow</a><a href="#18-scrollview"><span>Next</span>ScrollView →</a></div></section>
-<section class="page" id="18-scrollview" data-title="ScrollView" data-num="18" data-hasdemo="0"><h1>ScrollView</h1>
+<section class="page" id="18-scrollview" data-title="ScrollView" data-num="18" data-hasdemo="1"><h1>ScrollView</h1><div class="demo-mount" data-demo="su-scroll"></div>
 <p><code>ScrollView</code> is SwiftUI's container for scrollable content. Unlike <code>List</code>, it gives you full control over layout and appearance, but you must handle laziness and performance yourself by pairing it with <code>LazyVStack</code> or <code>LazyHStack</code>.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/07-lists-and-foreach.md">07-lists-and-foreach</a> -- <code>List</code> is a specialized scrolling container with built-in cell styling, selection, and swipe actions.</p>
@@ -8060,6 +8067,7 @@ or <code>UISpringTimingParameters(mass:stiffness:damping:initialVelocity:)</code
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
 <script src="assets/demos.js"></script>
 <script src="assets/app.js"></script>
 </body>

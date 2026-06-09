@@ -33,7 +33,13 @@ function arrow(x,x1,y1,x2,y2,col,wd){x.strokeStyle=col;x.fillStyle=col;x.lineWid
   x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();var a=Math.atan2(y2-y1,x2-x1),s=7;
   x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-s*Math.cos(a-0.4),y2-s*Math.sin(a-0.4));
   x.lineTo(x2-s*Math.cos(a+0.4),y2-s*Math.sin(a+0.4));x.closePath();x.fill();}
-function loop(c,draw){function f(t){if(vis(c)){draw(t);}requestAnimationFrame(f);}requestAnimationFrame(f);}
+/* shared virtual clock: freezes when window.__PAUSED so prefers-reduced-motion / the
+   motion toggle pauses all time-based demos while interaction still works */
+var VT=0,_lastReal=null;
+function _tick(real){if(_lastReal==null)_lastReal=real;var d=real-_lastReal;_lastReal=real;if(!window.__PAUSED)VT+=d;requestAnimationFrame(_tick);}
+requestAnimationFrame(_tick);
+function clock(){return VT;}
+function loop(c,draw){function f(){if(vis(c)){draw(VT);}requestAnimationFrame(f);}requestAnimationFrame(f);}
 function pointer(c,onMove,onDown,onUp){
   function pos(e){var r=c.getBoundingClientRect();return{x:(e.touches?e.touches[0].clientX:e.clientX)-r.left,y:(e.touches?e.touches[0].clientY:e.clientY)-r.top};}
   var dn=false;
@@ -76,7 +82,7 @@ D["trig"]=function(m){
   var fr=slider(ctrls,{label:"Frequency ω",min:0.5,max:5,step:0.1,value:2,fmt:function(v){return v.toFixed(1);}});
   var ph=slider(ctrls,{label:"Phase φ",min:0,max:6.28,step:0.05,value:0,fmt:function(v){return v.toFixed(1);}});
   cap(d,"The point orbits the circle on the left; its height is traced as the wave on the right. cos and sin are just the x and y of circular motion.");
-  var x,t0=performance.now();loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h;clr(x,c);
+  var x,t0=clock();loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h;clr(x,c);
     var A=+amp.value,om=+fr.value,phi=+ph.value,cx=80,cy=h/2,R=64,t=(now-t0)/1000;
     x.strokeStyle=COL.line;x.lineWidth=1.5;x.beginPath();x.arc(cx,cy,R,0,7);x.stroke();
     x.strokeStyle=COL.grid;x.beginPath();x.moveTo(cx-R,cy);x.lineTo(cx+R,cy);x.moveTo(cx,cy-R);x.lineTo(cx,cy+R);x.stroke();
@@ -148,13 +154,13 @@ D["easing"]=function(m){
   var cur="easeOut",anim=null;
   function E(n,t){if(n==="linear")return t;if(n==="easeIn")return t*t*t;if(n==="easeOut")return 1-Math.pow(1-t,3);return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
   var defs=[["easeOut","ease-out"],["easeIn","ease-in"],["easeInOut","ease-in-out"],["linear","linear"]];
-  var bs=defs.map(function(p,i){var b=btn(row,p[1],i===0);b.dataset.e=p[0];b.addEventListener("click",function(){cur=p[0];anim=performance.now();bs.forEach(function(x){x.classList.toggle("on",x.dataset.e===cur);});});return b;});
-  var play=btn(row,"▶ play");play.addEventListener("click",function(){anim=performance.now();});
+  var bs=defs.map(function(p,i){var b=btn(row,p[1],i===0);b.dataset.e=p[0];b.addEventListener("click",function(){cur=p[0];anim=clock();bs.forEach(function(x){x.classList.toggle("on",x.dataset.e===cur);});});return b;});
+  var play=btn(row,"▶ play");play.addEventListener("click",function(){anim=clock();});
   cap(d,"Same duration, different feel. ease-out starts fast → responsive. ease-in feels sluggish for UI.");
   var x;loop(c,function(){x=x||fit(c);var w=c._w,h=c._h,pad=24,gw=120,gy0=h-pad,gh=h-2*pad;clr(x,c);
     x.strokeStyle=COL.grid;x.strokeRect(pad,pad,gw,gh);
     x.strokeStyle=COL.blue;x.lineWidth=2.5;x.beginPath();for(var i=0;i<=gw;i++){var t=i/gw,y=gy0-E(cur,t)*gh;i===0?x.moveTo(pad,y):x.lineTo(pad+i,y);}x.stroke();
-    var tx0=pad+gw+40,tx1=w-pad-30,ty=h/2,prog=0;if(anim){prog=Math.min(1,(performance.now()-anim)/900);}
+    var tx0=pad+gw+40,tx1=w-pad-30,ty=h/2,prog=0;if(anim){prog=Math.min(1,(clock()-anim)/900);}
     x.strokeStyle=COL.grid;x.beginPath();x.moveTo(tx0,ty+22);x.lineTo(tx1+30,ty+22);x.stroke();
     var e=E(cur,prog),bx=tx0+e*(tx1-tx0);x.fillStyle=COL.fg;x.fillRect(bx-2,ty-14,28,28);
     if(anim)dot(x,pad+prog*gw,gy0-E(cur,prog)*gh,4,COL.red);
@@ -167,7 +173,7 @@ D["spring"]=function(m){
   var cs=slider(ctrls,{label:"Damping c",min:0,max:60,step:0.5,value:10,fmt:function(v){return v.toFixed(1);}});
   var crit=btn(row,"set critical damping"),kick=btn(row,"kick ↗");
   cap(d,"Drag the ball and release, or kick it. Critical damping c = 2√k → fastest settle, no overshoot.");
-  var xx=120,v=0,drag=false,hist=[],last=performance.now(),x;
+  var xx=120,v=0,drag=false,hist=[],last=clock(),x;
   kick.addEventListener("click",function(){v+=600;});
   crit.addEventListener("click",function(){cs.value=(2*Math.sqrt(+ks.value)).toFixed(1);cs.dispatchEvent(new Event("input"));});
   pointer(c,function(p){if(drag){xx=(p.x-c._w*0.32)/0.8;}},function(){drag=true;v=0;},function(){drag=false;});
@@ -189,8 +195,8 @@ D["oscillation"]=function(m){
   var ns=slider(ctrls,{label:"Noise amount",min:0,max:1,step:0.01,value:0.3,fmt:function(v){return v.toFixed(2);}});
   var damp=false,db=btn(row,"damping envelope: off",true);
   cap(d,"Two un-synced sines + a little noise = “gently alive, never looping.” Toggle the decay envelope to see a bounce settle.");
-  var nz=noise1(),t0=performance.now(),hist=[],x;
-  db.addEventListener("click",function(){damp=!damp;db.classList.toggle("on",!damp);db.textContent="damping envelope: "+(damp?"on":"off");if(damp)t0=performance.now();});
+  var nz=noise1(),t0=clock(),hist=[],x;
+  db.addEventListener("click",function(){damp=!damp;db.classList.toggle("on",!damp);db.textContent="damping envelope: "+(damp?"on":"off");if(damp)t0=clock();});
   loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h,a=+f1.value,b=+f2.value,na=+ns.value,t=(now-t0)/1000,mid=h/2;clr(x,c);
     function val(tt){var e=damp?Math.exp(-0.9*tt):1;return e*(40*Math.sin(a*2*tt)+28*Math.sin(b*2*tt)+(nz(tt*1.5)*2-1)*60*na);}
     x.strokeStyle=COL.grid;x.beginPath();x.moveTo(0,mid);x.lineTo(w,mid);x.stroke();
@@ -269,8 +275,8 @@ D["ca-transform3d"]=function(m){
 D["ca-timing"]=function(m){
   var d=box(m,"CAMediaTimingFunction"),c=addCanvas(d,260),row=addRow(d);
   cap(d,"Drag the two control points to shape a cubic timing curve — exactly the (c1x,c1y,c2x,c2y) of CAMediaTimingFunction. The dot below animates with your curve.");
-  var P1={x:0.25,y:0.1},P2={x:0.25,y:1.0},drag=-1,anim=performance.now(),x;
-  var play=btn(row,"▶ replay");play.addEventListener("click",function(){anim=performance.now();});
+  var P1={x:0.25,y:0.1},P2={x:0.25,y:1.0},drag=-1,anim=clock(),x;
+  var play=btn(row,"▶ replay");play.addEventListener("click",function(){anim=clock();});
   function bez(t,a,b){return 3*(1-t)*(1-t)*t*a+3*(1-t)*t*t*b+t*t*t;}
   function solveX(xT){var lo=0,hi=1,t=xT;for(var i=0;i<24;i++){t=(lo+hi)/2;var xv=bez(t,P1.x,P2.x);if(xv<xT)lo=t;else hi=t;}return t;}
   function geo(c){var pad=22,sz=Math.min(c._w*0.42,c._h-70);return{pad:pad,sz:sz,gx:pad,gy:c._h-50};}
@@ -282,7 +288,7 @@ D["ca-timing"]=function(m){
     x.strokeStyle=COL.line;x.setLineDash([4,4]);x.beginPath();x.moveTo(p0.x,p0.y);x.lineTo(s1.x,s1.y);x.moveTo(p3.x,p3.y);x.lineTo(s2.x,s2.y);x.stroke();x.setLineDash([]);
     x.strokeStyle=COL.blue;x.lineWidth=2.5;x.beginPath();for(var t=0;t<=1.001;t+=0.02){var px=g.gx+bez(t,P1.x,P2.x)*g.sz,py=top+(1-bez(t,P1.y,P2.y))*g.sz;t===0?x.moveTo(px,py):x.lineTo(px,py);}x.stroke();
     x.fillStyle="#fff";x.strokeStyle=COL.red;x.lineWidth=2;[s1,s2].forEach(function(s){x.beginPath();x.arc(s.x,s.y,7,0,7);x.fill();x.stroke();});
-    var prog=Math.min(1,(performance.now()-anim)/1100),eased=bez(solveX(prog),P1.y,P2.y);
+    var prog=Math.min(1,(clock()-anim)/1100),eased=bez(solveX(prog),P1.y,P2.y);
     var tx0=g.gx+g.sz+40,tx1=w-30,ty=top+g.sz*0.5;x.strokeStyle=COL.grid;x.beginPath();x.moveTo(tx0,ty+22);x.lineTo(tx1,ty+22);x.stroke();
     var bx=tx0+eased*(tx1-tx0-26);x.fillStyle=COL.fg;x.fillRect(bx,ty-13,26,26);
     x.fillStyle=COL.muted;x.font="11px ui-monospace,monospace";x.fillText("cubic-bezier("+P1.x.toFixed(2)+", "+P1.y.toFixed(2)+", "+P2.x.toFixed(2)+", "+P2.y.toFixed(2)+")",g.gx,g.gy+34);
@@ -368,7 +374,7 @@ D["su-drag"]=function(m){
   var stiff=slider(ctrls,{label:"spring stiffness",min:40,max:400,step:1,value:180});
   var resist=slider(ctrls,{label:"rubber-band resistance",min:0.1,max:1,step:0.01,value:0.55,fmt:function(v){return v.toFixed(2);}});
   cap(d,"Drag the card past the dashed bounds: travel is dampened (rubber-banding). Release and a spring carries it home — the core of every fluid iOS gesture.");
-  var x,px=0,py=0,vx=0,vy=0,drag=false,dragX=0,dragY=0,last=performance.now();
+  var x,px=0,py=0,vx=0,vy=0,drag=false,dragX=0,dragY=0,last=clock();
   function rb(over,res){return over/(1+Math.abs(over)*0.008*(1/res));}
   pointer(c,function(p){if(drag){dragX=p.x-c._w/2;dragY=p.y-c._h/2;}},function(p){var dx=p.x-(c._w/2+px),dy=p.y-(c._h/2+py);if(Math.abs(dx)<60&&Math.abs(dy)<44){drag=true;dragX=p.x-c._w/2-px;dragY=p.y-c._h/2-py;}},function(){drag=false;});
   loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h,k=+stiff.value,res=+resist.value;clr(x,c);var dt=Math.min(0.032,(now-last)/1000);last=now;
@@ -396,7 +402,7 @@ D["df-graph"]=function(m){
     {id:"sibling",label:"Footer (static)",x:0.84,y:0.5,kind:"view",reads:[]}
   ];
   var pulse={},count=0,x;
-  var mut=btn(row,"mutate count →");mut.addEventListener("click",function(){count++;nodes.forEach(function(n){if(n.reads.indexOf("state")>=0||n.kind==="state")pulse[n.id]=performance.now();});});
+  var mut=btn(row,"mutate count →");mut.addEventListener("click",function(){count++;nodes.forEach(function(n){if(n.reads.indexOf("state")>=0||n.kind==="state")pulse[n.id]=clock();});});
   loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h;clr(x,c);
     function P(n){return{x:n.x*w,y:n.y*h};}
     nodes.forEach(function(n){n.reads.forEach(function(r){var a=P(nodes.filter(function(z){return z.id===r;})[0]),b=P(n);var on=pulse[n.id]&&now-pulse[n.id]<600;x.strokeStyle=on?COL.red:COL.line;x.lineWidth=on?2.5:1.5;arrow(x,a.x+58,a.y,b.x-58,b.y,on?COL.red:"#cfcfcf",on?2.5:1.5);});});
@@ -459,7 +465,7 @@ D["sw-arc"]=function(m){
   var refs=0,alive=false,deinitAt=0,x;
   var add=btn(row,"add strong ref");var rem=btn(row,"remove ref");
   add.addEventListener("click",function(){refs++;alive=true;});
-  rem.addEventListener("click",function(){if(refs>0)refs--;if(refs===0&&alive){alive=false;deinitAt=performance.now();}});
+  rem.addEventListener("click",function(){if(refs>0)refs--;if(refs===0&&alive){alive=false;deinitAt=clock();}});
   loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h,cx=w*0.7,cy=h/2;clr(x,c);
     var justDied=deinitAt&&now-deinitAt<900;
     // object
@@ -471,6 +477,208 @@ D["sw-arc"]=function(m){
     if(justDied){x.fillStyle=COL.red;x.font="600 13px -apple-system,sans-serif";x.textAlign="center";x.fillText("deinit — freed",cx,cy-54);x.textAlign="start";}
     read.innerHTML="strong references = <b>"+refs+"</b> → "+(alive?"object <b style='color:#16a34a'>alive</b>":"<b style='color:#e0533d'>deallocated</b> (count reached 0)");
   });
+};
+
+/* ============================================================
+   SWIFT (added)
+   ============================================================ */
+D["sw-optionals"]=function(m){
+  var d=box(m,"Optional chaining: a?.b?.c"),row=addRow(d),read=addReadout(d);
+  var st={a:true,b:true,c:true},bs={};
+  ["a","b","c"].forEach(function(k){var b=btn(row,"",st[k]);bs[k]=b;b.addEventListener("click",function(){st[k]=!st[k];upd();});});
+  cap(d,"Each link is either a value or nil. The chain evaluates left → right and stops at the first nil, returning nil for the whole expression — no crash. That short-circuit is the point of <code>?.</code>");
+  function upd(){
+    ["a","b","c"].forEach(function(k){bs[k].textContent=k+" = "+(st[k]?"value":"nil");bs[k].classList.toggle("on",st[k]);});
+    var order=["a","b","c"],stop=null;
+    for(var i=0;i<3;i++){if(!st[order[i]]){stop=order[i];break;}}
+    read.innerHTML="let r = a?.b?.c &nbsp;→&nbsp; r = <b>"+(stop?("nil &nbsp;<span style='color:#e0533d'>(short-circuited at "+stop+"?.)</span>"):"value ✓")+"</b>";
+  }
+  upd();
+};
+D["sw-arc-cycle"]=function(m){
+  var d=box(m,"Retain cycles & weak"),c=addCanvas(d,210),row=addRow(d),read=addReadout(d);
+  var weak=false,ext=true;
+  var bw=btn(row,"B→A: strong"),rel=btn(row,"release external ref");
+  bw.addEventListener("click",function(){weak=!weak;bw.textContent="B→A: "+(weak?"weak":"strong");bw.classList.toggle("on",weak);});
+  rel.addEventListener("click",function(){ext=!ext;rel.textContent=ext?"release external ref":"re-add external ref";});
+  cap(d,"A strongly holds B; B points back to A. With a <b>strong</b> back-reference, releasing the external ref still leaves a cycle — both leak. Make B→A <b>weak</b> and they deallocate.");
+  var x;loop(c,function(){x=x||fit(c);var w=c._w,h=c._h,cy=h/2,ax=w*0.32,bx2=w*0.68;clr(x,c);
+    var leak=(!weak)&&(!ext),alive=ext||leak;
+    if(ext){arrow(x,20,cy,ax-40,cy,COL.blue,2);x.fillStyle=COL.blue;x.font="11px ui-monospace,monospace";x.fillText("external",18,cy-8);}
+    arrow(x,ax+40,cy-10,bx2-40,cy-10,leak?COL.red:COL.green,2);x.fillStyle=COL.muted;x.fillText("strong",(ax+bx2)/2-18,cy-16);
+    x.setLineDash(weak?[5,4]:[]);arrow(x,bx2-40,cy+12,ax+40,cy+12,weak?COL.muted:(leak?COL.red:COL.green),2);x.setLineDash([]);x.fillText(weak?"weak":"strong",(ax+bx2)/2-14,cy+30);
+    [["A",ax],["B",bx2]].forEach(function(p){x.globalAlpha=alive?1:0.2;x.fillStyle=leak?"rgba(224,83,61,0.12)":alive?"rgba(22,163,74,0.10)":"rgba(150,150,150,0.1)";x.strokeStyle=leak?COL.red:alive?COL.green:"#bbb";x.lineWidth=2;x.beginPath();x.arc(p[1],cy,30,0,7);x.fill();x.stroke();x.fillStyle=COL.fg;x.font="600 15px ui-monospace,monospace";x.textAlign="center";x.fillText(p[0],p[1],cy+5);x.textAlign="start";x.globalAlpha=1;});
+    read.innerHTML=leak?"<b style='color:#e0533d'>LEAK</b> — strong cycle, neither object is freed":alive?"both alive (external reference present)":"<b style='color:#16a34a'>both deallocated ✓</b>";
+  });
+};
+
+/* ============================================================
+   SWIFTUI (added)
+   ============================================================ */
+D["su-layout"]=function(m){
+  var d=box(m,"Stack layout"),c=addCanvas(d,240),ctrls=addControls(d),row=addRow(d);
+  var sp=slider(ctrls,{label:"spacing",min:0,max:44,step:1,value:14});
+  var axis="H",align="center";
+  var ab=btn(row,"axis: HStack",true),al=btn(row,"align: center");
+  ab.addEventListener("click",function(){axis=axis==="H"?"V":"H";ab.textContent="axis: "+(axis==="H"?"HStack":"VStack");});
+  al.addEventListener("click",function(){align=align==="leading"?"center":align==="center"?"trailing":"leading";al.textContent="align: "+align;});
+  cap(d,"An HStack/VStack lays children along one axis with fixed spacing, and aligns them on the other axis. Toggle axis and alignment, drag spacing.");
+  var sizes=[[64,46],[64,80],[64,34]],x;
+  loop(c,function(){x=x||fit(c);var w=c._w,h=c._h,s=+sp.value;clr(x,c);
+    var horiz=axis==="H";
+    var total=sizes.reduce(function(a,b){return a+(horiz?b[0]:b[1]);},0)+s*(sizes.length-1);
+    var cross=Math.max.apply(null,sizes.map(function(b){return horiz?b[1]:b[0];}));
+    var sx=horiz?(w-total)/2:0,sy=horiz?0:(h-total)/2;
+    var cx0=horiz?(h-cross)/2:(w-cross)/2;
+    var cur=horiz?sx:sy;
+    x.strokeStyle=COL.line;x.setLineDash([5,5]);
+    if(horiz)x.strokeRect((w-total)/2-6,cx0-6,total+12,cross+12);else x.strokeRect(cx0-6,(h-total)/2-6,cross+12,total+12);
+    x.setLineDash([]);
+    sizes.forEach(function(b,i){var bw2=horiz?b[0]:b[1],bh2=horiz?b[1]:b[0];var px,py;
+      if(horiz){px=cur;var off=align==="leading"?0:align==="trailing"?(cross-bh2):(cross-bh2)/2;py=cx0+off;cur+=bw2+s;}
+      else{py=cur;var off2=align==="leading"?0:align==="trailing"?(cross-bw2):(cross-bw2)/2;px=cx0+off2;cur+=bh2+s;}
+      x.fillStyle=["rgba(10,132,255,0.14)","rgba(124,58,237,0.14)","rgba(22,163,74,0.14)"][i];
+      x.strokeStyle=["#0a84ff","#7c3aed","#16a34a"][i];x.lineWidth=2;x.beginPath();(x.roundRect?x.roundRect(px,py,bw2,bh2,8):x.rect(px,py,bw2,bh2));x.fill();x.stroke();});
+  });
+};
+D["su-scroll"]=function(m){
+  var d=box(m,"scrollTransition — position drives the effect"),c=addCanvas(d,300),read=addReadout(d);
+  cap(d,"Each row's scale and opacity are a pure function of its distance from the center line — no animation object, just f(scrollPosition). Drag up/down to scroll.");
+  var off=120,drag=false,lastY=0,x;
+  pointer(c,function(p){if(drag){off+=lastY-p.y;lastY=p.y;}},function(p){drag=true;lastY=p.y;},function(){drag=false;});
+  var N=9,gap=72;
+  loop(c,function(){x=x||fit(c);var w=c._w,h=c._h,mid=h/2;clr(x,c);
+    off=Math.max(0,Math.min((N-1)*gap,off));
+    x.strokeStyle=COL.line;x.setLineDash([4,4]);x.beginPath();x.moveTo(0,mid);x.lineTo(w,mid);x.stroke();x.setLineDash([]);
+    for(var i=0;i<N;i++){var y=20+i*gap-off+ (mid-20);var dist=Math.abs(y-mid)/mid;var t=Math.max(0,1-dist);
+      var sc=0.6+0.4*t,op=0.25+0.75*t;
+      var bw2=w*0.7*sc,bh2=46*sc;
+      x.globalAlpha=op;x.fillStyle="rgba(10,132,255,0.14)";x.strokeStyle="#0a84ff";x.lineWidth=2;
+      x.beginPath();(x.roundRect?x.roundRect((w-bw2)/2,y-bh2/2,bw2,bh2,10):x.rect((w-bw2)/2,y-bh2/2,bw2,bh2));x.fill();x.stroke();
+      x.fillStyle=COL.fg;x.font="13px -apple-system,sans-serif";x.textAlign="center";x.fillText("Row "+(i+1),w/2,y+4);x.textAlign="start";x.globalAlpha=1;}
+    read.innerHTML="scale = 0.6 + 0.4·f &nbsp;·&nbsp; opacity = 0.25 + 0.75·f &nbsp; where f = 1 − |distance from center|";
+  });
+};
+
+/* ============================================================
+   CORE ANIMATION (added)
+   ============================================================ */
+D["ca-keyframe"]=function(m){
+  var d=box(m,"CAKeyframeAnimation along a path"),c=addCanvas(d,280),row=addRow(d);
+  var paced=false,pb=btn(row,"calculationMode: linear");
+  pb.addEventListener("click",function(){paced=!paced;pb.textContent="calculationMode: "+(paced?"paced":"linear");pb.classList.toggle("on",paced);});
+  cap(d,"Values are waypoints; the layer animates through them. <b>linear</b> spends equal time per segment (speeds up on long ones); <b>paced</b> holds constant speed via arc length.");
+  var pts=[[0.1,0.7],[0.3,0.2],[0.55,0.85],[0.78,0.35],[0.92,0.7]],x;
+  loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h,dur=3000;clr(x,c);
+    function P(p){return[40+p[0]*(w-80),20+p[1]*(h-60)];}
+    x.strokeStyle=COL.line;x.lineWidth=1.5;x.beginPath();pts.forEach(function(p,i){var s=P(p);i===0?x.moveTo(s[0],s[1]):x.lineTo(s[0],s[1]);});x.stroke();
+    pts.forEach(function(p){var s=P(p);dot(x,s[0],s[1],4,COL.muted);});
+    var prog=(now%dur)/dur,seg=pts.length-1,pos;
+    if(!paced){var f=prog*seg,i=Math.min(seg-1,Math.floor(f)),lt=f-i;var a=P(pts[i]),b=P(pts[i+1]);pos=[a[0]+(b[0]-a[0])*lt,a[1]+(b[1]-a[1])*lt];}
+    else{var L=[],tot=0;for(var k=0;k<seg;k++){var a2=P(pts[k]),b2=P(pts[k+1]);var d2=Math.hypot(b2[0]-a2[0],b2[1]-a2[1]);L.push(d2);tot+=d2;}
+      var target=prog*tot,acc=0,j=0;while(j<seg&&acc+L[j]<target){acc+=L[j];j++;}var lt2=L[j]?(target-acc)/L[j]:0;var a3=P(pts[j]),b3=P(pts[Math.min(seg,j+1)]);pos=[a3[0]+(b3[0]-a3[0])*lt2,a3[1]+(b3[1]-a3[1])*lt2];}
+    x.fillStyle="rgba(124,58,237,0.15)";x.strokeStyle=COL.purple;x.lineWidth=2;x.beginPath();x.arc(pos[0],pos[1],11,0,7);x.fill();x.stroke();
+  });
+};
+D["ca-replicator"]=function(m){
+  var d=box(m,"CAReplicatorLayer"),c=addCanvas(d,280),ctrls=addControls(d);
+  var cnt=slider(ctrls,{label:"instanceCount",min:1,max:24,step:1,value:10});
+  var hue=slider(ctrls,{label:"instanceColor shift",min:0,max:40,step:1,value:14});
+  var rad=slider(ctrls,{label:"radius",min:30,max:120,step:1,value:80});
+  cap(d,"One source layer, replicated N times with a per-instance transform (here a rotation) and a color delta. The GPU draws all copies — you author only one.");
+  var x;loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h,cx=w/2,cy=h/2,n=+cnt.value,hs=+hue.value,R=+rad.value;clr(x,c);
+    var spin=now/2200;
+    for(var i=0;i<n;i++){var a=spin+i*2*Math.PI/n;var px=cx+Math.cos(a)*R,py=cy+Math.sin(a)*R;
+      x.save();x.translate(px,py);x.rotate(a+Math.PI/2);
+      x.fillStyle="hsl("+((210+i*hs)%360)+",70%,55%)";x.beginPath();(x.roundRect?x.roundRect(-9,-16,18,32,4):x.rect(-9,-16,18,32));x.fill();x.restore();}
+    dot(x,cx,cy,3,COL.muted);
+  });
+};
+D["ca-emitter"]=function(m){
+  var d=box(m,"CAEmitterLayer — particles"),c=addCanvas(d,280),ctrls=addControls(d);
+  var rate=slider(ctrls,{label:"birthRate",min:5,max:200,step:1,value:80});
+  var spd=slider(ctrls,{label:"velocity",min:20,max:240,step:1,value:110});
+  var life=slider(ctrls,{label:"lifetime",min:0.4,max:3,step:0.05,value:1.4,fmt:function(v){return v.toFixed(2);}});
+  var spread=slider(ctrls,{label:"spread",min:0,max:3.14,step:0.02,value:0.6,fmt:function(v){return v.toFixed(2);}});
+  cap(d,"Particles spawn at birthRate/sec, fly outward with some velocity and angular spread, and fade over their lifetime. Drag the sliders to feel each property.");
+  var ps=[],last=clock(),acc=0,x;
+  loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h,cx=w/2,cy=h*0.62;clr(x,c);
+    var dt=Math.min(0.05,(now-last)/1000);last=now;
+    acc+=(+rate.value)*dt;while(acc>=1){acc-=1;var a=-Math.PI/2+(Math.random()-0.5)*2*(+spread.value);var v=(+spd.value)*(0.6+Math.random()*0.6);ps.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,age:0,life:+life.value,h:200+Math.random()*120});}
+    for(var i=ps.length-1;i>=0;i--){var p=ps[i];p.age+=dt;if(p.age>p.life){ps.splice(i,1);continue;}
+      p.vy+=60*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;var k=1-p.age/p.life;
+      x.globalAlpha=k;x.fillStyle="hsl("+p.h+",80%,60%)";x.beginPath();x.arc(p.x,p.y,2+4*k,0,7);x.fill();}
+    x.globalAlpha=1;dot(x,cx,cy,3,COL.muted);
+    x.fillStyle=COL.muted;x.font="11px ui-monospace,monospace";x.fillText(ps.length+" live particles",12,18);
+  });
+};
+
+/* ============================================================
+   SHADERS (added)
+   ============================================================ */
+D["sh-sdf"]=function(m){
+  var d=box(m,"Signed distance fields (metaballs)"),c=addCanvas(d,240),ctrls=addControls(d);
+  var r=slider(ctrls,{label:"radius",min:0.05,max:0.3,step:0.005,value:0.16,fmt:function(v){return v.toFixed(3);}});
+  var k=slider(ctrls,{label:"smooth union k",min:0.01,max:0.3,step:0.005,value:0.12,fmt:function(v){return v.toFixed(3);}});
+  cap(d,"Each shape is a signed distance function. A smooth-minimum (smin) blends two circles into one organic blob — the trick behind metaballs and gooey UI.");
+  var render=pixelDemo(c,function(u,v,t,p){var ar=c._w/c._h;u=(u-0.5)*ar;v=v-0.5;
+    var c1x=Math.cos(t*0.8)*0.18,c1y=Math.sin(t*0.8)*0.1,c2x=Math.cos(t*0.8+2.3)*0.18,c2y=Math.sin(t*0.8+2.3)*0.1;
+    var d1=Math.hypot(u-c1x,v-c1y)-p.r,d2=Math.hypot(u-c2x,v-c2y)-p.r;
+    var hh=Math.max(0,Math.min(1,0.5+0.5*(d2-d1)/p.k));var dd=d2+(d1-d2)*hh-p.k*hh*(1-hh);
+    var inside=dd<0?1:0;var edge=Math.max(0,1-Math.abs(dd)*16);
+    return [inside*0.15+edge*0.3, inside*0.55+edge*0.4, inside*0.95+edge*0.6];});
+  loop(c,function(now){render(now,{r:+r.value,k:+k.value});});
+};
+D["sh-blur"]=function(m){
+  var d=box(m,"Box blur (multi-tap sampling)"),c=addCanvas(d,220),ctrls=addControls(d);
+  var rad=slider(ctrls,{label:"blur radius",min:0,max:0.06,step:0.001,value:0.02,fmt:function(v){return v.toFixed(3);}});
+  cap(d,"Blur = average the neighbourhood. Here each pixel samples a grid of taps around itself; a bigger radius reads more neighbours and softens the pattern.");
+  function pat(u,v,t){var s=Math.sin((u*10+t)*2)*Math.cos((v*10)*2);var c2=(Math.hypot(u-0.5,v-0.5)*12%1)<0.5?1:0;return 0.5+0.5*s*(c2*2-1);}
+  var render=pixelDemo(c,function(u,v,t,p){var sum=0,n=0;for(var i=-2;i<=2;i++)for(var j=-2;j<=2;j++){sum+=pat(u+i*p.r,v+j*p.r,t);n++;}var g=sum/n;return [g*0.4,g*0.6,g];});
+  loop(c,function(now){render(now,{r:+rad.value});});
+};
+D["sh-distortion"]=function(m){
+  var d=box(m,"UV distortion"),c=addCanvas(d,220),ctrls=addControls(d);
+  var amp=slider(ctrls,{label:"amplitude",min:0,max:0.1,step:0.002,value:0.03,fmt:function(v){return v.toFixed(3);}});
+  var freq=slider(ctrls,{label:"frequency",min:2,max:40,step:0.5,value:14,fmt:function(v){return v.toFixed(1);}});
+  cap(d,"Warp the sampling coordinates before reading the image: <code>uv += amp·sin(uv·freq + t)</code>. This is the basis of water, heat-haze and glass refraction effects.");
+  function pat(u,v){var cx=(Math.floor(u*8)+Math.floor(v*8))%2;return cx;}
+  var render=pixelDemo(c,function(u,v,t,p){var uu=u+p.a*Math.sin(v*p.f+t),vv=v+p.a*Math.sin(u*p.f+t*1.3);var g=pat(uu,vv);return [g*0.2+0.1,g*0.5+0.1,g*0.8+0.2];});
+  loop(c,function(now){render(now,{a:+amp.value,f:+freq.value});});
+};
+D["sh-glsl"]=function(m){
+  var d=box(m,"Live fragment shader (WebGL)");
+  var wrap=el("div","sh-editor");
+  var DEFAULT="void main(){\n  vec2 uv = gl_FragCoord.xy / u_res;\n  float d = distance(uv, u_mouse);\n  vec3 col = 0.5 + 0.5*cos(u_time + uv.xyx*5.0 + vec3(0.0,2.0,4.0));\n  col *= smoothstep(0.45, 0.0, d) + 0.4;\n  gl_FragColor = vec4(col, 1.0);\n}";
+  var ta=document.createElement("textarea");ta.className="sh-code";ta.spellcheck=false;ta.value=DEFAULT;
+  var c=el("canvas");c._h=240;
+  wrap.appendChild(ta);wrap.appendChild(c);d.appendChild(wrap);
+  var err=el("div","sh-err");d.appendChild(err);
+  var row=addRow(d);var run=btn(row,"▶ run"),rst=btn(row,"reset");
+  cap(d,"Edit the GLSL and hit run — it's compiled and run on your GPU. Uniforms available: <code>u_time</code> (sec), <code>u_res</code> (px), <code>u_mouse</code> (0–1). Move the mouse over the canvas.");
+  var gl=c.getContext("webgl")||c.getContext("experimental-webgl");
+  if(!gl){err.textContent="WebGL is not available in this browser.";return;}
+  var prog=null,posLoc,uTime,uRes,uMouse,buf;
+  buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  var VS="attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}";
+  function compile(src,type){var s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){var e=gl.getShaderInfoLog(s);gl.deleteShader(s);throw e;}return s;}
+  function build(){try{
+    var fs="precision highp float;\nuniform float u_time;uniform vec2 u_res;uniform vec2 u_mouse;\n"+ta.value;
+    var v=compile(VS,gl.VERTEX_SHADER),f=compile(fs,gl.FRAGMENT_SHADER),p=gl.createProgram();
+    gl.attachShader(p,v);gl.attachShader(p,f);gl.linkProgram(p);
+    if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw gl.getProgramInfoLog(p);
+    prog=p;posLoc=gl.getAttribLocation(p,"p");uTime=gl.getUniformLocation(p,"u_time");uRes=gl.getUniformLocation(p,"u_res");uMouse=gl.getUniformLocation(p,"u_mouse");
+    err.textContent="compiled ✓";err.className="sh-err ok";
+  }catch(e){err.textContent=String(e).trim()||"compile error";err.className="sh-err";}}
+  build();run.addEventListener("click",build);rst.addEventListener("click",function(){ta.value=DEFAULT;build();});
+  var mouse=[0.5,0.5];pointer(c,function(p){mouse=[p.x/c._w,1-p.y/c._h];},function(p){mouse=[p.x/c._w,1-p.y/c._h];});
+  var lastW=0;
+  function size(){var dpr=Math.min(2,window.devicePixelRatio||1),w=c.clientWidth||300;c.width=Math.round(w*dpr);c.height=Math.round(c._h*dpr);c.style.height=c._h+"px";c._w=w;lastW=w;}
+  loop(c,function(now){if(!prog)return;if(c.clientWidth!==lastW||!c.width)size();
+    gl.viewport(0,0,c.width,c.height);gl.useProgram(prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(posLoc);gl.vertexAttribPointer(posLoc,2,gl.FLOAT,false,0,0);
+    gl.uniform1f(uTime,now/1000);gl.uniform2f(uRes,c.width,c.height);gl.uniform2f(uMouse,mouse[0],mouse[1]);
+    gl.drawArrays(gl.TRIANGLES,0,3);});
 };
 
 })();

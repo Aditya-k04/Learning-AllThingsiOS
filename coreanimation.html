@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Core Animation · Learning All things Apple</title>
+<meta name="description" content="The render substrate: layers, geometry, transforms, timing, the animation classes.">
+<meta property="og:title" content="Core Animation · Learning All things Apple">
+<meta property="og:description" content="The render substrate: layers, geometry, transforms, timing, the animation classes.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 <link rel="stylesheet" href="assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 </head>
@@ -2863,7 +2870,7 @@ See <a href="../Learning-CoreAnimation/11-caspringanimation.md">11-caspringanima
 <li>[x] I can add, query, and remove animations by key</li>
 <li>[x] I understand isAdditive and why it matters for interruptible animations</li>
 </ul><div class="pager"><a href="#08-catransaction"><span>Prev</span>← CATransaction</a><a href="#10-cakeyframeanimation"><span>Next</span>CAKeyframeAnimation →</a></div></section>
-<section class="page" id="10-cakeyframeanimation" data-title="CAKeyframeAnimation" data-num="10" data-hasdemo="0"><h1>CAKeyframeAnimation</h1>
+<section class="page" id="10-cakeyframeanimation" data-title="CAKeyframeAnimation" data-num="10" data-hasdemo="1"><h1>CAKeyframeAnimation</h1><div class="demo-mount" data-demo="ca-keyframe"></div>
 <p><code>CABasicAnimation</code> interpolates between two values. <code>CAKeyframeAnimation</code> interpolates through an arbitrary number of values, giving you frame-by-frame control over the animation curve. You can also animate along a <code>CGPath</code>, making it the go-to tool for path-based motion, shake effects, and any animation that needs more than a simple A-to-B transition.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/09-cabasicanimation.md">09-cabasicanimation.md</a> -- CAKeyframeAnimation inherits from CAPropertyAnimation, the same parent as CABasicAnimation.</p>
@@ -5274,7 +5281,7 @@ view.layer.addSublayer(gradientLayer)
 <li>[x] I can use a gradient layer as a mask for fade edges and gradient text</li>
 <li>[x] I know that gradient layers are GPU-rendered and lightweight</li>
 </ul><div class="pager"><a href="#17-catextlayer"><span>Prev</span>← CATextLayer</a><a href="#19-careplicatorlayer"><span>Next</span>CAReplicatorLayer →</a></div></section>
-<section class="page" id="19-careplicatorlayer" data-title="CAReplicatorLayer" data-num="19" data-hasdemo="0"><h1>CAReplicatorLayer</h1>
+<section class="page" id="19-careplicatorlayer" data-title="CAReplicatorLayer" data-num="19" data-hasdemo="1"><h1>CAReplicatorLayer</h1><div class="demo-mount" data-demo="ca-replicator"></div>
 <p><code>CAReplicatorLayer</code> efficiently clones its sublayers with incremental transforms, color shifts, and animation delays. You provide one sublayer, and the replicator draws N copies — each offset, rotated, or tinted from the previous. This is vastly more efficient than creating N separate layers, and the staggered animation delay produces elegant ripple and cascade effects.</p>
 <hr />
 <h2>Core Properties</h2>
@@ -5566,7 +5573,7 @@ replicator.instanceAlphaOffset = -0.1    // each copy is more transparent
 <li>[x] I can nest replicators to create 2D grids</li>
 <li>[x] I understand why CAReplicatorLayer is far more efficient than N separate layers</li>
 </ul><div class="pager"><a href="#18-cagradientlayer"><span>Prev</span>← CAGradientLayer</a><a href="#20-caemitterlayer"><span>Next</span>CAEmitterLayer →</a></div></section>
-<section class="page" id="20-caemitterlayer" data-title="CAEmitterLayer" data-num="20" data-hasdemo="0"><h1>CAEmitterLayer</h1>
+<section class="page" id="20-caemitterlayer" data-title="CAEmitterLayer" data-num="20" data-hasdemo="1"><h1>CAEmitterLayer</h1><div class="demo-mount" data-demo="ca-emitter"></div>
 <p><code>CAEmitterLayer</code> is Core Animation's GPU-accelerated particle system. It lets you spawn thousands of particles with randomized motion, color, scale, and lifetime -- all composited on the GPU with zero per-frame CPU cost after setup. Every confetti burst, snow scene, or fire effect you see in iOS apps likely uses this class.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/02-calayer-fundamentals.md">02-calayer-fundamentals.md</a> -- CAEmitterLayer is a CALayer subclass. Everything about the layer tree, geometry, and compositing applies here.</p>
@@ -8230,6 +8237,7 @@ class StaggeredListViewController: UITableViewController {
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
 <script src="assets/demos.js"></script>
 <script src="assets/app.js"></script>
 </body>
