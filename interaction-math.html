@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math for Interaction · Apple-RE Learning</title>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Math for Interaction</div><div class="cs">Model the visual as a function; read off rotation, spacing, and bend.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><option value="interaction-math.html" selected>Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-roadmap" data-title="Math for Interaction Design — Roadmap" data-num="·" data-hasdemo="0"><h1>Math for Interaction Design — Roadmap</h1>
+<blockquote>
+<p>The skill isn't "advanced math." It's a <strong>way of seeing</strong>: model the visual as a function, then use calculus / linear algebra to extract the geometric thing you need.</p>
+</blockquote>
+<p>This curriculum exists because of one caption on a wavy carousel:</p>
+<blockquote>
+<p><em>"Calculating the derivative of that wave lets you rotate the cells to sit perfectly on the curve. As you pinch, we stretch the amplitude of a sine wave that the cells follow."</em></p>
+</blockquote>
+<p>That sentence secretly contains <strong>trigonometry</strong> (the wave), <strong>a derivative</strong> (tangent → rotation), and nearby <strong>curvature</strong> (2nd derivative) and <strong>arc length</strong> (an integral). Become fluent in those moves and you can place and orient <em>anything</em> on <em>anything</em>. See the full decode in <a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a>.</p>
+<hr />
+<h2>The one mental move</h2>
+<pre><code>position   y(x)      →  WHERE a thing is
+tangent    y'(x)     →  which way it FACES   (rotation)
+curvature  y''(x)    →  how hard it BENDS    (squash / scale)
+arc length ∫|y'|dx   →  distance ALONG the path (even spacing)
+</code></pre>
+<p>Every interaction in this folder is an application of this. Internalize it and specs write themselves.</p>
+<hr />
+<h2>Lessons</h2>
+<ol>
+<li><a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a> — the core mindset and the meta-move</li>
+<li><a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a> — sin/cos as circular motion; phase, frequency, amplitude</li>
+<li><a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a> — calculus, read geometrically</li>
+<li><a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a> — dot, cross, rotation matrices, normals</li>
+<li><a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a> — paths, Béziers, tangents on any curve</li>
+<li><a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> — lerp, smoothstep, remap, spring as an ODE</li>
+<li><a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a> — damping, summed sines, noise</li>
+<li><a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a> — the full derivation, end to end</li>
+<li><a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a> — the bridge to iOS: function vs tween vs frame-loop</li>
+<li><a class="xref" href="#10-study-method">10-study-method</a> — how to actually learn this so it sticks</li>
+<li><a class="xref" href="#11-resources">11-resources</a> — ranked lessons, channels, books, tools</li>
+</ol>
+<hr />
+<h2>How this connects to the rest of your vault</h2>
+<ul>
+<li>Springs &amp; easing already live in <span class="xref-missing" title="note not in this site">interpolation-and-easing</span> and <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span> — this folder gives you the <em>why</em> underneath them.</li>
+<li>The same math powers shaders: see <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a> and <a class="xref" href="shaders.html#15-noise-and-patterns">15-noise-and-patterns</a>.</li>
+<li>The geometric substrate (layers, transforms) lives in <a class="xref" href="coreanimation.html#00-roadmap">Core Animation Roadmap</a> — esp. <a class="xref" href="coreanimation.html#15-transform-3d">15-transform-3d</a> and <a class="xref" href="coreanimation.html#11-caspringanimation">11-caspringanimation</a>.</li>
+<li>Rubber-banding, momentum and touch math: <span class="xref-missing" title="note not in this site">rubber-banding-formula</span>, <span class="xref-missing" title="note not in this site">momentum-and-deceleration</span>, <span class="xref-missing" title="note not in this site">touch-geometry</span>.</li>
+</ul>
+<hr />
+<h2>6-week plan</h2>
+<table>
+<thead>
+<tr>
+<th>Week</th>
+<th>Focus</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Intuition: derivative-as-slope, dot-as-alignment</td>
+<td>3Blue1Brown (see <a class="xref" href="#11-resources">11-resources</a>) + Desmos</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Nature of Code: vectors → forces → oscillation</td>
+<td><a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a>, <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Curves &amp; shaping functions</td>
+<td><a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a>, <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Build the wavy carousel from scratch</td>
+<td><a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Curvature + arc length; redo carousel "properly"</td>
+<td><a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Tie to iOS substrate: function vs tween vs frame-loop</td>
+<td><a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Prerequisites</h2>
+<ul>
+<li>Comfortable Swift (see <a class="xref" href="swift.html#00-roadmap">Swift Roadmap</a>).</li>
+<li>High-school algebra. Everything else is taught here, geometrically.</li>
+<li><strong>Tool to install before Lesson 2:</strong> <a href="https://www.desmos.com/calculator">Desmos</a> — your practice instrument.</li>
+</ul>
+<blockquote>
+<p>Study rule of thumb: <strong>model it in Desmos before you write any code.</strong> See <a class="xref" href="#10-study-method">10-study-method</a>.</p>
+</blockquote><div class="pager"><span class="sp"></span><a href="#01-modeling-visuals-as-functions"><span>Next</span>01 — Modeling Visuals as Functions →</a></div></section>
+<section class="page" id="01-modeling-visuals-as-functions" data-title="01 — Modeling Visuals as Functions" data-num="01" data-hasdemo="1"><h1>01 — Modeling Visuals as Functions</h1><div class="demo-mount" data-demo="overview"></div>
+<p>The single habit that separates "I tweak values until it looks right" from "I can derive exactly what I need."</p>
+<h2>The shift</h2>
+<p>Stop asking <em>"what animation API do I call?"</em> Ask:</p>
+<blockquote>
+<p><strong>What function describes this? And what does its derivative / normal / integral give me?</strong></p>
+</blockquote>
+<p>Once a visual is a function, the whole toolkit of calculus and linear algebra becomes a set of design controls.</p>
+<h2>The meta-move (memorize this)</h2>
+<pre><code>0th derivative   position    →  WHERE it is
+1st derivative   tangent      →  which way it FACES  (rotation, velocity)
+2nd derivative   curvature    →  how hard it BENDS   (acceleration, squash)
+integral         accumulation →  arc length, area, &quot;summed-up&quot; quantities
+</code></pre>
+<p>Each one hands you a <em>new geometric handle</em> on the same object. That progression is the "level of thinking" you're chasing.</p>
+<h2>Worked micro-example</h2>
+<p>Cells follow a wave <code>y(x) = A·sin(ω·x + φ)</code>.</p>
+<ul>
+<li><strong>Where</strong> is cell <em>i</em>? → <code>y(x_i)</code></li>
+<li><strong>Which way</strong> does it face so it sits flush on the curve? → tangent angle <code>θ = atan2(y'(x_i), 1)</code>, and <code>y'(x) = A·ω·cos(ω·x + φ)</code></li>
+<li><strong>Pinch</strong> stretches <code>A</code> → because <code>y'</code> is proportional to <code>A</code>, the tilt updates <em>for free</em>. One parameter, coherent result.</li>
+</ul>
+<p>Full derivation: <a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a>.</p>
+<h2>Why this is the high-leverage skill</h2>
+<ul>
+<li>It makes effects <strong>composable</strong>: change one parameter, everything downstream follows correctly.</li>
+<li>It makes them <strong>art-directable</strong>: you expose the parameters of the function (<code>A, ω, φ</code>) as sliders.</li>
+<li>It removes <strong>guesswork</strong>: no more "0.45 felt right" — you derive the relationship.</li>
+</ul>
+<h2>Try it</h2>
+<p>In Desmos: plot <code>y = A sin(b x + c)</code> with sliders for <code>A, b, c</code>. Then plot its derivative <code>A b cos(b x + c)</code> underneath. Drag <code>A</code> and watch <em>both</em> change together. That coupling is the whole idea.</p>
+<h2>Related</h2>
+<ul>
+<li>Next: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></li>
+<li>The geometric handles: <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>, <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a></li>
+<li>The payoff: <a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a></li>
+<li>iOS framing: <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></li>
+<li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Math for Interaction Design — Roadmap</a><a href="#02-trigonometry-and-the-unit-circle"><span>Next</span>02 — Trigonometry &amp; the Unit Circle →</a></div></section>
+<section class="page" id="02-trigonometry-and-the-unit-circle" data-title="02 — Trigonometry &amp; the Unit Circle" data-num="02" data-hasdemo="1"><h1>02 — Trigonometry &amp; the Unit Circle</h1><div class="demo-mount" data-demo="trig"></div>
+<p>Not "SOH-CAH-TOA." The one idea that unlocks waves, rotation, and oscillation at once.</p>
+<h2>The core insight</h2>
+<blockquote>
+<p><strong><code>cos</code> and <code>sin</code> are the x and y of a point travelling around the unit circle.</strong></p>
+</blockquote>
+<pre><code>point on circle at angle t  =  (cos t, sin t)
+</code></pre>
+<p>So a wave <em>is</em> circular motion projected onto a line. Oscillation, rotation, and waves are the same phenomenon seen from different angles. Once you see this, half of "creative math" collapses into one picture.</p>
+<h2>Anatomy of a wave</h2>
+<pre><code>y(x) = A · sin(ω·x + φ) + k
+        │        │     │    └ vertical offset (baseline)
+        │        │     └ phase   (horizontal shift / starting angle)
+        │        └ angular frequency (how many radians per unit x → how tight)
+        └ amplitude (height)
+</code></pre>
+<ul>
+<li><strong>Amplitude <code>A</code></strong> — how tall. (Pinch-to-stretch changes this.)</li>
+<li><strong>Frequency <code>ω</code></strong> — how many wiggles. Period = <code>2π / ω</code>.</li>
+<li><strong>Phase <code>φ</code></strong> — slides the wave sideways; also = "where on the circle it starts."</li>
+</ul>
+<h2>Things you can build immediately</h2>
+<ul>
+<li><strong>Pulsing / breathing:</strong> <code>scale = 1 + A·sin(ω·t)</code> driven by time <code>t</code>.</li>
+<li><strong>Staggered wave across items:</strong> give item <em>i</em> a phase <code>φ = i · Δ</code>, so <code>y_i = A·sin(ω·t + i·Δ)</code> → a travelling wave through a list.</li>
+<li><strong>Circular layout:</strong> place item <em>i</em> at angle <code>θ_i = i · 2π/n</code>, position <code>(R·cos θ_i, R·sin θ_i)</code>.</li>
+</ul>
+<pre><code class="language-swift">// Travelling wave through a row of dots
+for (i, dot) in dots.enumerated() {
+    let phase = Double(i) * 0.4
+    dot.offsetY = amplitude * sin(omega * time + phase)
+}
+</code></pre>
+<h2>Bridge to rotation (important)</h2>
+<p>A 2D rotation by angle <code>θ</code> is built <em>entirely</em> from sin/cos:</p>
+<pre><code>[ cos θ  −sin θ ] [x]
+[ sin θ   cos θ ] [y]
+</code></pre>
+<p>So trig ↔ rotation ↔ linear algebra are one topic. Continue in <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a>.</p>
+<h2>Try it</h2>
+<p>Desmos: plot <code>(cos t, sin t)</code> parametrically for <code>t</code> in <code>[0, 2π]</code> → you get a circle. Now plot <code>(t, sin t)</code> → you get the wave. Same <code>sin</code>, two viewpoints.</p>
+<h2>Related</h2>
+<ul>
+<li>Prev: <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a> · Next: <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a></li>
+<li>Rotation math: <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a></li>
+<li>Summed/ damped waves: <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a></li>
+<li>In shaders: <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></li>
+<li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#01-modeling-visuals-as-functions"><span>Prev</span>← 01 — Modeling Visuals as Functions</a><a href="#03-derivative-as-tangent"><span>Next</span>03 — Calculus: the Derivative as Tangent →</a></div></section>
+<section class="page" id="03-derivative-as-tangent" data-title="03 — Calculus: the Derivative as Tangent" data-num="03" data-hasdemo="1"><h1>03 — Calculus: the Derivative as Tangent</h1><div class="demo-mount" data-demo="derivative"></div>
+<p>You don't need symbol-pushing. You need the <strong>geometric meaning</strong> of three operations.</p>
+<h2>Derivative = slope = tangent direction</h2>
+<p>The derivative <code>y'(x)</code> is the slope of the curve at <code>x</code>. Slope <em>is</em> a direction. That's why it gives you rotation.</p>
+<pre><code>tangent vector at x  =  (1, y'(x))           // run 1, rise y'
+tangent angle        =  atan2(y'(x), 1)      // rotate a cell by this to lie on the curve
+</code></pre>
+<h3>The six derivatives worth memorizing</h3>
+<pre><code>d/dx [ sin x ]   = cos x
+d/dx [ cos x ]   = −sin x
+d/dx [ x^n ]     = n·x^(n−1)
+d/dx [ e^x ]     = e^x
+d/dx [ c ]       = 0          (constant)
+chain rule:  d/dx f(g(x)) = f'(g(x)) · g'(x)
+</code></pre>
+<p>Chain rule is why <code>d/dx [A·sin(ω x + φ)] = A·ω·cos(ω x + φ)</code> — the inner <code>ω</code> pops out.</p>
+<h2>Second derivative = curvature (how hard it bends)</h2>
+<pre><code>κ(x) = y''(x) / (1 + y'(x)²)^(3/2)
+</code></pre>
+<p>Use it to <strong>squash or scale</strong> an element more on tight bends, or to drive "acceleration feel."</p>
+<h2>Integral = accumulation → arc length</h2>
+<p>To space items <em>evenly along</em> a curve (not evenly in <code>x</code>, which bunches them on steep parts):</p>
+<pre><code>arc length from a to b  =  ∫_a^b sqrt(1 + y'(x)²) dx
+</code></pre>
+<p>In code you usually do this numerically (walk the curve in tiny steps, sum segment lengths, then resample at equal distances).</p>
+<pre><code class="language-swift">// Sample a curve, build a cumulative-length table, resample at even spacing
+func arcLengthSamples(_ f: (Double)-&gt;Double, x0: Double, x1: Double, n: Int) -&gt; [(x: Double, s: Double)] {
+    var out: [(Double, Double)] = []
+    var s = 0.0
+    var prev = CGPoint(x: x0, y: f(x0))
+    let dx = (x1 - x0) / Double(n)
+    for i in 0...n {
+        let x = x0 + Double(i) * dx
+        let p = CGPoint(x: x, y: f(x))
+        s += hypot(p.x - prev.x, p.y - prev.y)
+        out.append((x, s)); prev = p
+    }
+    return out   // invert s→x to place items at equal arc-length
+}
+</code></pre>
+<h2>The progression to keep in your head</h2>
+<pre><code>y      WHERE      position
+y'     FACING     rotation / velocity   ← the carousel trick
+y''    BENDING    curvature / accel
+∫      ALONG      arc length / area
+</code></pre>
+<h2>Try it</h2>
+<p>Desmos: plot a function and <code>tangent(x0)</code> at a draggable point. Drag it and watch the tangent line ride the curve — that line's angle is your rotation.</p>
+<h2>Related</h2>
+<ul>
+<li>The payoff: <a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a></li>
+<li>Tangents on arbitrary paths: <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a></li>
+<li>Springs are differential equations: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>, <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span></li>
+<li>Prev: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#02-trigonometry-and-the-unit-circle"><span>Prev</span>← 02 — Trigonometry &amp; the Unit Circle</a><a href="#04-vectors-and-linear-algebra"><span>Next</span>04 — Vectors &amp; Linear Algebra →</a></div></section>
+<section class="page" id="04-vectors-and-linear-algebra" data-title="04 — Vectors &amp; Linear Algebra" data-num="04" data-hasdemo="1"><h1>04 — Vectors &amp; Linear Algebra</h1><div class="demo-mount" data-demo="vectors"></div>
+<p>The native language of graphics. Two products do most of the work.</p>
+<h2>A vector is a direction-with-length</h2>
+<p>Position, velocity, normal, offset — all vectors. Learn to <em>think in vectors</em> instead of separate <code>x</code>/<code>y</code> and the code shrinks.</p>
+<pre><code class="language-swift">import simd
+let v = SIMD2&lt;Float&gt;(3, 4)
+let len = length(v)          // 5
+let dir = normalize(v)       // unit vector, length 1
+</code></pre>
+<h2>Dot product = "how aligned are these two directions?"</h2>
+<pre><code>a · b = ax·bx + ay·by = |a||b|·cos(angle between them)
+</code></pre>
+<ul>
+<li><code>&gt; 0</code> → same general direction · <code>0</code> → perpendicular · <code>&lt; 0</code> → opposing.</li>
+<li>Uses: lighting (<code>N·L</code>), "is the user dragging toward this?", projecting one vector onto another, finding angles.</li>
+</ul>
+<pre><code class="language-swift">let alignment = dot(normalize(drag), normalize(target))  // 1 = straight at it
+</code></pre>
+<h2>Cross product (2D) = "how perpendicular / which way does it turn?"</h2>
+<p>In 2D it's a single signed scalar:</p>
+<pre><code>cross(a, b) = ax·by − ay·bx
+</code></pre>
+<ul>
+<li>Sign = turn direction (left/right, clockwise/ccw) → winding, "which side of the line."</li>
+<li>Magnitude = area of the parallelogram → signed area, overlap tests.</li>
+<li><strong>Perpendicular (normal) of <code>(x, y)</code> is <code>(−y, x)</code></strong> — rotating 90°. This is how you offset along a curve's normal.</li>
+</ul>
+<pre><code class="language-swift">func normal(of tangent: SIMD2&lt;Float&gt;) -&gt; SIMD2&lt;Float&gt; {
+    normalize(SIMD2(-tangent.y, tangent.x))   // 90° turn
+}
+</code></pre>
+<h2>Rotation is a matrix (and it's just sin/cos)</h2>
+<pre><code>R(θ) = [ cos θ  −sin θ ]      rotate point p:  p' = R(θ) · p
+       [ sin θ   cos θ ]
+</code></pre>
+<pre><code class="language-swift">func rotate(_ p: SIMD2&lt;Float&gt;, by t: Float) -&gt; SIMD2&lt;Float&gt; {
+    SIMD2(cos(t)*p.x - sin(t)*p.y,
+          sin(t)*p.x + cos(t)*p.y)
+}
+</code></pre>
+<p>Translation + rotation + scale compose by multiplying matrices — this is exactly what <code>CGAffineTransform</code> and <code>CATransform3D</code> are. See <a class="xref" href="coreanimation.html#15-transform-3d">15-transform-3d</a>.</p>
+<h2>Why this matters for the carousel</h2>
+<p>The cell's rotation comes from a tangent <em>vector</em>; its perpendicular offset uses the <em>normal</em> <code>(−y, x)</code>; placing it on a circle uses a <em>rotation matrix</em>. Same three tools, everywhere.</p>
+<h2>Try it</h2>
+<p>Take two draggable vectors in Desmos (or paper). Compute <code>dot</code> and <code>cross</code> by hand as you move them; predict the sign before you calculate. Build the reflex: dot = alignment, cross = turn.</p>
+<h2>Related</h2>
+<ul>
+<li>Rotation source: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></li>
+<li>Applied: <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a>, <a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a></li>
+<li>In shaders (normals/lighting): <a class="xref" href="shaders.html#22-lighting-and-normals">22-lighting-and-normals</a>, <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></li>
+<li>Transforms: <a class="xref" href="coreanimation.html#15-transform-3d">15-transform-3d</a></li>
+<li>Prev: <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#03-derivative-as-tangent"><span>Prev</span>← 03 — Calculus: the Derivative as Tangent</a><a href="#05-parametric-curves-and-splines"><span>Next</span>05 — Parametric Curves &amp; Splines →</a></div></section>
+<section class="page" id="05-parametric-curves-and-splines" data-title="05 — Parametric Curves &amp; Splines" data-num="05" data-hasdemo="1"><h1>05 — Parametric Curves &amp; Splines</h1><div class="demo-mount" data-demo="bezier"></div>
+<p>Generalize "the wave" to <em>any</em> path — circles, arcs, hand-drawn strokes, Béziers.</p>
+<h2>Parametric form: describe motion, not just shape</h2>
+<p>Instead of <code>y = f(x)</code>, use a parameter <code>t</code>:</p>
+<pre><code>P(t) = ( x(t), y(t) )          t usually in [0, 1]
+P'(t) = ( x'(t), y'(t) )       velocity → TANGENT direction
+</code></pre>
+<p>This handles loops and verticals that <code>y = f(x)</code> can't, and the tangent falls right out of the derivative — same trick as <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>, now on any path.</p>
+<pre><code>tangent angle at t  =  atan2(y'(t), x'(t))
+normal              =  (−y'(t), x'(t))   normalized   // see 04
+</code></pre>
+<h2>Examples</h2>
+<pre><code>Circle:  P(t) = (R cos 2πt, R sin 2πt)
+Wave:    P(t) = (t·W, A sin(ω t))
+Spiral:  P(t) = (a·t·cos t, a·t·sin t)
+</code></pre>
+<h2>Bézier curves (the workhorse)</h2>
+<p>A cubic Bézier is a blend of 4 control points <code>P0..P3</code>:</p>
+<pre><code>B(t) = (1−t)³P0 + 3(1−t)²t P1 + 3(1−t)t² P2 + t³ P3
+</code></pre>
+<ul>
+<li><code>P0, P3</code> = endpoints; <code>P1, P2</code> = "handles" that pull the curve.</li>
+<li>Its derivative <code>B'(t)</code> (also a Bézier, one degree lower) gives the <strong>tangent</strong> → orientation along the path.</li>
+<li>This is what <code>UIBezierPath</code>, <code>CAShapeLayer</code> paths, and the cubic timing curve all are. See <a class="xref" href="coreanimation.html#16-cashapelayer">16-cashapelayer</a>.</li>
+</ul>
+<h2>Catmull-Rom (curve <em>through</em> points)</h2>
+<p>Béziers don't pass through their middle controls; <strong>Catmull-Rom splines pass through every point</strong> — ideal for "lay cells along these positions smoothly." It's a few lines and converts to Béziers for drawing.</p>
+<h2>Placing things along a curve</h2>
+<ol>
+<li>Sample the curve → build a length table (<a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a> arc length).</li>
+<li>Resample at equal arc-length for even spacing.</li>
+<li>At each sample, take the tangent → rotate the element; take the normal → offset it.</li>
+</ol>
+<p>This is the <strong>wavy-carousel recipe</strong> generalized to any path: <a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a>.</p>
+<h2>Try it</h2>
+<p><code>UIBezierPath</code> / Swift Charts / Desmos: drop 4 control points, drag the handles, and render the tangent at <code>t = 0.5</code>. Watch how the handles steer the orientation.</p>
+<h2>Related</h2>
+<ul>
+<li>Prereqs: <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>, <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a></li>
+<li>Drawing paths: <a class="xref" href="coreanimation.html#16-cashapelayer">16-cashapelayer</a></li>
+<li>Payoff: <a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a></li>
+<li>Bartosz Ciechanowski "Bézier Curves" → <a class="xref" href="#11-resources">11-resources</a></li>
+<li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#04-vectors-and-linear-algebra"><span>Prev</span>← 04 — Vectors &amp; Linear Algebra</a><a href="#06-interpolation-easing-and-springs"><span>Next</span>06 — Interpolation, Easing &amp; Springs →</a></div></section>
+<section class="page" id="06-interpolation-easing-and-springs" data-title="06 — Interpolation, Easing &amp; Springs" data-num="06" data-hasdemo="1"><h1>06 — Interpolation, Easing &amp; Springs</h1><div class="demo-mount" data-demo="easing"></div><div class="demo-mount" data-demo="spring"></div>
+<p>The small toolkit you reach for in <em>every</em> falloff — UI or shader. (Deep companion: <span class="xref-missing" title="note not in this site">interpolation-and-easing</span>.)</p>
+<h2>The five functions to know cold</h2>
+<pre><code>lerp(a, b, t)      = a + (b − a)·t                 // blend a→b
+inverseLerp(a,b,v) = (v − a) / (b − a)             // &quot;where is v between a and b?&quot; → t
+clamp(v, lo, hi)   = max(lo, min(hi, v))
+remap(v, a,b, c,d) = lerp(c, d, clamp(inverseLerp(a,b,v), 0, 1))   // map one range to another
+smoothstep(e0,e1,x): t = clamp((x−e0)/(e1−e0),0,1); return t·t·(3 − 2t)
+</code></pre>
+<p><code>remap</code> + <code>smoothstep</code> are 80% of "make this value drive that effect smoothly." (The Stories-strip edge falloff was exactly <code>smoothstep</code> over a remapped distance.)</p>
+<pre><code class="language-swift">func smoothstep(_ e0: Float, _ e1: Float, _ x: Float) -&gt; Float {
+    let t = max(0, min(1, (x - e0) / (e1 - e0)))
+    return t * t * (3 - 2 * t)
+}
+</code></pre>
+<h2>Easing = reshaping <code>t</code> before you lerp</h2>
+<p>An easing curve is just a function <code>[0,1] → [0,1]</code> applied to progress. <code>easeInOut</code> ≈ smoothstep. Cubic timing curves are Béziers (<a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a>). See <a class="xref" href="coreanimation.html#14-animation-timing">14-animation-timing</a>.</p>
+<h2>Springs = physics instead of a fixed curve</h2>
+<p>A spring is a <strong>second-order differential equation</strong> — which is why it connects back to calculus (<a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>):</p>
+<pre><code>a = −k·x − c·v          x = displacement from target
+                        v = velocity, a = acceleration
+                        k = stiffness, c = damping
+v += a·dt ;  x += v·dt   // integrate each frame
+</code></pre>
+<ul>
+<li><strong>Critical damping</strong> (<code>c = 2·sqrt(k)</code>) → fastest settle with <strong>no overshoot</strong>. (Used in the Perplexity dots' return.)</li>
+<li>Under-damped → bouncy; over-damped → sluggish.</li>
+<li>Springs are <em>retargetable</em> mid-flight (no fixed duration) → great for gestures. Full treatment: <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span> and the Wave library.</li>
+</ul>
+<pre><code class="language-swift">// One critically-damped step
+let damping = 2 * sqrt(stiffness)
+let a = -stiffness * x - damping * v
+v += a * dt
+x += v * dt
+</code></pre>
+<h2>When to use which</h2>
+<table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Map a position/scroll to an effect</td>
+<td><code>remap</code> + <code>smoothstep</code></td>
+</tr>
+<tr>
+<td>A→B over a fixed time, designed feel</td>
+<td>easing curve / Bézier timing</td>
+</tr>
+<tr>
+<td>Gesture-driven, interruptible, physical</td>
+<td>spring</td>
+</tr>
+</tbody>
+</table>
+<h2>Try it</h2>
+<p>Build a spring in a playground; expose <code>k</code> and <code>c</code> sliders. Find critical damping by feel, then verify <code>c = 2√k</code>.</p>
+<h2>Related</h2>
+<ul>
+<li>Vault deep-dives: <span class="xref-missing" title="note not in this site">interpolation-and-easing</span>, <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span>, <span class="xref-missing" title="note not in this site">momentum-and-deceleration</span>, <span class="xref-missing" title="note not in this site">rubber-banding-formula</span></li>
+<li>Timing in CA: <a class="xref" href="coreanimation.html#14-animation-timing">14-animation-timing</a>, <a class="xref" href="coreanimation.html#11-caspringanimation">11-caspringanimation</a></li>
+<li>Prev: <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#05-parametric-curves-and-splines"><span>Prev</span>← 05 — Parametric Curves &amp; Splines</a><a href="#07-oscillations-noise-and-organic-motion"><span>Next</span>07 — Oscillations, Noise &amp; Organic Motion →</a></div></section>
+<section class="page" id="07-oscillations-noise-and-organic-motion" data-title="07 — Oscillations, Noise &amp; Organic Motion" data-num="07" data-hasdemo="1"><h1>07 — Oscillations, Noise &amp; Organic Motion</h1><div class="demo-mount" data-demo="oscillation"></div>
+<p>How to make motion feel <em>alive</em> instead of mechanical.</p>
+<h2>Damped oscillation = bounce that dies out</h2>
+<pre><code>y(t) = A · e^(−λt) · sin(ω t + φ)
+        │    │          └ the wiggle
+        │    └ exponential decay envelope (λ = decay rate)
+        └ initial amplitude
+</code></pre>
+<p>The <code>e^(−λt)</code> envelope is the secret to natural settling — it's the analytic cousin of the spring in <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>. See <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span>.</p>
+<h2>Summed sines (Fourier intuition)</h2>
+<blockquote>
+<p><strong>Any periodic motion is a sum of sine waves.</strong></p>
+</blockquote>
+<p>Layer a few sines at different frequencies/amplitudes and you get rich, non-trivial motion from trivial parts:</p>
+<pre><code>y(t) = Σ  A_i · sin(ω_i · t + φ_i)
+</code></pre>
+<p>Use <strong>incommensurate</strong> frequencies (not simple multiples) so it never visibly repeats — that's the "gently alive, never looping" feel (the Perplexity dots' idle drift used exactly this).</p>
+<pre><code class="language-swift">let idle = a1*sin(0.6*t + p1) + a2*sin(0.43*t + p2)   // 0.6, 0.43 don't sync
+</code></pre>
+<h2>Noise = controlled randomness with smoothness</h2>
+<p>Plain <code>random()</code> is jittery. <strong>Perlin / simplex noise</strong> is <em>smooth</em> random — neighboring inputs give nearby outputs. That smoothness is what reads as organic (smoke, flowing fields, hand-tremor).</p>
+<ul>
+<li>Sample noise over <strong>time</strong> for wandering motion: <code>offset = noise(seed, t·speed)</code>.</li>
+<li>Sample over <strong>space</strong> for fields/turbulence: <code>n = noise(x·scale, y·scale)</code>.</li>
+<li><strong>Domain warping</strong> (feed noise into the input of more noise) gives liquid, billowing motion. See <a class="xref" href="shaders.html#15-noise-and-patterns">15-noise-and-patterns</a>.</li>
+</ul>
+<h2>Recipe: "gently alive" element</h2>
+<pre><code>position = rest
+         + summedSines(t)          // slow breathing      (this note)
+         + noise(seed, t)·amp      // organic wander       (this note)
+         + springToTarget(...)     // responds to input    (06)
+</code></pre>
+<p>That layered structure is how the best ambient interactions are built.</p>
+<h2>Try it</h2>
+<p>In a shader or playground, animate a dot with one sine, then add a second at an unrelated frequency, then add a touch of noise. Feel each layer's contribution.</p>
+<h2>Related</h2>
+<ul>
+<li>Decay &amp; springs: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>, <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span></li>
+<li>Wave basics: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></li>
+<li>Noise in shaders: <a class="xref" href="shaders.html#15-noise-and-patterns">15-noise-and-patterns</a>, <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></li>
+<li>Prev: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#06-interpolation-easing-and-springs"><span>Prev</span>← 06 — Interpolation, Easing &amp; Springs</a><a href="#08-worked-example-wavy-carousel"><span>Next</span>08 — Worked Example: The Wavy Carousel →</a></div></section>
+<section class="page" id="08-worked-example-wavy-carousel" data-title="08 — Worked Example: The Wavy Carousel" data-num="08" data-hasdemo="1"><h1>08 — Worked Example: The Wavy Carousel</h1><div class="demo-mount" data-demo="carousel"></div>
+<p>The full decode of: <em>"the derivative of that wave lets you rotate the cells to sit on the curve; as you pinch, we stretch the amplitude."</em> Everything in this folder, applied once.</p>
+<h2>Step 1 — Model the curve as a function</h2>
+<p>Cells ride a sine wave along the horizontal axis <code>x</code>:</p>
+<pre><code>y(x) = A · sin(ω·x + φ)
+</code></pre>
+<p><code>A</code> = amplitude (the pinch target), <code>ω</code> = frequency, <code>φ</code> = phase. → <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></p>
+<h2>Step 2 — Place each cell</h2>
+<p>Cell <em>i</em> sits at some <code>x_i</code> (its scroll position). Its vertical offset:</p>
+<pre><code>y_i = A · sin(ω·x_i + φ)
+</code></pre>
+<h2>Step 3 — Derivative → tangent → rotation</h2>
+<p>The slope at <code>x_i</code> (chain rule, <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>):</p>
+<pre><code>y'(x) = A · ω · cos(ω·x + φ)
+
+θ_i = atan2( y'(x_i), 1 )      // tangent angle
+cell.rotation = θ_i            // now it lies flush on the curve
+</code></pre>
+<h2>Step 4 — Pinch stretches amplitude (and rotation follows for free)</h2>
+<p>Map the pinch gesture's scale onto <code>A</code>:</p>
+<pre><code>A = remap(pinchScale, 1.0, 3.0,  Amin, Amax)    // see 06
+</code></pre>
+<p>Because <code>y'</code> is <strong>proportional to <code>A</code></strong>, increasing amplitude automatically increases the tilt. One parameter drives shape <em>and</em> orientation coherently — that coupling is the craft.</p>
+<h2>Step 5 (level-up) — even spacing via arc length</h2>
+<p>Equal <code>x</code> spacing bunches cells on the steep parts. Space them by <strong>arc length</strong> instead (<a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>):</p>
+<pre><code>s(x) = ∫ sqrt(1 + y'(x)²) dx     // distance along the wave
+</code></pre>
+<p>Sample the curve, build a length table, resample at equal <code>s</code>. Now cells are visually even no matter how tall the wave gets.</p>
+<h2>Step 6 (extra polish) — curvature</h2>
+<p>Scale/foreshorten cells slightly by curvature <code>κ = y'' / (1 + y'²)^{3/2}</code> so they "hug" tight bends. → <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a></p>
+<h2>The whole thing in pseudo-code</h2>
+<pre><code>on gesture or frame:
+    A = remap(pinchScale, 1, 3, Amin, Amax)
+    for each cell i at x_i:
+        y      = A * sin(ω*x_i + φ)
+        slope  = A * ω * cos(ω*x_i + φ)
+        θ      = atan2(slope, 1)
+        cell.position = (x_i, baseline + y)
+        cell.rotation = θ
+        # optional: cell.scale = 1 - clamp(curvature)*k
+</code></pre>
+<h2>Build it yourself (Week 4–5)</h2>
+<p>Do it in SwiftUI first (<code>rotationEffect</code> + <code>offset</code> per cell, driven by a <code>MagnifyGesture</code>'s scale), <em>then</em> understand it as a pure function of <code>(x_i, A)</code>. This is the function-driven mindset from <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>Uses every prior lesson: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a> · <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a> · <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a> · <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a> · <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></li>
+<li>Generalize to any path: <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a></li>
+<li>iOS framing: <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></li>
+<li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#07-oscillations-noise-and-organic-motion"><span>Prev</span>← 07 — Oscillations, Noise &amp; Organic Motion</a><a href="#09-what-drives-the-value"><span>Next</span>09 — What Drives the Value (the iOS Bridge) →</a></div></section>
+<section class="page" id="09-what-drives-the-value" data-title="09 — What Drives the Value (the iOS Bridge)" data-num="09" data-hasdemo="0"><h1>09 — What Drives the Value (the iOS Bridge)</h1>
+<p>The math tells you <em>what</em> the value should be. This note tells you <em>how</em> iOS should compute it over time. Same three categories, every interaction.</p>
+<h2>The three drivers</h2>
+<table>
+<thead>
+<tr>
+<th>Driver</th>
+<th>The value is…</th>
+<th>iOS tools</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Input-driven (a pure function)</strong></td>
+<td><code>f(scrollOffset)</code> or <code>f(gesture)</code> — <em>no animation</em></td>
+<td><code>visualEffect</code>, <code>scrollTransition</code>, <code>UIScrollView.contentOffset</code>, gesture translation</td>
+<td>Stories edge-scale; the <strong>wavy carousel</strong></td>
+</tr>
+<tr>
+<td><strong>Interpolated (a tween)</strong></td>
+<td>a start→end the system blends</td>
+<td>SwiftUI <code>.animation</code>, <code>UIViewPropertyAnimator</code>, CA implicit/explicit</td>
+<td>a button press, a sheet</td>
+</tr>
+<tr>
+<td><strong>Per-frame (imperative)</strong></td>
+<td>recomputed each frame</td>
+<td><code>CADisplayLink</code>, Metal compute, manual loop</td>
+<td>Perplexity dots; physics fields</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>The carousel and the Stories strip are <strong>category 1</strong> — they are <em>functions of gesture/scroll</em>, not animations. That's why "no per-frame effect, apply to the main composition" was the right instinct.</p>
+</blockquote>
+<h2>How to choose</h2>
+<ol>
+<li>Is the value a direct function of a gesture/scroll position? → <strong>pure function</strong> (cleanest; prefer this).</li>
+<li>Is it "go from A to B with a nice feel"? → <strong>tween / spring</strong>.</li>
+<li>Does it need continuous simulation (particles, fields, frame-precise timing)? → <strong>per-frame</strong>.</li>
+</ol>
+<h2>Why understanding Core Animation matters here</h2>
+<p>SwiftUI and UIKit are skins over <strong>Core Animation</strong>. The math you compute becomes layer transforms that the render server interpolates. Knowing the substrate explains <em>why</em> category-2 tweens behave as they do (model vs presentation layer) and when to drop to category 3.</p>
+<ul>
+<li>Substrate: <a class="xref" href="coreanimation.html#00-roadmap">Core Animation Roadmap</a> → <a class="xref" href="coreanimation.html#01-how-rendering-works">01-how-rendering-works</a>, <a class="xref" href="coreanimation.html#15-transform-3d">15-transform-3d</a></li>
+<li>Springs at the CA level: <a class="xref" href="coreanimation.html#11-caspringanimation">11-caspringanimation</a></li>
+<li>GPU per-frame: <a class="xref" href="coreanimation.html#24-metal-and-calayer">24-metal-and-calayer</a>, <a class="xref" href="shaders.html#00-roadmap">Shaders Roadmap</a></li>
+</ul>
+<h2>The discipline</h2>
+<p>When you imagine an interaction, name three things before coding:</p>
+<ol>
+<li><strong>What function</strong> describes the value? (this folder)</li>
+<li><strong>Which driver</strong> owns it? (this note)</li>
+<li><strong>Which layer</strong> renders it? (Core Animation / Metal)</li>
+</ol>
+<p>Get those three and the implementation is almost mechanical.</p>
+<h2>Related</h2>
+<ul>
+<li>The math side: <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a></li>
+<li>Springs/easing: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></li>
+<li>Study loop: <a class="xref" href="#10-study-method">10-study-method</a></li>
+<li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#08-worked-example-wavy-carousel"><span>Prev</span>← 08 — Worked Example: The Wavy Carousel</a><a href="#10-study-method"><span>Next</span>10 — Study Method →</a></div></section>
+<section class="page" id="10-study-method" data-title="10 — Study Method" data-num="10" data-hasdemo="0"><h1>10 — Study Method</h1>
+<p>The method matters more than the reading list. Four habits.</p>
+<h2>1. Desmos first, code second</h2>
+<p>Before writing any code, model the interaction as a function in <a href="https://www.desmos.com/calculator">Desmos</a> with sliders. Take its derivative there; watch the tangent move. The interactivity builds intuition that reading can't. <em>This is the most important habit on the page.</em></p>
+<h2>2. Drill the meta-move</h2>
+<p><code>position → derivative → geometric quantity.</code> Pick a curve (wave, circle, spiral, Bézier) and extract its <strong>tangent</strong> (orientation), <strong>normal</strong> (perpendicular), and <strong>curvature</strong> (bend). Do it for five different curves until it's automatic. → <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a>, <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a></p>
+<h2>3. Reconstruct, math-first</h2>
+<p>You already reverse-engineer interactions — keep doing it, but <strong>write the function and derive what you need <em>before</em> building.</strong> Ask: what curve are the cells on? what's its derivative? what does the gesture change? Write that spec, <em>then</em> code. (This also trains the spec/pseudo-code muscle — turn "scales as it enters" into <code>scale = lerp(0.5, 1, smoothstep(t))</code> with named constants and stated edge cases.)</p>
+<h2>4. Use shaders as the lab</h2>
+<p>Your Metal work <em>is</em> applied math — <code>smoothstep</code>, vectors, oscillation are already in there. When you learn a concept, immediately deploy it in a shader. Theory + an existing playground = a fast feedback loop. → <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></p>
+<h2>A good single rep</h2>
+<ol>
+<li>See an interaction you like.</li>
+<li>Guess the function + driver (<a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a>).</li>
+<li>Reproduce it in Desmos with sliders.</li>
+<li>Derive the tangent/normal/whatever it needs.</li>
+<li>Build it (SwiftUI or a shader).</li>
+<li>Compare to the original; note what you missed.</li>
+</ol>
+<p>Ten of these reps will move you further than any course.</p>
+<h2>Anti-patterns</h2>
+<ul>
+<li>Memorizing formulas without the geometric picture → you'll forget them. Learn the <em>meaning</em> (slope, alignment, turn).</li>
+<li>Jumping to code before modeling → you end up tuning magic numbers instead of deriving relationships.</li>
+<li>Reading passively → always have Desmos or a playground open.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Resources to feed this loop: <a class="xref" href="#11-resources">11-resources</a></li>
+<li>The mindset: <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a></li>
+<li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#09-what-drives-the-value"><span>Prev</span>← 09 — What Drives the Value (the iOS Bridge)</a><a href="#11-resources"><span>Next</span>11 — Resources →</a></div></section>
+<section class="page" id="11-resources" data-title="11 — Resources" data-num="11" data-hasdemo="0"><h1>11 — Resources</h1>
+<p>Ranked and chosen for the creative-coding / interaction flavor specifically.</p>
+<h2>Start here — intuition</h2>
+<ul>
+<li><strong>3Blue1Brown — "Essence of Calculus" + "Essence of Linear Algebra"</strong> (YouTube). The best visual intuition anywhere: derivative-as-slope, dot-product-as-projection. Watch both <em>before</em> anything else. → feeds <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>, <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a></li>
+<li><strong>The Nature of Code — Daniel Shiffman</strong> (natureofcode.com, free; "The Coding Train" on YouTube). Vectors → forces → oscillation → springs → noise, taught by <em>building interactions</em>. The single most on-target end-to-end resource. → <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a></li>
+</ul>
+<h2>Go deep — this exact aesthetic</h2>
+<ul>
+<li><strong>Freya Holmér</strong> (YouTube) — "Math for Game Devs," <strong>"The Continuity of Splines"</strong> (tangents/curvature = the carousel math), and her remapping/<code>smoothstep</code> videos. The creator most precisely aimed at your gap. → <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a>, <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></li>
+<li><strong>Inigo Quilez</strong> (iquilezles.org + YouTube) — "useful little functions," shaping functions, SDFs, <code>smoothstep</code>. Doubles as shader math. → <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></li>
+<li><strong>The Book of Shaders</strong> (thebookofshaders.com) — sine waves, shaping functions, noise; interactive and gentle. Bridges math ↔ your <code>.metal</code> files. → <a class="xref" href="shaders.html#15-noise-and-patterns">15-noise-and-patterns</a></li>
+</ul>
+<h2>Understand-through-interaction (gold standard)</h2>
+<ul>
+<li><strong>Bartosz Ciechanowski</strong> (ciechanow.ski) — interactive essays. Read <strong>"Curves and Surfaces"</strong> and <strong>"Bézier Curves."</strong> Nobody explains it better.</li>
+<li><strong>Steven Wittens</strong> (acko.net) — "Animate Your Way to Glory" for the math of animation/easing.</li>
+</ul>
+<h2>Apple / iOS specific</h2>
+<ul>
+<li><strong>"Designing Fluid Interfaces"</strong> (WWDC 2018). <em>The</em> talk on gesture-as-function, interruptible, physics-based interactions — exactly your aesthetic. Watch twice.</li>
+<li><strong>"Explore SwiftUI animation"</strong> + <strong>"Animate with springs"</strong> (WWDC 2023) — the official interpolation/spring model.</li>
+<li><strong>Wave</strong> (Janum Trivedi's spring library, already in your project) — read the source; a masterclass in retargetable springs. → <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span></li>
+</ul>
+<h2>Books</h2>
+<ul>
+<li><strong>objc.io — <em>Thinking in SwiftUI</em></strong> (layout/identity) and <strong><em>Advanced Swift</em></strong> (the language properly).</li>
+<li><strong>Nick Lockwood — <em>iOS Core Animation: Advanced Techniques</em></strong> — old but the substrate is unchanged. → <a class="xref" href="coreanimation.html#00-roadmap">CA Roadmap</a></li>
+</ul>
+<h2>Aspirational (later)</h2>
+<ul>
+<li><strong>Keenan Crane — "Discrete Differential Geometry"</strong> (CMU, free). Tangent frames and curvature on curves/surfaces — the rigorous version of this whole folder.</li>
+</ul>
+<h2>Tools</h2>
+<ul>
+<li><strong>Desmos</strong> (desmos.com/calculator) — your daily practice instrument. See <a class="xref" href="#10-study-method">10-study-method</a>.</li>
+<li><strong>Grapher</strong> (built into macOS) — quick 2D/3D function plots.</li>
+<li>A Swift <strong>Playground</strong> or this project's gallery — to deploy concepts immediately.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>How to use these: <a class="xref" href="#10-study-method">10-study-method</a></li>
+<li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#10-study-method"><span>Prev</span>← 10 — Study Method</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

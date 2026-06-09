@@ -1,0 +1,1252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stack Decisions · Apple-RE Learning</title>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Stack Decisions</div><div class="cs">A framework for choosing the right rendering tool for any interaction.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html" selected>Stack Decisions</option></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-roadmap" data-title="Choosing the Right Rendering Stack — Learning Roadmap" data-num="·" data-hasdemo="0"><h1>Choosing the Right Rendering Stack — Learning Roadmap</h1>
+<p>This curriculum teaches you to <strong>decide which technology stack to use for any interaction or animation — <em>before</em> you write a line of code.</strong> The goal: when you imagine an interaction, you already see the stack in your head ("this is SwiftUI for layout + a Metal <code>.layerEffect</code> for the reveal", or "this is explicit Core Animation because I need staggered per-layer timing").</p>
+<p>This is the meta-skill that sits <em>above</em> the other Learning folders. Once you have it, <a class="xref" href="coreanimation.html#00-roadmap">Core Animation</a>, <a class="xref" href="shaders.html#00-roadmap">Shaders</a>, and <a class="xref" href="swiftui.html#00-roadmap">SwiftUI</a> stop being separate worlds and become <strong>rungs on one ladder</strong> you climb up and down deliberately.</p>
+<hr />
+<h2>Why this matters</h2>
+<p>Most people pick a stack by habit ("I always use SwiftUI") or by cargo-culting a tutorial. Then they hit a wall — the animation stutters, the gesture can't interrupt, the effect can't be expressed — and they bolt on hacks.</p>
+<p>The fix is to understand that <strong>all rendering on Apple platforms is one layered system that bottoms out at the GPU compositor.</strong> Every animation API is a different <em>altitude</em> on that ladder. Master the map and three questions, and stack selection becomes mechanical.</p>
+<blockquote>
+<p>See <span class="xref-missing" title="note not in this site">core-animation-smooth-60-120fps</span> for the render-pipeline deep dive this curriculum builds on.</p>
+</blockquote>
+<hr />
+<h2>The one rule</h2>
+<blockquote>
+<p><strong>Start at the highest rung that can express the effect. Drop down only when you hit a specific, nameable limitation.</strong></p>
+</blockquote>
+<p>Each rung you descend costs you code and gains you control. If you can't <em>name</em> the limitation forcing you lower, you're over-engineering. This single principle is the spine of the whole curriculum — see <a class="xref" href="#07-escalation-ladder">07-escalation-ladder</a>.</p>
+<hr />
+<h2>Prerequisites</h2>
+<ul>
+<li><strong>Helpful:</strong> Basic SwiftUI and UIKit familiarity. You should know what a view, a layer, and a gesture are.</li>
+<li><strong>Helpful:</strong> Skim <a class="xref" href="coreanimation.html#01-how-rendering-works">how rendering works</a> so the GPU-compositor floor of the ladder makes sense.</li>
+<li><strong>Not required:</strong> Metal/shader knowledge. You'll learn <em>when</em> to reach for it, not how to write it (that's <a class="xref" href="shaders.html#00-roadmap">Learning-Shaders</a>).</li>
+</ul>
+<hr />
+<h2>Curriculum Structure — 9 Lessons</h2>
+<h3>Part 1: The Map (Lessons 01–02)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Lesson</th>
+<th>Core Concept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01</td>
+<td><a class="xref" href="#01-the-rendering-stack-map">01-the-rendering-stack-map</a></td>
+<td>Every rendering/animation tech as one ladder, high to low</td>
+</tr>
+<tr>
+<td>02</td>
+<td><a class="xref" href="#02-three-questions-framework">02-three-questions-framework</a></td>
+<td>The 3 questions that pick your rung: <em>what / timing / touch</em></td>
+</tr>
+</tbody>
+</table>
+<h3>Part 2: The Three Axes in Depth (Lessons 03–05)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Lesson</th>
+<th>Core Concept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>03</td>
+<td><a class="xref" href="#03-what-are-you-changing">03-what-are-you-changing</a></td>
+<td>Transform vs pixels vs geometry vs particles vs 3D</td>
+</tr>
+<tr>
+<td>04</td>
+<td><a class="xref" href="#04-who-drives-time">04-who-drives-time</a></td>
+<td>Declarative vs physics vs frame-perfect vs scrub</td>
+</tr>
+<tr>
+<td>05</td>
+<td><a class="xref" href="#05-how-the-user-touches-it">05-how-the-user-touches-it</a></td>
+<td>Fire-forget vs interruptible vs gesture-tracked</td>
+</tr>
+</tbody>
+</table>
+<h3>Part 3: The Cost Floor (Lesson 06)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Lesson</th>
+<th>Core Concept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>06</td>
+<td><a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a></td>
+<td>What's free, what's expensive, where the work runs</td>
+</tr>
+</tbody>
+</table>
+<h3>Part 4: Putting It Together (Lessons 07–09)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Lesson</th>
+<th>Core Concept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>07</td>
+<td><a class="xref" href="#07-escalation-ladder">07-escalation-ladder</a></td>
+<td>The discipline: climb down only on a named wall</td>
+</tr>
+<tr>
+<td>08</td>
+<td><a class="xref" href="#08-stack-combos-cookbook">08-stack-combos-cookbook</a></td>
+<td>Concrete combos and exactly when each one wins</td>
+</tr>
+<tr>
+<td>09</td>
+<td><a class="xref" href="#09-decision-flowchart-and-cases">09-decision-flowchart-and-cases</a></td>
+<td>The flowchart + 12 worked real-world interactions</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>How to use this series</h2>
+<ol>
+<li>Read 01–02 first — they give you the whole framework in compressed form.</li>
+<li>Read 03–06 to understand each axis deeply enough to apply it.</li>
+<li>Keep 08 (cookbook) and 09 (flowchart) open as <strong>reference</strong> whenever you plan a new interaction.</li>
+<li>When you design something, narrate the three questions out loud, then check yourself against the escalation ladder.</li>
+</ol>
+<hr />
+<h2>The payoff</h2>
+<p>After this curriculum, planning an interaction sounds like this in your head:</p>
+<blockquote>
+<p><em>"A card that the user drags and flicks away. Q1: I'm only changing transform → GPU-free, stay high. Q2: gesture velocity drives it → physics. Q3: continuously tracked then released with momentum → direct value-set during the drag, spring on release. Stack: SwiftUI layout + a spring engine (Wave) for the motion. No Metal, no Core Animation needed."</em></p>
+</blockquote>
+<p>That clarity — <em>before</em> implementation — is the entire point.</p>
+<hr />
+<h2>Related folders</h2>
+<ul>
+<li><a class="xref" href="coreanimation.html#00-roadmap">Learning-CoreAnimation</a> — once you decide "drop to CA", this is how</li>
+<li><a class="xref" href="shaders.html#00-roadmap">Learning-Shaders</a> — once you decide "I need a shader", this is how</li>
+<li><span class="xref-missing" title="note not in this site">Maths-Physics</span> — the math behind the physics rung</li>
+<li><span class="xref-missing" title="note not in this site">apple-private-animation-guide</span> — how Apple's own apps choose stacks</li>
+</ul><div class="pager"><span class="sp"></span><a href="#01-the-rendering-stack-map"><span>Next</span>01 — The Rendering Stack Map →</a></div></section>
+<section class="page" id="01-the-rendering-stack-map" data-title="01 — The Rendering Stack Map" data-num="01" data-hasdemo="0"><h1>01 — The Rendering Stack Map</h1>
+<p>Everything visual on iOS/macOS/tvOS/watchOS becomes <strong>CALayers composited by the GPU in a separate process (the render server / <code>backboardd</code>)</strong>. Every animation API you know is a <em>different altitude</em> on one ladder that bottoms out there. Learn the ladder and stack choice stops being mysterious.</p>
+<blockquote>
+<p>Foundation: <a class="xref" href="coreanimation.html#01-how-rendering-works">01-how-rendering-works</a> explains the app → render-server → GPU → display pipeline. This lesson assumes that floor and builds the ladder on top of it.</p>
+</blockquote>
+<hr />
+<h2>The full ladder, high to low</h2>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│ ALTITUDE        TECHNOLOGY                  YOU SPECIFY...      │
+├──────────────────────────────────────────────────────────────┤
+│ Highest    SwiftUI .animation/withAnimation  the END STATE     │
+│            SwiftUI PhaseAnimator/Keyframe     a sequence        │
+│            SwiftUI transitions                in/out behavior   │
+│ ───────────────────────────────────────────────────────────── │
+│            UIKit UIView.animate               end state + curve │
+│            UIViewPropertyAnimator             + interruptibility│
+│ ───────────────────────────────────────────────────────────── │
+│            Core Animation (CAAnimation)       per-property keys │
+│            CALayer subclasses (Shape/Emitter) + layer geometry  │
+│ ───────────────────────────────────────────────────────────── │
+│            CADisplayLink custom engine        EVERY FRAME       │
+│            Spring physics (Wave/UIDynamics)   forces &amp; velocity │
+│ ───────────────────────────────────────────────────────────── │
+│            SwiftUI Canvas / TimelineView      CPU draw commands │
+│            Core Graphics (Quartz 2D)          CPU pixels        │
+│ ───────────────────────────────────────────────────────────── │
+│            Metal shader effects (SwiftUI)     per-pixel (easy)  │
+│            MTKView / CAMetalLayer (raw Metal) EVERY PIXEL       │
+│ ───────────────────────────────────────────────────────────── │
+│ Lowest     GPU compositor (always running)    nothing — it just│
+│                                               composites layers │
+└──────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>The higher you are, the <strong>less you say and the more the system does</strong>. The lower you go, the <strong>more control and more code</strong>.</p>
+<hr />
+<h2>Rung-by-rung: what each is <em>for</em></h2>
+<h3>SwiftUI declarative (<code>.animation</code>, <code>withAnimation</code>, transitions)</h3>
+<p>You change <code>@State</code>; the system interpolates from old to new. You never think about frames. <strong>Default rung for 90% of app UI.</strong> → <a class="xref" href="swiftui.html#12-animation-basics">12-animation-basics</a></p>
+<h3>SwiftUI <code>PhaseAnimator</code> / <code>KeyframeAnimator</code></h3>
+<p>Canned multi-step sequences without a manual state machine. A "like" button that scales up, overshoots, settles. Still declarative — you list phases, system drives them.</p>
+<h3>UIKit <code>UIView.animate</code></h3>
+<p>The UIKit equivalent of declarative SwiftUI. Creates <code>CABasicAnimation</code>s under the hood. Reach here only in UIKit codebases or when you need a UIKit-only API.</p>
+<h3>UIViewPropertyAnimator</h3>
+<p>Adds <strong>interruptibility and scrubbing</strong>. You can pause, reverse, and set <code>fractionComplete</code> from a gesture. The rung for <em>grabbable, reversible</em> transitions. → <a class="xref" href="#05-how-the-user-touches-it">05-how-the-user-touches-it</a></p>
+<h3>Core Animation (explicit)</h3>
+<p><code>CABasicAnimation</code>, <code>CAKeyframeAnimation</code>, <code>CAAnimationGroup</code> on <code>CALayer</code>s. You get <strong>per-property, per-layer timing control</strong> — <code>beginTime</code> offsets, staggered groups, exact timing functions per layer. Plus specialized layers: <code>CAShapeLayer</code> (vector paths), <code>CAEmitterLayer</code> (particles), <code>CAGradientLayer</code> (gradients), <code>CAReplicatorLayer</code> (cloned layers). → <a class="xref" href="coreanimation.html#09-cabasicanimation">09-cabasicanimation</a></p>
+<h3>CADisplayLink custom engine</h3>
+<p>A callback fired once per display refresh. <strong>You compute the value of every frame yourself.</strong> Needed when each frame depends on live input the system can't predict: physics, audio levels, sensor data, scroll offset, a shader uniform. Wave is built on this. → <span class="xref-missing" title="note not in this site">core-animation-smooth-60-120fps</span></p>
+<h3>Spring physics (Wave, UIDynamics)</h3>
+<p>A specialization of the frame-driven rung: a physics simulation drives the value. Best for gesture-driven, interruptible motion with natural velocity transfer. → <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span></p>
+<h3>SwiftUI <code>Canvas</code> + <code>TimelineView</code> / Core Graphics</h3>
+<p><strong>CPU</strong> immediate-mode 2D drawing. Flexible, but every pixel is drawn on the CPU on (or off) the main thread. Fine for modest element counts; falls over with thousands of elements or heavy per-pixel math.</p>
+<h3>Metal shader effects (SwiftUI <code>.colorEffect</code> / <code>.distortionEffect</code> / <code>.layerEffect</code>)</h3>
+<p><strong>GPU per-pixel effects applied to existing SwiftUI views.</strong> iOS 17+. The <em>easy</em> entry to shaders — dissolve, shimmer, ripple, warp — without setting up a render pipeline. → <a class="xref" href="shaders.html#06-fragment-shaders">06-fragment-shaders</a></p>
+<h3>Raw Metal (<code>MTKView</code>, <code>CAMetalLayer</code>)</h3>
+<p>Full GPU control: vertex + fragment + compute, multi-pass, your own pipeline. Generative backgrounds, fluid sims, large particle systems. The bottom rung you'd ever hand-write. → <a class="xref" href="coreanimation.html#24-metal-and-calayer">24-metal-and-calayer</a></p>
+<h3>GPU compositor</h3>
+<p>Not something you call — it's the floor. It takes the layer tree and composites it every refresh. <strong>Transforms, opacity, and masks on layers are essentially free here</strong> because the compositor does them in hardware without redrawing content. This is <em>why</em> staying high is cheap. → <a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a></p>
+<hr />
+<h2>The two clocks</h2>
+<p>There are only <strong>two ways time advances</strong> in this whole stack:</p>
+<ol>
+<li><strong>The system's interpolation clock</strong> — declarative rungs. You hand over A, B, and a curve; the system ticks it. You don't see frames.</li>
+<li><strong>The manual clock</strong> — CADisplayLink / render loop. You get a tick per refresh and compute the frame yourself.</li>
+</ol>
+<p>Spring physics and Metar render loops both live on the manual clock. Core Animation lives on the system clock but lets you <em>offset and group</em> it precisely.</p>
+<p>Knowing which clock you need is half of <a class="xref" href="#04-who-drives-time">Question 2</a>.</p>
+<hr />
+<h2>The crucial insight: rungs <em>compose vertically</em></h2>
+<p>"SwiftUI + Metal" is <strong>not</strong> a choice between two rungs. It's SwiftUI owning the high rungs (layout, state, navigation) with a Metal effect occupying a low rung <em>inside</em> it. The same composition shows up everywhere:</p>
+<ul>
+<li>SwiftUI view → <code>.layerEffect</code> Metal shader (high + low)</li>
+<li><code>UIViewRepresentable</code> → wraps an <code>MTKView</code> (SwiftUI hosts raw Metal)</li>
+<li>CADisplayLink → drives a SwiftUI <code>@State</code> (manual clock feeds declarative view)</li>
+<li>SwiftUI host → UIKit <code>UIViewPropertyAnimator</code> for an interruptible transition</li>
+</ul>
+<p>So "what's my stack?" is really "<strong>what altitude does each <em>concern</em> live at?</strong>" Layout might be high, the effect low, the timing in the middle.</p>
+<hr />
+<h2>Checkpoint</h2>
+<p>You should now be able to:
+- Name the rungs of the ladder from SwiftUI down to the GPU compositor.
+- Explain why transforms/opacity are cheap (the compositor floor).
+- Explain the two clocks and which rungs use which.
+- Articulate why "SwiftUI + Metal" is vertical composition, not an either/or.</p>
+<p>Next: <a class="xref" href="#02-three-questions-framework">02-three-questions-framework</a> — the three questions that map any interaction onto these rungs.</p><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Choosing the Right Rendering Stack — Learning Roadmap</a><a href="#02-three-questions-framework"><span>Next</span>02 — The Three Questions Framework →</a></div></section>
+<section class="page" id="02-three-questions-framework" data-title="02 — The Three Questions Framework" data-num="02" data-hasdemo="1"><h1>02 — The Three Questions Framework</h1><div class="demo-mount" data-demo="sd-flow"></div>
+<p>Given any interaction, three questions deterministically narrow your stack. Each maps to one axis of the <a class="xref" href="#01-the-rendering-stack-map">ladder</a>. Ask them <em>in order</em>, before any code.</p>
+<pre><code>Q1. WHAT am I changing?          → picks the WHAT axis   (&lt;a class=&quot;xref&quot; href=&quot;#03-what-are-you-changing&quot;&gt;03-what-are-you-changing&lt;/a&gt;)
+Q2. WHAT drives it over time?    → picks the TIMING axis (&lt;a class=&quot;xref&quot; href=&quot;#04-who-drives-time&quot;&gt;04-who-drives-time&lt;/a&gt;)
+Q3. HOW does the user touch it?  → picks the TOUCH axis  (&lt;a class=&quot;xref&quot; href=&quot;#05-how-the-user-touches-it&quot;&gt;05-how-the-user-touches-it&lt;/a&gt;)
+</code></pre>
+<p>The answers combine into a stack. Most of the time Q1 alone tells you whether you can stay high or must drop to a shader; Q2 and Q3 then refine <em>which</em> high-rung tool.</p>
+<hr />
+<h2>Q1 — What am I actually changing?</h2>
+<p>This is the <strong>most decisive</strong> question. It alone determines whether you can stay in the cheap, high rungs or are forced down to pixels.</p>
+<table>
+<thead>
+<tr>
+<th>What you're changing</th>
+<th>Rung it forces</th>
+<th>Tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Position, scale, rotation, opacity</td>
+<td><strong>Stay highest</strong> — free on GPU</td>
+<td>SwiftUI / UIKit</td>
+</tr>
+<tr>
+<td>Per-pixel color, warp, ripple, dissolve, glow</td>
+<td><strong>Drop to shader</strong></td>
+<td>Metal effects / MTKView</td>
+</tr>
+<tr>
+<td>Vector geometry — strokes, morphing paths, rings</td>
+<td>Middle (geometry layer)</td>
+<td>CAShapeLayer / SwiftUI <code>Shape</code>+<code>.trim</code></td>
+</tr>
+<tr>
+<td>Hundreds+ independent particles</td>
+<td>Middle/low</td>
+<td>CAEmitterLayer / SpriteKit / Metal</td>
+</tr>
+<tr>
+<td>3D content</td>
+<td>Separate engine</td>
+<td>RealityKit / SceneKit</td>
+</tr>
+<tr>
+<td>Live 2D drawing, modest count</td>
+<td>CPU draw rung</td>
+<td>Canvas / Core Graphics</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>The single most important fork:</strong> <em>Am I moving/fading a view, or am I changing its pixels?</em> Moving = free, stay high. Changing pixels = shader, drop low. Detail in <a class="xref" href="#03-what-are-you-changing">03-what-are-you-changing</a>.</p>
+</blockquote>
+<hr />
+<h2>Q2 — What drives the change over time?</h2>
+<p>Picks your <strong>clock</strong> and timing rung.</p>
+<table>
+<thead>
+<tr>
+<th>Driver</th>
+<th>Rung</th>
+<th>Tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"From A to B with this curve"</td>
+<td>Declarative</td>
+<td>SwiftUI <code>.animation</code> / <code>UIView.animate</code></td>
+</tr>
+<tr>
+<td>A scripted multi-step sequence</td>
+<td>Declarative+</td>
+<td><code>PhaseAnimator</code> / <code>KeyframeAnimator</code> / <code>CAAnimationGroup</code></td>
+</tr>
+<tr>
+<td>Springs / momentum / gesture velocity</td>
+<td>Physics</td>
+<td>Wave / <code>CASpringAnimation</code> / UIDynamics</td>
+</tr>
+<tr>
+<td>Every frame depends on live input</td>
+<td>Manual clock</td>
+<td>CADisplayLink</td>
+</tr>
+<tr>
+<td>Position tied to a 0→1 value I control</td>
+<td>Scrub</td>
+<td><code>UIViewPropertyAnimator.fractionComplete</code></td>
+</tr>
+<tr>
+<td>Precise per-layer timing offsets</td>
+<td>Explicit CA</td>
+<td><code>beginTime</code> + grouped CAAnimations</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>If you said "every frame depends on something only known at runtime" → you're on the <strong>manual clock</strong> (CADisplayLink). Everything else can ride the system clock. Detail in <a class="xref" href="#04-who-drives-time">04-who-drives-time</a>.</p>
+</blockquote>
+<hr />
+<h2>Q3 — How does the user touch it?</h2>
+<p>Picks the <strong>interaction model</strong> — often the difference between two otherwise-equal high-rung tools.</p>
+<table>
+<thead>
+<tr>
+<th>Interaction</th>
+<th>Rung</th>
+<th>Tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tap → animate, never interrupted</td>
+<td>Highest</td>
+<td>SwiftUI / UIKit declarative</td>
+</tr>
+<tr>
+<td>User can grab mid-flight &amp; redirect</td>
+<td>Interruptible</td>
+<td>UIViewPropertyAnimator / additive CA / spring-with-velocity</td>
+</tr>
+<tr>
+<td>Finger drags continuously, flicks with momentum</td>
+<td>Track + release</td>
+<td>direct value-set during gesture + spring on release</td>
+</tr>
+<tr>
+<td>Static, no touch</td>
+<td>Highest</td>
+<td>whatever Q1/Q2 said</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>The trap: building a fire-and-forget animation, then discovering users <em>can</em> interrupt it and it looks broken. If there's <em>any</em> chance the user grabs it, design for interruption from the start. Detail in <a class="xref" href="#05-how-the-user-touches-it">05-how-the-user-touches-it</a>.</p>
+</blockquote>
+<hr />
+<h2>Worked example: decode the two canonical combos</h2>
+<h3>"SwiftUI + Metal for a shader reveal"</h3>
+<ul>
+<li><strong>Q1:</strong> I'm changing <em>pixels</em> (a dissolve/mask reveal) → <strong>shader forced</strong>. But layout, the content being revealed, and state are ordinary.</li>
+<li><strong>Q2:</strong> "from hidden to shown with a curve" → declarative timing is fine; I just feed <code>progress</code> into the shader.</li>
+<li><strong>Q3:</strong> tap to trigger, not interrupted → highest.</li>
+<li><strong>Stack:</strong> SwiftUI owns layout/state/timing; a Metal <code>.layerEffect</code>/<code>.colorEffect</code> occupies one low rung for the reveal pixels. Vertical composition — SwiftUI + Metal.</li>
+</ul>
+<h3>"UIKit + CA for fine layer timing"</h3>
+<ul>
+<li><strong>Q1:</strong> moving/fading several layers → could stay high...</li>
+<li><strong>Q2:</strong> ...<strong>except</strong> I need <em>staggered, exact per-layer timing</em> (<code>beginTime</code> offsets, a <code>CAAnimationGroup</code> choreographed to the millisecond). SwiftUI can't express that cleanly → <strong>drop to explicit Core Animation</strong>.</li>
+<li><strong>Q3:</strong> fire-and-forget → no interruption machinery.</li>
+<li><strong>Stack:</strong> UIKit view controllers + explicit CAAnimations on individual CALayers. The <em>timing precision</em> (Q2), not the <em>what</em> (Q1), is what forced the drop.</li>
+</ul>
+<p>Notice: <strong>different questions forced the drop in each case.</strong> That's the whole point of asking all three.</p>
+<hr />
+<h2>The framework as a one-liner</h2>
+<blockquote>
+<p><strong>Q1 decides if you can stay high or must go to pixels. Q2 decides your clock. Q3 decides interruptibility. The stack is the union of the three answers, applied per concern.</strong></p>
+</blockquote>
+<hr />
+<h2>Checkpoint</h2>
+<ul>
+<li>Given an interaction, you can state Q1/Q2/Q3 answers in under a minute.</li>
+<li>You can explain why "shader reveal" and "fine layer timing" drop for <em>different</em> reasons.</li>
+<li>You understand the answers combine <em>per concern</em>, not as a single global choice.</li>
+</ul>
+<p>Next: <a class="xref" href="#03-what-are-you-changing">03-what-are-you-changing</a> — Q1 in full depth.</p><div class="pager"><a href="#01-the-rendering-stack-map"><span>Prev</span>← 01 — The Rendering Stack Map</a><a href="#03-what-are-you-changing"><span>Next</span>03 — Q1: What Are You Changing? (The *What* Axis) →</a></div></section>
+<section class="page" id="03-what-are-you-changing" data-title="03 — Q1: What Are You Changing? (The *What* Axis)" data-num="03" data-hasdemo="0"><h1>03 — Q1: What Are You Changing? (The <em>What</em> Axis)</h1>
+<p>The single most decisive question. It determines whether you stay in the cheap, high rungs or must descend to pixels. Get this wrong and you either over-engineer (writing a shader to move a box) or hit a wall (trying to ripple pixels with <code>.offset</code>).</p>
+<hr />
+<h2>The five categories</h2>
+<p>Every animatable thing falls into one of these. Identify yours first.</p>
+<h3>1. Transform &amp; opacity — <em>the free tier</em></h3>
+<p>Position, scale, rotation, anchor, alpha, <code>cornerRadius</code> (with a shaped layer), shadow (with <code>shadowPath</code>).</p>
+<p>These are <strong>composited by the GPU without redrawing content.</strong> The render server already has the layer's rasterized contents; it just multiplies a matrix and an alpha. Animating these is nearly free even for hundreds of layers.</p>
+<ul>
+<li><strong>Stay at the highest rung.</strong> SwiftUI <code>.offset/.scaleEffect/.rotationEffect/.opacity</code>, or UIKit <code>transform</code>/<code>alpha</code>, or <code>CALayer.transform</code>.</li>
+<li><strong>Rule:</strong> if your effect can be expressed as "the same pixels, moved/scaled/faded", you never need to go lower than SwiftUI.</li>
+</ul>
+<blockquote>
+<p>See <a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a> for <em>why</em> these are free and what silently isn't (e.g. animating <code>cornerRadius</code> on a non-shaped layer triggers redraws).</p>
+</blockquote>
+<h3>2. Per-pixel procedural change — <em>the shader tier</em></h3>
+<p>Color shifts that vary per pixel, warping/distortion, ripples, dissolves, mask reveals driven by noise, glow/bloom, chromatic aberration, animated gradients with non-linear math, blur that you control.</p>
+<p>The defining trait: <strong>the output of each pixel is computed, not just repositioned.</strong> No transform can express it. This is the <em>only</em> category that genuinely forces Metal.</p>
+<ul>
+<li><strong>First reach:</strong> SwiftUI Metal effects — <code>.colorEffect</code> (recolor per pixel), <code>.distortionEffect</code> (move pixels), <code>.layerEffect</code> (sample the view's own pixels — needed for blur, dissolve, glow). iOS 17+. → <a class="xref" href="shaders.html#06-fragment-shaders">06-fragment-shaders</a></li>
+<li><strong>Drop to raw Metal (<code>MTKView</code>/<code>CAMetalLayer</code>)</strong> only if you need vertex control, compute passes, multi-pass, or to render <em>generated</em> content rather than effect an existing view.</li>
+<li><strong>Your "shader reveal" lives here.</strong></li>
+</ul>
+<h3>3. Vector geometry — <em>the path tier</em></h3>
+<p>Drawing/animating strokes, progress rings, morphing one shape into another, animated checkmarks, signature trails, graph lines.</p>
+<p>The trait: <strong>you're changing a path/shape, not pixels or position.</strong></p>
+<ul>
+<li><strong>UIKit/CA:</strong> <code>CAShapeLayer</code> with animated <code>strokeEnd</code> (draw-on), <code>strokeStart</code>, <code>lineWidth</code>, or <code>path</code> (morph — paths must have matching control-point counts). → <a class="xref" href="coreanimation.html#16-cashapelayer">16-cashapelayer</a></li>
+<li><strong>SwiftUI:</strong> a <code>Shape</code> + <code>.trim(from:to:)</code> animated, or <code>Path</code> interpolation.</li>
+<li>Don't reach for a shader for vector work — CAShapeLayer rasterizes crisply and animates <code>strokeEnd</code> essentially free.</li>
+</ul>
+<h3>4. Many independent elements — <em>the particle tier</em></h3>
+<p>Confetti, sparks, snow, a burst of hearts, fireworks — dozens to thousands of small sprites with individual lifetimes/velocities.</p>
+<p>The trait: <strong>too many elements to animate as individual views.</strong></p>
+<ul>
+<li><strong>CAEmitterLayer</strong> — the built-in particle system. Cheap, declarative emission/lifetime/velocity. Best first reach. → <a class="xref" href="coreanimation.html#20-caemitterlayer">20-caemitterlayer</a></li>
+<li><strong>SpriteKit</strong> — when you also want collisions, physics, and a scene graph.</li>
+<li><strong>Metal instancing</strong> — when you need <em>thousands+</em> with custom per-particle shading.</li>
+<li>Anti-pattern: 200 SwiftUI views in a <code>ForEach</code> each animated — the view-diffing cost will destroy your frame rate.</li>
+</ul>
+<h3>5. 3D / spatial — <em>the scene tier</em></h3>
+<p>Depth, lighting, 3D models, AR.</p>
+<ul>
+<li><strong>RealityKit</strong> (modern, AR-first) or <strong>SceneKit</strong> (older, still fine for non-AR 3D).</li>
+<li>Raw Metal only if you're writing your own 3D engine.</li>
+</ul>
+<hr />
+<h2>The decision in one diagram</h2>
+<pre><code>What am I changing?
+│
+├─ Same pixels, just moved/scaled/faded?  → TRANSFORM tier  → SwiftUI/UIKit (free)
+│
+├─ Each pixel's value is computed?         → SHADER tier     → .layerEffect → raw Metal
+│
+├─ A path / stroke / shape outline?        → PATH tier       → CAShapeLayer / Shape+trim
+│
+├─ Hundreds of small elements?             → PARTICLE tier   → CAEmitterLayer / SpriteKit
+│
+└─ Depth / 3D / AR?                         → SCENE tier      → RealityKit / SceneKit
+</code></pre>
+<hr />
+<h2>The classic mistakes this prevents</h2>
+<ul>
+<li><strong>Writing a shader to move a view.</strong> Transform tier — <code>.offset</code> is free. A shader is 100× the code for the same result.</li>
+<li><strong>Trying to ripple/dissolve with <code>.scaleEffect</code> + <code>.opacity</code>.</strong> That's the shader tier; no transform composes into a ripple. You'll fake it badly forever.</li>
+<li><strong>Animating 300 confetti pieces as SwiftUI views.</strong> Particle tier — use CAEmitterLayer. View diffing can't keep up.</li>
+<li><strong>Reaching for Metal to draw a progress ring.</strong> Path tier — <code>Shape</code> + <code>.trim</code> or <code>CAShapeLayer.strokeEnd</code>. Crisp and free.</li>
+<li><strong>Morphing shapes by cross-fading two images.</strong> Path tier — animate the actual <code>path</code>.</li>
+</ul>
+<hr />
+<h2>Checkpoint</h2>
+<ul>
+<li>You can drop any visual change into one of the five tiers instantly.</li>
+<li>You know the <em>only</em> tier that forces Metal is per-pixel procedural change.</li>
+<li>You know transforms/opacity are free and never justify dropping rungs.</li>
+</ul>
+<p>Next: <a class="xref" href="#04-who-drives-time">04-who-drives-time</a> — once you know <em>what</em>, decide <em>what drives it</em>.</p><div class="pager"><a href="#02-three-questions-framework"><span>Prev</span>← 02 — The Three Questions Framework</a><a href="#04-who-drives-time"><span>Next</span>04 — Q2: What Drives the Change Over Time? (The *Timing* Axis) →</a></div></section>
+<section class="page" id="04-who-drives-time" data-title="04 — Q2: What Drives the Change Over Time? (The *Timing* Axis)" data-num="04" data-hasdemo="0"><h1>04 — Q2: What Drives the Change Over Time? (The <em>Timing</em> Axis)</h1>
+<p>Once <a class="xref" href="#03-what-are-you-changing">Q1</a> tells you <em>what</em> tier you're in, Q2 picks the <strong>clock</strong> — who advances the animation each frame. This is where most "it stutters / it can't be interrupted / it feels robotic" problems are actually decided.</p>
+<hr />
+<h2>The two clocks (recap from <a class="xref" href="#01-the-rendering-stack-map">01-the-rendering-stack-map</a>)</h2>
+<ol>
+<li><strong>System interpolation clock</strong> — you give A, B, and a curve; the system ticks every frame for you. You never see a frame.</li>
+<li><strong>Manual clock (CADisplayLink)</strong> — you get a callback per refresh and compute the value yourself.</li>
+</ol>
+<p>Everything below is a flavor of one of these.</p>
+<hr />
+<h2>The five timing drivers</h2>
+<h3>A. Declarative interpolation — <em>system clock</em></h3>
+<p>"Go from A to B over 0.3s with ease-in-out." The default. The system owns the frames.</p>
+<ul>
+<li>SwiftUI <code>withAnimation(.easeInOut)</code> / <code>.animation(...)</code></li>
+<li>UIKit <code>UIView.animate(withDuration:)</code></li>
+<li>Core Animation <code>CABasicAnimation</code></li>
+<li><strong>Use when:</strong> the motion is fully known up front and nothing external influences it mid-flight.</li>
+<li><strong>Tradeoff:</strong> you can't easily redirect it once started (without dropping to interruptible tools — <a class="xref" href="#05-how-the-user-touches-it">05-how-the-user-touches-it</a>).</li>
+</ul>
+<h3>B. Scripted sequence — <em>system clock</em></h3>
+<p>A multi-step canned animation: scale up → overshoot → settle; or a staged reveal of several elements.</p>
+<ul>
+<li>SwiftUI <code>PhaseAnimator</code> (loop through discrete phases) / <code>KeyframeAnimator</code> (independent tracks per property).</li>
+<li>UIKit/CA <code>CAAnimationGroup</code> + <code>CAKeyframeAnimation</code>, with <code>beginTime</code> offsets for staggering. → <a class="xref" href="coreanimation.html#12-caanimationgroup">12-caanimationgroup</a></li>
+<li><strong>Use when:</strong> the choreography is fixed but multi-step. This is the rung "fine layer timing" lives on when you need <em>exact</em> per-element offsets.</li>
+</ul>
+<h3>C. Physics simulation — <em>manual clock (usually), or CASpringAnimation on system clock</em></h3>
+<p>A spring, momentum, or force field computes the value. Motion emerges from initial velocity + parameters, not a fixed duration.</p>
+<ul>
+<li><strong>Wave / custom CADisplayLink springs</strong> — full control, velocity transfer, interruptible. → <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span></li>
+<li><strong><code>CASpringAnimation</code> / SwiftUI <code>.spring</code></strong> — declarative spring; easier but less interruptible.</li>
+<li><strong>UIDynamics</strong> — collisions, attachments, gravity for UIKit. → <span class="xref-missing" title="note not in this site">fluid-dynamics-for-ui</span></li>
+<li><strong>Use when:</strong> motion should feel physical, or carries gesture velocity, or must be interruptible mid-flight.</li>
+</ul>
+<h3>D. Frame-perfect manual — <em>manual clock</em></h3>
+<p>Every frame's value depends on something only known at runtime <em>this frame</em>: audio level, sensor data, scroll offset, a continuously-updating shader uniform, a physics step you compute.</p>
+<ul>
+<li><strong>CADisplayLink</strong> is the only answer. → <span class="xref-missing" title="note not in this site">core-animation-smooth-60-120fps</span></li>
+<li><strong>Use when:</strong> "the system can't possibly interpolate this because I don't know the values in advance."</li>
+<li>This is what drives a shader's <code>time</code> uniform, an audio visualizer, or a parallax tied to live scroll.</li>
+</ul>
+<h3>E. Scrub / progress-driven — <em>system clock, paused</em></h3>
+<p>The animation's position is a 0→1 value <em>you</em> set — from a slider, a scroll offset, or a drag. Time doesn't flow; <em>you</em> are the playhead.</p>
+<ul>
+<li><strong><code>UIViewPropertyAnimator</code></strong> with <code>fractionComplete</code> — the cleanest tool. Pause an animation and scrub it.</li>
+<li>SwiftUI: bind progress to state directly, or drive a shader <code>progress</code> uniform.</li>
+<li>CA trick: <code>layer.speed = 0</code> + set <code>timeOffset</code> to scrub a CAAnimation.</li>
+<li><strong>Use when:</strong> the user (or scroll) controls <em>position</em>, not play/pause.</li>
+</ul>
+<hr />
+<h2>Decision diagram</h2>
+<pre><code>What advances each frame?
+│
+├─ A fixed curve, known up front          → DECLARATIVE   → withAnimation / UIView.animate / CABasic
+│
+├─ A fixed multi-step script              → SEQUENCE      → PhaseAnimator / CAAnimationGroup + beginTime
+│
+├─ Springs / momentum / gesture velocity  → PHYSICS       → Wave / CASpringAnimation / UIDynamics
+│
+├─ Live runtime input every frame         → MANUAL CLOCK  → CADisplayLink
+│
+└─ A 0→1 value I control (scroll/drag)    → SCRUB         → UIViewPropertyAnimator.fractionComplete
+</code></pre>
+<hr />
+<h2>The key tells</h2>
+<ul>
+<li><strong>"Duration" makes sense</strong> → declarative or sequence (system clock).</li>
+<li><strong>"Velocity" or "it should feel bouncy/heavy"</strong> → physics.</li>
+<li><strong>"It depends on [live thing] every frame"</strong> → manual clock, CADisplayLink.</li>
+<li><strong>"The user controls how far along it is"</strong> → scrub.</li>
+</ul>
+<hr />
+<h2>Why this axis causes the most pain</h2>
+<p>People default to <strong>declarative</strong> for everything, then:
+- a gesture-driven thing feels robotic (should've been <strong>physics</strong>),
+- a scroll-linked effect lags (should've been <strong>scrub</strong> or <strong>manual clock</strong>),
+- an interruption snaps (declarative can't redirect — needs <strong>physics</strong> or <strong>scrub</strong>).</p>
+<p>Choosing the clock correctly up front is the difference between "feels Apple-grade" and "feels like a web animation."</p>
+<hr />
+<h2>Checkpoint</h2>
+<ul>
+<li>You can name the clock for any interaction.</li>
+<li>You know CADisplayLink is <em>only</em> for live-input-per-frame, not "I want 120fps" (the compositor already gives you that for free — see <a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a>).</li>
+<li>You know scrub ≠ playback: the user is the playhead.</li>
+</ul>
+<p>Next: <a class="xref" href="#05-how-the-user-touches-it">05-how-the-user-touches-it</a> — the interaction model that separates fire-and-forget from interruptible.</p><div class="pager"><a href="#03-what-are-you-changing"><span>Prev</span>← 03 — Q1: What Are You Changing? (The *What* Axis)</a><a href="#05-how-the-user-touches-it"><span>Next</span>05 — Q3: How Does the User Touch It? (The *Interaction* Axis) →</a></div></section>
+<section class="page" id="05-how-the-user-touches-it" data-title="05 — Q3: How Does the User Touch It? (The *Interaction* Axis)" data-num="05" data-hasdemo="0"><h1>05 — Q3: How Does the User Touch It? (The <em>Interaction</em> Axis)</h1>
+<p>Two interactions can change the same thing (<a class="xref" href="#03-what-are-you-changing">Q1</a>) with the same driver (<a class="xref" href="#04-who-drives-time">Q2</a>) and still need different stacks — because of <em>how the user touches them</em>. This axis is the tiebreaker, and it's the one most often discovered too late.</p>
+<hr />
+<h2>The three interaction models</h2>
+<h3>1. Fire-and-forget</h3>
+<p>Tap a button → it animates → done. The user cannot grab it mid-flight. The animation runs to completion uninterrupted.</p>
+<ul>
+<li><strong>Any high rung works.</strong> SwiftUI <code>withAnimation</code>, <code>UIView.animate</code>, <code>CABasicAnimation</code>.</li>
+<li>Simplest case — no special machinery.</li>
+<li><strong>Examples:</strong> a checkmark drawing in, a toast sliding up, a screen push.</li>
+</ul>
+<h3>2. Interruptible / redirectable</h3>
+<p>The user can grab the thing <em>while it's animating</em> and send it somewhere else — and it must respond smoothly, carrying its current velocity, not snapping or restarting.</p>
+<p>This is the rung that <strong>plain declarative animation cannot do well.</strong> A <code>UIView.animate</code> in flight, if you start a new one, jumps. You need one of:</p>
+<ul>
+<li><strong><code>UIViewPropertyAnimator</code></strong> — pause, reverse, retarget; designed for this.</li>
+<li><strong>Additive Core Animation</strong> (<code>isAdditive = true</code>) — multiple animations <em>compose</em> instead of replacing, so a new one blends from the current presentation state. → <span class="xref-missing" title="note not in this site">core-animation-smooth-60-120fps</span></li>
+<li><strong>Spring physics with velocity transfer</strong> (Wave) — a new spring starts from the current value <em>and current velocity</em>, so redirection is seamless. → <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span></li>
+<li><strong>Examples:</strong> a sheet you can grab mid-dismiss, a card mid-fling, PiP video being re-flung before it settles.</li>
+</ul>
+<h3>3. Continuously gesture-tracked + release</h3>
+<p>The user's finger <em>is</em> the animation while touching (1:1 tracking, no easing), then on release the thing flies off / snaps with momentum.</p>
+<p>The defining pattern — <strong>two phases with a handoff:</strong>
+- <strong>During drag:</strong> set the value <em>directly</em> from the gesture translation. No animation, no spring response — <code>response: 0</code> / instantaneous. Any easing here feels laggy.
+- <strong>On release:</strong> hand the gesture's <em>velocity</em> to a spring/decay so it continues naturally.</p>
+<ul>
+<li><strong>Tools:</strong> direct value-set during the gesture + a spring (Wave / <code>CASpringAnimation</code> / UIDynamics) seeded with the gesture velocity on release. → <span class="xref-missing" title="note not in this site">momentum-and-deceleration</span></li>
+<li><strong>Velocity units matter:</strong> gesture recognizers give pts/s; some spring APIs want normalized velocity. Convert. → <span class="xref-missing" title="note not in this site">momentum-and-deceleration</span></li>
+<li><strong>Examples:</strong> drag-to-dismiss, a draggable card, a custom bottom sheet, swipe-to-delete with throw.</li>
+</ul>
+<hr />
+<h2>Decision diagram</h2>
+<pre><code>How does the user touch it?
+│
+├─ Can't touch mid-flight (tap → run)        → FIRE-AND-FORGET → any high rung
+│
+├─ Can grab &amp; redirect mid-flight            → INTERRUPTIBLE   → UIViewPropertyAnimator
+│                                                                 / additive CA / spring+velocity
+│
+└─ Finger tracks 1:1, then releases w/ throw → TRACK + RELEASE → direct set during drag
+                                                                  + spring seeded w/ velocity
+</code></pre>
+<hr />
+<h2>The trap: discovering interruption too late</h2>
+<p>The most common animation bug isn't a bug in the animation — it's that it was built <strong>fire-and-forget</strong> and then a user grabbed it. You see:
+- a snap/jump when a second gesture starts,
+- the view teleporting to a stale target,
+- velocity ignored so a fast flick feels mushy.</p>
+<p><strong>Mitigation:</strong> during planning, ask "can the user touch this <em>while it's moving</em>?" If there's <em>any</em> chance, design at the interruptible or track+release rung from the start. Retrofitting interruption onto declarative code usually means rewriting it on the physics rung anyway.</p>
+<hr />
+<h2>Why physics wins for interactive motion</h2>
+<p>Spring physics is over-represented in interactive UI for a structural reason: a spring is <strong>defined by its current state (position + velocity) and a target</strong>, not by a fixed timeline. That means:
+- you can change the target any frame and it smoothly re-aims,
+- you can inject gesture velocity on release and it continues naturally,
+- interruption is <em>free</em> — there's no timeline to break.</p>
+<p>This is exactly why libraries like Wave exist and why Apple's own interactive transitions feel the way they do. If Q3 is "interruptible" or "track+release", <strong>physics is almost always the right driver</strong> (Q2), regardless of Q1.</p>
+<blockquote>
+<p>Cross-link: the PiP / sheet / card patterns in <span class="xref-missing" title="note not in this site">custom-split-view-gesture-driven</span> and <span class="xref-missing" title="note not in this site">bottom-sheet-blur-backdrop</span> are all this rung.</p>
+</blockquote>
+<hr />
+<h2>Checkpoint</h2>
+<ul>
+<li>You can classify an interaction as fire-forget / interruptible / track+release.</li>
+<li>You know declarative animation breaks under interruption and why physics doesn't.</li>
+<li>You know track+release is <em>two phases</em>: direct-set during drag, velocity-seeded spring on release.</li>
+<li>You ask "can the user touch it mid-flight?" <em>before</em> implementing.</li>
+</ul>
+<p>Next: <a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a> — the cost floor that constrains all of the above.</p><div class="pager"><a href="#04-who-drives-time"><span>Prev</span>← 04 — Q2: What Drives the Change Over Time? (The *Timing* Axis)</a><a href="#06-cost-model-cpu-gpu"><span>Next</span>06 — The Cost Model: What&#x27;s Free, What&#x27;s Expensive, Where It Runs →</a></div></section>
+<section class="page" id="06-cost-model-cpu-gpu" data-title="06 — The Cost Model: What&#x27;s Free, What&#x27;s Expensive, Where It Runs" data-num="06" data-hasdemo="0"><h1>06 — The Cost Model: What's Free, What's Expensive, Where It Runs</h1>
+<p>The three questions (<a class="xref" href="#02-three-questions-framework">02-three-questions-framework</a>) tell you <em>which</em> stack. This lesson tells you what each rung <em>costs</em> — so your choice survives contact with 60/120fps. The golden rule of smoothness: <strong>keep work off the CPU's main thread and let the GPU compositor do what it does for free.</strong></p>
+<blockquote>
+<p>Foundation: <span class="xref-missing" title="note not in this site">core-animation-smooth-60-120fps</span> and <a class="xref" href="coreanimation.html#01-how-rendering-works">01-how-rendering-works</a> cover the pipeline. This lesson is the <em>budget</em> view.</p>
+</blockquote>
+<hr />
+<h2>The pipeline, as a budget</h2>
+<pre><code>Your app (CPU, main thread)          ← expensive work here = dropped frames
+   │  commits layer tree (IPC)
+   ▼
+Render server / backboardd (separate process)
+   │  composites layers
+   ▼
+GPU                                   ← transforms/opacity/masks: nearly free
+   ▼
+Display (60 or 120 Hz)                ← you have 16.6ms / 8.3ms per frame
+</code></pre>
+<p>You have <strong>16.6ms</strong> per frame at 60Hz, <strong>8.3ms</strong> at 120Hz ProMotion. Anything on the main thread that overruns that budget drops a frame. The render server runs <em>independently</em> — which is why a CABasicAnimation keeps animating even if your main thread is briefly busy.</p>
+<hr />
+<h2>The free tier (GPU compositing)</h2>
+<p>These run on the GPU in the render server <strong>without redrawing layer contents</strong>. Animate them freely, even on many layers:</p>
+<ul>
+<li><code>transform</code> (translate, scale, rotate, 3D)</li>
+<li><code>opacity</code> / <code>alpha</code></li>
+<li><code>position</code> / <code>bounds</code> (geometry)</li>
+<li><code>shadowPath</code>-based shadows (path supplied)</li>
+<li>masking by another layer (cheap if simple)</li>
+</ul>
+<p><strong>This is why <a class="xref" href="#03-what-are-you-changing">the transform tier</a> never justifies dropping rungs.</strong> Moving 200 cards is free; the compositor just re-multiplies matrices.</p>
+<hr />
+<h2>The expensive tier (rasterization / offscreen passes)</h2>
+<p>These force the GPU or CPU to <strong>redraw</strong>, often into an offscreen buffer, every frame they change:</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Why it's costly</th>
+<th>Cheaper alternative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cornerRadius</code> on a layer with contents + <code>masksToBounds</code></td>
+<td>offscreen pass per frame</td>
+<td>pre-rounded image, or <code>.cornerCurve</code> on a shaped layer, or avoid animating it</td>
+</tr>
+<tr>
+<td><code>shadowOpacity</code>/<code>shadowRadius</code> <strong>without</strong> <code>shadowPath</code></td>
+<td>recomputes shadow shape each frame</td>
+<td>set <code>shadowPath</code></td>
+</tr>
+<tr>
+<td>Non-opaque blending / many overlapping transparent layers</td>
+<td>overdraw</td>
+<td>mark opaque where possible, flatten</td>
+</tr>
+<tr>
+<td><code>drawRect:</code> / Core Graphics each frame</td>
+<td>CPU rasterization, main thread</td>
+<td>cache to an image; draw once</td>
+</tr>
+<tr>
+<td>Live blur (<code>UIVisualEffectView</code> animated)</td>
+<td>repeated offscreen sampling</td>
+<td>animate sparingly; or a cheaper shader</td>
+</tr>
+<tr>
+<td>Large <code>CAEmitterLayer</code> overdraw</td>
+<td>fill-rate bound</td>
+<td>fewer/smaller particles, additive blend</td>
+</tr>
+<tr>
+<td>SwiftUI heavy <code>body</code> recompute on every frame</td>
+<td>CPU diffing</td>
+<td>move work out of <code>body</code>, use <code>drawingGroup()</code> (Metal-back)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>"Offscreen pass" = the GPU can't composite directly; it renders to a temporary buffer first, then composites that. Each one is a context switch. A few are fine; per-frame in a scroll is death. Profile with <strong>Color Offscreen-Rendered</strong> in the simulator / Instruments.</p>
+</blockquote>
+<hr />
+<h2>Where each rung does its work</h2>
+<table>
+<thead>
+<tr>
+<th>Rung</th>
+<th>CPU cost</th>
+<th>GPU cost</th>
+<th>Thread</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SwiftUI/UIKit transform animation</td>
+<td>tiny (commit once)</td>
+<td>free composite</td>
+<td>render server</td>
+</tr>
+<tr>
+<td>Core Animation explicit</td>
+<td>tiny (commit once)</td>
+<td>free–cheap</td>
+<td>render server</td>
+</tr>
+<tr>
+<td>CADisplayLink engine</td>
+<td><strong>your code runs every frame</strong></td>
+<td>depends what you set</td>
+<td><strong>main thread</strong> (keep it lean!)</td>
+</tr>
+<tr>
+<td>Canvas / Core Graphics</td>
+<td><strong>full CPU raster</strong></td>
+<td>upload texture</td>
+<td>main (or bg) thread</td>
+</tr>
+<tr>
+<td>Metal shader effects</td>
+<td>tiny</td>
+<td><strong>fragment cost × pixels</strong></td>
+<td>GPU</td>
+</tr>
+<tr>
+<td>Raw Metal</td>
+<td>tiny–moderate</td>
+<td>whatever you write</td>
+<td>GPU</td>
+</tr>
+</tbody>
+</table>
+<p>Two danger rungs:
+- <strong>CADisplayLink</strong> — your callback is on the main thread every frame. If it does heavy work, <em>you</em> drop frames. Keep per-frame work to arithmetic; never allocate, never lay out, never decode images there.
+- <strong>Canvas / Core Graphics</strong> — CPU rasterization. Fine for static or low-frequency drawing; bad for per-frame animation of complex scenes. If it's hot, that's your signal to drop to a <a class="xref" href="shaders.html#00-roadmap">shader</a>.</p>
+<hr />
+<h2>Shader cost model</h2>
+<p>Metal fragment shaders cost roughly <strong>(fragment complexity) × (number of pixels covered)</strong>. Implications:</p>
+<ul>
+<li>A full-screen shader on a 120Hz ProMotion display at 3x is a <em>lot</em> of pixels × 120/sec. Keep the fragment function cheap (avoid loops, expensive <code>pow</code>/<code>sin</code> where a cheaper approximation works — see <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a>).</li>
+<li>Effecting a small view is cheap; effecting the whole screen needs care.</li>
+<li><code>.layerEffect</code> (samples the view's pixels) is pricier than <code>.colorEffect</code> (no sampling). Use the lightest that does the job.</li>
+</ul>
+<hr />
+<h2>"I want 120fps" is not a reason to use CADisplayLink</h2>
+<p>A common confusion: ProMotion 120fps is <strong>automatic</strong> for compositor-driven animations. A <code>CABasicAnimation</code> or SwiftUI transform animation already runs at the display's refresh rate. You only need CADisplayLink (and <code>preferredFrameRateRange</code>) when you're driving values <em>yourself</em> every frame (<a class="xref" href="#04-who-drives-time">manual clock</a>). Reaching for CADisplayLink to "get 120fps" on something the compositor could animate is a downgrade — more code, more main-thread risk, same frame rate.</p>
+<hr />
+<h2>The budget checklist (apply to any stack choice)</h2>
+<ol>
+<li>Can I express this as transform/opacity? → free, stop here.</li>
+<li>Am I triggering offscreen passes? → check the expensive-tier table; supply paths, pre-render, flatten.</li>
+<li>Is per-frame work on the main thread? → only with CADisplayLink, and keep it arithmetic-only.</li>
+<li>Is a shader covering huge pixel counts? → simplify the fragment function.</li>
+<li>Profile: Color Offscreen-Rendered, Color Blended Layers, Instruments Core Animation / Time Profiler.</li>
+</ol>
+<hr />
+<h2>Checkpoint</h2>
+<ul>
+<li>You know transforms/opacity are free and which operations trigger costly offscreen passes.</li>
+<li>You know CADisplayLink and Canvas put work on the (main) CPU and why that's the risk.</li>
+<li>You know 120fps is free for compositor animations — CADisplayLink isn't how you "get" it.</li>
+<li>You can sketch a shader's cost as complexity × pixels.</li>
+</ul>
+<p>Next: <a class="xref" href="#07-escalation-ladder">07-escalation-ladder</a> — the discipline that ties the whole framework together.</p><div class="pager"><a href="#05-how-the-user-touches-it"><span>Prev</span>← 05 — Q3: How Does the User Touch It? (The *Interaction* Axis)</a><a href="#07-escalation-ladder"><span>Next</span>07 — The Escalation Ladder (The Discipline) →</a></div></section>
+<section class="page" id="07-escalation-ladder" data-title="07 — The Escalation Ladder (The Discipline)" data-num="07" data-hasdemo="0"><h1>07 — The Escalation Ladder (The Discipline)</h1>
+<p>The three questions tell you <em>where</em> on the <a class="xref" href="#01-the-rendering-stack-map">ladder</a> to land. This lesson is the <em>discipline</em> that keeps you honest: <strong>start at the highest rung that can express the effect, and descend only when you hit a specific, nameable limitation.</strong></p>
+<hr />
+<h2>The rule, restated</h2>
+<blockquote>
+<p>Every rung down costs code and gains control. <strong>You must be able to name the wall</strong> that forced you lower. "I felt like using Metal" is not a wall. "Transform can't express a per-pixel dissolve" is a wall.</p>
+</blockquote>
+<p>This prevents the two failure modes:
+- <strong>Over-engineering</strong> — writing a CADisplayLink engine or a shader for something <code>withAnimation</code> does in one line.
+- <strong>Under-reaching</strong> — fighting a high rung to fake an effect it structurally can't do (rippling with <code>.scaleEffect</code>), instead of dropping one rung to the tool that does it cleanly.</p>
+<hr />
+<h2>The ladder with its "walls"</h2>
+<p>Descend one rung <strong>only</strong> when you can state the wall.</p>
+<pre><code>SwiftUI declarative
+   │  WALL: needs interruption / scrubbing / UIKit-only API
+   ▼
+UIViewPropertyAnimator / UIKit
+   │  WALL: needs exact per-layer timing offsets, or a specialized
+   │        layer (Shape/Emitter/Gradient/Replicator)
+   ▼
+Explicit Core Animation
+   │  WALL: each frame depends on live runtime input
+   ▼
+CADisplayLink custom engine
+   │  WALL: I'm changing per-pixel values, not positions
+   ▼
+Metal shader effects (.colorEffect/.distortionEffect/.layerEffect)
+   │  WALL: need vertex control / compute / multi-pass / generated content
+   ▼
+Raw Metal (MTKView / CAMetalLayer)
+</code></pre>
+<p>(Parallel branch off "needs physics / velocity / interruption": <strong>spring engine (Wave / UIDynamics)</strong> — a specialization of the CADisplayLink rung. → <a class="xref" href="#05-how-the-user-touches-it">05-how-the-user-touches-it</a>)</p>
+<hr />
+<h2>Named walls — the only valid reasons to descend</h2>
+<table>
+<thead>
+<tr>
+<th>From → To</th>
+<th>Valid wall (name it before descending)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SwiftUI → UIKit/PropertyAnimator</td>
+<td>"Must be interruptible / scrubbable", or a UIKit-only API</td>
+</tr>
+<tr>
+<td>SwiftUI → spring engine</td>
+<td>"Gesture velocity must transfer; must redirect mid-flight"</td>
+</tr>
+<tr>
+<td>UIKit → explicit Core Animation</td>
+<td>"Need <code>beginTime</code> stagger / per-layer timing functions / <code>CAAnimationGroup</code>" or "need CAShapeLayer/CAEmitterLayer/CAGradientLayer"</td>
+</tr>
+<tr>
+<td>Declarative → CADisplayLink</td>
+<td>"Each frame's value depends on live input (audio/sensor/scroll/uniform)"</td>
+</tr>
+<tr>
+<td>Anything → shader effect</td>
+<td>"I'm changing pixel values (color/warp/dissolve/blur), not positions"</td>
+</tr>
+<tr>
+<td>Shader effect → raw Metal</td>
+<td>"Need vertices / compute / multi-pass / to render generated content, not effect an existing view"</td>
+</tr>
+</tbody>
+</table>
+<p>If none of these sentences is true, <strong>stay where you are.</strong></p>
+<hr />
+<h2>Worked descents</h2>
+<h3>A draggable, flickable card</h3>
+<ul>
+<li>SwiftUI declarative? <strong>Wall:</strong> gesture velocity must transfer and the card must redirect mid-flight. → descend to <strong>spring engine</strong>. Stop. (Q1 is transform → no shader, no CA needed.)</li>
+</ul>
+<h3>A shimmer sweep across a skeleton loader</h3>
+<ul>
+<li>SwiftUI declarative? <strong>Wall:</strong> it's a per-pixel moving gradient/specular highlight — pixels, not position. → descend past CA/CADisplayLink straight to <strong>shader effect</strong> (<code>.colorEffect</code>/<code>.layerEffect</code>) with a <code>progress</code> uniform driven declaratively. Stop. (No raw Metal — effect on an existing view suffices.)</li>
+</ul>
+<h3>A staggered, choreographed multi-icon entrance</h3>
+<ul>
+<li>SwiftUI declarative? You <em>can</em> stagger with <code>.delay</code>, but <strong>Wall:</strong> you need millisecond-exact, per-layer timing functions and grouping. → descend to <strong>explicit Core Animation</strong> (<code>CAAnimationGroup</code> + <code>beginTime</code>). Stop. (Q1 transform → no shader.)</li>
+</ul>
+<h3>An audio-reactive waveform</h3>
+<ul>
+<li>Declarative? <strong>Wall:</strong> every frame's height depends on live audio level. → descend to <strong>CADisplayLink</strong> sampling the audio tap. Possibly + shader if the bars are per-pixel glowy. (Q2 forced the manual clock.)</li>
+</ul>
+<h3>A generative animated mesh-gradient background</h3>
+<ul>
+<li>Shader effect on a view? <strong>Wall:</strong> there's no underlying view to effect — it's <em>generated</em> full-screen content with multi-octave noise. → descend to <strong>raw Metal</strong> (<code>MTKView</code>/<code>CAMetalLayer</code>). (Note: SwiftUI's <code>MeshGradient</code> may suffice for simple cases — try the high rung first!)</li>
+</ul>
+<hr />
+<h2>The "try high first" habit</h2>
+<p>Before descending, spend 60 seconds asking: <em>is there a newer high-rung API that already does this?</em> Apple keeps pushing capabilities up the ladder:
+- <code>MeshGradient</code> (SwiftUI) instead of a custom gradient shader for simple cases.
+- <code>PhaseAnimator</code>/<code>KeyframeAnimator</code> instead of manual CA sequencing.
+- SF Symbol effects instead of hand-animating symbol layers.
+- <code>.symbolEffect</code>, <code>.scrollTransition</code>, <code>.visualEffect</code> — high-rung tools that used to require dropping down.</p>
+<p>The ladder's high rungs get taller every year. A wall that was real on iOS 15 may be gone on the current SDK — check via <a class="xref" href="swiftui.html#00-roadmap">Learning-SwiftUI</a> or the Axiom <code>swiftui-26-ref</code> skill before assuming you must descend.</p>
+<hr />
+<h2>Ascending back up</h2>
+<p>After descending for one concern, <strong>come back up for the others.</strong> You dropped to a shader for the <em>reveal pixels</em> — but the layout, state, and trigger timing stay on the SwiftUI rung. Don't let one low-rung concern drag your whole implementation down. This is the <a class="xref" href="#01-the-rendering-stack-map">vertical composition</a> principle in practice.</p>
+<hr />
+<h2>Checkpoint</h2>
+<ul>
+<li>You can state the <em>wall</em> for any descent, and you refuse to descend without one.</li>
+<li>You check for a newer high-rung API before dropping.</li>
+<li>You ascend back up for concerns that didn't need the low rung.</li>
+</ul>
+<p>Next: <a class="xref" href="#08-stack-combos-cookbook">08-stack-combos-cookbook</a> — the concrete combos, each with its winning condition.</p><div class="pager"><a href="#06-cost-model-cpu-gpu"><span>Prev</span>← 06 — The Cost Model: What&#x27;s Free, What&#x27;s Expensive, Where It Runs</a><a href="#08-stack-combos-cookbook"><span>Next</span>08 — Stack Combos Cookbook →</a></div></section>
+<section class="page" id="08-stack-combos-cookbook" data-title="08 — Stack Combos Cookbook" data-num="08" data-hasdemo="0"><h1>08 — Stack Combos Cookbook</h1>
+<p>Reference sheet. Each combo lists <strong>when it wins</strong>, <strong>when <em>not</em> to use it</strong>, and <strong>how the pieces compose vertically</strong> (<a class="xref" href="#01-the-rendering-stack-map">recall: rungs stack</a>). Keep this open while planning.</p>
+<hr />
+<h2>1. SwiftUI alone</h2>
+<ul>
+<li><strong>Wins:</strong> standard app UI — state changes, layout, navigation, list reordering, sheets, simple transforms/fades. The default for ~90% of screens.</li>
+<li><strong>Not when:</strong> per-pixel effects, frame-exact multi-layer timing, gesture motion needing velocity transfer.</li>
+<li><strong>Composition:</strong> one rung. <code>withAnimation</code> + transitions.</li>
+<li><strong>Tells:</strong> "tap → thing moves/fades/appears."</li>
+</ul>
+<h2>2. SwiftUI + PhaseAnimator / KeyframeAnimator</h2>
+<ul>
+<li><strong>Wins:</strong> canned multi-step sequences — button bounce, attention pulse, staged entrance — without a manual state machine. <code>KeyframeAnimator</code> when properties need independent timelines.</li>
+<li><strong>Not when:</strong> the sequence is gesture-driven or interruptible.</li>
+<li><strong>Composition:</strong> SwiftUI declarative, just richer.</li>
+<li><strong>Tells:</strong> "a scripted little routine that plays on an event."</li>
+</ul>
+<h2>3. SwiftUI + Canvas + TimelineView</h2>
+<ul>
+<li><strong>Wins:</strong> custom 2D drawing that updates over time with modest element counts — a sparkline, a simple visualizer, hand-drawn progress. CPU-drawn but very flexible.</li>
+<li><strong>Not when:</strong> thousands of elements, heavy per-pixel math, or hot per-frame redraw (→ shader). See <a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a>.</li>
+<li><strong>Composition:</strong> <code>TimelineView</code> provides the clock; <code>Canvas</code> draws each tick (CPU).</li>
+<li><strong>Tells:</strong> "I need to <em>draw</em> custom shapes that change, not many of them."</li>
+</ul>
+<h2>4. SwiftUI + Metal shader effects  ← <em>the "shader reveal" combo</em></h2>
+<ul>
+<li><strong>Wins:</strong> per-pixel effects applied to <em>existing</em> SwiftUI views — dissolve/mask reveal, shimmer, ripple, heat distortion, glow, recolor. iOS 17+ via <code>.colorEffect</code> / <code>.distortionEffect</code> / <code>.layerEffect</code>.</li>
+<li><strong>Not when:</strong> you need vertex control, compute, multi-pass, or to render <em>generated</em> content (→ raw Metal). Or when it's just a transform (→ stay SwiftUI).</li>
+<li><strong>Composition:</strong> <strong>SwiftUI owns layout/state/timing; a Metal fragment function owns the effect pixels.</strong> Drive the shader with a <code>progress</code>/<code>time</code> uniform from SwiftUI state. → <a class="xref" href="shaders.html#06-fragment-shaders">06-fragment-shaders</a></li>
+<li><strong>Tells:</strong> "the pixels themselves change, but it's a normal view underneath."</li>
+</ul>
+<h2>5. UIKit + UIViewPropertyAnimator</h2>
+<ul>
+<li><strong>Wins:</strong> interruptible, scrubbable, reversible transitions — a sheet you can grab and reverse, a custom VC transition driven by <code>fractionComplete</code>, pause/resume.</li>
+<li><strong>Not when:</strong> pure fire-and-forget (overkill — use <code>UIView.animate</code>), or per-pixel (→ shader).</li>
+<li><strong>Composition:</strong> UIKit views; the animator is the timing authority you can scrub. → <a class="xref" href="#05-how-the-user-touches-it">05-how-the-user-touches-it</a></li>
+<li><strong>Tells:</strong> "the user can grab it mid-animation and reverse/redirect it."</li>
+</ul>
+<h2>6. UIKit/AppKit + explicit Core Animation  ← <em>the "fine layer timing" combo</em></h2>
+<ul>
+<li><strong>Wins:</strong> precise multi-layer choreography — <code>beginTime</code> stagger, per-layer timing functions, <code>CAAnimationGroup</code>; and the specialized layers: <code>CAShapeLayer</code> (paths/strokes), <code>CAEmitterLayer</code> (particles), <code>CAGradientLayer</code> (gradients), <code>CAReplicatorLayer</code> (clones).</li>
+<li><strong>Not when:</strong> a single view move (SwiftUI is far less code), or per-pixel procedural (→ shader).</li>
+<li><strong>Composition:</strong> view controllers host CALayers; you animate layers directly with millisecond control. → <a class="xref" href="coreanimation.html#09-cabasicanimation">09-cabasicanimation</a></li>
+<li><strong>Tells:</strong> "several layers must move in an exactly-timed sequence," or "I need a particle/shape/gradient layer."</li>
+</ul>
+<h2>7. CADisplayLink custom engine</h2>
+<ul>
+<li><strong>Wins:</strong> each frame's value comes from live runtime input — audio levels, sensors, scroll-linked parallax, a continuously updated shader uniform, hand-rolled physics.</li>
+<li><strong>Not when:</strong> the system can interpolate it (don't use this just to "get 120fps" — that's free). See <a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a>.</li>
+<li><strong>Composition:</strong> the display link is the manual clock; it sets values on layers/SwiftUI state/shader uniforms each frame. Keep the callback arithmetic-only.</li>
+<li><strong>Tells:</strong> "the value literally isn't known until that frame."</li>
+</ul>
+<h2>8. Spring physics (Wave / UIDynamics)  ← <em>the interactive-motion combo</em></h2>
+<ul>
+<li><strong>Wins:</strong> gesture-driven, interruptible motion with natural velocity transfer — PiP windows, draggable cards, custom sheets, swipe-to-dismiss with throw. Redirect mid-flight for free.</li>
+<li><strong>Not when:</strong> non-interactive canned motion (a fixed-duration declarative animation is simpler).</li>
+<li><strong>Composition:</strong> direct value-set during the gesture; on release, a spring seeded with gesture velocity drives the value (often setting a <code>CALayer</code>/SwiftUI position each frame). → <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span>, <span class="xref-missing" title="note not in this site">momentum-and-deceleration</span></li>
+<li><strong>Tells:</strong> "finger drags it, then it flies/settles," or "it must feel physical and grabbable."</li>
+</ul>
+<h2>9. Raw Metal (MTKView / CAMetalLayer)</h2>
+<ul>
+<li><strong>Wins:</strong> generated full-screen content, fluid sims, large custom particle systems, multi-pass effects, anything needing vertex/compute control.</li>
+<li><strong>Not when:</strong> SwiftUI shader effects already do it (combo #4), or it's simple gradient/transform.</li>
+<li><strong>Composition:</strong> wrap <code>MTKView</code> in <code>UIViewRepresentable</code> to host inside SwiftUI; SwiftUI still owns surrounding UI. → <a class="xref" href="coreanimation.html#24-metal-and-calayer">24-metal-and-calayer</a></li>
+<li><strong>Tells:</strong> "there's no underlying view — I'm generating the pixels from scratch."</li>
+</ul>
+<h2>10. SpriteKit</h2>
+<ul>
+<li><strong>Wins:</strong> 2D sprite/particle scenes with built-in physics and a scene graph — game-like bursts, interactive 2D worlds.</li>
+<li><strong>Not when:</strong> plain UI (heavyweight), or you only need emission without physics (→ CAEmitterLayer).</li>
+<li><strong>Composition:</strong> <code>SKView</code> hosted in SwiftUI/UIKit; SpriteKit owns its scene.</li>
+</ul>
+<h2>11. RealityKit / SceneKit</h2>
+<ul>
+<li><strong>Wins:</strong> 3D content and AR. RealityKit for modern/AR; SceneKit for legacy non-AR 3D.</li>
+<li><strong>Not when:</strong> 2D UI.</li>
+<li><strong>Composition:</strong> <code>ARView</code>/<code>SCNView</code> (or <code>RealityView</code> in SwiftUI) hosts the 3D scene.</li>
+</ul>
+<hr />
+<h2>Quick lookup by intent</h2>
+<table>
+<thead>
+<tr>
+<th>I want to...</th>
+<th>Combo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Move/fade/scale views on state change</td>
+<td>#1 SwiftUI</td>
+</tr>
+<tr>
+<td>Play a canned bounce/pulse sequence</td>
+<td>#2 PhaseAnimator</td>
+</tr>
+<tr>
+<td>Draw a custom shape that changes over time</td>
+<td>#3 Canvas+TimelineView</td>
+</tr>
+<tr>
+<td>Dissolve / shimmer / ripple / glow a view</td>
+<td>#4 SwiftUI + Metal effects</td>
+</tr>
+<tr>
+<td>Let the user grab &amp; reverse a transition</td>
+<td>#5 UIViewPropertyAnimator</td>
+</tr>
+<tr>
+<td>Choreograph many layers with exact timing</td>
+<td>#6 explicit Core Animation</td>
+</tr>
+<tr>
+<td>Draw a progress ring / animate a stroke</td>
+<td>#6 (CAShapeLayer) or #1 (<code>Shape</code>+<code>.trim</code>)</td>
+</tr>
+<tr>
+<td>Emit confetti / sparks / particles</td>
+<td>#6 (CAEmitterLayer) or #10 SpriteKit</td>
+</tr>
+<tr>
+<td>React to audio / sensors / scroll per frame</td>
+<td>#7 CADisplayLink</td>
+</tr>
+<tr>
+<td>Drag-and-flick a card / sheet with momentum</td>
+<td>#8 spring physics (Wave)</td>
+</tr>
+<tr>
+<td>Generate a full-screen animated background</td>
+<td>#9 raw Metal (or SwiftUI <code>MeshGradient</code>)</td>
+</tr>
+<tr>
+<td>Build a 2D mini-game effect</td>
+<td>#10 SpriteKit</td>
+</tr>
+<tr>
+<td>Show 3D / AR content</td>
+<td>#11 RealityKit</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Composition table — who owns what</h2>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Usually owned by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layout &amp; state</td>
+<td>SwiftUI (highest rung)</td>
+</tr>
+<tr>
+<td>Navigation</td>
+<td>SwiftUI / UIKit</td>
+</tr>
+<tr>
+<td>Timing of a canned animation</td>
+<td>declarative</td>
+</tr>
+<tr>
+<td>Interruptible timing</td>
+<td>PropertyAnimator / spring</td>
+</tr>
+<tr>
+<td>Per-frame value from live input</td>
+<td>CADisplayLink</td>
+</tr>
+<tr>
+<td>Per-pixel effect</td>
+<td>Metal (effect or raw)</td>
+</tr>
+<tr>
+<td>Vector path</td>
+<td>CAShapeLayer / Shape</td>
+</tr>
+<tr>
+<td>Particles</td>
+<td>CAEmitterLayer / SpriteKit</td>
+</tr>
+<tr>
+<td>3D</td>
+<td>RealityKit / SceneKit</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>The lesson of this table: <strong>a single interaction routinely spans several rows.</strong> Name the rung for each concern, not one rung for the whole feature.</p>
+</blockquote>
+<p>Next: <a class="xref" href="#09-decision-flowchart-and-cases">09-decision-flowchart-and-cases</a> — the flowchart and 12 fully worked interactions.</p><div class="pager"><a href="#07-escalation-ladder"><span>Prev</span>← 07 — The Escalation Ladder (The Discipline)</a><a href="#09-decision-flowchart-and-cases"><span>Next</span>09 — The Decision Flowchart + 12 Worked Cases →</a></div></section>
+<section class="page" id="09-decision-flowchart-and-cases" data-title="09 — The Decision Flowchart + 12 Worked Cases" data-num="09" data-hasdemo="1"><h1>09 — The Decision Flowchart + 12 Worked Cases</h1><div class="demo-mount" data-demo="sd-flow"></div>
+<p>The framework compressed into a single flowchart, then applied to 12 real interactions. This is the lesson to reread whenever you plan something new.</p>
+<hr />
+<h2>The master flowchart</h2>
+<pre><code>START: describe the interaction in one sentence.
+│
+├─ Q1: What am I changing? ───────────────────────────────────────────┐
+│                                                                       │
+│   ┌─ Same pixels, moved/scaled/faded? ── yes ──► stay TRANSFORM tier  │
+│   │                                                (SwiftUI/UIKit/CA)  │
+│   ├─ Per-pixel color/warp/dissolve/glow? ─ yes ─► SHADER tier ────────┤
+│   │                                          (.layerEffect → Metal)   │
+│   ├─ A vector path/stroke/shape? ───────── yes ─► PATH tier           │
+│   │                                          (CAShapeLayer/Shape+trim) │
+│   ├─ Hundreds of elements? ─────────────── yes ─► PARTICLE tier       │
+│   │                                          (CAEmitterLayer/SpriteKit)│
+│   └─ 3D / AR? ──────────────────────────── yes ─► SCENE tier          │
+│                                              (RealityKit/SceneKit)     │
+│                                                                       │
+├─ Q2: What drives it over time? ─────────────────────────────────────┤
+│                                                                       │
+│   ┌─ Fixed curve, known up front? ──────► DECLARATIVE                 │
+│   ├─ Fixed multi-step script? ──────────► SEQUENCE (Phase/CAGroup)    │
+│   ├─ Springs/momentum/velocity? ────────► PHYSICS (Wave/CASpring)     │
+│   ├─ Live input every frame? ───────────► MANUAL CLOCK (CADisplayLink)│
+│   └─ A 0→1 value I control? ────────────► SCRUB (PropertyAnimator)    │
+│                                                                       │
+├─ Q3: How does the user touch it? ───────────────────────────────────┤
+│                                                                       │
+│   ┌─ Can't touch mid-flight? ──────────► any high rung               │
+│   ├─ Can grab &amp; redirect? ─────────────► INTERRUPTIBLE (PropertyAnim/ │
+│   │                                       additive CA / spring+vel)    │
+│   └─ Tracks finger then releases? ─────► TRACK+RELEASE (direct set +  │
+│                                           velocity-seeded spring)      │
+│                                                                       │
+└─ APPLY ESCALATION LADDER (&lt;a class=&quot;xref&quot; href=&quot;#07-escalation-ladder&quot;&gt;07-escalation-ladder&lt;/a&gt;):                  │
+   start at highest rung the three answers allow; descend only on a     │
+   named wall; ascend back up for concerns that didn't need to descend. │
+</code></pre>
+<hr />
+<h2>12 worked cases</h2>
+<p>Each: one-sentence interaction → Q1/Q2/Q3 → stack → why.</p>
+<h3>1. A button that bounces when tapped</h3>
+<ul>
+<li>Q1 transform · Q2 sequence · Q3 fire-forget</li>
+<li><strong>Stack:</strong> SwiftUI <code>PhaseAnimator</code> (or <code>.symbolEffect.bounce</code> for SF Symbols).</li>
+<li><strong>Why:</strong> canned multi-step, no pixels, no interruption. Stays top of ladder.</li>
+</ul>
+<h3>2. Pull-to-refresh with a custom spinner</h3>
+<ul>
+<li>Q1 transform (+ maybe path for the spinner) · Q2 scrub during pull, then physics on release · Q3 track+release</li>
+<li><strong>Stack:</strong> SwiftUI scroll offset drives the spinner state directly (scrub); spring settle on release.</li>
+<li><strong>Why:</strong> the pull <em>is</em> the playhead; release hands off to physics. → <span class="xref-missing" title="note not in this site">momentum-and-deceleration</span></li>
+</ul>
+<h3>3. A photo dissolve/shimmer reveal</h3>
+<ul>
+<li>Q1 <strong>pixels</strong> · Q2 declarative <code>progress</code> · Q3 fire-forget</li>
+<li><strong>Stack:</strong> SwiftUI + Metal <code>.layerEffect</code> with a <code>progress</code> uniform animated by <code>withAnimation</code>.</li>
+<li><strong>Why:</strong> Q1 forces a shader; everything else stays SwiftUI. The canonical <strong>SwiftUI + Metal</strong> combo. → <a class="xref" href="shaders.html#06-fragment-shaders">06-fragment-shaders</a></li>
+</ul>
+<h3>4. Picture-in-Picture window you drag and fling</h3>
+<ul>
+<li>Q1 transform · Q2 physics · Q3 track+release + interruptible</li>
+<li><strong>Stack:</strong> spring engine (Wave) — direct set during drag, velocity-seeded spring on release, re-flingable mid-flight.</li>
+<li><strong>Why:</strong> interruption + velocity transfer ⇒ physics, regardless of the transform-only Q1. → <span class="xref-missing" title="note not in this site">custom-split-view-gesture-driven</span></li>
+</ul>
+<h3>5. A staggered list entrance (rows cascade in)</h3>
+<ul>
+<li>Q1 transform · Q2 sequence with exact offsets · Q3 fire-forget</li>
+<li><strong>Stack:</strong> SwiftUI <code>.transition</code> + per-row <code>.delay</code> if loose timing is fine; <strong>drop to explicit Core Animation</strong> (<code>beginTime</code> stagger) only if you need millisecond-exact choreography.</li>
+<li><strong>Why:</strong> the wall for descending is <em>timing precision</em> (the "fine layer timing" reason). Try SwiftUI first.</li>
+</ul>
+<h3>6. An audio-reactive equalizer</h3>
+<ul>
+<li>Q1 transform (bar heights) or pixels (if glowy) · Q2 <strong>manual clock</strong> · Q3 fire-forget</li>
+<li><strong>Stack:</strong> CADisplayLink sampling the audio tap, setting bar heights each frame; add a shader if bars glow.</li>
+<li><strong>Why:</strong> value unknown until each frame ⇒ manual clock. → <a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a> (keep the callback lean).</li>
+</ul>
+<h3>7. A progress ring filling up</h3>
+<ul>
+<li>Q1 <strong>path</strong> · Q2 declarative · Q3 fire-forget</li>
+<li><strong>Stack:</strong> SwiftUI <code>Circle().trim(from:0,to:progress)</code> animated, or <code>CAShapeLayer.strokeEnd</code>.</li>
+<li><strong>Why:</strong> vector geometry ⇒ path tier; no shader, no physics. → <a class="xref" href="coreanimation.html#16-cashapelayer">16-cashapelayer</a></li>
+</ul>
+<h3>8. Confetti burst on success</h3>
+<ul>
+<li>Q1 <strong>particles</strong> · Q2 physics (built into emitter) · Q3 fire-forget</li>
+<li><strong>Stack:</strong> CAEmitterLayer (or SpriteKit if you want collisions).</li>
+<li><strong>Why:</strong> hundreds of elements ⇒ particle tier; never as individual views. → <a class="xref" href="coreanimation.html#20-caemitterlayer">20-caemitterlayer</a></li>
+</ul>
+<h3>9. A bottom sheet you drag, with rubber-banding past the top</h3>
+<ul>
+<li>Q1 transform · Q2 scrub during drag + physics on release · Q3 track+release + interruptible</li>
+<li><strong>Stack:</strong> direct set during drag with <span class="xref-missing" title="note not in this site">rubber-banding</span> beyond bounds; spring settle to a detent on release.</li>
+<li><strong>Why:</strong> track+release + bounded resistance. → <span class="xref-missing" title="note not in this site">bottom-sheet-blur-backdrop</span></li>
+</ul>
+<h3>10. A custom interactive VC transition you can reverse</h3>
+<ul>
+<li>Q1 transform · Q2 scrub · Q3 interruptible</li>
+<li><strong>Stack:</strong> UIKit <code>UIViewPropertyAnimator</code> driven by <code>fractionComplete</code> from a pan gesture.</li>
+<li><strong>Why:</strong> scrubbable + reversible ⇒ PropertyAnimator is purpose-built. → <a class="xref" href="#05-how-the-user-touches-it">05-how-the-user-touches-it</a></li>
+</ul>
+<h3>11. A living mesh-gradient background</h3>
+<ul>
+<li>Q1 <strong>pixels</strong> (generated) · Q2 manual/time · Q3 fire-forget</li>
+<li><strong>Stack:</strong> try SwiftUI <code>MeshGradient</code> first; if it needs animated multi-octave noise, <strong>raw Metal</strong> (<code>MTKView</code> in <code>UIViewRepresentable</code>).</li>
+<li><strong>Why:</strong> generated full-screen pixels ⇒ shader, and "no underlying view" ⇒ raw Metal over <code>.layerEffect</code>. Check the high rung (<code>MeshGradient</code>) before descending — see <a class="xref" href="#07-escalation-ladder">07-escalation-ladder</a>.</li>
+</ul>
+<h3>12. A morphing tab-bar icon (one shape becomes another)</h3>
+<ul>
+<li>Q1 <strong>path</strong> · Q2 declarative or spring · Q3 fire-forget (or interactive)</li>
+<li><strong>Stack:</strong> <code>CAShapeLayer</code> animating <code>path</code> (matched control points), or SF Symbol <code>.symbolEffect</code> if a symbol covers it.</li>
+<li><strong>Why:</strong> shape morph ⇒ path tier; check SF Symbol effects (high rung) before hand-rolling. → <span class="xref-missing" title="note not in this site">dynamic-island-morphing</span></li>
+</ul>
+<hr />
+<h2>The planning ritual (do this every time)</h2>
+<ol>
+<li><strong>One sentence:</strong> describe the interaction.</li>
+<li><strong>Q1 / Q2 / Q3:</strong> answer all three out loud.</li>
+<li><strong>Per concern:</strong> assign a rung to layout, timing, effect, interaction — not one rung to the whole thing.</li>
+<li><strong>Escalation check:</strong> is each descent justified by a named wall? Is there a newer high-rung API?</li>
+<li><strong>Cost check:</strong> any offscreen passes, main-thread per-frame work, or huge shader pixel counts? (<a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a>)</li>
+<li><strong>Now</strong> you have the stack in your head before writing code.</li>
+</ol>
+<hr />
+<h2>Checkpoint — you've completed the curriculum</h2>
+<p>You can now:
+- Run any interaction through the flowchart in under a minute.
+- Assign rungs per concern and compose them vertically.
+- Justify every descent with a named wall and check for high-rung alternatives.
+- Sanity-check the cost before committing.</p>
+<p>Loop back to <a class="xref" href="#00-roadmap">00-roadmap</a> · cross-train with <a class="xref" href="coreanimation.html#00-roadmap">Core Animation</a>, <a class="xref" href="shaders.html#00-roadmap">Shaders</a>, and <span class="xref-missing" title="note not in this site">Maths-Physics</span>.</p><div class="pager"><a href="#08-stack-combos-cookbook"><span>Prev</span>← 08 — Stack Combos Cookbook</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
