@@ -85,26 +85,10 @@ sections.forEach(function(s){
   var li=document.createElement("li");var a=document.createElement("a");
   a.href="#"+s.id;a.dataset.id=s.id;
   var demo=s.dataset.hasdemo==="1"?'<span class="hasdemo" title="interactive demo"></span>':"";
-  a.innerHTML='<span class="num">'+(s.dataset.num||"")+'</span><span>'+s.dataset.title+'</span>'+demo+'<span class="check">✓</span>';
+  a.innerHTML='<span class="num">'+(s.dataset.num||"")+'</span><span>'+s.dataset.title+'</span>'+demo;
   li.appendChild(a);navlist.appendChild(li);
 });
 var navlinks=Array.prototype.slice.call(navlist.querySelectorAll("a"));
-
-/* ---------- reading progress ---------- */
-function readSet(){try{return JSON.parse(getLS("lar-read","{}"))||{};}catch(e){return {};}}
-function saveRead(o){setLS("lar-read",JSON.stringify(o));}
-var progWrap=document.createElement("div");progWrap.className="progwrap";
-progWrap.innerHTML='<div class="progbar"><i></i></div><span class="progtxt"></span>';
-sidebar.querySelector("nav").insertBefore(progWrap, navlist);
-function refreshProgress(){
-  var rd=readSet(),done=0;
-  navlinks.forEach(function(a){var key=slug+":"+a.dataset.id;var r=!!rd[key];a.classList.toggle("read",r);if(r)done++;});
-  var pct=Math.round(done/navlinks.length*100);
-  progWrap.querySelector("i").style.width=pct+"%";
-  progWrap.querySelector(".progtxt").textContent=done+"/"+navlinks.length;
-}
-function markRead(id){var rd=readSet();rd[slug+":"+id]=1;saveRead(rd);refreshProgress();}
-refreshProgress();
 
 /* ---------- menu ---------- */
 function closeMenu(){if(sidebar)sidebar.classList.remove("open");if(scrim)scrim.classList.remove("show");}
@@ -142,7 +126,6 @@ function activate(id){
       else{m.innerHTML='<div class="demo"><div class="demo-cap">Interactive demo coming soon.</div></div>';}
     });
   }
-  setTimeout(function(){markRead(id);},900);
 }
 window.addEventListener("hashchange",function(){activate(location.hash.slice(1));});
 activate(location.hash.slice(1)||sections[0].id);
