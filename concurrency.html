@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concurrency in Practice · Learning All things Apple</title>
+<meta name="description" content="The async/await model, structured concurrency and task groups, actors &amp; data isolation, @MainActor discipline.">
+<meta property="og:title" content="Concurrency in Practice · Learning All things Apple">
+<meta property="og:description" content="The async/await model, structured concurrency and task groups, actors &amp; data isolation, @MainActor discipline.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Concurrency in Practice</div><div class="cs">The async/await model, structured concurrency and task groups, actors &amp; data isolation, @MainActor discipline.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html" selected>Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="Concurrency in Practice — Overview" data-num="·" data-hasdemo="0"><h1>Concurrency in Practice — Overview</h1>
+<p>Swift Concurrency (async/await, tasks, actors) replaced the old world of <code>DispatchQueue</code> callbacks and locks with a model the <em>compiler</em> can check for data races. Your <a class="xref" href="swift.html#20-concurrency-basics">Swift concurrency basics</a> notes cover the syntax; this course is about using it correctly in a real app — the patterns, the pitfalls, and the discipline that keeps the main thread smooth.</p>
+<h2>The three pillars</h2>
+<pre><code>async/await           – write asynchronous code that reads top-to-bottom
+structured concurrency – child tasks tied to a scope: cancellation &amp; errors propagate
+actors                 – reference types that serialize access to their state (no data races)
+</code></pre>
+<p>Layered on top: <strong><code>@MainActor</code></strong> for UI-thread safety, and <strong><code>Sendable</code></strong> — the compiler's check that a value is safe to cross concurrency boundaries.</p>
+<h2>The mental shift</h2>
+<blockquote>
+<p>Old model: <em>you</em> pick a queue and hope you don't touch shared state from two threads. New model: you mark <em>what</em> must run where (<code>@MainActor</code>, actors), and the compiler refuses to let you create a data race.</p>
+</blockquote>
+<p>This is the same move as elsewhere in modern Apple dev — declare intent, let the system enforce correctness.</p>
+<h2>What you'll learn</h2>
+<ol>
+<li><a class="xref" href="#01-async-await-model">01-async-await-model</a> — what <code>async</code>/<code>await</code> actually do (suspension, not blocking) and Tasks.</li>
+<li><a class="xref" href="#02-structured-concurrency">02-structured-concurrency</a> — <code>async let</code>, task groups, and cancellation propagation.</li>
+<li><a class="xref" href="#03-actors-and-isolation">03-actors-and-isolation</a> — actors, reentrancy, and <code>Sendable</code>.</li>
+<li><a class="xref" href="#04-mainactor-discipline">04-mainactor-discipline</a> — keeping UI on the main actor without freezing it.</li>
+<li><a class="xref" href="#05-pitfalls-and-patterns">05-pitfalls-and-patterns</a> — the mistakes everyone makes and the patterns that avoid them.</li>
+</ol>
+<h2>How it connects</h2>
+<p>This underpins <a class="xref" href="networking.html#02-async-await-requests">networking</a> (every request is async), <a class="xref" href="persistence.html#02-swiftdata">SwiftData</a> (context actor isolation), and SwiftUI itself (<code>.task</code>, <code>@MainActor</code> views). Strict concurrency checking — on by default in the Swift 6 language mode — is the through-line of modern Apple code.</p><div class="pager"><span class="sp"></span><a href="#01-async-await-model"><span>Next</span>The Async/Await Model →</a></div></section>
+<section class="page" id="01-async-await-model" data-title="The Async/Await Model" data-num="01" data-hasdemo="0"><h1>The Async/Await Model</h1>
+<p><code>async</code>/<code>await</code> lets you write asynchronous code that reads top-to-bottom, like synchronous code, while never blocking a thread. The key is understanding what <code>await</code> actually does — it's a <em>suspension point</em>, not a pause.</p>
+<h2>Suspension, not blocking</h2>
+<p>When you <code>await</code>, the function may <strong>suspend</strong>: it gives up its thread, lets other work run, and resumes later — possibly on a <em>different</em> thread — when the awaited result is ready. No thread sits idle waiting.</p>
+<pre><code class="language-swift">func loadProfile() async throws -&gt; Profile {
+    let user = try await api.fetchUser()      // suspends here; thread freed
+    let posts = try await api.fetchPosts()    // resumes, suspends again
+    return Profile(user: user, posts: posts)
+}
+</code></pre>
+<p>Contrast with old blocking code that ties up a thread, or callback code that fragments logic across closures. Here the control flow is linear and errors use ordinary <code>throw</code>/<code>try</code>.</p>
+<h2>Tasks: the unit of async work</h2>
+<p><code>async</code> functions can only be called from an async context. A <code>Task</code> is the bridge from sync (like a button handler) into async:</p>
+<pre><code class="language-swift">Button(&quot;Load&quot;) {
+    Task {                              // starts a new top-level async context
+        do { profile = try await loadProfile() }
+        catch { self.error = error }
+    }
+}
+</code></pre>
+<p>A <code>Task</code> runs concurrently with the code that created it. It captures the current actor context (a <code>Task {}</code> inside a <code>@MainActor</code> view runs its body on the main actor unless you say otherwise).</p>
+<h2>await ≠ parallel</h2>
+<p>Two sequential <code>await</code>s run <em>one after another</em>. To run work concurrently you must say so with <code>async let</code> or a task group (<a class="xref" href="#02-structured-concurrency">02-structured-concurrency</a>). A common beginner mistake is expecting two awaits to overlap — they don't.</p>
+<pre><code class="language-swift">// sequential: total = a + b
+let a = await slowA(); let b = await slowB()
+// concurrent: total = max(a, b)
+async let x = slowA(); async let y = slowB()
+let (a2, b2) = await (x, y)
+</code></pre>
+<h2>Where async runs</h2>
+<p>By default, <code>async</code> functions don't promise a thread — they run on the cooperative thread pool, sized to your CPU. UI-touching code must hop to the main actor (<a class="xref" href="#04-mainactor-discipline">04-mainactor-discipline</a>). CPU-heavy work should <em>not</em> run on the main actor; let it run on the pool and only return results to the main actor.</p>
+<h2>Try it</h2>
+<p>The demo below contrasts three async tasks run serially (await one after another) vs in a structured task group (all at once) — serial total is the <em>sum</em> of durations, concurrent is the <em>max</em>.</p>
+<h2>Related</h2>
+<ul>
+<li>Running things concurrently &amp; cancellation: <a class="xref" href="#02-structured-concurrency">02-structured-concurrency</a></li>
+<li>Syntax foundation: <a class="xref" href="swift.html#20-concurrency-basics">Concurrency Basics</a></li>
+<li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Concurrency in Practice — Overview</a><a href="#02-structured-concurrency"><span>Next</span>Structured Concurrency →</a></div></section>
+<section class="page" id="02-structured-concurrency" data-title="Structured Concurrency" data-num="02" data-hasdemo="1"><h1>Structured Concurrency</h1><div class="demo-mount" data-demo="cc-async"></div>
+<p>Structured concurrency means child tasks live within a <em>scope</em>: they can't outlive it, errors propagate out of it, and cancelling the parent cancels the children. This structure is what makes concurrent Swift code safe and leak-free, compared to fire-and-forget threads.</p>
+<h2>async let: a few concurrent children</h2>
+<p><code>async let</code> starts work immediately and binds a promise; you <code>await</code> it where you need the value. All <code>async let</code>s in a scope run concurrently:</p>
+<pre><code class="language-swift">func loadDashboard() async throws -&gt; Dashboard {
+    async let user   = api.fetchUser()
+    async let feed   = api.fetchFeed()
+    async let badges = api.fetchBadges()
+    return try await Dashboard(user: user, feed: feed, badges: badges)  // awaits all
+}
+</code></pre>
+<p>Total time is the <em>slowest</em> request, not the sum. If the scope exits (or throws) before awaiting, the unawaited children are automatically cancelled — no leaks.</p>
+<h2>Task groups: a dynamic number of children</h2>
+<p>When the count is dynamic (one task per item), use a task group:</p>
+<pre><code class="language-swift">func thumbnails(for ids: [Asset.ID]) async throws -&gt; [Asset.ID: UIImage] {
+    try await withThrowingTaskGroup(of: (Asset.ID, UIImage).self) { group in
+        for id in ids { group.addTask { (id, try await renderThumbnail(id)) } }
+        var result: [Asset.ID: UIImage] = [:]
+        for try await (id, image) in group { result[id] = image }   // collect as they finish
+        return result
+    }
+}
+</code></pre>
+<p>The group won't return until every child finishes (or one throws and the rest are cancelled). To bound concurrency (don't launch 1,000 at once), add tasks up to a limit, then add a new one each time one completes.</p>
+<h2>Cancellation is cooperative</h2>
+<p>Cancellation doesn't forcibly stop a task — it sets a flag. Well-behaved code checks it and stops early:</p>
+<pre><code class="language-swift">try Task.checkCancellation()                 // throws CancellationError if cancelled
+if Task.isCancelled { return partialResult } // or bail gracefully
+</code></pre>
+<p><code>URLSession</code> and <code>Task.sleep</code> already check cancellation, so awaiting them propagates cancellation automatically. This is why cancelling a search <code>Task</code> on each keystroke (<a class="xref" href="networking.html#02-async-await-requests">networking</a>) just works — and why a long CPU loop should call <code>checkCancellation()</code> periodically or it ignores cancellation.</p>
+<h2>Why "structured" matters</h2>
+<p>Because children are bound to a scope, you can reason locally: when <code>loadDashboard()</code> returns, <em>nothing it started is still running</em>. No detached threads quietly continuing, no callback that fires after the screen is gone. (For genuinely independent background work, <code>Task.detached</code> opts out of the structure — use it sparingly.)</p>
+<h2>Try it</h2>
+<p>Compare serial vs task-group execution in the timeline below — the win of concurrency is total time dropping from the sum to the max.</p>
+<h2>Related</h2>
+<ul>
+<li>What protects shared state across these: <a class="xref" href="#03-actors-and-isolation">03-actors-and-isolation</a></li>
+<li>Prev: <a class="xref" href="#01-async-await-model">01-async-await-model</a> · Next: <a class="xref" href="#03-actors-and-isolation">03-actors-and-isolation</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01-async-await-model"><span>Prev</span>← The Async/Await Model</a><a href="#03-actors-and-isolation"><span>Next</span>Actors &amp; Data Isolation →</a></div></section>
+<section class="page" id="03-actors-and-isolation" data-title="Actors &amp; Data Isolation" data-num="03" data-hasdemo="0"><h1>Actors &amp; Data Isolation</h1>
+<p>An <strong>actor</strong> is a reference type that protects its mutable state by allowing only one task inside at a time. It's Swift's structural answer to data races: instead of remembering to take a lock, the <em>type system</em> guarantees serialized access.</p>
+<h2>The problem actors solve</h2>
+<p>Two tasks mutating the same <code>class</code> from different threads is a data race — undefined behavior, crashes, corruption. The old fix was manual locks (<code>NSLock</code>, serial queues), easy to get wrong. An actor makes the compiler enforce it:</p>
+<pre><code class="language-swift">actor ImageCache {
+    private var store: [URL: UIImage] = [:]
+    func image(for url: URL) -&gt; UIImage? { store[url] }   // synchronous INSIDE the actor
+    func insert(_ image: UIImage, for url: URL) { store[url] = image }
+}
+</code></pre>
+<p><code>store</code> can only be touched through the actor, and only one task runs the actor's code at a time. No locks, no races.</p>
+<h2>Crossing in is async</h2>
+<p>From <em>outside</em>, every access is <code>await</code> — because you might have to wait your turn:</p>
+<pre><code class="language-swift">let cache = ImageCache()
+await cache.insert(img, for: url)        // await: may suspend until the actor is free
+let cached = await cache.image(for: url)
+</code></pre>
+<p>Inside the actor, its own methods call each other synchronously (you're already isolated).</p>
+<h2>Reentrancy: the subtle part</h2>
+<p>Actors are <strong>reentrant</strong> — when an actor method <code>await</code>s, it <em>suspends and the actor can run other tasks</em> in the meantime. So state you read before an <code>await</code> may have changed after it:</p>
+<pre><code class="language-swift">func loadOnce(_ url: URL) async -&gt; UIImage {
+    if let c = store[url] { return c }
+    let img = await download(url)        // SUSPENDS — another task may also be downloading url
+    store[url] = img                     // last writer wins; you may have downloaded twice
+    return img
+}
+</code></pre>
+<p>Guard against duplicate work by storing the <em>in-flight Task</em> (a <code>[URL: Task&lt;UIImage,Error&gt;]</code>), so concurrent callers await the same download — the coalescing pattern from <a class="xref" href="networking.html#05-caching-auth-and-testing">token refresh</a>. "Check your assumptions after every await" is the actor rule.</p>
+<h2>Sendable: what's safe to cross boundaries</h2>
+<p>A value sent into or out of an actor/task must be <code>Sendable</code> — provably safe to share. Value types of <code>Sendable</code> parts are automatically <code>Sendable</code>; <code>final class</code>es with immutable state can be marked <code>@unchecked Sendable</code> (you promise it's safe). The compiler uses <code>Sendable</code> to <em>prevent</em> you from smuggling a mutable reference across a concurrency boundary — the core of Swift 6's data-race safety.</p>
+<h2>The MainActor is an actor</h2>
+<p><code>@MainActor</code> is a global actor representing the main thread. It's the same mechanism: code annotated <code>@MainActor</code> is serialized onto the main thread. That's the next lesson.</p>
+<h2>Related</h2>
+<ul>
+<li>The UI-thread actor: <a class="xref" href="#04-mainactor-discipline">04-mainactor-discipline</a></li>
+<li>A real coalescing use: <a class="xref" href="networking.html#05-caching-auth-and-testing">Auth token refresh</a></li>
+<li>Prev: <a class="xref" href="#02-structured-concurrency">02-structured-concurrency</a> · Next: <a class="xref" href="#04-mainactor-discipline">04-mainactor-discipline</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02-structured-concurrency"><span>Prev</span>← Structured Concurrency</a><a href="#04-mainactor-discipline"><span>Next</span>@MainActor Discipline →</a></div></section>
+<section class="page" id="04-mainactor-discipline" data-title="@MainActor Discipline" data-num="04" data-hasdemo="0"><h1>@MainActor Discipline</h1>
+<p>All UIKit and SwiftUI updates must happen on the main thread. <code>@MainActor</code> is how Swift Concurrency expresses and <em>enforces</em> that. The discipline is: keep UI on the main actor, push heavy work off it, and let results flow back — without ever freezing the main thread.</p>
+<h2>What @MainActor means</h2>
+<p><code>@MainActor</code> annotates a type, method, or property as running on the main thread. The compiler then <em>checks</em> it — calling main-actor code from a background context requires an <code>await</code> hop, and accidentally touching UI off-main becomes a compile error rather than a runtime glitch.</p>
+<pre><code class="language-swift">@MainActor
+final class FeedViewModel: ObservableObject {
+    @Published var items: [Item] = []         // safe: only mutated on main
+
+    func refresh() async {
+        let fetched = await loader.load()      // load() runs off-main
+        items = fetched                        // back on main automatically
+    }
+}
+</code></pre>
+<p>SwiftUI <code>View</code>s are implicitly <code>@MainActor</code>, as are most of UIKit. So a <code>Task {}</code> started inside a view runs its body on the main actor by default.</p>
+<h2>The trap: heavy work on the main actor</h2>
+<p>Because <code>Task {}</code> in a view inherits the main actor, CPU-heavy work inside it <em>blocks the UI</em>:</p>
+<pre><code class="language-swift">// BAD: parsing/encoding runs on the main actor → dropped frames
+Task { let report = generateHugeReport() ; self.report = report }
+</code></pre>
+<p>Move the heavy part off-main, then return to main only to publish:</p>
+<pre><code class="language-swift">Task {
+    let report = await Task.detached(priority: .userInitiated) {
+        generateHugeReport()                    // runs off the main actor
+    }.value
+    self.report = report                        // back on main to update UI
+}
+</code></pre>
+<p>Or put the heavy function on a background actor / make it <code>nonisolated</code>. The principle: <strong>the main actor is for touching UI, not for computing.</strong></p>
+<h2>nonisolated for pure work</h2>
+<p>If a method on a <code>@MainActor</code> type does no UI work, mark it <code>nonisolated</code> so it can run anywhere without forcing a hop:</p>
+<pre><code class="language-swift">@MainActor final class Formatter {
+    nonisolated func format(_ x: Double) -&gt; String { String(format: &quot;%.1f&quot;, x) }
+}
+</code></pre>
+<h2>Awaiting back to main</h2>
+<p>You rarely call <code>DispatchQueue.main.async</code> anymore. Returning from an <code>await</code> into main-actor code resumes on the main actor automatically. When you <em>do</em> need an explicit hop from a non-isolated context:</p>
+<pre><code class="language-swift">await MainActor.run { label.text = &quot;done&quot; }
+</code></pre>
+<h2>The payoff</h2>
+<p>Done right, <code>@MainActor</code> means "UI off the main thread" bugs become compile errors, and "the app froze" bugs become obvious (you'll see heavy code on the main actor). It's the enforced version of the rule you already followed by habit.</p>
+<h2>Related</h2>
+<ul>
+<li>The actor model it's built on: <a class="xref" href="#03-actors-and-isolation">03-actors-and-isolation</a></li>
+<li>Common mistakes: <a class="xref" href="#05-pitfalls-and-patterns">05-pitfalls-and-patterns</a></li>
+<li>Prev: <a class="xref" href="#03-actors-and-isolation">03-actors-and-isolation</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03-actors-and-isolation"><span>Prev</span>← Actors &amp; Data Isolation</a><a href="#05-pitfalls-and-patterns"><span>Next</span>Pitfalls &amp; Patterns →</a></div></section>
+<section class="page" id="05-pitfalls-and-patterns" data-title="Pitfalls &amp; Patterns" data-num="05" data-hasdemo="0"><h1>Pitfalls &amp; Patterns</h1>
+<p>A field guide to the concurrency mistakes everyone makes once, and the patterns that prevent them.</p>
+<h2>Pitfall: expecting sequential awaits to be parallel</h2>
+<pre><code class="language-swift">let a = await load(1)      // these run ONE AFTER ANOTHER
+let b = await load(2)
+</code></pre>
+<p>Fix: <code>async let</code> or a task group when the work is independent (<a class="xref" href="#02-structured-concurrency">02-structured-concurrency</a>).</p>
+<h2>Pitfall: forgetting cancellation</h2>
+<p>A long task keeps running after the user leaves the screen, wasting battery and possibly updating dead UI. Fix: store the <code>Task</code> and cancel it, or use SwiftUI's <code>.task</code> modifier, which <strong>cancels automatically</strong> when the view disappears:</p>
+<pre><code class="language-swift">.task { await viewModel.subscribeToUpdates() }   // cancelled on disappear, for free
+</code></pre>
+<p>And honor cancellation in your loops with <code>try Task.checkCancellation()</code>.</p>
+<h2>Pitfall: actor reentrancy assumptions</h2>
+<p>State read before an <code>await</code> can change after it (<a class="xref" href="#03-actors-and-isolation">03-actors-and-isolation</a>). Re-check invariants after every suspension; coalesce duplicate in-flight work by caching the <code>Task</code>.</p>
+<h2>Pitfall: blocking the main actor</h2>
+<p>Heavy parsing/encoding/image work inside a view's <code>Task</code> freezes scrolling. Push it off-main (<a class="xref" href="#04-mainactor-discipline">04-mainactor-discipline</a>).</p>
+<h2>Pitfall: <code>Task.detached</code> everywhere</h2>
+<p>Detached tasks escape structured concurrency — they don't inherit cancellation, priority, or actor context, and they're easy to leak. Use them only for genuinely independent, fire-and-forget work; prefer structured <code>async let</code>/task groups otherwise.</p>
+<h2>Pattern: bridging callbacks with continuations</h2>
+<p>Wrapping an old delegate/closure API into async uses a continuation — call <code>resume</code> <strong>exactly once</strong> (zero = a leaked forever-suspended task; twice = a crash):</p>
+<pre><code class="language-swift">func currentLocation() async throws -&gt; CLLocation {
+    try await withCheckedThrowingContinuation { cont in
+        locationManager.requestLocation { result in
+            switch result {
+            case .success(let loc): cont.resume(returning: loc)
+            case .failure(let err): cont.resume(throwing: err)
+            }
+        }
+    }
+}
+</code></pre>
+<p><code>withCheckedContinuation</code> traps if you misuse <code>resume</code> — keep it during development.</p>
+<h2>Pattern: AsyncSequence for streams</h2>
+<p>For a stream of values over time (locations, socket messages, notifications) use <code>AsyncStream</code> / <code>AsyncSequence</code> and consume with <code>for await</code>:</p>
+<pre><code class="language-swift">for await event in eventStream {
+    handle(event)        // loop ends when the stream finishes or the task is cancelled
+}
+</code></pre>
+<p>This replaces delegate callbacks and Combine pipelines for many cases, and integrates with cancellation cleanly.</p>
+<h2>Pattern: make models Sendable by being value types</h2>
+<p>The easiest way to satisfy strict concurrency checking is to pass <code>struct</code>s of <code>Sendable</code> parts across boundaries. Value semantics (<a class="xref" href="swift.html#19-value-semantics">value semantics</a>) and concurrency safety reinforce each other — another reason to prefer structs.</p>
+<h2>Related</h2>
+<ul>
+<li>The whole model: <a class="xref" href="#00-overview">00-overview</a></li>
+<li>Prev: <a class="xref" href="#04-mainactor-discipline">04-mainactor-discipline</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#04-mainactor-discipline"><span>Prev</span>← @MainActor Discipline</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>

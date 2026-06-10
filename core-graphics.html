@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Core Graphics &amp; Core Image · Learning All things Apple</title>
+<meta name="description" content="The CPU drawing layer beneath Core Animation: contexts, paths, gradients — plus CIFilter / CIKernel image processing.">
+<meta property="og:title" content="Core Graphics &amp; Core Image · Learning All things Apple">
+<meta property="og:description" content="The CPU drawing layer beneath Core Animation: contexts, paths, gradients — plus CIFilter / CIKernel image processing.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Core Graphics &amp; Core Image</div><div class="cs">The CPU drawing layer beneath Core Animation: contexts, paths, gradients — plus CIFilter / CIKernel image processing.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html" selected>Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="Core Graphics &amp; Core Image — Overview" data-num="·" data-hasdemo="0"><h1>Core Graphics &amp; Core Image — Overview</h1>
+<p>Below Core Animation's compositing of layers sits the layer that actually <em>draws pixels</em>: <strong>Core Graphics</strong> (a.k.a. Quartz 2D), a C-based 2D drawing engine for paths, gradients, text, and images on the CPU. Alongside it, <strong>Core Image</strong> is a GPU-accelerated <em>image processing</em> pipeline of filters. Together they cover everything between "arrange rectangles" (Core Animation) and "write a shader" (Metal).</p>
+<h2>Where each fits</h2>
+<pre><code>Metal / shaders   → per-pixel, on the GPU, maximum control      (your Shaders course)
+Core Image        → chain image FILTERS (blur, color, distort)  on the GPU
+Core Graphics     → DRAW vector content (paths, text, gradients) on the CPU
+Core Animation    → COMPOSITE &amp; animate layers                  (your CA course)
+</code></pre>
+<p>Reach <em>down</em> into Core Graphics when a layer-and-image approach can't express the shape; reach <em>into</em> Core Image when you need to process an existing image rather than draw one.</p>
+<h2>What you'll learn</h2>
+<ol>
+<li><a class="xref" href="#01-drawing-model">01-drawing-model</a> — the graphics context, the painter's model, and <code>UIGraphicsImageRenderer</code>.</li>
+<li><a class="xref" href="#02-paths-and-curves">02-paths-and-curves</a> — <code>CGPath</code> / <code>UIBezierPath</code>, lines, arcs, and Bézier curves.</li>
+<li><a class="xref" href="#03-gradients-shadows-blends">03-gradients-shadows-blends</a> — gradients, shadows, and blend modes.</li>
+<li><a class="xref" href="#04-images-and-bitmaps">04-images-and-bitmaps</a> — bitmap contexts, drawing &amp; resizing images, scale and color spaces.</li>
+<li><a class="xref" href="#05-core-image-filters">05-core-image-filters</a> — <code>CIFilter</code>, the filter graph, and writing a <code>CIKernel</code>.</li>
+<li><a class="xref" href="#06-performance">06-performance</a> — when to draw, cache, or rasterize, and how to stay off the main thread.</li>
+</ol>
+<h2>The mental model</h2>
+<blockquote>
+<p>Core Graphics is a <strong>painter</strong>: you give a context a sequence of drawing commands and it lays paint down in order, each stroke covering what's beneath. Core Image is a <strong>darkroom</strong>: you describe a graph of filters and it processes an image through them on the GPU.</p>
+</blockquote>
+<h2>How it connects</h2>
+<p>The shapes you draw here back <code>CAShapeLayer</code> (<a class="xref" href="coreanimation.html#16-cashapelayer">CAShapeLayer</a>). The Bézier math is the same as <a class="xref" href="interaction-math.html#05-parametric-curves-and-splines">Parametric Curves</a>. Core Image's per-pixel kernels are conceptually the fragment shaders from your <a class="xref" href="shaders.html#00-roadmap">Shaders roadmap</a> — just expressed through a different API.</p><div class="pager"><span class="sp"></span><a href="#01-drawing-model"><span>Next</span>The Drawing Model →</a></div></section>
+<section class="page" id="01-drawing-model" data-title="The Drawing Model" data-num="01" data-hasdemo="0"><h1>The Drawing Model</h1>
+<p>Core Graphics draws into a <strong>graphics context</strong> (<code>CGContext</code>) — an opaque destination for drawing commands. The context can be the screen (inside <code>draw(_:)</code>), an off-screen bitmap, a PDF, or a print page. The same drawing code targets any of them.</p>
+<h2>The painter's model</h2>
+<p>Core Graphics is <em>stateful</em> and <em>sequential</em>. You set state (fill color, line width, transform), then issue a paint command, and pixels are laid down immediately, on top of whatever is already there:</p>
+<pre><code class="language-swift">override func draw(_ rect: CGRect) {
+    guard let ctx = UIGraphicsGetCurrentContext() else { return }
+    ctx.setFillColor(UIColor.systemBlue.cgColor)
+    ctx.fill(CGRect(x: 20, y: 20, width: 100, height: 60))
+    ctx.setStrokeColor(UIColor.label.cgColor)
+    ctx.setLineWidth(3)
+    ctx.stroke(CGRect(x: 40, y: 40, width: 100, height: 60))  // drawn ON TOP
+}
+</code></pre>
+<p>Order is everything: later commands paint over earlier ones.</p>
+<h2>Graphics state is a stack</h2>
+<p>The context holds a <em>graphics state</em> (colors, line attributes, the current transform, clipping). Save it, change it, draw, and restore — like <code>push</code>/<code>pop</code>:</p>
+<pre><code class="language-swift">ctx.saveGState()
+ctx.translateBy(x: 50, y: 50)
+ctx.rotate(by: .pi / 6)
+// draw rotated content here
+ctx.restoreGState()   // transform/colors return to what they were
+</code></pre>
+<p>This is the same affine-transform machinery as <a class="xref" href="interaction-math.html#04-vectors-and-linear-algebra">rotation matrices</a> — <code>CGAffineTransform</code> is a 2D matrix.</p>
+<h2>The modern way: UIGraphicsImageRenderer</h2>
+<p>You rarely call <code>UIGraphicsBeginImageContext</code> anymore. <code>UIGraphicsImageRenderer</code> manages the context, scale, and color space correctly and returns a <code>UIImage</code>:</p>
+<pre><code class="language-swift">let renderer = UIGraphicsImageRenderer(size: CGSize(width: 200, height: 200))
+let image = renderer.image { ctx in
+    let cg = ctx.cgContext
+    cg.setFillColor(UIColor.systemPink.cgColor)
+    cg.fillEllipse(in: CGRect(x: 0, y: 0, width: 200, height: 200))
+}
+</code></pre>
+<p>It picks the right <code>scale</code> for the screen automatically, so your drawing is crisp on Retina without manual <code>@2x</code>/<code>@3x</code> math.</p>
+<h2>draw(_:) vs rendering an image</h2>
+<p>Override <code>draw(_:)</code> when content changes with the view's bounds and you want UIKit to manage invalidation (<code>setNeedsDisplay()</code>). Render to a <code>UIImage</code> once when the content is static and you'd rather hand a finished bitmap to an image view or a <code>CALayer.contents</code> — that avoids re-drawing on every layout. The trade-off is covered in <a class="xref" href="#06-performance">06-performance</a>.</p>
+<h2>Flipped coordinates</h2>
+<p>UIKit's <code>draw(_:)</code> gives you a context with the origin at the <strong>top-left</strong>, y-down. Raw <code>CGContext</code> (and Core Image) use <strong>bottom-left</strong>, y-up. When you mix them, you flip with <code>ctx.translateBy(x:0,y:height); ctx.scaleBy(x:1,y:-1)</code>. This catches everyone once.</p>
+<h2>Related</h2>
+<ul>
+<li>Next: <a class="xref" href="#02-paths-and-curves">02-paths-and-curves</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Core Graphics &amp; Core Image — Overview</a><a href="#02-paths-and-curves"><span>Next</span>Paths &amp; Curves →</a></div></section>
+<section class="page" id="02-paths-and-curves" data-title="Paths &amp; Curves" data-num="02" data-hasdemo="1"><h1>Paths &amp; Curves</h1><div class="demo-mount" data-demo="bezier"></div>
+<p>A <strong>path</strong> is a sequence of lines and curves that you can stroke (outline), fill (interior), or use as a clip. <code>CGPath</code> is the low-level type; <code>UIBezierPath</code> is the friendly UIKit wrapper. Paths back <code>CAShapeLayer</code>, animated strokes, custom buttons, charts, and any non-rectangular shape.</p>
+<h2>Building a path</h2>
+<pre><code class="language-swift">let path = UIBezierPath()
+path.move(to: CGPoint(x: 20, y: 100))          // pen down
+path.addLine(to: CGPoint(x: 120, y: 20))       // straight segment
+path.addQuadCurve(to: CGPoint(x: 220, y: 100), // one control point
+                  controlPoint: CGPoint(x: 170, y: 0))
+path.addCurve(to: CGPoint(x: 320, y: 100),     // cubic: two control points
+              controlPoint1: CGPoint(x: 250, y: 180),
+              controlPoint2: CGPoint(x: 290, y: 180))
+path.close()                                    // line back to start
+</code></pre>
+<ul>
+<li><strong><code>move(to:)</code></strong> starts a new subpath without drawing.</li>
+<li><strong><code>addLine</code></strong>, <strong><code>addArc</code></strong>, <strong><code>addQuadCurve</code></strong> (1 control point), <strong><code>addCurve</code></strong> (cubic, 2 control points).</li>
+<li><strong><code>close()</code></strong> connects back to the subpath's start.</li>
+</ul>
+<h2>The cubic Bézier is the workhorse</h2>
+<p>A cubic Bézier blends four points — two endpoints and two "handles" that pull the curve toward them — exactly the formula from <a class="xref" href="interaction-math.html#05-parametric-curves-and-splines">Parametric Curves</a>:</p>
+<pre><code>B(t) = (1−t)³P0 + 3(1−t)²t·P1 + 3(1−t)t²·P2 + t³·P3
+</code></pre>
+<p>This same cubic is what <code>UIBezierPath</code>, <code>CAShapeLayer</code> paths, font glyphs, and CSS/<code>CAMediaTimingFunction</code> timing curves are all made of. Learn to feel how the handles steer the curve and you can draw or animate anything.</p>
+<h2>Fill rules</h2>
+<p>When a path self-intersects, the <strong>fill rule</strong> decides what's "inside":</p>
+<ul>
+<li><strong>Non-zero winding</strong> (default) — counts the signed crossings; overlaps stay filled.</li>
+<li><strong>Even-odd</strong> (<code>usesEvenOddFillRule = true</code>) — toggles inside/outside on each crossing, creating holes. This is how you punch a hole (a "spotlight" overlay): one big rect + an inner shape, even-odd filled.</li>
+</ul>
+<h2>Stroking</h2>
+<p><code>lineWidth</code>, <code>lineCapStyle</code> (<code>.butt</code>/<code>.round</code>/<code>.square</code>), <code>lineJoinStyle</code> (<code>.miter</code>/<code>.round</code>/<code>.bevel</code>), and <code>setLineDash</code> control the outline. Dashes + animating <code>CAShapeLayer.strokeEnd</code> from 0→1 produce the classic "draw-on" signature/loading animation.</p>
+<h2>Path → CAShapeLayer (animatable)</h2>
+<pre><code class="language-swift">let shape = CAShapeLayer()
+shape.path = path.cgPath
+shape.strokeColor = UIColor.label.cgColor
+shape.fillColor = UIColor.clear.cgColor
+shape.lineWidth = 3
+// animate the stroke drawing itself
+let draw = CABasicAnimation(keyPath: &quot;strokeEnd&quot;)
+draw.fromValue = 0; draw.toValue = 1; draw.duration = 1.2
+shape.add(draw, forKey: &quot;draw&quot;)
+</code></pre>
+<p>This bridges Core Graphics shapes into Core Animation; see <a class="xref" href="coreanimation.html#16-cashapelayer">CAShapeLayer</a>.</p>
+<h2>Try it</h2>
+<p>Drag the four control points of the cubic Bézier below and watch the tangent — the same curve that backs every path you'll draw.</p>
+<h2>Related</h2>
+<ul>
+<li>The math: <a class="xref" href="interaction-math.html#05-parametric-curves-and-splines">Parametric Curves &amp; Splines</a></li>
+<li>Prev: <a class="xref" href="#01-drawing-model">01-drawing-model</a> · Next: <a class="xref" href="#03-gradients-shadows-blends">03-gradients-shadows-blends</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01-drawing-model"><span>Prev</span>← The Drawing Model</a><a href="#03-gradients-shadows-blends"><span>Next</span>Gradients, Shadows &amp; Blend Modes →</a></div></section>
+<section class="page" id="03-gradients-shadows-blends" data-title="Gradients, Shadows &amp; Blend Modes" data-num="03" data-hasdemo="0"><h1>Gradients, Shadows &amp; Blend Modes</h1>
+<p>These three give flat shapes depth and richness. They're cheap to describe and, used well, are the difference between a "drawn rectangle" and a polished surface.</p>
+<h2>Gradients</h2>
+<p>Two kinds: <strong>axial</strong> (linear, along a line) and <strong>radial</strong> (out from a center). In Core Graphics you draw a <code>CGGradient</code> into a (usually clipped) region:</p>
+<pre><code class="language-swift">let colors = [UIColor.systemBlue.cgColor, UIColor.systemPurple.cgColor] as CFArray
+let space = CGColorSpaceCreateDeviceRGB()
+let gradient = CGGradient(colorsSpace: space, colors: colors, locations: [0, 1])!
+
+ctx.saveGState()
+ctx.addPath(path.cgPath); ctx.clip()        // confine gradient to a shape
+ctx.drawLinearGradient(gradient,
+    start: CGPoint(x: 0, y: 0),
+    end: CGPoint(x: 0, y: bounds.height),
+    options: [])
+ctx.restoreGState()
+</code></pre>
+<p>For a <em>view-wide</em> gradient that animates, prefer <code>CAGradientLayer</code> (<a class="xref" href="coreanimation.html#18-cagradientlayer">CAGradientLayer</a>) — it's GPU-composited. Use Core Graphics gradients when the gradient must be clipped to a complex drawn path or baked into an image.</p>
+<h2>Shadows</h2>
+<p>A shadow is offset + blur + color. Set it on the context <em>before</em> drawing the shape it should apply to:</p>
+<pre><code class="language-swift">ctx.setShadow(offset: CGSize(width: 0, height: 4),
+              blur: 12,
+              color: UIColor.black.withAlphaComponent(0.25).cgColor)
+ctx.fill(cardRect)
+</code></pre>
+<p>For view layers, <code>layer.shadowPath</code> is the performance-critical version — giving the shadow an explicit path avoids the expensive off-screen pass UIKit otherwise does to derive the shape. Always set <code>shadowPath</code> for moving/animating shadows.</p>
+<h2>Blend modes</h2>
+<p>A blend mode decides how new paint combines with what's underneath — the same modes you know from Photoshop and from <a class="xref" href="shaders.html#16-blending-and-compositing">shader compositing</a>:</p>
+<pre><code class="language-swift">ctx.setBlendMode(.multiply)   // darkens: great for tints over photos
+ctx.setBlendMode(.screen)     // lightens: glows, light leaks
+ctx.setBlendMode(.overlay)    // contrast
+ctx.setBlendMode(.destinationOut)  // ERASE: punch a hole / mask
+</code></pre>
+<p><code>.destinationOut</code> is especially useful: draw an opaque shape with it and you <em>cut</em> that shape out of everything beneath — a one-line way to build masks and "scratch-off" effects.</p>
+<h2>Putting it together: a card surface</h2>
+<p>A convincing card is often: a rounded-rect path → clip → axial gradient fill → a subtle inner highlight stroke at the top → a soft <code>shadowPath</code> on the layer. Each piece is a few lines, and together they read as a real, lit surface — the same "unseen details compound" idea from interaction design.</p>
+<h2>Related</h2>
+<ul>
+<li>GPU-composited gradients/shadows: <a class="xref" href="coreanimation.html#05-layer-appearance">Layer Appearance</a></li>
+<li>Prev: <a class="xref" href="#02-paths-and-curves">02-paths-and-curves</a> · Next: <a class="xref" href="#04-images-and-bitmaps">04-images-and-bitmaps</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02-paths-and-curves"><span>Prev</span>← Paths &amp; Curves</a><a href="#04-images-and-bitmaps"><span>Next</span>Images &amp; Bitmaps →</a></div></section>
+<section class="page" id="04-images-and-bitmaps" data-title="Images &amp; Bitmaps" data-num="04" data-hasdemo="0"><h1>Images &amp; Bitmaps</h1>
+<p>A <code>UIImage</code> is a high-level, immutable picture; a <code>CGImage</code> is the raw bitmap underneath; a <em>bitmap context</em> is a canvas you can draw into and read back. Knowing the difference is the key to resizing correctly, avoiding memory blow-ups, and getting color right.</p>
+<h2>Scale: points vs pixels</h2>
+<p>A <code>UIImage</code> carries a <code>scale</code> (1, 2, or 3). Its <code>size</code> is in <strong>points</strong>; the underlying pixel dimensions are <code>size × scale</code>. The number one image bug is ignoring scale — drawing at <code>image.size</code> on a 3× screen and getting a blurry or mis-sized result. <code>UIGraphicsImageRenderer</code> handles scale for you:</p>
+<pre><code class="language-swift">func resized(_ image: UIImage, to size: CGSize) -&gt; UIImage {
+    let r = UIGraphicsImageRenderer(size: size)   // picks screen scale
+    return r.image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+}
+</code></pre>
+<h2>Downsampling large images (the memory trap)</h2>
+<p>Loading a 12-megapixel photo into a 120pt thumbnail wastes ~48 MB of RAM per image — a top cause of memory-pressure crashes in feeds. <strong>Downsample at decode time</strong> with ImageIO so the full bitmap is never created:</p>
+<pre><code class="language-swift">import ImageIO
+func downsample(_ url: URL, to pointSize: CGSize, scale: CGFloat) -&gt; UIImage? {
+    let src = CGImageSourceCreateWithURL(url as CFURL, nil)!
+    let maxDim = max(pointSize.width, pointSize.height) * scale
+    let opts: [CFString: Any] = [
+        kCGImageSourceCreateThumbnailFromImageAlways: true,
+        kCGImageSourceShouldCacheImmediately: true,
+        kCGImageSourceCreateThumbnailWithTransform: true,
+        kCGImageSourceThumbnailMaxPixelSize: maxDim
+    ]
+    guard let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, opts as CFDictionary) else { return nil }
+    return UIImage(cgImage: cg, scale: scale, orientation: .up)
+}
+</code></pre>
+<p>This is the single highest-impact image optimization in list-heavy apps.</p>
+<h2>Reading and writing pixels</h2>
+<p>For per-pixel work (histograms, picking a color, generating textures), draw into a known-format bitmap context and read the buffer:</p>
+<pre><code class="language-swift">var pixels = [UInt8](repeating: 0, count: w * h * 4)
+let ctx = CGContext(data: &amp;pixels, width: w, height: h,
+    bitsPerComponent: 8, bytesPerRow: w * 4,
+    space: CGColorSpaceCreateDeviceRGB(),
+    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: w, height: h))
+// pixels now holds RGBA bytes you can inspect or mutate
+</code></pre>
+<p>For <em>heavy</em> per-pixel math, this is the slow CPU path — push it to Core Image or Metal instead (<a class="xref" href="shaders.html#00-roadmap">Shaders</a>).</p>
+<h2>Color spaces, briefly</h2>
+<p>sRGB is the safe default for UI. Display P3 covers a wider gamut on modern displays (richer reds/greens). Mismatched color spaces cause subtle color shifts; when generating images for display, use <code>CGColorSpace(name: CGColorSpace.sRGB)</code> unless you specifically want P3.</p>
+<h2>Related</h2>
+<ul>
+<li>Processing images with filters: <a class="xref" href="#05-core-image-filters">05-core-image-filters</a></li>
+<li>Prev: <a class="xref" href="#03-gradients-shadows-blends">03-gradients-shadows-blends</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03-gradients-shadows-blends"><span>Prev</span>← Gradients, Shadows &amp; Blend Modes</a><a href="#05-core-image-filters"><span>Next</span>Core Image Filters →</a></div></section>
+<section class="page" id="05-core-image-filters" data-title="Core Image Filters" data-num="05" data-hasdemo="1"><h1>Core Image Filters</h1><div class="demo-mount" data-demo="sh-blur"></div>
+<p>Core Image (CI) is a <em>non-destructive, GPU-accelerated</em> image-processing pipeline. You describe a graph of filters; CI fuses them into an optimized program and runs it on the GPU only when you ask for output. It's the bridge between Core Graphics drawing and full Metal shaders.</p>
+<h2>The three core types</h2>
+<pre><code>CIImage    – a recipe for an image (lazy; not yet rendered)
+CIFilter   – a node that transforms a CIImage into another CIImage
+CIContext  – the (expensive) object that actually renders a CIImage to pixels
+</code></pre>
+<blockquote>
+<p>A <code>CIImage</code> is a <em>promise</em>, not a bitmap. Chaining filters just builds a graph. Nothing executes until a <code>CIContext</code> renders it — so a 10-filter chain costs one optimized GPU pass, not ten.</p>
+</blockquote>
+<h2>Chaining filters</h2>
+<pre><code class="language-swift">import CoreImage.CIFilterBuiltins
+
+let input = CIImage(image: uiImage)!
+let blur = CIFilter.gaussianBlur()
+blur.inputImage = input
+blur.radius = 8
+
+let vibrance = CIFilter.vibrance()
+vibrance.inputImage = blur.outputImage
+vibrance.amount = 0.6
+
+// render once
+let context = CIContext()                      // create ONCE, reuse — it's heavy
+let out = vibrance.outputImage!
+let cg = context.createCGImage(out, from: input.extent)!
+let result = UIImage(cgImage: cg)
+</code></pre>
+<p>The big performance rule: <strong>create one <code>CIContext</code> and reuse it.</strong> Allocating a context per render is the classic Core Image performance mistake.</p>
+<h2>Useful built-ins</h2>
+<p>Blur (<code>gaussianBlur</code>, <code>boxBlur</code>), color (<code>colorControls</code>, <code>vibrance</code>, <code>exposureAdjust</code>), stylize (<code>bloom</code>, <code>sharpenLuminance</code>), distortion (<code>bumpDistortion</code>, <code>glassDistortion</code>), generators (<code>qrCodeGenerator</code>, <code>linearGradient</code>), and <code>colorMatrix</code> for arbitrary channel mixing. There are ~200; <code>CIFilter.filterNames(inCategories:)</code> lists them.</p>
+<h2>Real-time rendering</h2>
+<p>For live effects (camera, scrubbing a slider), don't go through <code>UIImage</code>. Render the <code>CIImage</code> straight into a Metal-backed view with a Metal <code>CIContext</code> so the pixels never round-trip through the CPU:</p>
+<pre><code class="language-swift">let context = CIContext(mtlDevice: MTLCreateSystemDefaultDevice()!)
+// render into a MTKView's drawable each frame
+</code></pre>
+<p>This is how camera filters stay at 60fps.</p>
+<h2>Writing your own: CIKernel</h2>
+<p>When no built-in fits, write a kernel in the Metal Shading Language — a per-pixel function, exactly like the fragment shaders in your <a class="xref" href="shaders.html#06-fragment-shaders">Fragment Shaders</a> notes:</p>
+<pre><code class="language-cpp">// MyKernels.ci.metal — a simple tint kernel
+#include &lt;CoreImage/CoreImage.h&gt;
+extern &quot;C&quot; float4 tint(coreimage::sample_t s, float3 color) {
+    return float4(s.rgb * color, s.a);
+}
+</code></pre>
+<p>You load it as a <code>CIColorKernel</code>/<code>CIKernel</code> and apply it like any filter. This is the same per-pixel thinking as your shader course, wrapped in CI's filter graph and memory management.</p>
+<h2>Try it</h2>
+<p>The blur playground below is the canvas version of a <code>gaussianBlur</code> filter — multi-tap sampling that softens a pattern as the radius grows.</p>
+<h2>Related</h2>
+<ul>
+<li>The shader equivalent: <a class="xref" href="shaders.html#13-blur-effects">Blur Effects</a>, <a class="xref" href="shaders.html#06-fragment-shaders">Fragment Shaders</a></li>
+<li>Prev: <a class="xref" href="#04-images-and-bitmaps">04-images-and-bitmaps</a> · Next: <a class="xref" href="#06-performance">06-performance</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#04-images-and-bitmaps"><span>Prev</span>← Images &amp; Bitmaps</a><a href="#06-performance"><span>Next</span>Drawing Performance →</a></div></section>
+<section class="page" id="06-performance" data-title="Drawing Performance" data-num="06" data-hasdemo="0"><h1>Drawing Performance</h1>
+<p>Custom drawing is powerful and easy to make slow. The whole game is: <strong>draw as little as possible, as rarely as possible, off the main thread when you can, and let the GPU composite the rest.</strong></p>
+<h2>Know what's expensive</h2>
+<ul>
+<li><strong><code>draw(_:)</code> runs on the main thread</strong> and produces a bitmap the size of the view × screen scale. Big views redrawn often = jank.</li>
+<li><strong>Off-screen passes</strong> are the silent killer: <code>cornerRadius</code> + <code>masksToBounds</code>, <code>shadowPath</code>-less shadows, <code>shouldRasterize</code>, and masks force the GPU to render into a separate buffer and composite it back. Instruments' Core Animation tool flags these in yellow/red.</li>
+</ul>
+<h2>The decision ladder</h2>
+<pre><code>1. Can a CALayer property do it?      → use it (corner radius, border, bg color) — GPU, free
+2. Can an image/asset do it?          → ship a bitmap, set layer.contents
+3. Does it change with bounds/state?  → override draw(_:), keep it minimal
+4. Is it per-pixel &amp; heavy?           → Core Image or Metal (off the CPU entirely)
+</code></pre>
+<p>Most "I need custom drawing" turns out to be step 1 or 2.</p>
+<h2>Cheap shadows</h2>
+<pre><code class="language-swift">// SLOW: UIKit derives the shape via an off-screen pass every frame
+layer.shadowOpacity = 0.2
+// FAST: tell it the shape explicitly
+layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 12).cgPath
+</code></pre>
+<p>Always set <code>shadowPath</code> for any shadow that moves or animates — it can be the difference between 60 and 20 fps in a scrolling list.</p>
+<h2>Rasterize sparingly</h2>
+<p><code>layer.shouldRasterize = true</code> caches a layer as a bitmap — great for a complex <em>static</em> layer reused while scrolling, terrible for anything that changes (it re-rasterizes every frame). Always pair with <code>layer.rasterizationScale = UIScreen.main.scale</code> or it's blurry on Retina.</p>
+<h2>Draw off the main thread</h2>
+<p><code>UIGraphicsImageRenderer</code> works on a background queue. Render expensive content there, then hop back to assign it:</p>
+<pre><code class="language-swift">DispatchQueue.global(qos: .userInitiated).async {
+    let img = renderer.image { ctx in /* expensive drawing */ }
+    DispatchQueue.main.async { imageView.image = img }
+}
+</code></pre>
+<p>Combined with the ImageIO downsampling from <a class="xref" href="#04-images-and-bitmaps">04-images-and-bitmaps</a>, this keeps scrolling smooth even with heavy thumbnails.</p>
+<h2>Measure, don't guess</h2>
+<p>Use Instruments' <strong>Core Animation</strong> template (color off-screen-rendered layers, color blended layers) and <strong>Time Profiler</strong> to find the real cost. This pairs directly with <a class="xref" href="testing.html#04-instruments">Instruments profiling</a> and the WWDC performance sessions (<a class="xref" href="wwdc.html#10181-ultimate-performance-survival-guide">Performance Survival Guide</a>).</p>
+<h2>Related</h2>
+<ul>
+<li>The compositing layer above: <a class="xref" href="coreanimation.html#01-how-rendering-works">How Rendering Works</a></li>
+<li>Prev: <a class="xref" href="#05-core-image-filters">05-core-image-filters</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#05-core-image-filters"><span>Prev</span>← Core Image Filters</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>

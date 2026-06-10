@@ -681,4 +681,65 @@ D["sh-glsl"]=function(m){
     gl.drawArrays(gl.TRIANGLES,0,3);});
 };
 
+/* ============================================================
+   ADDITIONAL TOPICS (added)
+   ============================================================ */
+D["ui-compositional"]=function(m){
+  var d=box(m,"Compositional layout"),c=addCanvas(d,300),ctrls=addControls(d),row=addRow(d);
+  var cols=slider(ctrls,{label:"items per group",min:1,max:5,step:1,value:3});
+  var groups=slider(ctrls,{label:"groups",min:1,max:5,step:1,value:3});
+  var gap=slider(ctrls,{label:"interItemSpacing",min:0,max:20,step:1,value:8});
+  var dir="V",db=btn(row,"group axis: vertical",true);
+  db.addEventListener("click",function(){dir=dir==="V"?"H":"V";db.textContent="group axis: "+(dir==="V"?"vertical":"horizontal");});
+  cap(d,"NSCollectionLayoutItem → Group → Section. Items fill a group by fractional size; groups stack along the section axis. Change the counts and spacing to see how fractional sizing reflows.");
+  var x;loop(c,function(){x=x||fit(c);var w=c._w,h=c._h,pad=16,nC=+cols.value,nG=+groups.value,sp=+gap.value;clr(x,c);
+    var horiz=dir==="H";
+    // section area
+    var SX=pad,SY=pad,SW=w-2*pad,SH=h-2*pad;
+    x.strokeStyle=COL.line;x.setLineDash([4,4]);x.strokeRect(SX,SY,SW,SH);x.setLineDash([]);
+    for(var g=0;g<nG;g++){
+      var gx,gy,gw,gh;
+      if(horiz){gw=(SW-(nG-1)*sp)/nG;gh=SH;gx=SX+g*(gw+sp);gy=SY;}
+      else{gw=SW;gh=(SH-(nG-1)*sp)/nG;gx=SX;gy=SY+g*(gh+sp);}
+      // items fill across the group's cross axis (fractional width 1/nC)
+      for(var i=0;i<nC;i++){
+        var ix,iy,iw,ih;
+        if(horiz){iw=gw;ih=(gh-(nC-1)*sp)/nC;ix=gx;iy=gy+i*(ih+sp);}
+        else{iw=(gw-(nC-1)*sp)/nC;ih=gh;ix=gx+i*(iw+sp);iy=gy;}
+        x.fillStyle="rgba(88,86,214,0.13)";x.strokeStyle="#5856d6";x.lineWidth=1.5;
+        x.beginPath();(x.roundRect?x.roundRect(ix,iy,iw,ih,6):x.rect(ix,iy,iw,ih));x.fill();x.stroke();
+      }
+    }
+    x.fillStyle=COL.muted;x.font="11px ui-monospace,monospace";x.fillText("section",SX+4,SY+14);
+  });
+};
+
+D["cc-async"]=function(m){
+  var d=box(m,"Serial vs structured-concurrent"),c=addCanvas(d,230),row=addRow(d),read=addReadout(d);
+  cap(d,"Three async tasks of different durations. Run them <b>serially</b> (await one after another) vs in a <b>task group</b> (all at once). Total time = sum vs max. That's the whole win of structured concurrency.");
+  var durs=[1.0,1.6,0.7],mode="serial",playing=false,t0=0,x;
+  var b1=btn(row,"run serial",true),b2=btn(row,"run task group");
+  b1.addEventListener("click",function(){mode="serial";b1.classList.add("on");b2.classList.remove("on");start();});
+  b2.addEventListener("click",function(){mode="group";b2.classList.add("on");b1.classList.remove("on");start();});
+  function start(){playing=true;t0=clock();}
+  function total(){return mode==="serial"?durs[0]+durs[1]+durs[2]:Math.max(durs[0],durs[1],durs[2]);}
+  loop(c,function(now){x=x||fit(c);var w=c._w,h=c._h,pad=80,trackW=w-pad-20;clr(x,c);
+    var T=total(),el=playing?(now-t0)/1000:0;if(el>T){el=T;playing=false;}
+    var scale=trackW/Math.max(2.2,T);
+    var labels=["fetchUser","loadPosts","loadAvatar"];
+    for(var i=0;i<3;i++){
+      var y=34+i*52,startT=mode==="serial"?(durs.slice(0,i).reduce(function(a,b){return a+b;},0)):0;
+      x.fillStyle=COL.muted;x.font="12px ui-monospace,monospace";x.fillText(labels[i],10,y+5);
+      // full bar (faint)
+      x.fillStyle="rgba(120,120,130,0.12)";x.beginPath();(x.roundRect?x.roundRect(pad+startT*scale,y-9,durs[i]*scale,20,5):x.rect(pad+startT*scale,y-9,durs[i]*scale,20));x.fill();
+      // progress fill
+      var fillT=Math.max(0,Math.min(durs[i],el-startT));
+      if(fillT>0){x.fillStyle=mode==="serial"?"#ff9500":"#34c759";x.beginPath();(x.roundRect?x.roundRect(pad+startT*scale,y-9,fillT*scale,20,5):x.rect(pad+startT*scale,y-9,fillT*scale,20));x.fill();}
+    }
+    // playhead
+    x.strokeStyle=COL.fg;x.lineWidth=1;x.beginPath();x.moveTo(pad+el*scale,18);x.lineTo(pad+el*scale,h-16);x.stroke();
+    read.innerHTML=(mode==="serial"?"serial: total = 1.0+1.6+0.7 = <b>3.3s</b>":"task group: total = max(1.0,1.6,0.7) = <b>1.6s</b>")+" &nbsp; elapsed <b>"+el.toFixed(2)+"s</b>";
+  });
+};
+
 })();

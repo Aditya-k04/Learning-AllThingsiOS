@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Networking · Learning All things Apple</title>
+<meta name="description" content="URLSession, async/await requests, Codable modelling, error handling, retries, caching and auth.">
+<meta property="og:title" content="Networking · Learning All things Apple">
+<meta property="og:description" content="URLSession, async/await requests, Codable modelling, error handling, retries, caching and auth.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Networking</div><div class="cs">URLSession, async/await requests, Codable modelling, error handling, retries, caching and auth.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html" selected>Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="Networking — Overview" data-num="·" data-hasdemo="0"><h1>Networking — Overview</h1>
+<p>Almost every app talks to a server. Apple's <code>URLSession</code> is a capable, modern HTTP stack — with async/await it's genuinely pleasant, and you rarely need a third-party library like Alamofire for typical REST work. This course builds a clean, testable networking layer from the primitives up.</p>
+<h2>What you'll learn</h2>
+<ol>
+<li><a class="xref" href="#01-urlsession">01-urlsession</a> — the session, requests, configurations, and the response model.</li>
+<li><a class="xref" href="#02-async-await-requests">02-async-await-requests</a> — modern request code, cancellation, and a typed request layer.</li>
+<li><a class="xref" href="#03-codable">03-codable</a> — modelling JSON with <code>Codable</code>, keys, dates, and nested/odd shapes.</li>
+<li><a class="xref" href="#04-errors-and-retries">04-errors-and-retries</a> — a real error taxonomy, status-code handling, retries and backoff.</li>
+<li><a class="xref" href="#05-caching-auth-and-testing">05-caching-auth-and-testing</a> — <code>URLCache</code>, auth tokens, and testing the layer with <code>URLProtocol</code>.</li>
+</ol>
+<h2>The mental model</h2>
+<blockquote>
+<p>A request is a <em>value</em> (<code>URLRequest</code>), a session is the <em>engine</em> (<code>URLSession</code>), and a response is <em>data + metadata</em> (<code>(Data, URLResponse)</code>). Your job is to turn a typed request into a typed model, handling failure honestly at every step.</p>
+</blockquote>
+<h2>The shape of a good networking layer</h2>
+<pre><code>Endpoint (typed)  →  URLRequest  →  URLSession  →  (Data, HTTPURLResponse)
+        ↓                                                    ↓
+   decode/encode  ←——————————  validate status  ←———————————┘
+        ↓
+   typed Model  /  typed Error
+</code></pre>
+<p>Keep the <em>transport</em> (sending bytes) separate from <em>modelling</em> (Codable) and <em>policy</em> (retries, auth). That separation is what makes the layer testable.</p>
+<h2>How it connects</h2>
+<p>Networking is almost entirely async, so it leans on <a class="xref" href="concurrency.html#01-async-await-model">the async/await model</a> and structured cancellation. The decoded models often flow into <a class="xref" href="persistence.html#02-swiftdata">SwiftData</a> for offline use, and the whole layer is a prime target for the dependency injection in <a class="xref" href="architecture.html#03-dependency-injection">App Architecture</a> so you can swap in a fake for tests.</p><div class="pager"><span class="sp"></span><a href="#01-urlsession"><span>Next</span>URLSession →</a></div></section>
+<section class="page" id="01-urlsession" data-title="URLSession" data-num="01" data-hasdemo="0"><h1>URLSession</h1>
+<p><code>URLSession</code> is the engine. It manages a pool of connections, applies a configuration (caching, timeouts, headers), and hands you data via tasks. Understanding its pieces means you almost never reach for a third-party HTTP library.</p>
+<h2>Sessions and configurations</h2>
+<pre><code class="language-swift">// .shared is fine for simple cases; a custom session lets you set policy.
+let config = URLSessionConfiguration.default
+config.timeoutIntervalForRequest = 15
+config.httpAdditionalHeaders = [&quot;Accept&quot;: &quot;application/json&quot;]
+config.requestCachePolicy = .useProtocolCachePolicy
+config.waitsForConnectivity = true            // queue until network is available
+let session = URLSession(configuration: config)
+</code></pre>
+<p>Three configuration flavors: <strong><code>.default</code></strong> (disk-cached, credential storage), <strong><code>.ephemeral</code></strong> (nothing persisted — "private" sessions), and <strong><code>.background</code></strong> (uploads/downloads that continue after the app is suspended, delivered to your app on relaunch).</p>
+<h2>Building a request</h2>
+<p>A <code>URLRequest</code> is a value you configure:</p>
+<pre><code class="language-swift">var req = URLRequest(url: URL(string: &quot;https://api.example.com/users/42&quot;)!)
+req.httpMethod = &quot;POST&quot;
+req.setValue(&quot;application/json&quot;, forHTTPHeaderField: &quot;Content-Type&quot;)
+req.httpBody = try JSONEncoder().encode(payload)
+</code></pre>
+<p>Build URLs safely with <code>URLComponents</code> so query items are percent-encoded correctly:</p>
+<pre><code class="language-swift">var comps = URLComponents(string: &quot;https://api.example.com/search&quot;)!
+comps.queryItems = [URLQueryItem(name: &quot;q&quot;, value: &quot;swift ui&quot;),
+                    URLQueryItem(name: &quot;page&quot;, value: &quot;2&quot;)]
+let url = comps.url!     // …/search?q=swift%20ui&amp;page=2
+</code></pre>
+<h2>The response is data + metadata</h2>
+<p>A request returns <code>(Data, URLResponse)</code>. The <code>URLResponse</code> is really an <code>HTTPURLResponse</code> carrying the status code and headers — and <strong>a non-2xx status is <em>not</em> an error</strong> as far as URLSession is concerned. A 404 or 500 still "succeeds" at the transport level; you must check the code yourself (covered in <a class="xref" href="#04-errors-and-retries">04-errors-and-retries</a>):</p>
+<pre><code class="language-swift">let (data, response) = try await session.data(for: req)
+guard let http = response as? HTTPURLResponse else { throw NetError.nonHTTP }
+guard (200..&lt;300).contains(http.statusCode) else { throw NetError.status(http.statusCode) }
+</code></pre>
+<h2>Task types</h2>
+<p><code>dataTask</code> (in-memory <code>Data</code>, the common case), <code>uploadTask</code> (large bodies/files, progress), and <code>downloadTask</code> (streams to a file on disk — use for large payloads to avoid loading them into RAM). With async/await you mostly use <code>session.data(for:)</code>, <code>session.upload(for:from:)</code>, and <code>session.download(for:)</code>.</p>
+<h2>Related</h2>
+<ul>
+<li>The modern call style: <a class="xref" href="#02-async-await-requests">02-async-await-requests</a></li>
+<li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Networking — Overview</a><a href="#02-async-await-requests"><span>Next</span>Async/Await Requests →</a></div></section>
+<section class="page" id="02-async-await-requests" data-title="Async/Await Requests" data-num="02" data-hasdemo="0"><h1>Async/Await Requests</h1>
+<p><code>URLSession</code>'s async methods turn callback spaghetti into linear, readable code that supports cancellation for free. This lesson builds a small, typed request layer you'd actually ship.</p>
+<h2>The basic call</h2>
+<pre><code class="language-swift">func fetchUser(id: Int) async throws -&gt; User {
+    let url = URL(string: &quot;https://api.example.com/users/\(id)&quot;)!
+    let (data, response) = try await URLSession.shared.data(from: url)
+    guard let http = response as? HTTPURLResponse, (200..&lt;300).contains(http.statusCode)
+    else { throw NetError.badStatus }
+    return try JSONDecoder().decode(User.self, from: data)
+}
+</code></pre>
+<p>No completion handlers, no nesting, errors propagate with <code>throw</code>. Call it from a <code>Task</code> or another async function.</p>
+<h2>A typed endpoint layer</h2>
+<p>Don't scatter URL strings across the app. Describe endpoints as values and have one function execute them — this is the seam you'll later mock for tests and inject per <a class="xref" href="architecture.html#03-dependency-injection">dependency injection</a>:</p>
+<pre><code class="language-swift">struct Endpoint&lt;Response: Decodable&gt; {
+    var path: String
+    var method = &quot;GET&quot;
+    var query: [URLQueryItem] = []
+    var body: Data? = nil
+}
+
+protocol APIClient { func send&lt;R&gt;(_ e: Endpoint&lt;R&gt;) async throws -&gt; R }
+
+struct LiveAPIClient: APIClient {
+    let base = URL(string: &quot;https://api.example.com&quot;)!
+    let session = URLSession.shared
+    func send&lt;R&gt;(_ e: Endpoint&lt;R&gt;) async throws -&gt; R {
+        var comps = URLComponents(url: base.appending(path: e.path), resolvingAgainstBaseURL: false)!
+        comps.queryItems = e.query.isEmpty ? nil : e.query
+        var req = URLRequest(url: comps.url!)
+        req.httpMethod = e.method; req.httpBody = e.body
+        let (data, resp) = try await session.data(for: req)
+        try validate(resp)                       // status-code check from lesson 04
+        return try JSONDecoder.api.decode(R.self, from: data)
+    }
+}
+
+// Usage reads like the domain, not like HTTP:
+let user: User = try await api.send(Endpoint(path: &quot;/users/42&quot;))
+</code></pre>
+<h2>Cancellation is structured</h2>
+<p>An async request is tied to its <code>Task</code>. Cancel the task (or let it cancel when its scope ends) and the underlying request is cancelled — no manual <code>URLSessionTask</code> bookkeeping:</p>
+<pre><code class="language-swift">let task = Task { try await api.send(searchEndpoint(query)) }
+// later, e.g. when the user types again:
+task.cancel()        // throws CancellationError / URLError.cancelled into the awaiter
+</code></pre>
+<p>This is why search-as-you-type is trivial with async/await: cancel the in-flight task on each keystroke. It builds directly on <a class="xref" href="concurrency.html#02-structured-concurrency">structured concurrency</a>.</p>
+<h2>Parallel requests</h2>
+<p>Need several resources at once? <code>async let</code> runs them concurrently and awaits together — total time is the <em>slowest</em> request, not the sum:</p>
+<pre><code class="language-swift">async let profile = api.send(profileEndpoint)
+async let posts   = api.send(postsEndpoint)
+let screen = try await ProfileScreen(profile: profile, posts: posts)
+</code></pre>
+<h2>Related</h2>
+<ul>
+<li>The decode step: <a class="xref" href="#03-codable">03-codable</a></li>
+<li>Concurrency underneath: <a class="xref" href="concurrency.html#02-structured-concurrency">Structured Concurrency</a></li>
+<li>Prev: <a class="xref" href="#01-urlsession">01-urlsession</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01-urlsession"><span>Prev</span>← URLSession</a><a href="#03-codable"><span>Next</span>Codable →</a></div></section>
+<section class="page" id="03-codable" data-title="Codable" data-num="03" data-hasdemo="0"><h1>Codable</h1>
+<p><code>Codable</code> (= <code>Encodable &amp; Decodable</code>) is Swift's built-in serialization. For JSON APIs it turns bytes into typed models with almost no boilerplate — and gives you precise escape hatches when the JSON is messy.</p>
+<h2>The happy path</h2>
+<pre><code class="language-swift">struct User: Codable, Identifiable {
+    let id: Int
+    let name: String
+    let email: String
+}
+let user = try JSONDecoder().decode(User.self, from: data)
+</code></pre>
+<p>If property names match the JSON keys and types line up, that's the whole story.</p>
+<h2>Key mismatches: keyDecodingStrategy</h2>
+<p>APIs love <code>snake_case</code>. Rather than annotate every property, convert globally:</p>
+<pre><code class="language-swift">let decoder = JSONDecoder()
+decoder.keyDecodingStrategy = .convertFromSnakeCase   // created_at → createdAt
+</code></pre>
+<p>For one-off renames, <code>CodingKeys</code>:</p>
+<pre><code class="language-swift">struct Post: Codable {
+    let id: Int
+    let bodyText: String
+    enum CodingKeys: String, CodingKey {
+        case id
+        case bodyText = &quot;content&quot;     // JSON &quot;content&quot; → bodyText
+    }
+}
+</code></pre>
+<h2>Dates and other strategies</h2>
+<pre><code class="language-swift">decoder.dateDecodingStrategy = .iso8601                 // &quot;2026-06-09T12:00:00Z&quot;
+// or a custom formatter for non-standard dates:
+decoder.dateDecodingStrategy = .formatted(myFormatter)
+</code></pre>
+<p>Centralize these in one configured decoder (<code>JSONDecoder.api</code>) and reuse it everywhere so every model decodes consistently.</p>
+<h2>Messy JSON: custom init(from:)</h2>
+<p>When the shape doesn't map cleanly — a field that's sometimes a string and sometimes a number, a flattened nested object, defaults for missing keys — implement the decoder yourself:</p>
+<pre><code class="language-swift">struct Product: Decodable {
+    let id: Int
+    let price: Double
+    let inStock: Bool
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        // price may arrive as &quot;12.99&quot; (string) or 12.99 (number)
+        if let d = try? c.decode(Double.self, forKey: .price) { price = d }
+        else { price = Double(try c.decode(String.self, forKey: .price)) ?? 0 }
+        // default when key is absent
+        inStock = (try? c.decode(Bool.self, forKey: .inStock)) ?? true
+    }
+    enum CodingKeys: String, CodingKey { case id, price, inStock }
+}
+</code></pre>
+<h2>Decoupling API shape from your domain</h2>
+<p>A useful pattern: decode a <code>…DTO</code> that mirrors the JSON exactly, then map it to a clean domain model. Your app code never depends on the API's quirks, and when the API changes you fix one mapping function. This DTO→domain boundary pairs with <a class="xref" href="architecture.html#02-unidirectional-data-flow">clean data flow</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>Where it slots in: <a class="xref" href="#02-async-await-requests">02-async-await-requests</a></li>
+<li>Persisting decoded models: <a class="xref" href="persistence.html#02-swiftdata">SwiftData</a></li>
+<li>Prev: <a class="xref" href="#02-async-await-requests">02-async-await-requests</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02-async-await-requests"><span>Prev</span>← Async/Await Requests</a><a href="#04-errors-and-retries"><span>Next</span>Errors &amp; Retries →</a></div></section>
+<section class="page" id="04-errors-and-retries" data-title="Errors &amp; Retries" data-num="04" data-hasdemo="0"><h1>Errors &amp; Retries</h1>
+<p>Networking fails constantly — flaky connections, expired tokens, server hiccups, rate limits. Production-grade code treats failure as a first-class path, with a clear error taxonomy and a retry policy that doesn't make things worse.</p>
+<h2>A real error taxonomy</h2>
+<p>Collapse the many failure modes into a domain error your UI can reason about:</p>
+<pre><code class="language-swift">enum NetError: Error {
+    case offline                 // URLError.notConnectedToInternet
+    case timedOut
+    case cancelled               // user navigated away — usually silent
+    case badStatus(Int, Data?)   // non-2xx; keep the body for server messages
+    case decoding(Error)         // shape mismatch — a bug, not a transient failure
+    case unauthorized            // 401 — trigger token refresh
+    case rateLimited(retryAfter: TimeInterval?)  // 429
+    case server                  // 5xx — retryable
+}
+</code></pre>
+<p>Map raw failures into it:</p>
+<pre><code class="language-swift">func classify(_ error: Error) -&gt; NetError {
+    if let u = error as? URLError {
+        switch u.code {
+        case .notConnectedToInternet, .dataNotAllowed: return .offline
+        case .timedOut: return .timedOut
+        case .cancelled: return .cancelled
+        default: return .server
+        }
+    }
+    return .server
+}
+</code></pre>
+<h2>Status codes carry meaning</h2>
+<pre><code class="language-swift">func validate(_ resp: URLResponse, _ data: Data) throws {
+    guard let http = resp as? HTTPURLResponse else { throw NetError.server }
+    switch http.statusCode {
+    case 200..&lt;300: return
+    case 401:       throw NetError.unauthorized
+    case 429:       throw NetError.rateLimited(retryAfter:
+                        http.value(forHTTPHeaderField: &quot;Retry-After&quot;).flatMap(TimeInterval.init))
+    case 400..&lt;500: throw NetError.badStatus(http.statusCode, data)
+    default:        throw NetError.server
+    }
+}
+</code></pre>
+<h2>Retry only what's retryable — with backoff</h2>
+<p>Retrying a 400 (your bad request) is pointless; retrying a 503 or a timeout is sensible. Use <strong>exponential backoff with jitter</strong> so a recovering server isn't hammered by every client at once:</p>
+<pre><code class="language-swift">func withRetry&lt;T&gt;(max: Int = 3, _ op: @escaping () async throws -&gt; T) async throws -&gt; T {
+    var attempt = 0
+    while true {
+        do { return try await op() }
+        catch let e as NetError {
+            attempt += 1
+            let retryable = { if case .server = e { return true }
+                              if case .timedOut = e { return true }
+                              if case .rateLimited = e { return true }; return false }()
+            guard retryable, attempt &lt; max else { throw e }
+            let base = pow(2.0, Double(attempt))            // 2,4,8 s
+            let jitter = Double.random(in: 0...0.5)
+            try await Task.sleep(for: .seconds(base + jitter))
+        }
+    }
+}
+</code></pre>
+<p>For <code>429</code>, honor the server's <code>Retry-After</code> instead of your own backoff.</p>
+<h2>Surface failure honestly</h2>
+<p>In the UI, distinguish <em>offline</em> (show a retry affordance), <em>cancelled</em> (show nothing — expected), <em>decoding</em> (a bug — log it, don't silently swallow), and <em>server</em> (transient — retry then apologize). Mapping each <code>NetError</code> case to a specific UI state is what makes an app feel robust rather than mysteriously broken.</p>
+<h2>Related</h2>
+<ul>
+<li>Token refresh on 401: <a class="xref" href="#05-caching-auth-and-testing">05-caching-auth-and-testing</a></li>
+<li>Sleeping/awaiting: <a class="xref" href="concurrency.html#01-async-await-model">Async/Await</a></li>
+<li>Prev: <a class="xref" href="#03-codable">03-codable</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03-codable"><span>Prev</span>← Codable</a><a href="#05-caching-auth-and-testing"><span>Next</span>Caching, Auth &amp; Testing →</a></div></section>
+<section class="page" id="05-caching-auth-and-testing" data-title="Caching, Auth &amp; Testing" data-num="05" data-hasdemo="0"><h1>Caching, Auth &amp; Testing</h1>
+<p>Three pieces that turn a working request into a production layer: caching (speed + offline), authentication (tokens done right), and testing (proving it works without hitting a real server).</p>
+<h2>Caching with URLCache</h2>
+<p><code>URLSession</code> has an HTTP cache out of the box. If the server sends proper <code>Cache-Control</code>/<code>ETag</code> headers, responses are cached and revalidated automatically:</p>
+<pre><code class="language-swift">URLCache.shared = URLCache(memoryCapacity: 16_000_000, diskCapacity: 200_000_000)
+config.requestCachePolicy = .useProtocolCachePolicy   // respect server headers (default)
+</code></pre>
+<p>For app-level caching (offline browsing, instant reloads), persist decoded models into <a class="xref" href="persistence.html#02-swiftdata">SwiftData</a> and treat the network as a refresh — the "read from store, revalidate in background" pattern.</p>
+<h2>Authentication tokens</h2>
+<p>The common scheme: a short-lived <strong>access token</strong> sent on every request, and a long-lived <strong>refresh token</strong> used to get a new access token when it expires (401). The hard part is doing the refresh <em>once</em> even when many requests fail at the same moment:</p>
+<pre><code class="language-swift">actor TokenProvider {
+    private var token: String?
+    private var refreshTask: Task&lt;String, Error&gt;?
+
+    func valid() async throws -&gt; String {
+        if let t = token { return t }
+        // coalesce concurrent refreshes into one in-flight task
+        if let task = refreshTask { return try await task.value }
+        let task = Task { try await refresh() }
+        refreshTask = task
+        defer { refreshTask = nil }
+        let t = try await task.value; token = t; return t
+    }
+}
+</code></pre>
+<p>Using an <code>actor</code> here is exactly the data-isolation tool from <a class="xref" href="concurrency.html#03-actors-and-isolation">actors</a> — it serializes access so two requests can't kick off two refreshes. <strong>Never</strong> store tokens in <code>UserDefaults</code>; use the Keychain (<a class="xref" href="shipping.html#02-accessibility">shipping</a> covers secure storage alongside it).</p>
+<h2>Testing without a server: URLProtocol</h2>
+<p>The cleanest way to test networking is to intercept requests with a custom <code>URLProtocol</code> and return canned responses — fast, deterministic, no network:</p>
+<pre><code class="language-swift">final class MockURLProtocol: URLProtocol {
+    static var handler: ((URLRequest) throws -&gt; (HTTPURLResponse, Data))?
+    override class func canInit(with: URLRequest) -&gt; Bool { true }
+    override class func canonicalRequest(for r: URLRequest) -&gt; URLRequest { r }
+    override func startLoading() {
+        guard let h = Self.handler else { return }
+        do {
+            let (resp, data) = try h(request)
+            client?.urlProtocol(self, didReceive: resp, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch { client?.urlProtocol(self, didFailWithError: error) }
+    }
+    override func stopLoading() {}
+}
+
+// In the test:
+let config = URLSessionConfiguration.ephemeral
+config.protocolClasses = [MockURLProtocol.self]
+let session = URLSession(configuration: config)
+MockURLProtocol.handler = { _ in (HTTPURLResponse(/*200*/), userJSON) }
+</code></pre>
+<p>Alternatively, hide the network behind the <code>APIClient</code> protocol from <a class="xref" href="#02-async-await-requests">02-async-await-requests</a> and inject a fake implementation — usually simpler for unit tests. Both approaches are the testing seam covered in <a class="xref" href="testing.html#02-unit-testing-patterns">unit testing patterns</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>Inject the client: <a class="xref" href="architecture.html#03-dependency-injection">Dependency Injection</a></li>
+<li>Prev: <a class="xref" href="#04-errors-and-retries">04-errors-and-retries</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#04-errors-and-retries"><span>Prev</span>← Errors &amp; Retries</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>

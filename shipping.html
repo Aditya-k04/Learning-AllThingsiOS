@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App Intents, Accessibility &amp; Shipping · Learning All things Apple</title>
+<meta name="description" content="App Intents &amp; Siri, accessibility done right, Swift Package Manager, code signing, Xcode Cloud and the App Store.">
+<meta property="og:title" content="App Intents, Accessibility &amp; Shipping · Learning All things Apple">
+<meta property="og:description" content="App Intents &amp; Siri, accessibility done right, Swift Package Manager, code signing, Xcode Cloud and the App Store.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">App Intents, Accessibility &amp; Shipping</div><div class="cs">App Intents &amp; Siri, accessibility done right, Swift Package Manager, code signing, Xcode Cloud and the App Store.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html" selected>App Intents, Accessibility &amp; Shipping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="App Intents, Accessibility &amp; Shipping — Overview" data-num="·" data-hasdemo="0"><h1>App Intents, Accessibility &amp; Shipping — Overview</h1>
+<p>A finished app isn't just features — it integrates with the system, works for everyone, and actually makes it to the App Store. This course covers three things every shippable app needs and most tutorials skip: exposing actions to the system, accessibility, and the build-and-release pipeline.</p>
+<h2>What you'll learn</h2>
+<ol>
+<li><a class="xref" href="#01-app-intents-and-siri">01-app-intents-and-siri</a> — App Intents: one definition that powers Siri, Shortcuts, Spotlight, and widgets.</li>
+<li><a class="xref" href="#02-accessibility">02-accessibility</a> — VoiceOver, Dynamic Type, contrast, and Reduce Motion done properly.</li>
+<li><a class="xref" href="#03-swift-package-manager">03-swift-package-manager</a> — dependencies and your own packages with SPM.</li>
+<li><a class="xref" href="#04-code-signing">04-code-signing</a> — certificates, identifiers, profiles — demystified.</li>
+<li><a class="xref" href="#05-xcode-cloud-and-app-store">05-xcode-cloud-and-app-store</a> — CI/CD and the path through App Store Connect to release.</li>
+</ol>
+<h2>The mental model</h2>
+<blockquote>
+<p>Features make the app <em>do</em> things. Shipping makes those things <em>reachable</em> — by the system (Intents), by every user (accessibility), and by the world (signing + the store). Skipping this layer is how good apps never get used.</p>
+</blockquote>
+<h2>Why it's worth your time</h2>
+<p>App Intents turn your features into system capabilities (a huge reach multiplier). Accessibility is both the right thing and required — and it makes UI tests easier (<a class="xref" href="testing.html#03-snapshot-and-ui-tests">UI tests</a>). And signing/CI is the gauntlet every app must pass; understanding it turns a recurring source of dread into a routine. This is the difference between "it runs on my simulator" and "it's in people's hands."</p>
+<h2>How it connects</h2>
+<p>App Intents are the same mechanism behind <a class="xref" href="widgetkit.html#05-interactivity-and-app-intents">interactive widgets</a>. SPM is the tool behind <a class="xref" href="architecture.html#05-modularization">modularization</a>. And accessibility identifiers are what make <a class="xref" href="testing.html#03-snapshot-and-ui-tests">UI tests</a> robust.</p><div class="pager"><span class="sp"></span><a href="#01-app-intents-and-siri"><span>Next</span>App Intents &amp; Siri →</a></div></section>
+<section class="page" id="01-app-intents-and-siri" data-title="App Intents &amp; Siri" data-num="01" data-hasdemo="0"><h1>App Intents &amp; Siri</h1>
+<p>App Intents is the framework that exposes your app's actions to the <em>system</em>. One Swift definition becomes a Siri command, a Shortcuts action, a Spotlight result, and an interactive widget button — all at once. It's one of the highest-leverage things you can add, because it multiplies where your features can be invoked.</p>
+<h2>An intent is a verb</h2>
+<pre><code class="language-swift">import AppIntents
+
+struct AddTaskIntent: AppIntent {
+    static var title: LocalizedStringResource = &quot;Add Task&quot;
+    static var description = IntentDescription(&quot;Adds a task to your list.&quot;)
+
+    @Parameter(title: &quot;Title&quot;) var taskTitle: String
+
+    func perform() async throws -&gt; some IntentResult &amp; ProvidesDialog {
+        TaskStore.shared.add(taskTitle)
+        return .result(dialog: &quot;Added “\(taskTitle)”.&quot;)
+    }
+}
+</code></pre>
+<p><code>perform()</code> is the action; <code>@Parameter</code>s are the inputs the system can prompt for. Because the intent is a serializable value, the system can run it from anywhere — even when your app isn't open (the same property that makes <a class="xref" href="widgetkit.html#05-interactivity-and-app-intents">interactive widgets</a> work).</p>
+<h2>Entities and queries</h2>
+<p>To act on <em>your</em> data ("call my plumber", "open the Acme project"), model it as an <code>AppEntity</code> with a query so the system can resolve names to objects:</p>
+<pre><code class="language-swift">struct ProjectEntity: AppEntity, Identifiable {
+    let id: UUID
+    var name: String
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = &quot;Project&quot;
+    var displayRepresentation: DisplayRepresentation { .init(title: &quot;\(name)&quot;) }
+    static var defaultQuery = ProjectQuery()
+}
+
+struct ProjectQuery: EntityQuery {
+    func entities(for ids: [UUID]) async throws -&gt; [ProjectEntity] { /* look up */ }
+    func suggestedEntities() async throws -&gt; [ProjectEntity] { /* recents */ }
+}
+</code></pre>
+<p>Now an intent can take a <code>ProjectEntity</code> parameter and Siri/Shortcuts will let the user pick or speak one.</p>
+<h2>Shortcuts and Siri phrases</h2>
+<p>Expose intents to Siri and the Shortcuts app with <code>AppShortcutsProvider</code>, including spoken phrases:</p>
+<pre><code class="language-swift">struct MyShortcuts: AppShortcutsProvider {
+    static var appShortcuts: [AppShortcut] {
+        AppShortcut(intent: AddTaskIntent(),
+            phrases: [&quot;Add a task in \(.applicationName)&quot;,
+                      &quot;New \(.applicationName) task&quot;],
+            shortTitle: &quot;Add Task&quot;, systemImageName: &quot;plus.circle&quot;)
+    }
+}
+</code></pre>
+<p>These appear automatically in Spotlight and Shortcuts, and Siri understands the phrases — no separate Siri code.</p>
+<h2>Why this is worth it</h2>
+<p>App Intents is a small amount of code for an outsized payoff: your features become OS-level capabilities the user can automate, voice-trigger, and pin. It's also future-facing — it's how features surface in newer system experiences. Define your key actions as intents and you get reach you'd otherwise never build.</p>
+<h2>Related</h2>
+<ul>
+<li>Same system, widget side: <a class="xref" href="widgetkit.html#05-interactivity-and-app-intents">Interactivity &amp; App Intents</a></li>
+<li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Next: <a class="xref" href="#02-accessibility">02-accessibility</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← App Intents, Accessibility &amp; Shipping — Overview</a><a href="#02-accessibility"><span>Next</span>Accessibility →</a></div></section>
+<section class="page" id="02-accessibility" data-title="Accessibility" data-num="02" data-hasdemo="0"><h1>Accessibility</h1>
+<p>Accessibility (a11y) makes your app usable by people with vision, motor, hearing, or cognitive differences. It's the right thing to do, it's expected on Apple platforms, and — a nice side effect — accessible UI is more testable and often better designed for everyone. SwiftUI gives you a lot for free; the rest is small, deliberate additions.</p>
+<h2>VoiceOver: the screen reader</h2>
+<p>VoiceOver reads the UI aloud and lets users navigate by swiping. Standard SwiftUI controls are already accessible; your job is to make <em>custom</em> views and decorative compositions read sensibly:</p>
+<pre><code class="language-swift">Image(&quot;heart&quot;).onTapGesture { like() }
+    .accessibilityLabel(&quot;Like&quot;)                    // what it is
+    .accessibilityValue(isLiked ? &quot;On&quot; : &quot;Off&quot;)    // its current state
+    .accessibilityHint(&quot;Double tap to toggle&quot;)     // what happens
+    .accessibilityAddTraits(.isButton)             // how it behaves
+
+// Combine a decorative cluster into one element:
+HStack { Image(systemName: &quot;star.fill&quot;); Text(&quot;4.8&quot;); Text(&quot;(2.3k)&quot;) }
+    .accessibilityElement(children: .combine)      // reads &quot;4.8, 2.3k&quot; as one
+</code></pre>
+<p>Mark purely decorative images <code>.accessibilityHidden(true)</code> so VoiceOver skips noise.</p>
+<h2>Dynamic Type</h2>
+<p>Users can scale text system-wide, up to huge accessibility sizes. Use <strong>semantic font styles</strong> (<code>.body</code>, <code>.headline</code>) which scale automatically — never hard-coded point sizes:</p>
+<pre><code class="language-swift">Text(&quot;Title&quot;).font(.headline)            // scales with the user's setting
+// custom font that still scales:
+Text(&quot;Hi&quot;).font(.custom(&quot;Inter&quot;, size: 17, relativeTo: .body))
+</code></pre>
+<p>Then make sure layouts <em>survive</em> large type: prefer flexible layouts, allow wrapping, and test at the largest accessibility size. Switch HStacks to VStacks at huge sizes with <code>@Environment(\.dynamicTypeSize)</code>.</p>
+<h2>Contrast and color</h2>
+<p>Don't rely on color alone to convey meaning (color-blind users) — pair it with text or an icon. Meet contrast ratios, and respect <strong>Increase Contrast</strong> and <strong>Reduce Transparency</strong>. Use semantic colors (<code>.primary</code>, <code>.secondary</code>, asset colors with dark variants) so the system adapts them.</p>
+<h2>Reduce Motion</h2>
+<p>Some users get motion sickness from large animations. Honor their setting and swap big movement for a cross-fade:</p>
+<pre><code class="language-swift">@Environment(\.accessibilityReduceMotion) private var reduceMotion
+withAnimation(reduceMotion ? .none : .spring) { expand.toggle() }
+</code></pre>
+<p>(This is exactly the <code>prefers-reduced-motion</code> courtesy your own learning site implements.)</p>
+<h2>VoiceOver-friendly = test-friendly</h2>
+<p>Accessibility identifiers and labels are what <code>XCUITest</code> uses to find elements (<a class="xref" href="testing.html#03-snapshot-and-ui-tests">UI tests</a>). Adding them makes the app both accessible and robustly testable — the same work, two payoffs.</p>
+<h2>Audit it</h2>
+<p>Use the <strong>Accessibility Inspector</strong> (in Xcode) to audit a running app — it flags missing labels, small touch targets, and contrast issues. Better: turn on VoiceOver on a device and try to use your app with the screen off. It's humbling and instantly shows what's broken.</p>
+<h2>Related</h2>
+<ul>
+<li>Why it doubles as testability: <a class="xref" href="testing.html#03-snapshot-and-ui-tests">UI Tests</a></li>
+<li>Prev: <a class="xref" href="#01-app-intents-and-siri">01-app-intents-and-siri</a> · Next: <a class="xref" href="#03-swift-package-manager">03-swift-package-manager</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01-app-intents-and-siri"><span>Prev</span>← App Intents &amp; Siri</a><a href="#03-swift-package-manager"><span>Next</span>Swift Package Manager →</a></div></section>
+<section class="page" id="03-swift-package-manager" data-title="Swift Package Manager" data-num="03" data-hasdemo="0"><h1>Swift Package Manager</h1>
+<p>Swift Package Manager (SPM) is the built-in tool for adding third-party dependencies and for splitting your own code into reusable modules. It replaced CocoaPods/Carthage for most projects and is integrated directly into Xcode.</p>
+<h2>Adding a dependency</h2>
+<p>In Xcode: <em>File → Add Package Dependencies</em>, paste a repo URL, choose a version rule. Or in a <code>Package.swift</code>:</p>
+<pre><code class="language-swift">dependencies: [
+    .package(url: &quot;https://github.com/pointfreeco/swift-composable-architecture&quot;,
+             from: &quot;1.0.0&quot;)
+],
+</code></pre>
+<h2>Version rules matter</h2>
+<p>SPM uses semantic versioning. Choose how much you trust upstream:</p>
+<pre><code>from: &quot;1.2.0&quot;            → &gt;=1.2.0 and &lt;2.0.0  (accept minor/patch — common default)
+.upToNextMinor(from:)    → &gt;=1.2.0 and &lt;1.3.0  (conservative)
+.exact(&quot;1.2.3&quot;)          → pin precisely       (reproducible, but you miss fixes)
+branch: &quot;main&quot;           → bleeding edge       (avoid for releases)
+</code></pre>
+<p>The resolved versions are recorded in <code>Package.resolved</code> — <strong>commit it</strong> so everyone (and CI) builds the exact same dependency versions.</p>
+<h2>Authoring your own package</h2>
+<p>A package is a folder with a <code>Package.swift</code> manifest describing products (what it exposes), targets (compilation units), and their dependencies — the structure behind <a class="xref" href="architecture.html#05-modularization">modularization</a>:</p>
+<pre><code class="language-swift">// swift-tools-version: 5.10
+import PackageDescription
+let package = Package(
+    name: &quot;DesignSystem&quot;,
+    platforms: [.iOS(.v17)],
+    products: [.library(name: &quot;DesignSystem&quot;, targets: [&quot;DesignSystem&quot;])],
+    targets: [
+        .target(name: &quot;DesignSystem&quot;, resources: [.process(&quot;Resources&quot;)]),
+        .testTarget(name: &quot;DesignSystemTests&quot;, dependencies: [&quot;DesignSystem&quot;])
+    ])
+</code></pre>
+<p>Reference local packages by path (<code>.package(path: "../DesignSystem")</code>) to build a multi-module app from sibling folders.</p>
+<h2>Resources and access control</h2>
+<p>Bundle assets, JSON, or <code>.metal</code> files with <code>.process(...)</code>/<code>.copy(...)</code> and load them via <code>Bundle.module</code>. Remember that types are <code>internal</code> by default — anything a <em>consumer</em> of your package must use needs to be <code>public</code> (or <code>open</code>). Forgetting <code>public</code> is the most common "why can't I import this?" confusion.</p>
+<h2>Practical tips</h2>
+<ul>
+<li>Keep dependency count low; each one is code you don't control, plus build time and a supply-chain surface.</li>
+<li>Prefer well-maintained packages with real release tags over <code>branch: main</code>.</li>
+<li>If Xcode's package cache misbehaves, <em>File → Packages → Reset Package Caches</em> fixes most resolution gremlins.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>What you build with it: <a class="xref" href="architecture.html#05-modularization">Modularization</a></li>
+<li>Prev: <a class="xref" href="#02-accessibility">02-accessibility</a> · Next: <a class="xref" href="#04-code-signing">04-code-signing</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02-accessibility"><span>Prev</span>← Accessibility</a><a href="#04-code-signing"><span>Next</span>Code Signing →</a></div></section>
+<section class="page" id="04-code-signing" data-title="Code Signing" data-num="04" data-hasdemo="0"><h1>Code Signing</h1>
+<p>Code signing is the part of iOS development everyone dreads, usually because it's treated as magic. It isn't — it's a small set of pieces that together prove <em>who</em> built an app and <em>what</em> it's allowed to do. Understand the pieces and the dread goes away.</p>
+<h2>The four pieces</h2>
+<pre><code>Certificate          – proves WHO you are (a public/private key pair issued by Apple).
+                       Development cert (run on your devices) vs Distribution cert (ship).
+App ID / Bundle ID   – uniquely identifies the app (com.you.app) and its capabilities.
+Entitlements         – what the app may DO (push, App Groups, iCloud, HealthKit…).
+Provisioning Profile – ties cert + App ID + entitlements + (for dev) allowed devices
+                       together into one file Xcode embeds in the build.
+</code></pre>
+<p>A signed build = your binary + a provisioning profile that says "this certificate is allowed to run this bundle ID with these entitlements (on these devices)."</p>
+<h2>Automatic signing (use this)</h2>
+<p>For most apps, Xcode's <strong>Automatically manage signing</strong> is the right choice: check the box, pick your Team, and Xcode creates and renews certificates and profiles for you.</p>
+<pre><code>Target → Signing &amp; Capabilities → ✔ Automatically manage signing → select Team
+</code></pre>
+<p>Add a capability (Push, App Groups, Sign in with Apple) in that same tab and Xcode updates the App ID's entitlements and regenerates the profile automatically. This is the 90% path.</p>
+<h2>When you manage it manually</h2>
+<p>CI servers, enterprise distribution, and teams with strict control sometimes manage signing by hand: create the App ID and capabilities in the developer portal, generate a distribution certificate, create a profile, and download both. Tools like <strong>fastlane match</strong> store a shared set of certificates/profiles in a git repo so every machine and CI runner signs identically — the usual fix for "works on my Mac, fails on the build server."</p>
+<h2>Distribution flavors</h2>
+<ul>
+<li><strong>Development</strong> — run on registered devices during dev.</li>
+<li><strong>App Store</strong> — upload to App Store Connect for TestFlight/App Store.</li>
+<li><strong>Ad Hoc</strong> — distribute to a fixed list of registered devices outside the store.</li>
+<li><strong>Enterprise</strong> — in-house distribution (special program).</li>
+</ul>
+<p>The certificate <em>type</em> and profile must match the distribution method, which is why "the archive won't upload" is usually a profile/cert mismatch.</p>
+<h2>Common errors, decoded</h2>
+<ul>
+<li><em>"No profiles for 'com.you.app' were found"</em> → the App ID/profile doesn't exist or doesn't match the bundle ID; let automatic signing regenerate it.</li>
+<li><em>"Provisioning profile doesn't include signing certificate"</em> → your cert and the profile are out of sync; refresh.</li>
+<li><em>"Entitlement not in profile"</em> → you added a capability but the profile is stale; toggle automatic signing or regenerate.</li>
+</ul>
+<p>Almost every signing error is "the four pieces don't agree." Find which one is stale and refresh it.</p>
+<h2>Related</h2>
+<ul>
+<li>Where signed builds go: <a class="xref" href="#05-xcode-cloud-and-app-store">05-xcode-cloud-and-app-store</a></li>
+<li>Secure storage of secrets (Keychain): <a class="xref" href="persistence.html#01-where-data-lives">Where Data Lives</a></li>
+<li>Prev: <a class="xref" href="#03-swift-package-manager">03-swift-package-manager</a> · Next: <a class="xref" href="#05-xcode-cloud-and-app-store">05-xcode-cloud-and-app-store</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03-swift-package-manager"><span>Prev</span>← Swift Package Manager</a><a href="#05-xcode-cloud-and-app-store"><span>Next</span>Xcode Cloud &amp; the App Store →</a></div></section>
+<section class="page" id="05-xcode-cloud-and-app-store" data-title="Xcode Cloud &amp; the App Store" data-num="05" data-hasdemo="0"><h1>Xcode Cloud &amp; the App Store</h1>
+<p>The last mile: getting a signed build tested by real users and onto the App Store, ideally automatically. This lesson covers continuous integration with Xcode Cloud, TestFlight, and the App Store Connect release flow.</p>
+<h2>Continuous integration</h2>
+<p>CI runs your tests on every push and produces builds without anyone manually archiving. <strong>Xcode Cloud</strong> is Apple's built-in option (no servers to manage, integrated with App Store Connect):</p>
+<pre><code>App Store Connect → Xcode Cloud → create a workflow:
+  Start condition:  push to main / PR opened
+  Actions:          Build → Test (your XCTest/Swift Testing suites)
+  Post-action:      Archive → deliver to TestFlight
+</code></pre>
+<p>Alternatives — GitHub Actions, fastlane, Bitrise — do the same with more control and (often) lower cost at scale; many teams use fastlane lanes (<code>fastlane beta</code>) invoked from GitHub Actions. Whatever the tool, the pipeline is the same: <strong>build → test → sign → upload</strong>.</p>
+<h2>The build → release pipeline</h2>
+<pre><code>1. Archive          a Release build (signed with a Distribution profile)
+2. Upload           to App Store Connect (Xcode Organizer, `xcodebuild`, or fastlane `pilot`)
+3. Processing       Apple processes the build (a few minutes to an hour)
+4. TestFlight       distribute to internal testers instantly; external testers after a brief review
+5. Submit           attach the build to an App Store version, fill metadata, submit for review
+6. Review → Release  approval, then release (manually, automatically, or phased)
+</code></pre>
+<h2>TestFlight</h2>
+<p>TestFlight is how you get real-world testing before release. <strong>Internal testers</strong> (up to 100 team members) get builds immediately; <strong>external testers</strong> (up to 10,000, via public link) get them after a lightweight beta review. Builds expire after 90 days. Use it to catch device-specific bugs, gather feedback, and validate analytics before going live.</p>
+<h2>App Store submission essentials</h2>
+<p>A submission needs: an app icon and screenshots for required device sizes, a description and keywords, a privacy policy URL, and the <strong>Privacy Nutrition Label</strong> (declare what data you collect and why) plus the privacy manifest (<code>PrivacyInfo.xcprivacy</code>) for the app and SDKs. Incomplete or inaccurate privacy info is a common rejection.</p>
+<h2>Surviving review</h2>
+<p>Most rejections are avoidable: provide a demo account if login is required, don't ship placeholder/crashing content, request permissions with clear purpose strings (the <code>NS…UsageDescription</code> keys), and make sure every feature works without the reviewer guessing. Read the rejection carefully — it cites a specific guideline — fix that, and reply in Resolution Center.</p>
+<h2>Phased release</h2>
+<p>For App Store releases you can roll out gradually (phased release) over 7 days, so a bad build reaches a small fraction first. Pair it with crash monitoring (Xcode Organizer's crash reports / MetricKit) so you catch regressions before they hit everyone — the production analog of the profiling in <a class="xref" href="testing.html#05-performance-and-hangs">performance &amp; hangs</a>.</p>
+<h2>The whole journey</h2>
+<p>From here you've gone end to end: write a feature, test it (<a class="xref" href="testing.html#00-overview">testing</a>), make it reachable (<a class="xref" href="#01-app-intents-and-siri">App Intents</a>) and usable by everyone (<a class="xref" href="#02-accessibility">accessibility</a>), sign it (<a class="xref" href="#04-code-signing">code signing</a>), and ship it. That's a complete iOS engineer's loop.</p>
+<h2>Related</h2>
+<ul>
+<li>What gets signed and uploaded: <a class="xref" href="#04-code-signing">Code Signing</a></li>
+<li>Prev: <a class="xref" href="#04-code-signing">04-code-signing</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#04-code-signing"><span>Prev</span>← Code Signing</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>

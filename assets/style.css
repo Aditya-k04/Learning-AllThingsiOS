@@ -251,3 +251,9 @@ nav a.read .hasdemo{display:none}
 .chat-key a{color:var(--accent)}
 .chat-note{font-size:11px;color:var(--faint);margin-top:10px}
 @media(max-width:560px){.chat-panel{right:8px;left:8px;bottom:8px;width:auto;height:calc(100vh - 16px)}}
+
+/* ============ Landing: additional-topics section ============ */
+.section-divider{height:1px;background:var(--line);margin:66px 0 0}
+.section-head{margin:42px 0 26px}
+.section-head h2{font-family:var(--serif);font-weight:600;font-size:29px;letter-spacing:-0.02em;margin:0 0 8px}
+.section-head p{font-size:15px;line-height:1.55;color:var(--muted);margin:0;max-width:620px}

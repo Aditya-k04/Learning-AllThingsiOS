@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WidgetKit &amp; Live Activities · Learning All things Apple</title>
+<meta name="description" content="Timelines, widget families, Live Activities and the Dynamic Island — high-craft, product-facing surfaces.">
+<meta property="og:title" content="WidgetKit &amp; Live Activities · Learning All things Apple">
+<meta property="og:description" content="Timelines, widget families, Live Activities and the Dynamic Island — high-craft, product-facing surfaces.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">WidgetKit &amp; Live Activities</div><div class="cs">Timelines, widget families, Live Activities and the Dynamic Island — high-craft, product-facing surfaces.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html" selected>WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="WidgetKit &amp; Live Activities — Overview" data-num="·" data-hasdemo="0"><h1>WidgetKit &amp; Live Activities — Overview</h1>
+<p>Widgets, Live Activities, and the Dynamic Island are some of the highest-craft surfaces on iOS — tiny, glanceable, and unforgiving of sloppiness. They share one runtime model: <strong>your code runs briefly, produces SwiftUI views and a schedule, and the system renders them later, without your app running.</strong></p>
+<h2>The fundamental constraint</h2>
+<blockquote>
+<p>A widget is <strong>not</strong> a live app. You don't get a render loop. You hand the system a <em>timeline</em> of pre-rendered states with dates, and it shows each one at the right time. No timers, no networking at display time — everything is computed in advance.</p>
+</blockquote>
+<p>Internalizing this "archived snapshots, not a running app" model explains every WidgetKit rule.</p>
+<h2>What you'll learn</h2>
+<ol>
+<li><a class="xref" href="#01-timeline-provider">01-timeline-provider</a> — the <code>TimelineProvider</code>, snapshots, entries, and refresh policies.</li>
+<li><a class="xref" href="#02-widget-views-families">02-widget-views-families</a> — building the SwiftUI view, supported families, and the <code>containerBackground</code> rules.</li>
+<li><a class="xref" href="#03-live-activities">03-live-activities</a> — ActivityKit: live, updating content on the Lock Screen.</li>
+<li><a class="xref" href="#04-dynamic-island">04-dynamic-island</a> — the compact, minimal, and expanded presentations.</li>
+<li><a class="xref" href="#05-interactivity-and-app-intents">05-interactivity-and-app-intents</a> — buttons and toggles in widgets via App Intents, and deep links.</li>
+</ol>
+<h2>Where it runs</h2>
+<p>All of this lives in a <strong>widget extension</strong> — a separate target/process from your app, with its own memory budget. Sharing data with the main app means an <strong>App Group</strong> container (shared <code>UserDefaults</code> or a shared SwiftData/file store), covered alongside <a class="xref" href="persistence.html#04-files-and-codable">persistence</a>.</p>
+<h2>Why it's worth your time</h2>
+<p>These surfaces are pure SwiftUI (<a class="xref" href="swiftui.html#00-roadmap">SwiftUI</a>) under tight constraints, they're extremely product-facing, and the Dynamic Island in particular is a showcase of the fluid, physical motion you care about. They reward craft more than almost anything else on the platform.</p><div class="pager"><span class="sp"></span><a href="#01-timeline-provider"><span>Next</span>The Timeline Provider →</a></div></section>
+<section class="page" id="01-timeline-provider" data-title="The Timeline Provider" data-num="01" data-hasdemo="0"><h1>The Timeline Provider</h1>
+<p>The <code>TimelineProvider</code> is the engine of a widget. It answers one question: <em>"what should this widget show, and when should it change?"</em> You return a list of timed entries; the system caches them and renders each at its date — no further code of yours runs in between.</p>
+<h2>Three methods</h2>
+<pre><code class="language-swift">struct Provider: TimelineProvider {
+    // 1. A static placeholder for the gallery / redacted state. Instant, no data.
+    func placeholder(in: Context) -&gt; Entry {
+        Entry(date: .now, value: &quot;—&quot;)
+    }
+    // 2. A single snapshot for the widget gallery / transient previews.
+    func getSnapshot(in: Context, completion: @escaping (Entry) -&gt; Void) {
+        completion(Entry(date: .now, value: latestValue()))
+    }
+    // 3. The real schedule: multiple future entries + a refresh policy.
+    func getTimeline(in: Context, completion: @escaping (Timeline&lt;Entry&gt;) -&gt; Void) {
+        var entries: [Entry] = []
+        let now = Date()
+        for hour in 0..&lt;5 {                       // pre-render the next 5 hours
+            let date = Calendar.current.date(byAdding: .hour, value: hour, to: now)!
+            entries.append(Entry(date: date, value: forecast(at: date)))
+        }
+        completion(Timeline(entries: entries, policy: .atEnd))
+    }
+}
+</code></pre>
+<p>Each <code>Entry</code> is a <code>TimelineEntry</code> with a <code>date</code> (when it becomes visible) plus your data.</p>
+<h2>Refresh policies</h2>
+<p>The <code>policy</code> tells the system when to ask for a fresh timeline:</p>
+<ul>
+<li><strong><code>.atEnd</code></strong> — request a new timeline after the last entry's date.</li>
+<li><strong><code>.after(date)</code></strong> — refresh at a specific time.</li>
+<li><strong><code>.never</code></strong> — only when the app explicitly reloads it.</li>
+</ul>
+<h2>You don't control timing precisely</h2>
+<p>The system budgets widget refreshes (battery, frequency caps). A timeline asking for updates every minute will be throttled. Design around it: pre-compute several entries so the widget <em>appears</em> to update frequently from a single refresh, and push urgent changes from the app with:</p>
+<pre><code class="language-swift">WidgetCenter.shared.reloadTimelines(ofKind: &quot;ForecastWidget&quot;)
+</code></pre>
+<h2>Getting data in</h2>
+<p>Because the provider runs in the extension, it reads from the <strong>shared App Group</strong> store the main app writes to — not from your app's memory. Fetch/network in the app, persist to the shared container, and let the provider read it synchronously. Heavy work in <code>getTimeline</code> risks the extension being killed for exceeding its memory budget.</p>
+<h2>Configurable widgets</h2>
+<p>User-customizable widgets (choose a city, pick an account) use <code>AppIntentTimelineProvider</code> with an <code>AppIntent</code> configuration — the same App Intents system from <a class="xref" href="#05-interactivity-and-app-intents">05-interactivity-and-app-intents</a> and <a class="xref" href="shipping.html#01-app-intents-and-siri">App Intents &amp; Siri</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>What the entries render into: <a class="xref" href="#02-widget-views-families">02-widget-views-families</a></li>
+<li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← WidgetKit &amp; Live Activities — Overview</a><a href="#02-widget-views-families"><span>Next</span>Widget Views &amp; Families →</a></div></section>
+<section class="page" id="02-widget-views-families" data-title="Widget Views &amp; Families" data-num="02" data-hasdemo="0"><h1>Widget Views &amp; Families</h1>
+<p>A widget's appearance is a SwiftUI view fed one timeline entry. The discipline is making one view adapt across several <strong>families</strong> (sizes), and following the platform rules that keep widgets crisp and legible.</p>
+<h2>The widget definition</h2>
+<pre><code class="language-swift">@main
+struct ForecastWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: &quot;ForecastWidget&quot;, provider: Provider()) { entry in
+            ForecastView(entry: entry)
+                .containerBackground(.fog.gradient, for: .widget)  // required iOS 17+
+        }
+        .configurationDisplayName(&quot;Forecast&quot;)
+        .description(&quot;Your local forecast at a glance.&quot;)
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge,
+                            .accessoryCircular, .accessoryRectangular, .accessoryInline])
+    }
+}
+</code></pre>
+<h2>Adapt to the family</h2>
+<p>The same view renders at very different sizes. Read the environment and branch:</p>
+<pre><code class="language-swift">struct ForecastView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: Entry
+    var body: some View {
+        switch family {
+        case .systemSmall:        CompactForecast(entry)
+        case .accessoryCircular:  Gauge(value: entry.temp) { Text(&quot;°&quot;) }
+        default:                  DetailedForecast(entry)
+        }
+    }
+}
+</code></pre>
+<p><code>accessory*</code> families are the Lock Screen / watch complications — monochrome, vibrancy-tinted; design them as glyphs and gauges, not full layouts.</p>
+<h2>The rules that trip people up</h2>
+<ul>
+<li><strong><code>containerBackground(for: .widget)</code> is required</strong> (iOS 17+) — it's how the system insets and renders your background in StandBy, the gallery, and on the Home Screen. Without it the widget looks broken.</li>
+<li><strong>No scrolling, no video, no interactive UIKit.</strong> Widgets are static images plus (since iOS 17) <code>Button</code>/<code>Toggle</code> backed by App Intents — nothing else is interactive.</li>
+<li><strong>Use system fonts and <code>.widgetAccentable()</code></strong> so tinted Home Screen modes recolor your widget correctly.</li>
+<li><strong>Keep the view pure</strong> — it's rendered from an archived entry; it can't fetch or run timers.</li>
+</ul>
+<h2>Animation</h2>
+<p>Widgets get <em>limited</em>, system-driven transitions between timeline entries (iOS 17+): SwiftUI will animate numeric text and view changes between entries automatically, and you can hint with <code>.contentTransition</code>. You don't drive these frame-by-frame — you describe two states and the system tweens, the same declarative model as <a class="xref" href="swiftui.html#12-animation-basics">SwiftUI animation</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>The data that feeds it: <a class="xref" href="#01-timeline-provider">01-timeline-provider</a></li>
+<li>Live, updating variant: <a class="xref" href="#03-live-activities">03-live-activities</a></li>
+<li>Prev: <a class="xref" href="#01-timeline-provider">01-timeline-provider</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01-timeline-provider"><span>Prev</span>← The Timeline Provider</a><a href="#03-live-activities"><span>Next</span>Live Activities →</a></div></section>
+<section class="page" id="03-live-activities" data-title="Live Activities" data-num="03" data-hasdemo="0"><h1>Live Activities</h1>
+<p>A Live Activity is a glanceable, <em>updating</em> view on the Lock Screen and in the Dynamic Island — a ride approaching, a game score, a timer, a delivery. It's WidgetKit's views plus a live update channel (ActivityKit), bounded by strict time and size limits.</p>
+<h2>The shape</h2>
+<p>You define the activity's data in two parts: <strong>attributes</strong> (fixed for the activity's life) and <strong>content state</strong> (the part that updates):</p>
+<pre><code class="language-swift">import ActivityKit
+
+struct DeliveryAttributes: ActivityAttributes {
+    struct ContentState: Codable, Hashable {   // the changing part
+        var status: String
+        var etaMinutes: Int
+    }
+    let orderNumber: String                     // fixed for the whole activity
+}
+</code></pre>
+<h2>Lifecycle: start, update, end</h2>
+<pre><code class="language-swift">// Start (from the foreground app)
+let activity = try Activity.request(
+    attributes: DeliveryAttributes(orderNumber: &quot;A-1024&quot;),
+    content: .init(state: .init(status: &quot;Preparing&quot;, etaMinutes: 30), staleDate: nil))
+
+// Update — locally, or remotely via a push to activity.pushToken
+await activity.update(.init(state: .init(status: &quot;On the way&quot;, etaMinutes: 12), staleDate: nil))
+
+// End
+await activity.end(.init(state: .init(status: &quot;Delivered&quot;, etaMinutes: 0), staleDate: nil),
+                   dismissalPolicy: .after(.now + 60))
+</code></pre>
+<h2>Updating without your app running</h2>
+<p>The power move is <strong>remote updates via push</strong>: each activity has a <code>pushToken</code>; your server sends a special <code>liveactivity</code> push with the new <code>ContentState</code>, and the system re-renders the views — your app never wakes. This is how a delivery or sports app keeps the Lock Screen current. Local updates work too but only while your app has execution time.</p>
+<h2>The views</h2>
+<p>The Live Activity declares a SwiftUI layout for the <strong>Lock Screen</strong> banner and for the <strong>Dynamic Island</strong> presentations (next lesson). They're the same view-building skills as <a class="xref" href="#02-widget-views-families">02-widget-views-families</a>, under even tighter size limits.</p>
+<pre><code class="language-swift">struct DeliveryLiveActivity: Widget {
+    var body: some WidgetConfiguration {
+        ActivityConfiguration(for: DeliveryAttributes.self) { context in
+            // Lock Screen / banner UI
+            LockScreenView(context: context)
+        } dynamicIsland: { context in
+            // compact / minimal / expanded — see next lesson
+        }
+    }
+}
+</code></pre>
+<h2>Constraints to design around</h2>
+<p>Live Activities have a maximum lifetime (hours, then the system ends them), a small memory budget, and update throttling. Keep <code>ContentState</code> tiny, set sensible <code>staleDate</code>s so the UI can show "outdated" gracefully, and always provide an <code>.end</code> path.</p>
+<h2>Related</h2>
+<ul>
+<li>The Dynamic Island presentations: <a class="xref" href="#04-dynamic-island">04-dynamic-island</a></li>
+<li>Prev: <a class="xref" href="#02-widget-views-families">02-widget-views-families</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02-widget-views-families"><span>Prev</span>← Widget Views &amp; Families</a><a href="#04-dynamic-island"><span>Next</span>The Dynamic Island →</a></div></section>
+<section class="page" id="04-dynamic-island" data-title="The Dynamic Island" data-num="04" data-hasdemo="0"><h1>The Dynamic Island</h1>
+<p>The Dynamic Island is the live, morphing pill around the front camera. It's the presentation layer of a Live Activity, and it's a masterclass in fluid motion — shapes that grow, merge, and split with physical springs. You author three discrete states; the system handles the morphing between them.</p>
+<h2>The three presentations</h2>
+<pre><code class="language-swift">dynamicIsland: { context in
+    DynamicIsland {
+        // EXPANDED — when long-pressed or for important updates. Four regions:
+        DynamicIslandExpandedRegion(.leading)  { Label(context) }
+        DynamicIslandExpandedRegion(.trailing) { ETA(context) }
+        DynamicIslandExpandedRegion(.center)   { Title(context) }
+        DynamicIslandExpandedRegion(.bottom)   { ProgressBar(context) }
+    } compactLeading: {
+        Image(systemName: &quot;bicycle&quot;)           // COMPACT — left of the camera
+    } compactTrailing: {
+        Text(&quot;\(context.state.etaMinutes)m&quot;)   // COMPACT — right of the camera
+    } minimal: {
+        Image(systemName: &quot;bicycle&quot;)           // MINIMAL — when another activity shares the island
+    }
+}
+</code></pre>
+<ul>
+<li><strong>Compact</strong> — the default: small leading + trailing content hugging the camera.</li>
+<li><strong>Minimal</strong> — a single tiny glyph, used when multiple activities compete for the island.</li>
+<li><strong>Expanded</strong> — a rich layout shown on long-press or for momentary alerts.</li>
+</ul>
+<h2>You describe states; the system animates</h2>
+<p>You never animate the pill morphing. You declare what each state looks like and the system tweens between them with its signature springs — the same "two states, let the system interpolate" model as SwiftUI animation (<a class="xref" href="swiftui.html#12-animation-basics">Animation Basics</a>) and the WWDC spring talk (<a class="xref" href="wwdc.html#10158-animate-with-springs">Animate with Springs</a>). Your job is making each <em>static</em> state beautiful and legible.</p>
+<h2>Design constraints</h2>
+<ul>
+<li>The hardware camera cutout is sacred — content flows <em>around</em> it; never assume a rectangle.</li>
+<li>Compact content is tiny: a glyph and a few characters. Reserve detail for expanded.</li>
+<li>Use <code>.foregroundStyle</code>, vibrancy, and SF Symbols; the island is rendered with system materials.</li>
+<li>Keep the leading/trailing compact items visually balanced — they read as one unit split by the camera.</li>
+</ul>
+<h2>Tap targets and deep links</h2>
+<p>Tapping the island/Live Activity launches your app. Route it with <code>.widgetURL(URL)</code> on the Lock Screen view, or <code>Link</code> destinations in expanded regions, so different parts deep-link to different screens — the same deep-link handling as a widget tap (<a class="xref" href="#05-interactivity-and-app-intents">05-interactivity-and-app-intents</a>).</p>
+<h2>Why study it</h2>
+<p>The Dynamic Island is the platform's clearest demonstration that <em>premium motion = declarative states + great springs + respect for physical constraints</em> — exactly the thesis running through your interaction-math and Core Animation work.</p>
+<h2>Related</h2>
+<ul>
+<li>The activity behind it: <a class="xref" href="#03-live-activities">03-live-activities</a></li>
+<li>The motion model: <a class="xref" href="wwdc.html#10158-animate-with-springs">Animate with Springs</a></li>
+<li>Prev: <a class="xref" href="#03-live-activities">03-live-activities</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03-live-activities"><span>Prev</span>← Live Activities</a><a href="#05-interactivity-and-app-intents"><span>Next</span>Interactivity &amp; App Intents →</a></div></section>
+<section class="page" id="05-interactivity-and-app-intents" data-title="Interactivity &amp; App Intents" data-num="05" data-hasdemo="0"><h1>Interactivity &amp; App Intents</h1>
+<p>Before iOS 17 a widget could only deep-link into the app. Now a widget or Live Activity can contain <strong><code>Button</code>s and <code>Toggle</code>s</strong> that run code <em>in place</em> — check off a reminder, toggle a light — without launching the app. The mechanism is <strong>App Intents</strong>.</p>
+<h2>Buttons backed by intents</h2>
+<p>A widget button doesn't take a closure (there's no running app to run it). It takes an <code>AppIntent</code> — a serializable description of an action the system performs on your behalf:</p>
+<pre><code class="language-swift">import AppIntents
+
+struct ToggleTaskIntent: AppIntent {
+    static var title: LocalizedStringResource = &quot;Toggle Task&quot;
+    @Parameter var taskID: String
+    init() {} 
+    init(taskID: String) { self.taskID = taskID }
+
+    func perform() async throws -&gt; some IntentResult {
+        TaskStore.shared.toggle(taskID)       // mutate shared (App Group) store
+        return .result()
+    }
+}
+
+// In the widget view (iOS 17+):
+Button(intent: ToggleTaskIntent(taskID: task.id)) {
+    Image(systemName: task.done ? &quot;checkmark.circle.fill&quot; : &quot;circle&quot;)
+}
+</code></pre>
+<p>When tapped, the system runs <code>perform()</code> in your extension, you mutate the <strong>shared store</strong>, and WidgetKit reloads the timeline to reflect the change — all without opening the app.</p>
+<h2>Why App Intents, not closures</h2>
+<p>The widget UI is an archived snapshot; there's no live code to call. An <code>AppIntent</code> is a <em>value</em> the system can serialize, schedule, and execute in a fresh process. That same property is why App Intents also power Siri, Shortcuts, and Spotlight — one definition, many entry points (covered in <a class="xref" href="shipping.html#01-app-intents-and-siri">App Intents &amp; Siri</a>).</p>
+<h2>Deep links for everything else</h2>
+<p>For actions that genuinely need the app (open a detail screen), use a URL:</p>
+<pre><code class="language-swift">// widget view
+.widgetURL(URL(string: &quot;myapp://task/\(task.id)&quot;))
+// or a Link on a sub-region
+Link(destination: URL(string: &quot;myapp://task/\(task.id)&quot;)!) { RowView(task) }
+</code></pre>
+<p>Handle it in the app with <code>.onOpenURL { url in router.handle(url) }</code>.</p>
+<h2>Keep perform() fast and shared-state based</h2>
+<p><code>perform()</code> runs with a tight budget. Do the minimal mutation against the App Group store; don't network or do heavy work there. If a button needs network, mutate optimistic state, reload the timeline, and let the app reconcile later.</p>
+<h2>Related</h2>
+<ul>
+<li>The intents system in full: <a class="xref" href="shipping.html#01-app-intents-and-siri">App Intents &amp; Siri</a></li>
+<li>Shared storage: <a class="xref" href="persistence.html#04-files-and-codable">Files &amp; Shared Storage</a></li>
+<li>Prev: <a class="xref" href="#04-dynamic-island">04-dynamic-island</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#04-dynamic-island"><span>Prev</span>← The Dynamic Island</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>

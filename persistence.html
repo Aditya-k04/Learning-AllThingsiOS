@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Persistence &amp; SwiftData · Learning All things Apple</title>
+<meta name="description" content="Where data lives: SwiftData, the Core Data engine underneath, the file system, and migrations.">
+<meta property="og:title" content="Persistence &amp; SwiftData · Learning All things Apple">
+<meta property="og:description" content="Where data lives: SwiftData, the Core Data engine underneath, the file system, and migrations.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Persistence &amp; SwiftData</div><div class="cs">Where data lives: SwiftData, the Core Data engine underneath, the file system, and migrations.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html" selected>Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="Persistence &amp; SwiftData — Overview" data-num="·" data-hasdemo="0"><h1>Persistence &amp; SwiftData — Overview</h1>
+<p>Every app needs to remember things — between launches, offline, across devices. iOS gives you a ladder of options from a single value to a full object graph. The skill is matching the tool to the data, and knowing the Core Data engine that still sits under the modern API.</p>
+<h2>The ladder of options</h2>
+<pre><code>@AppStorage / UserDefaults   – small key-values: flags, prefs, last-selected tab
+Files (Codable → disk)       – documents, caches, exported data, App Group sharing
+Keychain                     – secrets: tokens, passwords (encrypted)
+SwiftData / Core Data        – a queryable object GRAPH with relationships &amp; migrations
+CloudKit (+ SwiftData)       – the above, synced across the user's devices
+</code></pre>
+<blockquote>
+<p>Don't reach for a database to store a boolean, and don't store a thousand related records in a JSON file. Pick the lightest tool that fits the <em>shape</em> and <em>size</em> of the data.</p>
+</blockquote>
+<h2>What you'll learn</h2>
+<ol>
+<li><a class="xref" href="#01-where-data-lives">01-where-data-lives</a> — UserDefaults, the sandbox directories, and what belongs where.</li>
+<li><a class="xref" href="#02-swiftdata">02-swiftdata</a> — the modern <code>@Model</code> API: models, queries, the context.</li>
+<li><a class="xref" href="#03-core-data-engine">03-core-data-engine</a> — what SwiftData is built on, and when you still meet Core Data.</li>
+<li><a class="xref" href="#04-files-and-codable">04-files-and-codable</a> — saving Codable to disk and sharing via App Groups.</li>
+<li><a class="xref" href="#05-migrations-and-performance">05-migrations-and-performance</a> — evolving your schema safely and keeping it fast.</li>
+</ol>
+<h2>The mental model</h2>
+<p>Persistence has two halves: a <strong>store</strong> (where bytes live) and a <strong>context</strong> (your in-memory working set that you mutate and then save). SwiftData and Core Data both follow this; understanding it explains saving, undo, and threading.</p>
+<h2>How it connects</h2>
+<p>Decoded network models (<a class="xref" href="networking.html#03-codable">Codable</a>) often land in SwiftData for offline use. Widgets read a <em>shared</em> store via an App Group (<a class="xref" href="widgetkit.html#05-interactivity-and-app-intents">widget interactivity</a>). And the <code>@Observable</code> models SwiftData produces plug straight into <a class="xref" href="swiftui-dataflow.html#05-observation-framework-internals">the Observation framework</a>.</p><div class="pager"><span class="sp"></span><a href="#01-where-data-lives"><span>Next</span>Where Data Lives →</a></div></section>
+<section class="page" id="01-where-data-lives" data-title="Where Data Lives" data-num="01" data-hasdemo="0"><h1>Where Data Lives</h1>
+<p>Before reaching for a database, know the lightweight stores and the app sandbox. Putting data in the wrong directory is a real bug — it can get purged, fail to back up, or get your app rejected.</p>
+<h2>UserDefaults / @AppStorage</h2>
+<p>For small, simple values — preferences, flags, the last-selected tab. Backed by a property list, loaded into memory at launch.</p>
+<pre><code class="language-swift">UserDefaults.standard.set(true, forKey: &quot;hasOnboarded&quot;)
+
+// SwiftUI binds to it directly:
+@AppStorage(&quot;hasOnboarded&quot;) private var hasOnboarded = false
+</code></pre>
+<p><code>@AppStorage</code> is a property wrapper that reads/writes <code>UserDefaults</code> <em>and</em> invalidates the view when it changes — the data-flow integration from <a class="xref" href="swiftui-dataflow.html#03-state-storage-internals">state storage</a>. Rule: <strong>small values only.</strong> It's not for images, large arrays, or models.</p>
+<h2>The app sandbox directories</h2>
+<p>Your app can only read/write inside its sandbox. The directories differ in <em>backup</em> and <em>purge</em> behavior — this is the part people get wrong:</p>
+<pre><code>Documents/        – user-created, user-visible data. Backed up to iCloud/iTunes.
+Library/Application Support/  – app-generated data you want to keep. Backed up. (DBs go here.)
+Library/Caches/   – re-creatable data. NOT backed up; system may PURGE under pressure.
+tmp/              – scratch. Can vanish any time.
+</code></pre>
+<pre><code class="language-swift">let support = try FileManager.default.url(for: .applicationSupportDirectory,
+    in: .userDomainMask, appropriateFor: nil, create: true)
+</code></pre>
+<p>Common mistakes: putting a cache in <code>Documents</code> (bloats the user's iCloud backup → possible rejection), or putting the database in <code>Caches</code> (the OS deletes it and the app "loses everything").</p>
+<h2>Excluding from backup</h2>
+<p>For large re-downloadable files you keep in Application Support, mark them so they don't inflate backups:</p>
+<pre><code class="language-swift">var url = fileURL
+var values = URLResourceValues(); values.isExcludedFromBackup = true
+try url.setResourceValues(values)
+</code></pre>
+<h2>Keychain for secrets</h2>
+<p>Tokens, passwords, keys — never <code>UserDefaults</code> (it's plain plist). The Keychain is encrypted and survives reinstalls (optionally). The API is C-ish; most apps wrap it or use a tiny helper:</p>
+<pre><code class="language-swift">let query: [String: Any] = [
+    kSecClass as String: kSecClassGenericPassword,
+    kSecAttrAccount as String: &quot;authToken&quot;,
+    kSecValueData as String: token.data(using: .utf8)!]
+SecItemAdd(query as CFDictionary, nil)
+</code></pre>
+<h2>App Group: sharing with extensions</h2>
+<p>Widgets, share extensions, and your app are separate processes. To share data, put it in an <strong>App Group</strong> container (enabled in capabilities) — a directory and <code>UserDefaults</code> suite both targets can reach:</p>
+<pre><code class="language-swift">let shared = UserDefaults(suiteName: &quot;group.com.you.app&quot;)!
+let dir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: &quot;group.com.you.app&quot;)!
+</code></pre>
+<p>This is how a <a class="xref" href="widgetkit.html#01-timeline-provider">widget timeline provider</a> reads what the app wrote.</p>
+<h2>Related</h2>
+<ul>
+<li>For object graphs, step up to: <a class="xref" href="#02-swiftdata">02-swiftdata</a></li>
+<li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Persistence &amp; SwiftData — Overview</a><a href="#02-swiftdata"><span>Next</span>SwiftData →</a></div></section>
+<section class="page" id="02-swiftdata" data-title="SwiftData" data-num="02" data-hasdemo="0"><h1>SwiftData</h1>
+<p>SwiftData (iOS 17+) is Apple's modern persistence framework: you annotate plain Swift classes with <code>@Model</code>, and they become a queryable, relational, observable store — with deep SwiftUI integration. It's the recommended default for structured data in new apps.</p>
+<h2>Define a model</h2>
+<pre><code class="language-swift">import SwiftData
+
+@Model
+final class Task {
+    var title: String
+    var isDone: Bool
+    var createdAt: Date
+    @Relationship(deleteRule: .cascade) var subtasks: [Subtask] = []
+
+    init(title: String, isDone: Bool = false) {
+        self.title = title; self.isDone = isDone; self.createdAt = .now
+    }
+}
+</code></pre>
+<p><code>@Model</code> rewrites the class to track changes and persist properties. Relationships are just typed properties; <code>deleteRule: .cascade</code> means deleting a task deletes its subtasks.</p>
+<h2>The container and context</h2>
+<pre><code>ModelContainer  – owns the store file (the database on disk)
+ModelContext    – your in-memory working set: insert/delete/edit, then save
+</code></pre>
+<p>In SwiftUI you wire the container once and get a context from the environment:</p>
+<pre><code class="language-swift">@main struct MyApp: App {
+    var body: some Scene {
+        WindowGroup { ContentView() }
+            .modelContainer(for: Task.self)     // creates the store
+    }
+}
+
+struct ContentView: View {
+    @Environment(\.modelContext) private var context
+    @Query(sort: \Task.createdAt, order: .reverse) private var tasks: [Task]   // live results
+
+    var body: some View {
+        List(tasks) { task in Text(task.title) }
+        Button(&quot;Add&quot;) { context.insert(Task(title: &quot;New&quot;)) }   // auto-saves
+    }
+}
+</code></pre>
+<h2>@Query is the magic</h2>
+<p><code>@Query</code> runs a fetch <em>and</em> keeps the view in sync: insert, delete, or edit a model anywhere and every <code>@Query</code> showing it updates automatically. It's the persistence equivalent of the <a class="xref" href="swiftui-dataflow.html#01-the-dependency-graph">dependency graph</a> — you describe what you want, the framework keeps it current. Filter and sort declaratively:</p>
+<pre><code class="language-swift">@Query(filter: #Predicate&lt;Task&gt; { !$0.isDone }, sort: \.createdAt) var open: [Task]
+</code></pre>
+<h2>Saving, deleting, undo</h2>
+<p><code>context.insert(_:)</code> and <code>context.delete(_:)</code> stage changes; SwiftData autosaves by default, or call <code>try context.save()</code> explicitly. Enable undo with <code>container.mainContext.undoManager</code> for free edit/undo.</p>
+<h2>Threading</h2>
+<p>The main context is main-actor bound. For heavy imports, use a background <code>ModelContext</code> (via <code>ModelContainer</code>), do the work off-main, and save — the same main-actor discipline from <a class="xref" href="concurrency.html#04-mainactor-discipline">@MainActor discipline</a>. Pass model <strong>IDs</strong> (<code>PersistentIdentifier</code>) across actors, not the model objects.</p>
+<h2>Related</h2>
+<ul>
+<li>The engine underneath: <a class="xref" href="#03-core-data-engine">03-core-data-engine</a></li>
+<li>Prev: <a class="xref" href="#01-where-data-lives">01-where-data-lives</a> · Next: <a class="xref" href="#03-core-data-engine">03-core-data-engine</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01-where-data-lives"><span>Prev</span>← Where Data Lives</a><a href="#03-core-data-engine"><span>Next</span>The Core Data Engine →</a></div></section>
+<section class="page" id="03-core-data-engine" data-title="The Core Data Engine" data-num="03" data-hasdemo="0"><h1>The Core Data Engine</h1>
+<p>SwiftData is a modern Swift skin over <strong>Core Data</strong>, the framework that has powered iOS persistence for over a decade. You'll still meet Core Data in existing codebases, in advanced scenarios SwiftData doesn't yet cover, and in the concepts that explain SwiftData's behavior.</p>
+<h2>The Core Data stack</h2>
+<pre><code>NSManagedObjectModel    – the schema (entities, attributes, relationships)
+NSPersistentStoreCoordinator – connects the model to the actual store file (SQLite)
+NSManagedObjectContext  – the in-memory scratchpad of managed objects
+NSPersistentContainer   – bundles all of the above together (the modern entry point)
+</code></pre>
+<p>SwiftData's <code>ModelContainer</code>/<code>ModelContext</code> map directly onto <code>NSPersistentContainer</code>/<code>NSManagedObjectContext</code>. Same architecture, friendlier API.</p>
+<h2>Managed objects are faulted</h2>
+<p>Core Data is lazy. A fetched object can be a <strong>fault</strong> — a placeholder that hasn't loaded its data yet; touching a property fires the fault and loads from SQLite. This makes fetching large graphs cheap but means I/O can happen at surprising times. SwiftData inherits this laziness, which is why you keep model access on the right actor.</p>
+<h2>Contexts and threading (the classic footgun)</h2>
+<blockquote>
+<p>A managed object belongs to the context that created it and <strong>must not</strong> be used on another thread. Cross threads by passing the <code>NSManagedObjectID</code> (SwiftData: <code>PersistentIdentifier</code>) and re-fetching in the target context.</p>
+</blockquote>
+<p>The standard pattern is a main-queue context for UI and background contexts for imports, merging changes between them. SwiftData automates much of this, but the rule is the same and explains its actor constraints from <a class="xref" href="#02-swiftdata">02-swiftdata</a>.</p>
+<h2>When you still need Core Data directly</h2>
+<ul>
+<li>Fine-grained fetch control: <code>NSFetchedResultsController</code> (efficient table/collection backing), batch updates/deletes (<code>NSBatchDeleteRequest</code>) that skip loading objects into memory.</li>
+<li>Complex migrations beyond SwiftData's current support.</li>
+<li>Existing apps with a large Core Data model you're not ready to port.</li>
+</ul>
+<p>SwiftData and Core Data can even share the same store, so migration can be incremental.</p>
+<h2>CloudKit sync</h2>
+<p>Both can sync to the user's private CloudKit database with little code — <code>NSPersistentCloudKitContainer</code> for Core Data, or <code>.modelContainer(..., cloudKitDatabase: .automatic)</code>-style configuration for SwiftData. The store mirrors to iCloud and merges across the user's devices, with constraints (every attribute must be optional or have a default, no unique constraints) that shape your model design.</p>
+<h2>Related</h2>
+<ul>
+<li>The modern face: <a class="xref" href="#02-swiftdata">02-swiftdata</a></li>
+<li>Evolving the schema: <a class="xref" href="#05-migrations-and-performance">05-migrations-and-performance</a></li>
+<li>Prev: <a class="xref" href="#02-swiftdata">02-swiftdata</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02-swiftdata"><span>Prev</span>← SwiftData</a><a href="#04-files-and-codable"><span>Next</span>Files &amp; Codable Storage →</a></div></section>
+<section class="page" id="04-files-and-codable" data-title="Files &amp; Codable Storage" data-num="04" data-hasdemo="0"><h1>Files &amp; Codable Storage</h1>
+<p>Sometimes a database is overkill. For documents, exported data, caches, and sharing between your app and its extensions, writing <code>Codable</code> values straight to disk is simpler, transparent, and fast.</p>
+<h2>Codable → disk in three lines</h2>
+<pre><code class="language-swift">func save&lt;T: Encodable&gt;(_ value: T, to url: URL) throws {
+    let data = try JSONEncoder().encode(value)
+    try data.write(to: url, options: [.atomic])    // atomic = no half-written files
+}
+func load&lt;T: Decodable&gt;(_ type: T.Type, from url: URL) throws -&gt; T {
+    try JSONDecoder().decode(T.self, from: Data(contentsOf: url))
+}
+</code></pre>
+<p><code>.atomic</code> writes to a temp file and renames — so a crash mid-write never corrupts the existing file. For large or performance-sensitive data, prefer <code>PropertyListEncoder</code> (binary plist) or a compact binary format over JSON.</p>
+<h2>Choosing the directory</h2>
+<p>Use the right sandbox location from <a class="xref" href="#01-where-data-lives">01-where-data-lives</a>: user documents in <code>Documents</code>, app-managed data in <code>Application Support</code>, throwaway/recreatable data in <code>Caches</code>. Create the directory before writing:</p>
+<pre><code class="language-swift">let dir = try FileManager.default.url(for: .applicationSupportDirectory,
+    in: .userDomainMask, appropriateFor: nil, create: true)
+let fileURL = dir.appendingPathComponent(&quot;draft.json&quot;)
+</code></pre>
+<h2>Sharing via App Groups</h2>
+<p>To hand data to a widget or share extension, write into the App Group container both processes can reach:</p>
+<pre><code class="language-swift">let groupID = &quot;group.com.you.app&quot;
+let dir = FileManager.default
+    .containerURL(forSecurityApplicationGroupIdentifier: groupID)!
+try save(model, to: dir.appendingPathComponent(&quot;widget-feed.json&quot;))
+// the widget's TimelineProvider then loads it synchronously
+</code></pre>
+<p>This is the concrete mechanism behind <a class="xref" href="widgetkit.html#01-timeline-provider">the timeline provider</a> reading your app's data.</p>
+<h2>Large binaries: write files, store paths</h2>
+<p>Don't stuff images or video into JSON/SwiftData as <code>Data</code> — it bloats the store and memory. Write the binary to a file and persist only its filename/relative path in your model. SwiftData's <code>@Attribute(.externalStorage)</code> automates exactly this: large <code>Data</code> properties are written to separate files and referenced, keeping the database lean.</p>
+<h2>Document-based apps</h2>
+<p>If the <em>file is the document</em> (a drawing app, an editor), use <code>FileDocument</code> (SwiftUI) or <code>UIDocument</code> (UIKit). They handle reading/writing, conflict resolution, autosave, and iCloud Drive integration — don't hand-roll that for true document apps.</p>
+<h2>When to use files vs SwiftData</h2>
+<p>Files: a handful of blobs, exported/imported documents, simple caches, cross-process sharing. SwiftData: many records, relationships, querying/sorting/filtering, live UI binding. If you find yourself writing search/sort logic over a folder of JSON files, that's the signal to graduate to <a class="xref" href="#02-swiftdata">02-swiftdata</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>The lighter and heavier options around it: <a class="xref" href="#01-where-data-lives">01-where-data-lives</a>, <a class="xref" href="#02-swiftdata">02-swiftdata</a></li>
+<li>Prev: <a class="xref" href="#03-core-data-engine">03-core-data-engine</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03-core-data-engine"><span>Prev</span>← The Core Data Engine</a><a href="#05-migrations-and-performance"><span>Next</span>Migrations &amp; Performance →</a></div></section>
+<section class="page" id="05-migrations-and-performance" data-title="Migrations &amp; Performance" data-num="05" data-hasdemo="0"><h1>Migrations &amp; Performance</h1>
+<p>Two things separate a toy store from a shippable one: it can <strong>evolve</strong> without losing user data when you change the schema, and it stays <strong>fast</strong> as data grows. Both need a little upfront thought.</p>
+<h2>Why migrations matter</h2>
+<p>The moment you ship, users have data on disk in your <em>current</em> schema. Add a property, rename an entity, or change a relationship, and the new app's schema no longer matches the old store. Without a migration plan, the store fails to open — and the app crashes on launch or wipes data.</p>
+<h2>SwiftData versioned schemas</h2>
+<p>SwiftData expresses each schema version as a type, and a migration plan describes how to move between them:</p>
+<pre><code class="language-swift">enum SchemaV1: VersionedSchema {
+    static var versionIdentifier = Schema.Version(1, 0, 0)
+    static var models: [any PersistentModel.Type] { [TaskV1.self] }
+}
+enum SchemaV2: VersionedSchema {
+    static var versionIdentifier = Schema.Version(2, 0, 0)
+    static var models: [any PersistentModel.Type] { [Task.self] }  // added `priority`
+}
+
+enum MigrationPlan: SchemaMigrationPlan {
+    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self] }
+    static var stages: [MigrationStage] {
+        [.lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self)]
+    }
+}
+</code></pre>
+<ul>
+<li><strong>Lightweight</strong> migrations are automatic: adding/removing optional properties, adding entities. No code needed beyond declaring the stage.</li>
+<li><strong>Custom</strong> migrations run a closure to transform data (split a name field, compute a new value) when the change isn't mechanical.</li>
+</ul>
+<p>The same lightweight-vs-heavyweight distinction exists in Core Data; SwiftData just makes the common case declarative. Always test a migration by installing the old version, adding data, then upgrading.</p>
+<h2>Performance: fetch less, fetch lazily</h2>
+<ul>
+<li><strong>Predicate at the store, not in Swift.</strong> Filter with <code>#Predicate</code> so SQLite does the work and returns few rows — never fetch everything and <code>.filter</code> in memory.</li>
+<li><strong>Sort in the query</strong>, paginate with <code>fetchLimit</code>/<code>fetchOffset</code> for large lists.</li>
+<li><strong>Only load what you show.</strong> Core Data faulting means relationships load on access; avoid walking a whole graph in a list cell.</li>
+<li><strong>Batch heavy writes</strong> on a background context and save once, rather than inserting thousands of objects one save at a time.</li>
+</ul>
+<pre><code class="language-swift">@Query(filter: #Predicate&lt;Task&gt; { $0.isDone == false },
+       sort: [SortDescriptor(\.createdAt, order: .reverse)]) var open: [Task]
+</code></pre>
+<h2>Indexing</h2>
+<p>For properties you filter or sort on frequently, add an index so lookups stay fast as the table grows (<code>@Attribute(.unique)</code> for uniqueness, and schema indexes for hot query paths). Without an index, a filter becomes a full-table scan — fine at 100 rows, painful at 100,000.</p>
+<h2>Measure with Instruments</h2>
+<p>Use the <strong>SwiftData/Core Data</strong> and <strong>Time Profiler</strong> instruments to catch slow fetches and main-thread saves — the same profiling workflow as <a class="xref" href="testing.html#04-instruments">Instruments</a>. A janky scroll over a list is often a too-broad fetch or main-thread save, not a UI problem.</p>
+<h2>Related</h2>
+<ul>
+<li>The engine that runs migrations: <a class="xref" href="#03-core-data-engine">03-core-data-engine</a></li>
+<li>Profiling: <a class="xref" href="testing.html#04-instruments">Instruments</a></li>
+<li>Prev: <a class="xref" href="#04-files-and-codable">04-files-and-codable</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#04-files-and-codable"><span>Prev</span>← Files &amp; Codable Storage</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>

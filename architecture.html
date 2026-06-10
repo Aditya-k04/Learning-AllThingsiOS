@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App Architecture · Learning All things Apple</title>
+<meta name="description" content="MVC → MVVM, unidirectional data flow, dependency injection, TCA, and modularization.">
+<meta property="og:title" content="App Architecture · Learning All things Apple">
+<meta property="og:description" content="MVC → MVVM, unidirectional data flow, dependency injection, TCA, and modularization.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">App Architecture</div><div class="cs">MVC → MVVM, unidirectional data flow, dependency injection, TCA, and modularization.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html" selected>App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="App Architecture — Overview" data-num="·" data-hasdemo="0"><h1>App Architecture — Overview</h1>
+<p>Architecture is how you arrange code so an app stays understandable and changeable as it grows. There's no single "right" pattern — there are trade-offs. This course covers the spectrum, from the MVC you inherit to the strict unidirectional flows of modern SwiftUI, so you can choose deliberately instead of by default.</p>
+<h2>The questions architecture answers</h2>
+<blockquote>
+<p>Where does <strong>state</strong> live? How does the <strong>view</strong> get it and signal intent? Where do <strong>side effects</strong> (network, disk) happen? How do you <strong>test</strong> logic without the UI? How do pieces stay <strong>decoupled</strong> so one change doesn't ripple everywhere?</p>
+</blockquote>
+<p>Every pattern is a different set of answers to those five questions.</p>
+<h2>What you'll learn</h2>
+<ol>
+<li><a class="xref" href="#01-mvc-to-mvvm">01-mvc-to-mvvm</a> — why Massive-View-Controller happens and how MVVM splits it.</li>
+<li><a class="xref" href="#02-unidirectional-data-flow">02-unidirectional-data-flow</a> — state down, events up; the SwiftUI-native mental model.</li>
+<li><a class="xref" href="#03-dependency-injection">03-dependency-injection</a> — decoupling from concrete services so code is testable.</li>
+<li><a class="xref" href="#04-tca">04-tca</a> — The Composable Architecture: reducers, effects, and when it's worth it.</li>
+<li><a class="xref" href="#05-modularization">05-modularization</a> — splitting into Swift packages for build speed and boundaries.</li>
+</ol>
+<h2>A guiding principle</h2>
+<p>Keep <strong>logic</strong> out of views and <strong>side effects</strong> at the edges. A view should render state and emit intent; it shouldn't know how to talk to the network or the database. That single rule — pushing I/O to the boundary, keeping a testable core — is what most architectures are really enforcing.</p>
+<h2>How it connects</h2>
+<p>The data-flow patterns here are the application-level version of <a class="xref" href="swiftui-dataflow.html#01-the-dependency-graph">SwiftUI&#x27;s dependency graph</a>. Dependency injection is what makes the networking (<a class="xref" href="networking.html#02-async-await-requests">API client</a>) and persistence layers swappable for the tests in <a class="xref" href="testing.html#02-unit-testing-patterns">unit testing</a>.</p><div class="pager"><span class="sp"></span><a href="#01-mvc-to-mvvm"><span>Next</span>MVC → MVVM →</a></div></section>
+<section class="page" id="01-mvc-to-mvvm" data-title="MVC → MVVM" data-num="01" data-hasdemo="0"><h1>MVC → MVVM</h1>
+<p>Apple's original pattern is <strong>MVC</strong> — Model, View, Controller. It's simple and it's everywhere in UIKit, but it has a famous failure mode. MVVM is the most common response, and understanding <em>why</em> it exists matters more than the acronym.</p>
+<h2>Classic MVC and its failure mode</h2>
+<p>In theory: the Model holds data, the View displays it, the Controller mediates. In practice on iOS, <code>UIViewController</code> owns the views <em>and</em> becomes the dumping ground for networking, formatting, navigation, and business logic — the dreaded <strong>Massive View Controller</strong>. A 2,000-line controller that can't be tested because everything is tangled with <code>UIView</code>s.</p>
+<p>The root problem: the controller mixes <em>presentation logic</em> (how data becomes display values) with <em>view lifecycle</em> and <em>side effects</em>, so none of it can be isolated.</p>
+<h2>MVVM: extract a testable ViewModel</h2>
+<p>MVVM splits the controller in two:</p>
+<ul>
+<li><strong>ViewModel</strong> — owns presentation state and logic. Knows nothing about UIKit/SwiftUI. Pure, testable.</li>
+<li><strong>View</strong> (the controller/SwiftUI view) — observes the ViewModel and renders it; forwards user intent back.</li>
+</ul>
+<pre><code class="language-swift">@MainActor
+final class ProfileViewModel: ObservableObject {
+    @Published private(set) var state: State = .loading
+    enum State { case loading, loaded(ProfileVM), failed(String) }
+
+    private let api: APIClient            // injected dependency (testable)
+    init(api: APIClient) { self.api = api }
+
+    func load(id: Int) async {
+        do { state = .loaded(ProfileVM(try await api.user(id))) }
+        catch { state = .failed(&quot;Couldn’t load profile.&quot;) }
+    }
+}
+</code></pre>
+<p>The view becomes thin:</p>
+<pre><code class="language-swift">struct ProfileView: View {
+    @StateObject var vm: ProfileViewModel
+    var body: some View {
+        switch vm.state {
+        case .loading: ProgressView()
+        case .loaded(let p): ProfileContent(p)
+        case .failed(let m): ErrorView(m)
+        }
+    }
+    .task { await vm.load(id: id) }
+}
+</code></pre>
+<h2>Why this is testable</h2>
+<p>Because <code>ProfileViewModel</code> has no UIKit/SwiftUI imports and takes its <code>APIClient</code> by injection, a test creates it with a <em>fake</em> client and asserts the <code>state</code> transitions — no UI, no network, milliseconds to run. That's the whole payoff, and it depends on <a class="xref" href="#03-dependency-injection">dependency injection</a>.</p>
+<h2>MVVM isn't free</h2>
+<p>Pitfalls: ViewModels can themselves bloat (split them), bindings can create retain cycles (use <code>[weak self]</code> in closures, or value-type state), and two-way bindings can get hard to trace. MVVM tames MVC but doesn't enforce a <em>direction</em> of data flow — which is what the next pattern adds.</p>
+<h2>Related</h2>
+<ul>
+<li>A stricter discipline: <a class="xref" href="#02-unidirectional-data-flow">02-unidirectional-data-flow</a></li>
+<li>The SwiftUI state machinery: <a class="xref" href="swiftui-dataflow.html#06-observable-ownership">Observable Ownership</a></li>
+<li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← App Architecture — Overview</a><a href="#02-unidirectional-data-flow"><span>Next</span>Unidirectional Data Flow →</a></div></section>
+<section class="page" id="02-unidirectional-data-flow" data-title="Unidirectional Data Flow" data-num="02" data-hasdemo="1"><h1>Unidirectional Data Flow</h1><div class="demo-mount" data-demo="df-graph"></div>
+<p>Unidirectional data flow (UDF) adds a rule MVVM lacks: data moves in <strong>one direction</strong>. State flows <em>down</em> into the view; the view sends <em>actions up</em>; actions produce a new state. No two-way bindings tangling who-changed-what. It's the model SwiftUI itself is built around, and it makes complex screens predictable.</p>
+<h2>The loop</h2>
+<pre><code>        ┌─────────── State ───────────┐
+        │                             ▼
+   (reducer)                       View renders
+        ▲                             │
+        └────────── Action ◄──────────┘
+                 (user intent)
+</code></pre>
+<blockquote>
+<p><strong>State down, events up.</strong> The view is a pure function of state; the only way to change state is to send an action through a single place that produces the next state.</p>
+</blockquote>
+<h2>A minimal UDF store</h2>
+<pre><code class="language-swift">@MainActor
+final class Store&lt;State, Action&gt;: ObservableObject {
+    @Published private(set) var state: State
+    private let reduce: (inout State, Action) -&gt; Void
+    init(_ initial: State, reduce: @escaping (inout State, Action) -&gt; Void) {
+        self.state = initial; self.reduce = reduce
+    }
+    func send(_ action: Action) { reduce(&amp;state, action) }   // the ONLY mutation path
+}
+</code></pre>
+<pre><code class="language-swift">struct CounterState { var count = 0 }
+enum CounterAction { case increment, decrement, reset }
+
+let store = Store(CounterState()) { state, action in
+    switch action {
+    case .increment: state.count += 1
+    case .decrement: state.count -= 1
+    case .reset:     state.count = 0
+    }
+}
+// View:  Text(&quot;\(store.state.count)&quot;)  ;  Button(&quot;+&quot;) { store.send(.increment) }
+</code></pre>
+<p>Every change is an action through <code>send</code> → easy to log, replay, and test. You assert "given this state, sending this action yields that state" with no UI.</p>
+<h2>Why it scales</h2>
+<ul>
+<li><strong>Predictable:</strong> there's exactly one way state changes, so bugs are reproducible.</li>
+<li><strong>Debuggable:</strong> log every action to get a complete history of what happened.</li>
+<li><strong>Testable:</strong> the reducer is a pure function — the easiest thing in the world to test.</li>
+</ul>
+<p>This is the same precision as SwiftUI's <a class="xref" href="swiftui-dataflow.html#01-the-dependency-graph">dependency graph</a>: describe state, and the system re-renders only what depends on what changed.</p>
+<h2>Side effects</h2>
+<p>Pure reducers can't network. UDF handles effects by having the reducer <em>return</em> effects (async work) that run outside and feed their results back as new actions — the model formalized by TCA (<a class="xref" href="#04-tca">04-tca</a>). Keeping effects at this boundary is the same "I/O at the edges" principle from <a class="xref" href="#00-overview">00-overview</a>.</p>
+<h2>Try it</h2>
+<p>The graph below shows the SwiftUI version of this: mutating one <code>@State</code> value invalidates only the views that read it, recomputing exactly the dependent nodes — unidirectional flow in action.</p>
+<h2>Related</h2>
+<ul>
+<li>The framework that productionizes this: <a class="xref" href="#04-tca">04-tca</a></li>
+<li>Prev: <a class="xref" href="#01-mvc-to-mvvm">01-mvc-to-mvvm</a> · Next: <a class="xref" href="#03-dependency-injection">03-dependency-injection</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01-mvc-to-mvvm"><span>Prev</span>← MVC → MVVM</a><a href="#03-dependency-injection"><span>Next</span>Dependency Injection →</a></div></section>
+<section class="page" id="03-dependency-injection" data-title="Dependency Injection" data-num="03" data-hasdemo="0"><h1>Dependency Injection</h1>
+<p>Dependency injection (DI) means a component receives the things it needs from outside, instead of creating them itself. It's the single most important technique for testable, decoupled code — and it's mostly just "pass it in," no framework required.</p>
+<h2>The problem with hard-coded dependencies</h2>
+<pre><code class="language-swift">final class FeedViewModel {
+    func load() async {
+        let data = try? await URLSession.shared.data(from: url)   // hard-wired!
+        // ...
+    }
+}
+</code></pre>
+<p>This ViewModel <em>is</em> its network call. You can't test it without hitting the real server, can't preview it offline, can't swap implementations. It's welded to <code>URLSession</code>.</p>
+<h2>Inject an abstraction</h2>
+<p>Depend on a <em>protocol</em>, and pass an implementation in:</p>
+<pre><code class="language-swift">protocol FeedLoading { func loadFeed() async throws -&gt; [Post] }
+
+final class FeedViewModel {
+    private let loader: FeedLoading
+    init(loader: FeedLoading) { self.loader = loader }     // injected
+    func load() async { posts = (try? await loader.loadFeed()) ?? [] }
+}
+
+struct LiveFeedLoader: FeedLoading { /* real URLSession */ }
+struct StubFeedLoader: FeedLoading {                        // for tests/previews
+    func loadFeed() async throws -&gt; [Post] { Post.samples }
+}
+</code></pre>
+<p>Now production injects <code>LiveFeedLoader</code>, tests inject <code>StubFeedLoader</code>, and SwiftUI previews inject sample data — same ViewModel, no changes. This is the seam every other course relies on: the <a class="xref" href="networking.html#02-async-await-requests">API client protocol</a>, the testing fakes in <a class="xref" href="testing.html#02-unit-testing-patterns">unit testing</a>.</p>
+<h2>Forms of injection</h2>
+<ul>
+<li><strong>Initializer injection</strong> (preferred): pass dependencies in <code>init</code>. Explicit, compile-checked, no hidden state.</li>
+<li><strong>Property injection:</strong> set after creation. Use when init can't have the value yet.</li>
+<li><strong>Environment injection (SwiftUI):</strong> put a dependency in the <code>Environment</code> so a subtree can read it — Apple's built-in DI:</li>
+</ul>
+<pre><code class="language-swift">struct APIKey: EnvironmentKey { static let defaultValue: APIClient = LiveAPIClient() }
+extension EnvironmentValues { var api: APIClient {
+    get { self[APIKey.self] } set { self[APIKey.self] = newValue } } }
+
+ContentView().environment(\.api, MockAPIClient())   // swap for previews/tests
+</code></pre>
+<p>This is the same environment mechanism from <a class="xref" href="swiftui-dataflow.html#07-environment-as-a-graph">environment as a graph</a>.</p>
+<h2>Composition root</h2>
+<p>Decide <em>where</em> concrete types are chosen: one place near the app's entry point (the "composition root") wires real implementations together, and nothing deep in the app says <code>URLSession.shared</code> or <code>LiveFeedLoader()</code>. Keep the <code>new</code>-ing of concrete dependencies at the top; everything below receives abstractions.</p>
+<h2>You rarely need a DI framework</h2>
+<p>For most apps, initializer injection + the SwiftUI environment is enough. Heavy DI containers add indirection that obscures the dependency graph. Reach for one only when manual wiring genuinely hurts.</p>
+<h2>Related</h2>
+<ul>
+<li>Why it matters for tests: <a class="xref" href="testing.html#02-unit-testing-patterns">Unit Testing Patterns</a></li>
+<li>Prev: <a class="xref" href="#02-unidirectional-data-flow">02-unidirectional-data-flow</a> · Next: <a class="xref" href="#04-tca">04-tca</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02-unidirectional-data-flow"><span>Prev</span>← Unidirectional Data Flow</a><a href="#04-tca"><span>Next</span>The Composable Architecture (TCA) →</a></div></section>
+<section class="page" id="04-tca" data-title="The Composable Architecture (TCA)" data-num="04" data-hasdemo="0"><h1>The Composable Architecture (TCA)</h1>
+<p>TCA is a popular open-source library (by Point-Free) that takes unidirectional data flow and makes it rigorous, composable, and testable to an exhaustive degree. It's opinionated and has a learning curve — worth knowing whether or not you adopt it, because it crystallizes the ideas.</p>
+<h2>The core types</h2>
+<pre><code>State    – a value type describing everything a feature needs
+Action   – an enum of every event that can happen (user + system)
+Reducer  – (inout State, Action) -&gt; Effect : evolves state, returns side effects
+Store    – runtime that holds State and processes Actions
+Effect   – async work whose results feed back in as Actions
+</code></pre>
+<pre><code class="language-swift">@Reducer
+struct Counter {
+    @ObservableState struct State { var count = 0; var fact: String? }
+    enum Action { case incr, factButtonTapped, factResponse(String) }
+
+    var body: some Reducer&lt;State, Action&gt; {
+        Reduce { state, action in
+            switch action {
+            case .incr:
+                state.count += 1; return .none
+            case .factButtonTapped:
+                return .run { [count = state.count] send in           // side EFFECT
+                    let fact = try await numberFact(count)
+                    await send(.factResponse(fact))                   // feeds back as an action
+                }
+            case .factResponse(let fact):
+                state.fact = fact; return .none
+            }
+        }
+    }
+}
+</code></pre>
+<h2>What it buys you</h2>
+<ul>
+<li><strong>Composition:</strong> features are reducers you can nest and combine; a parent's state contains children's states, and actions route down. Big apps stay made of small, isolated features.</li>
+<li><strong>Effects are explicit &amp; controlled:</strong> every side effect goes through <code>Effect</code>, and dependencies are injected through a typed dependency system — so tests run with controlled clocks and stubbed services.</li>
+<li><strong>Exhaustive testing:</strong> the <code>TestStore</code> asserts that <em>every</em> state mutation after <em>every</em> action is exactly what you declared — if anything else changes, the test fails. It's the strictest testability on the platform.</li>
+</ul>
+<h2>The cost</h2>
+<p>TCA adds real overhead: a lot of boilerplate, a strong learning curve, and a whole-app commitment (it works best when everything is TCA). For small apps or teams new to it, plain MVVM + the lightweight UDF store from <a class="xref" href="#02-unidirectional-data-flow">02-unidirectional-data-flow</a> gets most of the benefit with far less ceremony.</p>
+<h2>When to reach for it</h2>
+<p>Large, long-lived apps with complex state and many engineers, where the discipline and exhaustive tests pay back the boilerplate. For a solo side project, it's usually more than you need — but studying it sharpens how you think about state and effects everywhere.</p>
+<h2>Related</h2>
+<ul>
+<li>The pattern it formalizes: <a class="xref" href="#02-unidirectional-data-flow">02-unidirectional-data-flow</a></li>
+<li>Testing philosophy it embodies: <a class="xref" href="testing.html#02-unit-testing-patterns">Unit Testing</a></li>
+<li>Prev: <a class="xref" href="#03-dependency-injection">03-dependency-injection</a> · Next: <a class="xref" href="#05-modularization">05-modularization</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03-dependency-injection"><span>Prev</span>← Dependency Injection</a><a href="#05-modularization"><span>Next</span>Modularization →</a></div></section>
+<section class="page" id="05-modularization" data-title="Modularization" data-num="05" data-hasdemo="0"><h1>Modularization</h1>
+<p>As an app grows, a single target becomes slow to build and easy to tangle. <strong>Modularization</strong> — splitting the app into Swift packages with explicit dependencies — restores fast builds, enforced boundaries, and independently testable, previewable features.</p>
+<h2>Why split up</h2>
+<ul>
+<li><strong>Build speed:</strong> changing one feature recompiles only that module, not the whole app. This is the biggest day-to-day win on a large codebase.</li>
+<li><strong>Enforced boundaries:</strong> module A can only use module B if it explicitly depends on it. Accidental coupling becomes a compile error instead of a habit.</li>
+<li><strong>Isolation:</strong> a feature module can be built, tested, and SwiftUI-previewed on its own, without launching the full app.</li>
+</ul>
+<h2>A typical structure</h2>
+<pre><code>App                     – thin shell: composition root, app lifecycle, wiring
+├── Features/
+│   ├── Feed            – one feature = one module (UI + logic)
+│   ├── Profile
+│   └── Settings
+├── Core/
+│   ├── Networking      – the API client (Topics-Networking)
+│   ├── Persistence     – the store (Topics-Persistence)
+│   └── DesignSystem    – shared components, colors, typography
+└── Shared/
+    └── Models          – domain types used across features
+</code></pre>
+<p>Features depend on Core and Shared, never on each other directly — cross-feature communication goes through abstractions or the app shell.</p>
+<h2>Swift Package Manager</h2>
+<p>Local SPM packages are the standard tool. A <code>Package.swift</code> declares the module's products, dependencies, and targets:</p>
+<pre><code class="language-swift">// swift-tools-version: 5.10
+import PackageDescription
+let package = Package(
+    name: &quot;Feed&quot;,
+    products: [.library(name: &quot;Feed&quot;, targets: [&quot;Feed&quot;])],
+    dependencies: [.package(path: &quot;../Networking&quot;), .package(path: &quot;../DesignSystem&quot;)],
+    targets: [
+        .target(name: &quot;Feed&quot;, dependencies: [&quot;Networking&quot;, &quot;DesignSystem&quot;]),
+        .testTarget(name: &quot;FeedTests&quot;, dependencies: [&quot;Feed&quot;])
+    ])
+</code></pre>
+<p>Add these as local packages in your Xcode project; SPM also manages third-party dependencies (TCA, etc.) in the same file.</p>
+<h2>Keep boundaries clean with protocols</h2>
+<p>Modules should depend on <em>abstractions</em>, not each other's concretes — the <a class="xref" href="#03-dependency-injection">DI</a> principle at module scale. The <code>Feed</code> module depends on a <code>FeedLoading</code> protocol (perhaps in a small <code>Interfaces</code> module), and the app shell injects the concrete <code>Networking</code> implementation. This keeps the dependency graph a tree, not a web.</p>
+<h2>Don't over-modularize early</h2>
+<p>Forty modules for a five-screen app is its own kind of pain — every change touches many <code>Package.swift</code> files. Start with a single target; split when build times or coupling actually hurt. Modularize in response to real pressure, not speculatively.</p>
+<h2>Related</h2>
+<ul>
+<li>The wiring point: <a class="xref" href="#03-dependency-injection">Dependency Injection</a></li>
+<li>Build-time profiling: <a class="xref" href="testing.html#04-instruments">Instruments</a></li>
+<li>Prev: <a class="xref" href="#04-tca">04-tca</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#04-tca"><span>Prev</span>← The Composable Architecture (TCA)</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>

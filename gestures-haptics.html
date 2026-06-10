@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestures &amp; Haptics · Learning All things Apple</title>
+<meta name="description" content="Custom and simultaneous recognizers, velocity &amp; rubber-banding, and Core Haptics — the &#x27;feel&#x27; of fluid interfaces.">
+<meta property="og:title" content="Gestures &amp; Haptics · Learning All things Apple">
+<meta property="og:description" content="Custom and simultaneous recognizers, velocity &amp; rubber-banding, and Core Haptics — the &#x27;feel&#x27; of fluid interfaces.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Gestures &amp; Haptics</div><div class="cs">Custom and simultaneous recognizers, velocity &amp; rubber-banding, and Core Haptics — the &#x27;feel&#x27; of fluid interfaces.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html" selected>Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="Gestures &amp; Haptics — Overview" data-num="·" data-hasdemo="0"><h1>Gestures &amp; Haptics — Overview</h1>
+<p>Fluid interfaces feel alive because they respond <em>continuously</em> to the user and confirm actions <em>physically</em>. That's two systems working together: <strong>gesture recognition</strong> (turning raw touches into intent) and <strong>haptics</strong> (turning events into felt feedback). This course covers both — the input side of the "feel" you keep chasing in your interaction work.</p>
+<h2>The big idea</h2>
+<blockquote>
+<p>A great gesture-driven interaction is a <strong>pure function of the touch</strong>, not an animation that plays. The interface tracks the finger 1:1, and physics (springs, deceleration) takes over only on release.</p>
+</blockquote>
+<p>This is the thesis of Apple's <a class="xref" href="wwdc.html#803-designing-fluid-interfaces">Designing Fluid Interfaces</a>, and it's why understanding gestures matters as much as understanding animation.</p>
+<h2>What you'll learn</h2>
+<ol>
+<li><a class="xref" href="#01-gesture-recognizers">01-gesture-recognizers</a> — the recognizer state machine, the built-in recognizers, and discrete vs continuous.</li>
+<li><a class="xref" href="#02-simultaneity-and-dependencies">02-simultaneity-and-dependencies</a> — making recognizers cooperate, fail, or require each other (the hard part).</li>
+<li><a class="xref" href="#03-velocity-and-rubber-banding">03-velocity-and-rubber-banding</a> — velocity, projection, and the rubber-band formula behind every Apple scroll edge.</li>
+<li><a class="xref" href="#04-core-haptics">04-core-haptics</a> — <code>UIFeedbackGenerator</code> and the <code>CHHapticEngine</code> for custom textures.</li>
+<li><a class="xref" href="#05-designing-the-feel">05-designing-the-feel</a> — combining gesture, spring, and haptic into one coherent interaction.</li>
+</ol>
+<h2>Why it connects</h2>
+<p>The math of velocity, projection, and rubber-banding is <a class="xref" href="interaction-math.html#00-roadmap">Interaction Math</a> applied. The spring that catches a released gesture is <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">the same critically-damped spring</a> you already studied. And the place gestures actually live — <code>UIScrollView</code>, hit-testing — is <a class="xref" href="uikit-internals.html#02-responder-chain">the responder chain</a>.</p><div class="pager"><span class="sp"></span><a href="#01-gesture-recognizers"><span>Next</span>Gesture Recognizers →</a></div></section>
+<section class="page" id="01-gesture-recognizers" data-title="Gesture Recognizers" data-num="01" data-hasdemo="0"><h1>Gesture Recognizers</h1>
+<p>A <code>UIGestureRecognizer</code> watches the raw touch stream on a view and collapses it into a single, meaningful gesture — a tap, a pan, a pinch. It saves you from implementing <code>touchesBegan/Moved/Ended</code> by hand and, crucially, coordinates with other recognizers.</p>
+<h2>The state machine</h2>
+<p>Every recognizer is a small state machine. The two shapes:</p>
+<ul>
+<li><strong>Discrete</strong> (tap, long-press): <code>.possible → .recognized</code> (fires once) or <code>.failed</code>.</li>
+<li><strong>Continuous</strong> (pan, pinch, rotation): <code>.possible → .began → .changed (repeatedly) → .ended</code> (or <code>.cancelled</code>).</li>
+</ul>
+<pre><code class="language-swift">let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan))
+view.addGestureRecognizer(pan)
+
+@objc func handlePan(_ g: UIPanGestureRecognizer) {
+    switch g.state {
+    case .began:   startOffset = card.center
+    case .changed:
+        let t = g.translation(in: view)
+        card.center = CGPoint(x: startOffset.x + t.x, y: startOffset.y + t.y)
+    case .ended, .cancelled:
+        let v = g.velocity(in: view)        // points/sec — feed a spring
+        settle(with: v)
+    default: break
+    }
+}
+</code></pre>
+<p>You read <code>translation(in:)</code>, <code>velocity(in:)</code>, <code>scale</code>, or <code>rotation</code> depending on the recognizer — these are the continuous values you map to your effect.</p>
+<h2>The built-ins</h2>
+<p><code>UITapGestureRecognizer</code> (set <code>numberOfTapsRequired</code>), <code>UILongPressGestureRecognizer</code> (continuous after the press threshold), <code>UIPanGestureRecognizer</code>, <code>UIPinchGestureRecognizer</code>, <code>UIRotationGestureRecognizer</code>, <code>UISwipeGestureRecognizer</code> (discrete, directional), and <code>UIScreenEdgePanGestureRecognizer</code> (interactive back-swipe).</p>
+<h2>Translation reset trick</h2>
+<p><code>translation</code> accumulates from the gesture start. A common pattern is to read it, apply it, then zero it so you work in deltas:</p>
+<pre><code class="language-swift">let t = g.translation(in: view)
+card.center.x += t.x
+g.setTranslation(.zero, in: view)   // now translation is the delta since last call
+</code></pre>
+<h2>Discrete vs continuous matters for design</h2>
+<p>Discrete gestures <em>commit</em> an action (tap to select). Continuous gestures <em>track</em> a value (drag to move) — and tracking is where fluidity lives, because the user stays in control the whole time. Prefer continuous, interruptible gestures over discrete taps that trigger canned animations wherever the interaction allows.</p>
+<h2>SwiftUI parallel</h2>
+<p>SwiftUI's <code>DragGesture</code>, <code>MagnificationGesture</code>, etc. wrap these same recognizers. When SwiftUI's gesture API isn't enough (simultaneous recognition with a scroll view, precise failure requirements), drop to UIKit via <a class="xref" href="uikit-internals.html#06-uikit-swiftui-interop">UIViewRepresentable</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>The conflict-resolution layer: <a class="xref" href="#02-simultaneity-and-dependencies">02-simultaneity-and-dependencies</a></li>
+<li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Gestures &amp; Haptics — Overview</a><a href="#02-simultaneity-and-dependencies"><span>Next</span>Simultaneity &amp; Dependencies →</a></div></section>
+<section class="page" id="02-simultaneity-and-dependencies" data-title="Simultaneity &amp; Dependencies" data-num="02" data-hasdemo="0"><h1>Simultaneity &amp; Dependencies</h1>
+<p>A single view often has several recognizers, and they compete for the same touches. By default, <strong>only one recognizer wins</strong> a touch sequence. Coordinating them — letting some run together, making one wait for another to fail — is where most real gesture work happens, and it's all done through <code>UIGestureRecognizerDelegate</code>.</p>
+<h2>The default: mutual exclusion</h2>
+<p>If a view has both a tap and a pan, UIKit lets exactly one recognize. A pinch and a rotation on the same view won't both fire unless you explicitly allow it. The fix is one delegate method:</p>
+<pre><code class="language-swift">func gestureRecognizer(_ g: UIGestureRecognizer,
+    shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -&gt; Bool {
+    return true   // let pinch + rotation + pan all drive the same view
+}
+</code></pre>
+<p>This is exactly how a photo viewer lets you pinch, rotate, and pan a picture at once.</p>
+<h2>Dependencies: require failure / require success</h2>
+<p>Two ordering tools:</p>
+<pre><code class="language-swift">// Don't recognize a single-tap until the double-tap has FAILED
+singleTap.require(toFail: doubleTap)
+
+// Don't start my pan until the screen-edge pan has failed (let system back-swipe win)
+myPan.require(toFail: edgePan)
+</code></pre>
+<p><code>require(toFail:)</code> is the classic single-vs-double-tap solution and the way you yield to system gestures at screen edges.</p>
+<h2>Cooperating with UIScrollView</h2>
+<p>The trickiest real case: a custom pan inside a scroll view. The scroll view's pan and yours fight. Options:</p>
+<ul>
+<li>Implement <code>shouldRecognizeSimultaneouslyWith</code> to let both run, then decide in your handler.</li>
+<li>Use <code>gestureRecognizerShouldBegin(_:)</code> to <em>veto</em> your recognizer based on direction (e.g. only take over for horizontal drags, let vertical scroll pass through).</li>
+</ul>
+<pre><code class="language-swift">func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -&gt; Bool {
+    guard let pan = g as? UIPanGestureRecognizer else { return true }
+    let v = pan.velocity(in: view)
+    return abs(v.x) &gt; abs(v.y)   // only claim mostly-horizontal drags
+}
+</code></pre>
+<h2>shouldReceive: filtering touches</h2>
+<p><code>gestureRecognizer(_:shouldReceive:)</code> lets you ignore touches that land on certain subviews (e.g. don't start a background pan when the touch began on a button). It's the precise alternative to toggling <code>isUserInteractionEnabled</code> everywhere.</p>
+<h2>The hit-testing connection</h2>
+<p>Before a recognizer ever sees a touch, hit-testing decided which view the touch belongs to (<a class="xref" href="uikit-internals.html#02-responder-chain">the responder chain</a>). If a gesture "never fires," check hit-testing first — an overlapping view or disabled interaction is the usual culprit, not the recognizer config.</p>
+<h2>Related</h2>
+<ul>
+<li>The values you extract: <a class="xref" href="#03-velocity-and-rubber-banding">03-velocity-and-rubber-banding</a></li>
+<li>Prev: <a class="xref" href="#01-gesture-recognizers">01-gesture-recognizers</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01-gesture-recognizers"><span>Prev</span>← Gesture Recognizers</a><a href="#03-velocity-and-rubber-banding"><span>Next</span>Velocity &amp; Rubber-Banding →</a></div></section>
+<section class="page" id="03-velocity-and-rubber-banding" data-title="Velocity &amp; Rubber-Banding" data-num="03" data-hasdemo="1"><h1>Velocity &amp; Rubber-Banding</h1><div class="demo-mount" data-demo="su-drag"></div>
+<p>The difference between a gesture that feels mechanical and one that feels <em>alive</em> comes down to two things: respecting the <strong>velocity</strong> of the finger when it lifts, and resisting — with <strong>rubber-banding</strong> — when the content reaches a boundary. Both are simple formulas, and both are everywhere in iOS.</p>
+<h2>Velocity: the handoff to physics</h2>
+<p>When a drag ends, the finger has a velocity (points/second). A canned animation ignores it; a fluid one <em>continues</em> the motion at that speed and lets a spring or deceleration take over. This is the gesture→physics handoff.</p>
+<pre><code class="language-swift">case .ended:
+    let v = pan.velocity(in: view)         // e.g. (1200, -300) pts/sec
+    // hand v to a spring as initial velocity, or project where it would land:
+    let projected = project(initial: v.x, decelerationRate: 0.998)
+}
+</code></pre>
+<h2>Projection: where would it land?</h2>
+<p>UIScrollView's deceleration uses an exponential decay. The closed-form "final resting point" is the standard projection function — use it to decide which page/item the flick should snap to:</p>
+<pre><code class="language-swift">func project(initial v: CGFloat, decelerationRate d: CGFloat) -&gt; CGFloat {
+    return (v / 1000) * d / (1 - d)        // displacement after a flick
+}
+</code></pre>
+<p>This is the math from <a class="xref" href="wwdc.html#803-designing-fluid-interfaces">Designing Fluid Interfaces</a> — project the flick, find the nearest snap target, then spring there.</p>
+<h2>Rubber-banding</h2>
+<p>When content is dragged past its bounds (top of a scroll view, edge of a card stack), it shouldn't move 1:1 — it should <em>resist</em>, moving less and less the further you pull. Apple's formula:</p>
+<pre><code class="language-swift">// x  = how far past the edge the finger is
+// d  = dimension (e.g. view height), c ≈ 0.55 constant
+func rubberBand(_ x: CGFloat, dim d: CGFloat, c: CGFloat = 0.55) -&gt; CGFloat {
+    return (1 - (1 / (x * c / d + 1))) * d
+}
+</code></pre>
+<p>The result asymptotically approaches a limit no matter how hard you pull — exactly the bouncy resistance of every iOS scroll edge. On release, a spring returns it to the boundary.</p>
+<h2>The complete release behavior</h2>
+<pre><code>on .ended:
+    if past a boundary  → spring back to the boundary (using release velocity)
+    else if flicked     → project landing point, snap to nearest item, spring there
+    else                → spring to nearest rest position
+</code></pre>
+<p>That three-case release is the heart of nearly every premium iOS interaction.</p>
+<h2>Try it</h2>
+<p>The card below rubber-bands when dragged past the dashed bounds and springs home on release — drag it past the edge and let go.</p>
+<h2>Related</h2>
+<ul>
+<li>The spring that catches it: <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">Springs</a></li>
+<li>The deceleration model: <a class="xref" href="uikit-internals.html#03-uiscrollview-mechanics">UIScrollView Mechanics</a></li>
+<li>Prev: <a class="xref" href="#02-simultaneity-and-dependencies">02-simultaneity-and-dependencies</a> · Next: <a class="xref" href="#04-core-haptics">04-core-haptics</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02-simultaneity-and-dependencies"><span>Prev</span>← Simultaneity &amp; Dependencies</a><a href="#04-core-haptics"><span>Next</span>Core Haptics →</a></div></section>
+<section class="page" id="04-core-haptics" data-title="Core Haptics" data-num="04" data-hasdemo="0"><h1>Core Haptics</h1>
+<p>Haptics are the felt half of feedback — the tap you feel when a picker lands, the buzz when an action fails. Used well they make an interface feel physical and confident; overused they're annoying. iOS gives you two tiers: simple semantic generators and the full Core Haptics engine.</p>
+<h2>Tier 1: UIFeedbackGenerator (use this 90% of the time)</h2>
+<p>Three semantic generators cover most needs. They map to system-tuned patterns and respect the user's settings:</p>
+<pre><code class="language-swift">// Impact — something hit/landed. Style sets the weight.
+let impact = UIImpactFeedbackGenerator(style: .medium)  // .light/.medium/.heavy/.soft/.rigid
+impact.prepare()                 // warms the Taptic Engine (lowers latency)
+impact.impactOccurred()
+
+// Selection — a value changed (picker tick, segmented control)
+let selection = UISelectionFeedbackGenerator()
+selection.selectionChanged()
+
+// Notification — success / warning / error
+UINotificationFeedbackGenerator().notificationOccurred(.success)
+</code></pre>
+<p>The key detail: <strong>call <code>prepare()</code> just before you expect to fire.</strong> It wakes the Taptic Engine so the haptic lands in sync with the visual; without it there's a perceptible lag.</p>
+<h2>Match haptics to motion</h2>
+<p>A haptic that fires a frame off from its visual feels wrong. Trigger the feedback at the exact moment the visual event happens — the snap, the toggle, the boundary hit from <a class="xref" href="#03-velocity-and-rubber-banding">03-velocity-and-rubber-banding</a>. A pull-to-refresh, for example, fires one <code>.impactOccurred()</code> precisely when the threshold is crossed, not when the release animation finishes.</p>
+<h2>Tier 2: CHHapticEngine (custom textures)</h2>
+<p>For bespoke feedback — a continuous rumble that tracks a drag, a layered "texture" — use Core Haptics directly. You build a pattern of <strong>transient</strong> events (sharp taps) and <strong>continuous</strong> events (sustained vibration), each with <code>intensity</code> and <code>sharpness</code>:</p>
+<pre><code class="language-swift">import CoreHaptics
+let engine = try CHHapticEngine()
+try engine.start()
+
+let tap = CHHapticEvent(eventType: .hapticTransient, parameters: [
+    CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.7)
+], relativeTime: 0)
+
+let pattern = try CHHapticPattern(events: [tap], parameters: [])
+try engine.makePlayer(with: pattern).start(atTime: 0)
+</code></pre>
+<ul>
+<li><strong>intensity</strong> — how strong (amplitude).</li>
+<li><strong>sharpness</strong> — timbre, from soft/round (0) to crisp/clicky (1).</li>
+</ul>
+<p>You can drive a continuous event's parameters in real time (a <code>CHHapticParameterCurve</code>) so the haptic intensity follows a gesture's velocity — the deepest level of "feel."</p>
+<h2>Availability &amp; etiquette</h2>
+<p>Core Haptics needs a Taptic Engine (iPhone 8+); check <code>CHHapticEngine.capabilitiesForHardware().supportsHaptics</code>. Respect the system: haptics are silenced in Low Power Mode and by the user's settings — never rely on them as the <em>only</em> feedback channel.</p>
+<h2>Related</h2>
+<ul>
+<li>Fire them at the right moment: <a class="xref" href="#05-designing-the-feel">05-designing-the-feel</a></li>
+<li>Prev: <a class="xref" href="#03-velocity-and-rubber-banding">03-velocity-and-rubber-banding</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03-velocity-and-rubber-banding"><span>Prev</span>← Velocity &amp; Rubber-Banding</a><a href="#05-designing-the-feel"><span>Next</span>Designing the Feel →</a></div></section>
+<section class="page" id="05-designing-the-feel" data-title="Designing the Feel" data-num="05" data-hasdemo="0"><h1>Designing the Feel</h1>
+<p>This is the synthesis lesson: take a gesture, a spring, and a haptic and combine them into one interaction that feels like a physical object. Everything in this course and your interaction-math notes comes together here.</p>
+<h2>The recipe</h2>
+<blockquote>
+<p><strong>Track</strong> the finger 1:1 while it's down. <strong>Resist</strong> at boundaries with rubber-banding. On release, <strong>continue</strong> with the finger's velocity into a spring. <strong>Confirm</strong> discrete moments with a haptic.</p>
+</blockquote>
+<p>That's it — four ingredients, applied consistently, are what separates "Apple-grade" from "fine."</p>
+<h2>A worked example: a dismissable sheet</h2>
+<pre><code class="language-swift">@objc func handlePan(_ g: UIPanGestureRecognizer) {
+    let t = g.translation(in: view).y
+    switch g.state {
+    case .changed:
+        // track 1:1 downward; rubber-band upward (can't drag above its rest)
+        sheet.transform = CGAffineTransform(translationX: 0,
+            y: t &gt; 0 ? t : rubberBand(-t, dim: view.bounds.height) * -1)
+    case .ended:
+        let v = g.velocity(in: view).y
+        if t &gt; 120 || v &gt; 800 {                 // past threshold OR flicked down
+            haptic.impactOccurred()             // confirm the commit
+            dismissWithVelocity(v)              // spring off-screen at that speed
+        } else {
+            springBack(initialVelocity: v)      // not enough → spring home
+        }
+    default: break
+    }
+}
+</code></pre>
+<p>Notice: the <em>decision</em> uses both displacement and velocity (a fast flick dismisses even a short drag), the haptic fires at the <strong>moment of commitment</strong>, and both outcomes are springs seeded with the release velocity.</p>
+<h2>Principles that scale</h2>
+<ul>
+<li><strong>Interruptible always.</strong> The user can grab the sheet mid-dismiss and drag it back. Springs are retargetable; canned animations aren't — this is why you prefer springs (<a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">Springs</a>).</li>
+<li><strong>Velocity is sacred.</strong> Never drop the finger's velocity at release; it's the single biggest contributor to "fluid."</li>
+<li><strong>Haptics mark events, not motion.</strong> One crisp tap at the threshold beats a continuous buzz.</li>
+<li><strong>Tune by feel, then derive.</strong> Find the spring response/damping that feels right, <em>then</em> note the numbers — the workflow from <a class="xref" href="interaction-math.html#10-study-method">the study method</a>.</li>
+</ul>
+<h2>What to avoid</h2>
+<p>Fixed-duration animations for gesture-driven UI (they fight interruption), haptics on high-frequency events (exhausting), and 1:1 tracking past boundaries (feels broken — always rubber-band). These are the anti-patterns from <a class="xref" href="wwdc.html#803-designing-fluid-interfaces">Designing Fluid Interfaces</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>The physics: <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">Interpolation, Easing &amp; Springs</a></li>
+<li>The talk: <a class="xref" href="wwdc.html#803-designing-fluid-interfaces">Designing Fluid Interfaces</a></li>
+<li>Prev: <a class="xref" href="#04-core-haptics">04-core-haptics</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#04-core-haptics"><span>Prev</span>← Core Haptics</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>
