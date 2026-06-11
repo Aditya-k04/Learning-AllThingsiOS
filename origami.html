@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Origami Studio · Learning All things Apple</title>
+<meta name="description" content="Meta&#x27;s free, patch-based tool for prototyping real interactions — layers, patches, springs, and Origami Live.">
+<meta property="og:title" content="Origami Studio · Learning All things Apple">
+<meta property="og:description" content="Meta&#x27;s free, patch-based tool for prototyping real interactions — layers, patches, springs, and Origami Live.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Origami Studio</div><div class="cs">Meta&#x27;s free, patch-based tool for prototyping real interactions — layers, patches, springs, and Origami Live.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html" selected>Origami Studio</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="origami-studio" data-title="Origami Studio" data-num="·" data-hasdemo="1"><h1>Origami Studio</h1><div class="demo-mount" data-demo="spring"></div>
+<p>Origami Studio is Meta's <strong>free</strong> prototyping tool for designing real, physics-based interactions — the kind that ship in Facebook, Instagram, WhatsApp, and Quest. Where Figma prototyping is about linking screens, Origami is about <em>behavior</em>: how something moves, responds to a finger, and feels. It's the natural companion to your interaction-math and fluid-interface work — the same ideas (springs, gesture-as-function, velocity) made visual and hands-on.</p>
+<blockquote>
+<p>Origami is <strong>Mac-only</strong>, completely free with no subscriptions or feature limits, and pairs with <strong>Origami Live</strong>, a free iOS app that runs your prototype on a real device so you can feel the interaction in your hand.</p>
+</blockquote>
+<h2>The three areas of the interface</h2>
+<p>Origami's window has three panels, and almost everything you do lives in one of them:</p>
+<pre><code>Layers (left)    – the visual hierarchy: groups, text, images, shapes, video.
+                   Like the layers panel in Figma/Sketch.
+Viewer (center)  – the live preview. It updates instantly as you build — no &quot;play&quot; button.
+Patch Editor     – the node graph where the LOGIC lives. This is the heart of Origami.
+(bottom/right)
+</code></pre>
+<p>You design <em>appearance</em> in Layers and <em>behavior</em> in the Patch Editor. The Viewer is always live, which is what makes Origami feel immediate.</p>
+<h2>Patches: visual programming</h2>
+<p>A <strong>patch</strong> is a node with inputs (left) and outputs (right). You wire an output of one patch into the input of another to build logic — no text code. A simple interaction reads like a sentence drawn left-to-right:</p>
+<pre><code>[ Interaction ]──tap──▶[ Switch ]──on/off──▶[ Pop Animation ]──progress──▶ Layer.Scale
+</code></pre>
+<p>That graph means: "when the layer is tapped, flip a switch, and spring the layer's scale to a new value." The whole tool is composing these little data-flow graphs — exactly the <em>model-the-behavior-as-a-function</em> mindset from <a class="xref" href="interaction-math.html#01-modeling-visuals-as-functions">modeling visuals as functions</a>.</p>
+<h2>The core patches (learn these first)</h2>
+<p>The library has hundreds of patches, but ~15–20 cover almost everything:</p>
+<ul>
+<li><strong>Interaction</strong> — detects tap, press, drag, scroll on a layer; outputs position, and crucially <strong>velocity</strong>.</li>
+<li><strong>Switch</strong> — flip-flops between on/off (a tap toggles a state).</li>
+<li><strong>Pop Animation</strong> — a <em>spring</em>: animates a value with bounciness and speed. Origami's signature, physical feel.</li>
+<li><strong>Classic Animation</strong> — duration + easing curve (when you want a fixed timing, not a spring).</li>
+<li><strong>Transition</strong> — remaps a 0→1 progress value into a range (e.g. progress → scale 1.0…1.2). This is <code>lerp</code>/<code>remap</code> from <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">interpolation &amp; easing</a>.</li>
+<li><strong>Pulse</strong>, <strong>Option Switch / Option Picker</strong>, <strong>Delay</strong>, <strong>Hit Area</strong>, <strong>Conditional</strong>, math patches (<strong>Add</strong>, <strong>Multiply</strong>, <strong>Progress</strong>), and <strong>Scroll</strong>.</li>
+</ul>
+<p>Master those and you can build most interactions; the rest you look up as needed.</p>
+<h2>Pop animation = a spring</h2>
+<p>The Pop patch is a critically-tunable spring with two dials — <strong>Bounciness</strong> and <strong>Speed</strong> — which map directly to damping and stiffness. Drag a card and let go, and a Pop animation carries it home with the finger's velocity. That's the exact gesture→physics handoff from <a class="xref" href="gestures-haptics.html#03-velocity-and-rubber-banding">velocity &amp; rubber-banding</a> and the <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">spring</a> you already studied — Origami just exposes it as two sliders.</p>
+<p>The demo above is that spring: drag the ball and release, or set critical damping, and watch how bounciness/speed translate into feel. Tuning a Pop patch in Origami is the same intuition.</p>
+<h2>Driving values from a gesture (the key idea)</h2>
+<p>Origami's power is that a value can be a <strong>continuous function of a drag</strong>, not a canned animation. The Interaction patch outputs the drag position; you feed it through a Transition (remap) into a layer property, and the layer tracks the finger 1:1:</p>
+<pre><code>[ Interaction ]──drag.Y──▶[ Transition: 0…300 → 1.0…0.5 ]──▶ Card.Scale
+                          (as you drag down 300pt, scale goes 1.0 → 0.5)
+</code></pre>
+<p>This is the <em>interface-as-a-function-of-the-gesture</em> principle — category 1 from <a class="xref" href="stack-decisions.html#04-who-drives-time">who drives time</a> — made tangible. Build it here, <em>feel</em> it on Origami Live, then reproduce it in SwiftUI.</p>
+<h2>Components and reuse</h2>
+<p>A <strong>Component</strong> is a self-contained, reusable patch+layer module with its own inputs and outputs — like a function or a SwiftUI view. Build a toggle once, expose its "isOn" input and "changed" output, and drop it in everywhere. Components keep big prototypes manageable, the same way <a class="xref" href="architecture.html#05-modularization">modularization</a> does for code.</p>
+<h2>Figma import &amp; handoff</h2>
+<p>You don't have to design in Origami. Import a Figma (or Sketch) file and your layers come in with their hierarchy intact, ready to wire up interactions. The common workflow: <strong>design in Figma → import to Origami → prototype the interaction → test on Origami Live → spec it for engineering.</strong> Origami is the "make it move" step between static design and real code.</p>
+<h2>Why it's worth your time</h2>
+<p>Origami trains the exact instinct your whole learning stack is about: thinking of an interaction as <em>driven values and physics</em>, not as screens and canned transitions. It's a fast, no-code sandbox to explore a feel before committing to SwiftUI/UIKit — and because its model (interaction → remap → spring) mirrors what you've learned, the translation to code is almost mechanical.</p>
+<h2>A first project (do this)</h2>
+<ol>
+<li>Import or draw a card layer.</li>
+<li>Add an <strong>Interaction</strong> patch on it; wire <code>drag</code> position into the card's Position so it follows your finger.</li>
+<li>On release, route through a <strong>Pop Animation</strong> back to the origin — feel the spring.</li>
+<li>Add a <strong>Transition</strong> so the card's scale shrinks as it's dragged away.</li>
+<li>Open it in <strong>Origami Live</strong> on your phone and tune the Pop's bounciness/speed until it feels right.</li>
+<li>Now rebuild the same thing in SwiftUI (<a class="xref" href="gestures-haptics.html#05-designing-the-feel">designing the feel</a>) and compare.</li>
+</ol>
+<p>Ten of those reps and the gap between "an interaction you admire" and "an interaction you can build" closes fast.</p>
+<h2>Resources</h2>
+<ul>
+<li><strong>Official docs &amp; patch reference</strong> — origami.design/documentation</li>
+<li><strong>Origami Live</strong> — free on the App Store; essential for feeling prototypes on real hardware.</li>
+<li>Pairs with: <a class="xref" href="interaction-math.html#00-roadmap">Interaction Math</a>, <a class="xref" href="gestures-haptics.html#00-overview">Gestures &amp; Haptics</a>, <a class="xref" href="wwdc.html#803-designing-fluid-interfaces">Designing Fluid Interfaces</a>.</li>
+</ul><div class="pager"><span class="sp"></span><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>
