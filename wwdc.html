@@ -28,6 +28,39 @@
 <section class="page" id="00-index" data-title="WWDC Sessions — Study Index" data-num="·" data-hasdemo="0"><h1>WWDC Sessions — Study Index</h1>
 <p>Curated sessions on design thinking, SwiftUI, animations, and app performance.</p>
 <hr />
+<h2>🆕 WWDC26 (June 2026)</h2>
+<p>The latest, fresh from this year's conference — iOS/macOS/etc. <strong>27</strong>, the Siri AI overhaul, refined Liquid Glass, and the Foundation Models opening up.</p>
+<table>
+<thead>
+<tr>
+<th>Session</th>
+<th>Focus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a class="xref" href="#2026-whats-new-in-swiftui">2026-whats-new-in-swiftui</a></td>
+<td>swipe/reorder anywhere, prominent tabs, cross-fade nav, AsyncImage caching, toolbar visibility, Document API</td>
+</tr>
+<tr>
+<td><a class="xref" href="#2026-whats-new-in-swift">2026-whats-new-in-swift</a></td>
+<td>Swift 6.3/6.4: new <code>Continuation</code>, <code>withTaskCancellationShield</code>, <code>~Sendable</code>, <code>anyAppleOS</code>, module selectors, Android SDK</td>
+</tr>
+<tr>
+<td><a class="xref" href="#2026-foundation-models">2026-foundation-models</a></td>
+<td>One <code>LanguageModel</code> protocol over on-device, server &amp; third-party (Claude/Gemini); image input; free server tier</td>
+</tr>
+<tr>
+<td><a class="xref" href="#2026-xcode-27">2026-xcode-27</a></td>
+<td>Agentic coding: on-device completions + opt-in cloud agents; SwiftUI agent skills</td>
+</tr>
+<tr>
+<td><a class="xref" href="#2026-liquid-glass-and-siri">2026-liquid-glass-and-siri</a></td>
+<td>Refined Liquid Glass + opacity slider; Siri AI app; App Intents over SiriKit; AI accessibility</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2>Animation Trilogy (WWDC23)</h2>
 <p>These three sessions form a complete animation curriculum — watch in order:</p>
 <table>
@@ -4188,8 +4221,165 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MXMetricManagerSubscriber
 <li><a href="https://developer.apple.com/documentation/xcode/analyzing-responsiveness-issues-in-your-shipping-app">Apple Documentation: Analyzing responsiveness issues in your shipping app</a></li>
 <li><a href="https://developer.apple.com/documentation/metrickit/mxhangdiagnostic">Apple Documentation: MXHangDiagnostic</a></li>
 <li><a href="https://developer.apple.com/tutorials/instruments/identifying-a-hang">Apple Tutorial: Identifying a hang</a></li>
-</ul><div class="pager"><a href="#10181-ultimate-performance-survival-guide"><span>Prev</span>← Ultimate Application Performance Survival Guide</a><a href="#250-principles-of-great-design"><span>Next</span>Principles of Great Design (WWDC26 — 250) →</a></div></section>
-<section class="page" id="250-principles-of-great-design" data-title="Principles of Great Design (WWDC26 — 250)" data-num="10" data-hasdemo="0"><h1>Principles of Great Design (WWDC26 — 250)</h1>
+</ul><div class="pager"><a href="#10181-ultimate-performance-survival-guide"><span>Prev</span>← Ultimate Application Performance Survival Guide</a><a href="#2026-foundation-models"><span>Next</span>Foundation Models Framework (WWDC26) →</a></div></section>
+<section class="page" id="2026-foundation-models" data-title="Foundation Models Framework (WWDC26)" data-num="10" data-hasdemo="0"><h1>Foundation Models Framework (WWDC26)</h1>
+<p>The biggest developer story of WWDC26: the Foundation Models framework opened up. What launched in 2025 as on-device-only inference is now a single API surface over <strong>on-device</strong>, <strong>server-side</strong>, and <strong>third-party</strong> models.</p>
+<h2>One protocol, any model</h2>
+<p>A new public <strong><code>LanguageModel</code></strong> protocol is the common inference surface. Apps target it; providers implement it. That means you can run against Apple's on-device model, Apple's server model, or third-party providers like <strong>Claude</strong> and <strong>Gemini</strong> — or any provider that adopts the protocol — without rewriting your call sites.</p>
+<pre><code class="language-swift">// Conceptual shape — talk to a model behind the common protocol
+let session = LanguageModelSession(model: .default)        // on-device, or…
+let session = LanguageModelSession(model: .server)         // Apple server model
+let session = LanguageModelSession(model: ThirdParty.claude) // any LanguageModel provider
+
+let reply = try await session.respond(to: &quot;Summarize this note: \(text)&quot;)
+</code></pre>
+<p>The headline framing in the press: <em>Foundation Models can swap AI providers without code changes.</em></p>
+<h2>Image input</h2>
+<p>The framework gains <strong>native image input</strong> — it's no longer text-only, extending to vision use cases (describe/inspect an image, multimodal prompts).</p>
+<h2>Pricing that matters</h2>
+<p><strong>Server-side</strong> Foundation Models access — drawing on models built with Google's Gemini — is offered at <strong>zero cost</strong> to developers who qualify for Apple's <strong>App Store Small Business Program</strong> (apps under ~$1M/yr revenue). On-device inference remains free and private by definition.</p>
+<h2>Core AI</h2>
+<p>A new <strong>Core AI</strong> framework was introduced as "the best way to run models on device" — the lower-level substrate beneath Foundation Models for local model execution.</p>
+<h2>Why it's a big deal</h2>
+<p>Until now, adding LLM features meant signing up with a provider, managing keys, and shipping network code. Foundation Models collapses that into a first-party Swift API with a privacy-clear on-device path and an optional free server tier — dramatically lowering the bar to add intelligence to an app.</p>
+<h2>How this lands in our notes</h2>
+<p>This is the system-level version of the BYO-key chatbot pattern. It connects to <a class="xref" href="shipping.html#01-app-intents-and-siri">App Intents</a> (intents become the actions an AI assistant can invoke) and to networking (<a class="xref" href="networking.html#00-overview">Networking</a>) for providers that route remotely.</p>
+<h2>Related</h2>
+<ul>
+<li>Companion: <a class="xref" href="#2026-xcode-27">2026-xcode-27</a>, <a class="xref" href="#2026-liquid-glass-and-siri">2026-liquid-glass-and-siri</a></li>
+<li>Source: Apple Newsroom "new intelligence frameworks"; WWDC26 session 241</li>
+<li>Hub: <a class="xref" href="#00-index">00-index</a></li>
+</ul><div class="pager"><a href="#10258-eliminate-hangs"><span>Prev</span>← Understand and Eliminate Hangs from Your App</a><a href="#2026-liquid-glass-and-siri"><span>Next</span>Liquid Glass &amp; Siri AI (WWDC26) →</a></div></section>
+<section class="page" id="2026-liquid-glass-and-siri" data-title="Liquid Glass &amp; Siri AI (WWDC26)" data-num="11" data-hasdemo="0"><h1>Liquid Glass &amp; Siri AI (WWDC26)</h1>
+<p>The consumer-facing headlines of WWDC26: a refreshed <strong>Liquid Glass</strong> design and a long-promised <strong>Siri</strong> overhaul, shipping across <strong>iOS 27, iPadOS 27, macOS 27, watchOS 27, visionOS 27, and tvOS 27</strong>.</p>
+<h2>Liquid Glass, refined</h2>
+<p>Liquid Glass (introduced in the "26" release) got tuned based on a year of feedback. The default look is <strong>less aggressively translucent</strong>, and there's now a system <strong>opacity slider</strong> so users can dial how transparent the material is. For developers this is mostly free — SwiftUI adopts the refinements automatically when you build against the new SDK (see <a class="xref" href="#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI</a>). The lesson for our own work: respect the material, don't fight it, and test legibility at both opacity extremes — the same "respect the substrate" point as <a class="xref" href="coreanimation.html#05-layer-appearance">layer appearance</a>.</p>
+<h2>Siri AI</h2>
+<p>The marquee announcement: a genuinely capable <strong>Siri</strong>, powered by Apple Intelligence, that combines <strong>personal context, on-screen awareness, image understanding, and broad world knowledge</strong> for the first time. It surfaces in a <strong>new Siri app</strong> (also on iPad and Mac) that keeps a history of conversations and results you can revisit.</p>
+<h2>App Intents becomes the way in</h2>
+<p>For developers, the practical consequence is that <strong>App Intents</strong> is now the primary mechanism for exposing your app's actions to Siri and the system — the migration path as older <strong>SiriKit</strong> intents are phased out. If you define your features as App Intents, the new Siri can discover and invoke them. This raises the priority of the App Intents work in <a class="xref" href="shipping.html#01-app-intents-and-siri">App Intents &amp; Siri</a> and <a class="xref" href="widgetkit.html#05-interactivity-and-app-intents">interactive widgets</a>.</p>
+<h2>Accessibility gains from AI</h2>
+<p>VoiceOver now offers <strong>richer image descriptions</strong>; the Action Button can answer questions about what the camera sees; and Accessibility Reader supports <strong>summaries and translations</strong>. Good accessibility hooks (<a class="xref" href="shipping.html#02-accessibility">Accessibility</a>) make your app benefit from these automatically.</p>
+<h2>Child accounts</h2>
+<p>New mandatory <strong>child accounts</strong> (under-13, extendable to 18) let guardians control contacts and app/website access, with in-flow permission requests. If you ship to families, expect new age-assurance and parental-control touchpoints.</p>
+<h2>How this lands in our notes</h2>
+<p>Design: build against the SDK and verify under both Liquid Glass opacities. Reach: define App Intents so Siri can drive your features. Inclusion: invest in accessibility to ride the new AI descriptions.</p>
+<h2>Related</h2>
+<ul>
+<li>Companion: <a class="xref" href="#2026-whats-new-in-swiftui">2026-whats-new-in-swiftui</a>, <a class="xref" href="#2026-foundation-models">2026-foundation-models</a></li>
+<li>Source: Apple WWDC26 keynote; press recaps (Engadget, MacRumors, CNBC)</li>
+<li>Hub: <a class="xref" href="#00-index">00-index</a></li>
+</ul><div class="pager"><a href="#2026-foundation-models"><span>Prev</span>← Foundation Models Framework (WWDC26)</a><a href="#2026-whats-new-in-swift"><span>Next</span>What&#x27;s New in Swift (WWDC26) →</a></div></section>
+<section class="page" id="2026-whats-new-in-swift" data-title="What&#x27;s New in Swift (WWDC26)" data-num="12" data-hasdemo="0"><h1>What's New in Swift (WWDC26)</h1>
+<p>Swift <strong>6.3</strong> and <strong>6.4</strong> were covered at WWDC26 with one theme: <em>less boilerplate, fewer surprises, more control.</em> Four areas — language, libraries, performance, cross-platform.</p>
+<h2>Concurrency: more correctness, less ceremony</h2>
+<p>The compiler catches more mistakes (e.g. catching errors inside a <code>Task</code>, saving a task for later rendezvous) and the model tightens data-isolation guarantees while <em>reducing</em> annotation burden. Concrete additions:</p>
+<ul>
+<li><strong><code>Continuation&lt;Success, Failure&gt;</code></strong> — a third continuation type that makes double-resume a <em>compile-time</em> error and a missing resume a runtime trap, with no fast-path overhead. Use it over <code>CheckedContinuation</code>/<code>UnsafeContinuation</code> going forward.</li>
+<li><strong><code>withTaskCancellationShield</code></strong> — protect critical work (e.g. sending an SOS) so it completes even if the parent task is cancelled.</li>
+<li><strong>Improved <code>Sendable</code></strong> — <code>~Sendable</code> to opt a class out, and <code>weak let</code> properties allowed in <code>Sendable</code> types.</li>
+</ul>
+<pre><code class="language-swift">let value = try await withContinuation { c in
+    legacyAPI { result in c.resume(returning: result) }   // double-resume won't compile
+}
+</code></pre>
+<h2>Language ergonomics</h2>
+<ul>
+<li><strong><code>anyAppleOS</code></strong> availability shorthand — <code>@available(anyAppleOS 27, *)</code> instead of listing every platform; also works in <code>#if os(anyAppleOS)</code>.</li>
+<li><strong>More accessible memberwise initializers</strong> — Swift generates inits at multiple access levels based on property visibility (no more hand-written boilerplate inits).</li>
+<li><strong><code>@diagnose</code></strong> — per-declaration control to silence/promote/demote specific compiler diagnostics.</li>
+<li><strong>Module selectors (<code>::</code>)</strong> — <code>Rocket::SaturnV</code> to disambiguate names across modules (even <code>Swift::Task</code>).</li>
+<li><strong><code>@c</code></strong> — expose a Swift function/enum to C with an auto-generated header declaration.</li>
+</ul>
+<h2>Libraries</h2>
+<p><code>Ref&lt;T&gt;</code> / <code>MutableRef&lt;T&gt;</code> (safe first-class references, no unsafe pointers), <code>Dictionary.mapKeyedValues</code>, a new Foundation <code>FilePath</code>, <code>ProgressManager</code> for structured async progress, and <code>Subprocess</code> output streaming.</p>
+<p><strong>Swift Testing</strong> picked up: issue <strong>severity</strong> (<code>.warning</code>), <code>Test.cancel</code>, <strong>image attachments</strong>, and full <strong>XCTest interoperability</strong> (mix <code>#expect</code> and <code>XCTAssert</code> freely). See <a class="xref" href="testing.html#01-xctest-and-swift-testing">XCTest &amp; Swift Testing</a>.</p>
+<h2>Performance</h2>
+<p>Explicit <code>@inline(never)</code>/<code>@inline(always)</code>, <code>@specialized</code> for pre-compiled generic specializations, <code>@export(implementation)</code> for ABI-stable libs, <code>~Copyable</code>/<code>~Escapable</code> associated types, and <code>borrow</code>/<code>mutate</code> accessors for non-copyable types.</p>
+<h2>Cross-platform</h2>
+<p>The first <strong>official Swift SDK for Android</strong> (build native Android apps in Swift, interop with Kotlin/Java), continued Embedded Swift maturation, and a <strong>Swift Build</strong> preview unifying the build engine across platforms in SPM.</p>
+<h2>How this lands in our notes</h2>
+<p>Concurrency changes update <a class="xref" href="swift.html#20-concurrency-basics">Concurrency Basics</a>, <a class="xref" href="swift.html#21-concurrency-advanced">Concurrency Advanced</a>, and <a class="xref" href="concurrency.html#05-pitfalls-and-patterns">Pitfalls &amp; Patterns</a> (use the new <code>Continuation</code>). Testing additions update <a class="xref" href="testing.html#01-xctest-and-swift-testing">XCTest &amp; Swift Testing</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>Companion: <a class="xref" href="#2026-whats-new-in-swiftui">2026-whats-new-in-swiftui</a>, <a class="xref" href="#2026-xcode-27">2026-xcode-27</a></li>
+<li>Source: Apple "What's new in Swift" (WWDC26); Swift 6.3/6.4 release notes</li>
+<li>Hub: <a class="xref" href="#00-index">00-index</a></li>
+</ul><div class="pager"><a href="#2026-liquid-glass-and-siri"><span>Prev</span>← Liquid Glass &amp; Siri AI (WWDC26)</a><a href="#2026-whats-new-in-swiftui"><span>Next</span>What&#x27;s New in SwiftUI (WWDC26) →</a></div></section>
+<section class="page" id="2026-whats-new-in-swiftui" data-title="What&#x27;s New in SwiftUI (WWDC26)" data-num="13" data-hasdemo="0"><h1>What's New in SwiftUI (WWDC26)</h1>
+<p>WWDC26's SwiftUI release is a "remove the limitations" year — no single headline feature, but a pile of changes that delete long-standing constraints around containers, navigation, toolbars, and documents. It also auto-adopts the refreshed Liquid Glass look.</p>
+<h2>Liquid Glass, for free</h2>
+<p>The Liquid Glass design gained refinements (and a system-wide opacity control). SwiftUI <strong>adopts most of it automatically</strong> — glass tints and material treatments apply to standard controls with no code changes. You mostly get the new look by rebuilding against the iOS 27 SDK.</p>
+<h2>swipeActions on any container</h2>
+<p><code>swipeActions</code> is no longer <code>List</code>-only. Apply the new <code>swipeActionsContainer</code> modifier and you get swipe actions in <code>ScrollView</code>, lazy stacks, even custom layouts:</p>
+<pre><code class="language-swift">ScrollView {
+    LazyVStack {
+        ForEach(items) { item in
+            ItemRow(item)
+                .swipeActions { Button(&quot;Delete&quot;, role: .destructive) { delete(item) } }
+        }
+    }
+}
+.swipeActionsContainer()
+</code></pre>
+<p>No more wrapping content in a <code>List</code> just to get a swipe-to-delete.</p>
+<h2>Reordering anywhere</h2>
+<p>Drag-to-reorder also escaped <code>List</code>. Mark items <code>.reorderable()</code> and declare a <code>reorderContainer</code>:</p>
+<pre><code class="language-swift">VStack {
+    ForEach(landmarks) { LandmarkView($0) }
+        .reorderable()
+}
+.reorderContainer(for: Landmark.self) { difference in
+    difference.apply(to: &amp;landmarks)
+}
+</code></pre>
+<h2>Prominent tab role</h2>
+<p>A new <code>.prominent</code> tab role gives a trailing-separated, emphasized tab (like the system search tab):</p>
+<pre><code class="language-swift">Tab(&quot;Create&quot;, systemImage: &quot;pencil&quot;, role: .prominent) { CreateView() }
+</code></pre>
+<h2>Cross-fade navigation transition</h2>
+<p>Navigation/presentation gains a <code>.crossFade</code> transition alongside the existing <code>.zoom</code> and <code>.automatic</code>. You still can't fully hand-drive navigation transitions, but there are more built-in options:</p>
+<pre><code class="language-swift">.sheet(isPresented: $show) {
+    DetailView().navigationTransition(.crossFade)
+}
+</code></pre>
+<h2>AsyncImage caching</h2>
+<p><code>AsyncImage</code> finally caches, and you can supply a custom <code>URLSession</code>/<code>URLCache</code> to control cache size — pairs with the networking notes on <a class="xref" href="networking.html#05-caching-auth-and-testing">caching</a>:</p>
+<pre><code class="language-swift">AsyncImage(request: URLRequest(url: imageURL))
+    .asyncImageURLSession(session)   // session with a custom URLCache
+</code></pre>
+<h2>Toolbar visibility control</h2>
+<p>New toolbar modifiers give precise control on small screens: <code>visibilityPriority(.high)</code> to keep key items visible, <code>ToolbarOverflowMenu</code> to push secondary items into an overflow, and <code>.topBarPinnedTrailing</code> placement to pin an item.</p>
+<h2>Document API + lazy Observable state</h2>
+<p>Document-based apps get a refreshed look and a performance boost (a new snapshot-diffing Document model), and Observable types gain lazy state initialization. Xcode itself adopted the new document improvements.</p>
+<h2>How this lands in our notes</h2>
+<p>These remove constraints we worked around in <a class="xref" href="swiftui.html#07-lists-and-foreach">Lists &amp; ForEach</a>, <a class="xref" href="swiftui.html#19-tabview-and-toolbars">TabView &amp; Toolbars</a>, and <a class="xref" href="swiftui.html#08-navigation">Navigation</a>. The declarative "describe two states, system animates" model is unchanged — see <a class="xref" href="swiftui.html#12-animation-basics">Animation Basics</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>Companion WWDC26 notes: <a class="xref" href="#2026-whats-new-in-swift">2026-whats-new-in-swift</a>, <a class="xref" href="#2026-liquid-glass-and-siri">2026-liquid-glass-and-siri</a></li>
+<li>Source: Apple "What's new in SwiftUI" (WWDC26, session 269)</li>
+<li>Hub: <a class="xref" href="#00-index">00-index</a></li>
+</ul><div class="pager"><a href="#2026-whats-new-in-swift"><span>Prev</span>← What&#x27;s New in Swift (WWDC26)</a><a href="#2026-xcode-27"><span>Next</span>Xcode 27 — Agentic Coding (WWDC26) →</a></div></section>
+<section class="page" id="2026-xcode-27" data-title="Xcode 27 — Agentic Coding (WWDC26)" data-num="14" data-hasdemo="0"><h1>Xcode 27 — Agentic Coding (WWDC26)</h1>
+<p>Xcode 27 brings AI assistance into the IDE in two tiers, with a clear privacy boundary: fast on-device completions that never leave your Mac, and opt-in agentic tasks that route to cloud coding agents when you ask.</p>
+<h2>Two tiers, one boundary</h2>
+<ul>
+<li><strong>Inline completions — on device.</strong> Contextually relevant completions for the patterns Apple-platform developers write, generated by an on-device model running on the Neural Engine. <strong>Source code never leaves the machine</strong> for these.</li>
+<li><strong>Agentic tasks — cloud, opt-in.</strong> For work the on-device model can't handle, Xcode 27 routes to third-party coding agents from <strong>Anthropic, Google, and OpenAI</strong>. This only happens when you explicitly invoke an agent — the privacy line is "completions stay local; agents go out when you choose."</li>
+</ul>
+<h2>Agent skills</h2>
+<p>Xcode ships Apple-authored <strong>agent skills</strong> — packaged expertise the agent can use — including a <strong>SwiftUI Specialist</strong> and a <strong>What's New in SwiftUI</strong> skill, so the agent applies current best practices and new-API knowledge rather than stale patterns.</p>
+<h2>Why it matters</h2>
+<p>This is Apple's answer to AI-assisted coding built into the default toolchain: no separate extension, no cloud bill for everyday completions, and a privacy story that fits Apple's positioning. For day-to-day work the on-device completions are the win; agents are there for bigger refactors and generation when you opt in.</p>
+<h2>How this lands in our notes</h2>
+<p>Pairs with the testing/profiling workflow in <a class="xref" href="testing.html#00-overview">Testing &amp; Instruments</a> and the broader <a class="xref" href="#2026-foundation-models">Foundation Models</a> story — the same provider set (Anthropic/Google/OpenAI) shows up in both the IDE and the runtime framework.</p>
+<h2>Related</h2>
+<ul>
+<li>Companion: <a class="xref" href="#2026-whats-new-in-swift">2026-whats-new-in-swift</a>, <a class="xref" href="#2026-foundation-models">2026-foundation-models</a></li>
+<li>Source: Apple Newsroom; WWDC26 session "What's new in Xcode" (258)</li>
+<li>Hub: <a class="xref" href="#00-index">00-index</a></li>
+</ul><div class="pager"><a href="#2026-whats-new-in-swiftui"><span>Prev</span>← What&#x27;s New in SwiftUI (WWDC26)</a><a href="#250-principles-of-great-design"><span>Next</span>Principles of Great Design (WWDC26 — 250) →</a></div></section>
+<section class="page" id="250-principles-of-great-design" data-title="Principles of Great Design (WWDC26 — 250)" data-num="15" data-hasdemo="0"><h1>Principles of Great Design (WWDC26 — 250)</h1>
 <blockquote>
 <p>A ~16-minute design-philosophy talk. Not an API session — it's the <em>why</em> that should sit above every stack decision you make. Eight principles, in order, each building toward the last.</p>
 </blockquote>
@@ -4309,8 +4499,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MXMetricManagerSubscriber
 <ul>
 <li><a href="https://developer.apple.com/design/human-interface-guidelines/design-principles">Human Interface Guidelines — Design principles</a></li>
 <li><a href="https://developer.apple.com/videos/play/wwdc2026/250/">Session video</a></li>
-</ul><div class="pager"><a href="#10258-eliminate-hangs"><span>Prev</span>← Understand and Eliminate Hangs from Your App</a><a href="#803-designing-fluid-interfaces"><span>Next</span>WWDC18 Session 803 -- Designing Fluid Interfaces →</a></div></section>
-<section class="page" id="803-designing-fluid-interfaces" data-title="WWDC18 Session 803 -- Designing Fluid Interfaces" data-num="11" data-hasdemo="1"><h1>WWDC18 Session 803 -- Designing Fluid Interfaces</h1><div class="demo-mount" data-demo="su-drag"></div>
+</ul><div class="pager"><a href="#2026-xcode-27"><span>Prev</span>← Xcode 27 — Agentic Coding (WWDC26)</a><a href="#803-designing-fluid-interfaces"><span>Next</span>WWDC18 Session 803 -- Designing Fluid Interfaces →</a></div></section>
+<section class="page" id="803-designing-fluid-interfaces" data-title="WWDC18 Session 803 -- Designing Fluid Interfaces" data-num="16" data-hasdemo="1"><h1>WWDC18 Session 803 -- Designing Fluid Interfaces</h1><div class="demo-mount" data-demo="su-drag"></div>
 <blockquote>
 <p>"When you align the interface to the way we think and move, something kind of magical happens. It really stops feeling like a computer, and starts feeling like a seamless extension of us."</p>
 </blockquote>

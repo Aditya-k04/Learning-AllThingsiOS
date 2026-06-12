@@ -983,7 +983,14 @@ Image(systemName: &quot;chevron.right&quot;)
 - [x] <code>Image</code> from asset catalog requires <code>.resizable()</code> before sizing modifiers
 - [x] <code>.scaledToFit()</code> preserves aspect ratio; <code>.scaledToFill()</code> may crop
 - [x] <code>AsyncImage</code> loads remote images with support for loading, success, and failure states
-- [x] Use <code>Image(decorative:)</code> and <code>.accessibilityLabel()</code> for proper accessibility</p><div class="pager"><a href="#02-views-and-modifiers"><span>Prev</span>← 02 — Views and Modifiers: Building Blocks of SwiftUI</a><a href="#04-layout-fundamentals"><span>Next</span>04 — Layout Fundamentals: Stacks, Spacers, and Frames →</a></div></section>
+- [x] Use <code>Image(decorative:)</code> and <code>.accessibilityLabel()</code> for proper accessibility</p>
+<hr />
+<h2>🆕 WWDC26 update</h2>
+<p><strong><code>AsyncImage</code> now caches.</strong> You can supply a custom <code>URLSession</code> (with a sized <code>URLCache</code>) to control the cache:</p>
+<pre><code class="language-swift">AsyncImage(request: URLRequest(url: imageURL))
+    .asyncImageURLSession(session)   // session configured with a custom URLCache
+</code></pre>
+<p>Pairs with <a class="xref" href="networking.html#05-caching-auth-and-testing">caching</a>. Full list: <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#02-views-and-modifiers"><span>Prev</span>← 02 — Views and Modifiers: Building Blocks of SwiftUI</a><a href="#04-layout-fundamentals"><span>Next</span>04 — Layout Fundamentals: Stacks, Spacers, and Frames →</a></div></section>
 <section class="page" id="04-layout-fundamentals" data-title="04 — Layout Fundamentals: Stacks, Spacers, and Frames" data-num="04" data-hasdemo="1"><h1>04 — Layout Fundamentals: Stacks, Spacers, and Frames</h1><div class="demo-mount" data-demo="su-layout"></div>
 <p>SwiftUI uses a stack-based layout system. Instead of Auto Layout constraints, you compose views using horizontal, vertical, and layered stacks. Understanding how SwiftUI negotiates size between parent and child is the key to mastering layout.</p>
 <hr />
@@ -2194,7 +2201,20 @@ ScrollView {
 <li>[x] I can implement pull-to-refresh with <code>.refreshable</code></li>
 <li>[x] I can enable single and multi-select with <code>List(selection:)</code></li>
 <li>[x] I understand that <code>List</code> is lazy and when to prefer it over <code>ScrollView</code> + <code>VStack</code></li>
-</ul><div class="pager"><a href="#06-controls"><span>Prev</span>← 06 — Controls: Buttons, Toggles, Pickers, and Text Input</a><a href="#08-navigation"><span>Next</span>Navigation →</a></div></section>
+</ul>
+<hr />
+<h2>🆕 WWDC26 update</h2>
+<p>Two long-standing <code>List</code>-only features became universal in SwiftUI (iOS 27):</p>
+<ul>
+<li><strong>Swipe actions anywhere</strong> — apply <code>.swipeActionsContainer()</code> to a <code>ScrollView</code>/<code>LazyVStack</code>/custom layout and use <code>.swipeActions { … }</code> on its rows. You no longer need a <code>List</code> just for swipe-to-delete.</li>
+<li><strong>Reordering anywhere</strong> — mark items <code>.reorderable()</code> and add <code>.reorderContainer(for: Item.self) { difference in difference.apply(to: &amp;items) }</code>.</li>
+</ul>
+<pre><code class="language-swift">ScrollView { LazyVStack { ForEach(items) { row in
+    ItemRow(row).swipeActions { Button(&quot;Delete&quot;, role: .destructive) { delete(row) } }
+}}}
+.swipeActionsContainer()
+</code></pre>
+<p>Full rundown: <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#06-controls"><span>Prev</span>← 06 — Controls: Buttons, Toggles, Pickers, and Text Input</a><a href="#08-navigation"><span>Next</span>Navigation →</a></div></section>
 <section class="page" id="08-navigation" data-title="Navigation" data-num="08" data-hasdemo="0"><h1>Navigation</h1>
 <p>Navigation is how users move between screens in your app. SwiftUI's navigation system (iOS 16+) is built around <code>NavigationStack</code> and value-based <code>NavigationLink</code>, replacing the older <code>NavigationView</code>. The new system supports programmatic navigation, deep linking, and state restoration.</p>
 <blockquote>
@@ -2478,7 +2498,13 @@ NavigationStack {
 <li>[x] I understand <code>NavigationSplitView</code> for iPad multi-column layouts</li>
 <li>[x] I know the common mistakes: nested stacks, links outside stacks, deprecated NavigationView</li>
 <li>[x] I can encode/decode <code>NavigationPath</code> for deep linking</li>
-</ul><div class="pager"><a href="#07-lists-and-foreach"><span>Prev</span>← Lists and ForEach</a><a href="#09-sheets-and-alerts"><span>Next</span>Sheets and Alerts →</a></div></section>
+</ul>
+<hr />
+<h2>🆕 WWDC26 update</h2>
+<p>Navigation/presentation gained a <strong><code>.crossFade</code></strong> transition alongside <code>.zoom</code> and <code>.automatic</code>:</p>
+<pre><code class="language-swift">.sheet(isPresented: $show) { DetailView().navigationTransition(.crossFade) }
+</code></pre>
+<p>You still can't fully hand-drive navigation transitions, but there are more built-in options now. See <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#07-lists-and-foreach"><span>Prev</span>← Lists and ForEach</a><a href="#09-sheets-and-alerts"><span>Next</span>Sheets and Alerts →</a></div></section>
 <section class="page" id="09-sheets-and-alerts" data-title="Sheets and Alerts" data-num="09" data-hasdemo="0"><h1>Sheets and Alerts</h1>
 <p>Sheets, alerts, and popovers are SwiftUI's modal presentation tools. Unlike navigation, which pushes screens onto a stack, modals appear on top of the current content and demand attention before the user returns.</p>
 <blockquote>
@@ -5617,7 +5643,14 @@ struct OnboardingPage: View {
 <li>[x] Add dropdown menus with <code>.toolbarTitleMenu</code></li>
 <li>[x] Use <code>.principal</code> placement for custom title areas</li>
 <li>[x] Adapt between TabView and sidebar for iPhone vs iPad</li>
-</ul><div class="pager"><a href="#18-scrollview"><span>Prev</span>← ScrollView</a><a href="#20-search-and-filtering"><span>Next</span>Search and Filtering →</a></div></section>
+</ul>
+<hr />
+<h2>🆕 WWDC26 update</h2>
+<ul>
+<li><strong>Prominent tab role</strong> — <code>Tab("Create", systemImage: "pencil", role: .prominent)</code> gives a trailing-separated, emphasized tab (like the system search tab).</li>
+<li><strong>Toolbar visibility control</strong> — <code>visibilityPriority(.high)</code> keeps key items visible on small screens, <code>ToolbarOverflowMenu { … }</code> pushes secondary items into an overflow, and the <code>.topBarPinnedTrailing</code> placement pins an item to the trailing edge.</li>
+</ul>
+<p>See <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#18-scrollview"><span>Prev</span>← ScrollView</a><a href="#20-search-and-filtering"><span>Next</span>Search and Filtering →</a></div></section>
 <section class="page" id="20-search-and-filtering" data-title="Search and Filtering" data-num="20" data-hasdemo="0"><h1>Search and Filtering</h1>
 <p>Search is one of the most common interactions in any app. SwiftUI provides the <code>.searchable</code> modifier that adds a platform-native search bar to navigation containers. Combined with Swift's collection filtering, you can build powerful, responsive search experiences with very little code.</p>
 <blockquote>

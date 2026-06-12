@@ -103,7 +103,17 @@ final class CartXCTests: XCTestCase {
 <ul>
 <li>What to actually test and how: <a class="xref" href="#02-unit-testing-patterns">02-unit-testing-patterns</a></li>
 <li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Next: <a class="xref" href="#02-unit-testing-patterns">02-unit-testing-patterns</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Testing &amp; Instruments — Overview</a><a href="#02-unit-testing-patterns"><span>Next</span>Unit Testing Patterns →</a></div></section>
+</ul>
+<hr />
+<h2>🆕 WWDC26 update</h2>
+<p>Swift Testing picked up four useful additions:</p>
+<ul>
+<li><strong>Issue severity</strong> — <code>Issue.record("…", severity: .warning)</code> for soft failures that shouldn't stop the test.</li>
+<li><strong><code>Test.cancel("reason")</code></strong> — a test can cleanly stop itself early.</li>
+<li><strong>Image attachments</strong> — attach rendered images to results (great for snapshot-style checks).</li>
+<li><strong>XCTest interoperability</strong> — mix <code>#expect</code> and <code>XCTAssert</code> in the same codebase; migration no longer has to be all-or-nothing.</li>
+</ul>
+<p>See <a class="xref" href="wwdc.html#2026-whats-new-in-swift">What&#x27;s New in Swift (WWDC26)</a>.</p><div class="pager"><a href="#00-overview"><span>Prev</span>← Testing &amp; Instruments — Overview</a><a href="#02-unit-testing-patterns"><span>Next</span>Unit Testing Patterns →</a></div></section>
 <section class="page" id="02-unit-testing-patterns" data-title="Unit Testing Patterns" data-num="02" data-hasdemo="0"><h1>Unit Testing Patterns</h1>
 <p>Knowing the framework is easy; knowing <em>what</em> and <em>how</em> to test is the skill. Good unit tests are fast, isolated, deterministic, and read like a specification of behavior.</p>
 <h2>Arrange–Act–Assert</h2>

@@ -256,7 +256,15 @@ let b = await load(2)
 <ul>
 <li>The whole model: <a class="xref" href="#00-overview">00-overview</a></li>
 <li>Prev: <a class="xref" href="#04-mainactor-discipline">04-mainactor-discipline</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#04-mainactor-discipline"><span>Prev</span>← @MainActor Discipline</a><span class="sp"></span></div></section>
+</ul>
+<hr />
+<h2>🆕 WWDC26 update</h2>
+<p>Swift 6.3 adds a <strong>third continuation type, <code>Continuation&lt;Success, Failure&gt;</code></strong> — use it instead of <code>CheckedContinuation</code>/<code>UnsafeContinuation</code> when bridging callbacks. Double-resume becomes a <strong>compile-time error</strong> and a missing resume <strong>traps</strong>, with no fast-path overhead:</p>
+<pre><code class="language-swift">let value = try await withContinuation { c in
+    legacyAPI { result in c.resume(returning: result) }
+}
+</code></pre>
+<p>Also useful: <strong><code>withTaskCancellationShield { … }</code></strong> to protect critical cleanup/SOS work from cancellation. See <a class="xref" href="wwdc.html#2026-whats-new-in-swift">What&#x27;s New in Swift (WWDC26)</a>.</p><div class="pager"><a href="#04-mainactor-discipline"><span>Prev</span>← @MainActor Discipline</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

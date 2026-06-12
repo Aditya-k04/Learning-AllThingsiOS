@@ -5744,7 +5744,15 @@ See <a href="../Learning-SwiftUI/21-async-patterns.md">async-patterns</a> for <c
 <li>[x] Handle cancellation with <code>Task.isCancelled</code> and <code>Task.checkCancellation()</code></li>
 <li>[x] Use <code>Task.sleep(for:)</code> for non-blocking delays</li>
 <li>[x] Convert callback APIs with <code>withCheckedContinuation</code> / <code>withCheckedThrowingContinuation</code></li>
-</ul><div class="pager"><a href="#19-value-semantics"><span>Prev</span>← Value Semantics</a><a href="#21-concurrency-advanced"><span>Next</span>Concurrency Advanced →</a></div></section>
+</ul>
+<hr />
+<h2>🆕 WWDC26 update (Swift 6.3 / 6.4)</h2>
+<ul>
+<li><strong>New <code>Continuation&lt;Success, Failure&gt;</code></strong> — prefer it over <code>CheckedContinuation</code>/<code>UnsafeContinuation</code>: double-resume is a compile error, missing-resume traps, and there's no fast-path overhead.</li>
+<li><strong><code>withTaskCancellationShield { … }</code></strong> — guarantees a critical block finishes even if the parent task is cancelled.</li>
+<li><strong>Better diagnostics</strong> — the compiler now flags catching errors inside a <code>Task</code> and saving a task for later rendezvous.</li>
+</ul>
+<p>Details: <a class="xref" href="wwdc.html#2026-whats-new-in-swift">What&#x27;s New in Swift (WWDC26)</a>.</p><div class="pager"><a href="#19-value-semantics"><span>Prev</span>← Value Semantics</a><a href="#21-concurrency-advanced"><span>Next</span>Concurrency Advanced →</a></div></section>
 <section class="page" id="21-concurrency-advanced" data-title="Concurrency Advanced" data-num="21" data-hasdemo="0"><h1>Concurrency Advanced</h1>
 <p>Actors, Sendable, <code>@MainActor</code>, AsyncSequence, and Swift 6 strict concurrency. These make concurrent code safe by construction.</p>
 <blockquote>
@@ -5895,7 +5903,15 @@ for await loc in locationUpdates() { print(loc.coordinate) }
 <li>[x] Iterate <code>AsyncSequence</code> with <code>for await</code> and create <code>AsyncStream</code></li>
 <li>[x] Distinguish structured from unstructured concurrency</li>
 <li>[x] Avoid pitfalls: actor reentrancy, deadlocks, data races</li>
-</ul><div class="pager"><a href="#20-concurrency-basics"><span>Prev</span>← Concurrency Basics</a><a href="#22-pattern-matching"><span>Next</span>Pattern Matching →</a></div></section>
+</ul>
+<hr />
+<h2>🆕 WWDC26 update (Swift 6.3 / 6.4)</h2>
+<ul>
+<li><strong>Improved <code>Sendable</code></strong> — mark a class <code>~Sendable</code> to opt out, and <code>weak let</code> is now allowed in <code>Sendable</code> types.</li>
+<li><strong><code>Ref&lt;T&gt;</code> / <code>MutableRef&lt;T&gt;</code></strong> — safe first-class references without unsafe pointers (locals, struct members, generic params).</li>
+<li><strong>Data-isolation tightened with less ceremony</strong> — more correctness, fewer annotations than Swift 6's strict mode required.</li>
+</ul>
+<p>Also new platform-wide: <strong><code>anyAppleOS</code></strong> availability shorthand, <strong>module selectors</strong> (<code>Foo::Bar</code>), and the <strong><code>@c</code></strong> attribute. See <a class="xref" href="wwdc.html#2026-whats-new-in-swift">What&#x27;s New in Swift (WWDC26)</a>.</p><div class="pager"><a href="#20-concurrency-basics"><span>Prev</span>← Concurrency Basics</a><a href="#22-pattern-matching"><span>Next</span>Pattern Matching →</a></div></section>
 <section class="page" id="22-pattern-matching" data-title="Pattern Matching" data-num="22" data-hasdemo="0"><h1>Pattern Matching</h1>
 <p>Swift's pattern matching goes far beyond equality checks. Destructure values, bind variables, filter by type, and express complex conditions concisely. The <code>switch</code> statement is the primary tool, but patterns appear throughout the language.</p>
 <blockquote>
