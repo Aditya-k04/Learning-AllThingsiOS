@@ -4350,8 +4350,22 @@ let reply = try await session.respond(to: &quot;Summarize this note: \(text)&quo
 </code></pre>
 <h2>Toolbar visibility control</h2>
 <p>New toolbar modifiers give precise control on small screens: <code>visibilityPriority(.high)</code> to keep key items visible, <code>ToolbarOverflowMenu</code> to push secondary items into an overflow, and <code>.topBarPinnedTrailing</code> placement to pin an item.</p>
+<h2><code>@State</code> becomes a macro (lazy initialization)</h2>
+<p>A quietly important change: in Xcode 27, <strong><code>@State</code> is now a Swift macro</strong> rather than a property wrapper conforming to <code>DynamicProperty</code>. The practical payoff is <strong>lazy evaluation of the initial value</strong>.</p>
+<p>Before, the default-value expression of a <code>@State</code> property ran <em>every time the view struct was recreated</em> (i.e. whenever the parent re-evaluated). SwiftUI threw the redundant instances away and kept the first, but the initializer still <em>ran</em> — wasteful for <code>@Observable</code> models with non-trivial setup.</p>
+<pre><code class="language-swift">struct CounterView: View {
+    @State private var model = CounterViewModel()   // init() used to run on EVERY recreation
+    var body: some View { Text(&quot;\(model.count)&quot;) }
+}
+</code></pre>
+<p>With the macro, the initializer <strong>runs only once</strong>, when SwiftUI first sets up the view's state storage. The old workaround — declaring the state optional and assigning it inside a <code>task</code> — is no longer needed.</p>
+<p>Two caveats remain:</p>
+<ul>
+<li>The behavior is <strong>back-deployed to iOS 17 / macOS 14</strong> (where Observation shipped), but you must <strong>compile with Xcode 27</strong> to get it.</li>
+<li>The <code>init()</code> anti-pattern still applies: assigning a model in the view's <code>init()</code> runs its initializer on every recreation <em>and</em> SwiftUI ignores the new instance after the first, so the model can hold <strong>stale</strong> data relative to what the parent passes in. For dependency-driven models, initialize outside <code>init</code> and use the <code>task(id:)</code> pattern.</li>
+</ul>
 <h2>Document API + lazy Observable state</h2>
-<p>Document-based apps get a refreshed look and a performance boost (a new snapshot-diffing Document model), and Observable types gain lazy state initialization. Xcode itself adopted the new document improvements.</p>
+<p>Document-based apps get a refreshed look and a performance boost (a new snapshot-diffing Document model). Xcode itself adopted the new document improvements.</p>
 <h2>How this lands in our notes</h2>
 <p>These remove constraints we worked around in <a class="xref" href="swiftui.html#07-lists-and-foreach">Lists &amp; ForEach</a>, <a class="xref" href="swiftui.html#19-tabview-and-toolbars">TabView &amp; Toolbars</a>, and <a class="xref" href="swiftui.html#08-navigation">Navigation</a>. The declarative "describe two states, system animates" model is unchanged — see <a class="xref" href="swiftui.html#12-animation-basics">Animation Basics</a>.</p>
 <h2>Related</h2>

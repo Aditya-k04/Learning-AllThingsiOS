@@ -437,7 +437,12 @@
 <li>[ ] A value passed into <code>@State</code> seeds it once and won't track the parent afterward.</li>
 <li>[ ] I know why mutating a plain-class property in <code>@State</code> doesn't update the UI, and that <code>@Observable</code> fixes it.</li>
 </ul>
-<p>→ Next: <a href="04-binding-mechanics.md">04 — Binding Mechanics</a></p><div class="pager"><a href="#02-view-identity-and-lifetime"><span>Prev</span>← 02 — View Identity and Lifetime</a><a href="#04-binding-mechanics"><span>Next</span>04 — Binding Mechanics →</a></div></section>
+<p>→ Next: <a href="04-binding-mechanics.md">04 — Binding Mechanics</a></p>
+<hr />
+<h2>🆕 WWDC26 update — <code>@State</code> macro &amp; storage init</h2>
+<p>WWDC26 reworked how <code>@State</code>'s initial value reaches storage. <code>@State</code> is now a <strong>Swift macro</strong> (it used to be a <code>DynamicProperty</code> property wrapper), and the initial-value expression is evaluated <strong>lazily</strong> — it runs once, when SwiftUI allocates the state storage box for the view, instead of on every view-struct recreation.</p>
+<p>This directly affects <code>@Observable</code> models held in <code>@State</code>: their <code>init</code> no longer fires repeatedly when a parent re-evaluates, only when the storage is first created. The state box still lives outside the (ephemeral) view struct and persists across re-renders — what changed is that <em>populating it</em> is now deferred and one-shot. Compile with <strong>Xcode 27</strong> to get the behavior (back-deployed to iOS 17 / macOS 14).</p>
+<p>See <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a> and <a class="xref" href="#06-observable-ownership">Observable Ownership</a>.</p><div class="pager"><a href="#02-view-identity-and-lifetime"><span>Prev</span>← 02 — View Identity and Lifetime</a><a href="#04-binding-mechanics"><span>Next</span>04 — Binding Mechanics →</a></div></section>
 <section class="page" id="04-binding-mechanics" data-title="04 — Binding Mechanics" data-num="04" data-hasdemo="0"><h1>04 — Binding Mechanics</h1>
 <p>A <code>Binding</code> is the answer to: "how do I let a child <em>write</em> to a source of truth it doesn't own?" Understanding that it's just a <strong>get/set pair</strong> dissolves most confusion about <code>$</code>.</p>
 <hr />

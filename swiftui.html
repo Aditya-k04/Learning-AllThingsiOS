@@ -1547,7 +1547,21 @@ See <a href="16-data-flow.md">16-data-flow</a> for state management patterns.</p
 - [x] <code>.constant(value)</code> creates a read-only binding for previews
 - [x] State change triggers <code>body</code> recomputation, which triggers UI diff and update
 - [x] Don't put <code>@State</code> too high (unnecessary recomputation) or initialize it from parameters
-- [x] For shared/app-wide state, you need <code>@Observable</code> and <code>@Environment</code> (later lessons)</p><div class="pager"><a href="#04-layout-fundamentals"><span>Prev</span>← 04 — Layout Fundamentals: Stacks, Spacers, and Frames</a><a href="#06-controls"><span>Next</span>06 — Controls: Buttons, Toggles, Pickers, and Text Input →</a></div></section>
+- [x] For shared/app-wide state, you need <code>@Observable</code> and <code>@Environment</code> (later lessons)</p>
+<hr />
+<h2>🆕 WWDC26 update — <code>@State</code> is now a macro</h2>
+<p>In Xcode 27, <code>@State</code> changes from a property wrapper (conforming to <code>DynamicProperty</code>) into a <strong>Swift macro</strong>. The headline benefit is <strong>lazy initialization of the default value</strong>:</p>
+<pre><code class="language-swift">struct CounterView: View {
+    @State private var model = CounterViewModel()   // initializer now runs ONCE
+    var body: some View { Text(&quot;\(model.count)&quot;) }
+}
+</code></pre>
+<p>Previously this <code>CounterViewModel()</code> ran on <em>every</em> recreation of the view struct (each time the parent re-evaluated); SwiftUI kept only the first instance but still paid the init cost. Now the initializer runs <strong>only once</strong>, when SwiftUI sets up the state storage. The old "make it optional + assign in <code>.task</code>" workaround is no longer needed.</p>
+<ul>
+<li>Back-deployed to <strong>iOS 17 / macOS 14+</strong>, but you must <strong>build with Xcode 27</strong>.</li>
+<li>Still avoid assigning a model in the view's <code>init()</code> — it re-runs and SwiftUI ignores all but the first instance, risking <strong>stale</strong> data. Use <code>task(id:)</code> for dependency-driven models.</li>
+</ul>
+<p>Details: <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#04-layout-fundamentals"><span>Prev</span>← 04 — Layout Fundamentals: Stacks, Spacers, and Frames</a><a href="#06-controls"><span>Next</span>06 — Controls: Buttons, Toggles, Pickers, and Text Input →</a></div></section>
 <section class="page" id="06-controls" data-title="06 — Controls: Buttons, Toggles, Pickers, and Text Input" data-num="06" data-hasdemo="0"><h1>06 — Controls: Buttons, Toggles, Pickers, and Text Input</h1>
 <p>SwiftUI provides a rich set of built-in controls. Every control follows the same pattern: it displays data from your state and writes changes back through bindings.</p>
 <blockquote>
