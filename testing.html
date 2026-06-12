@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-overview" data-title="Testing &amp; Instruments — Overview" data-num="·" data-hasdemo="0"><h1>Testing &amp; Instruments — Overview</h1>
+<section class="page" id="00-overview" data-title="Testing &amp; Instruments — Overview" data-num="·" data-hasdemo="0" data-group=""><h1>Testing &amp; Instruments — Overview</h1>
 <p>Tests let you change code without fear; Instruments lets you find out <em>why</em> something is slow instead of guessing. Together they're what turn a working prototype into something you can maintain and ship with confidence.</p>
 <h2>What you'll learn</h2>
 <ol>
@@ -47,7 +47,7 @@
 <p>Tests reward the architecture from the previous course: logic in ViewModels/reducers (not views), dependencies injected so you can substitute fakes (<a class="xref" href="architecture.html#03-dependency-injection">DI</a>), and side effects pushed to the edges. If something is hard to test, that's usually a design smell, not a testing problem.</p>
 <h2>How it connects</h2>
 <p>The seams you test were built in <a class="xref" href="networking.html#05-caching-auth-and-testing">networking</a> (mockable client) and <a class="xref" href="architecture.html#02-unidirectional-data-flow">unidirectional flow</a> (pure reducers). The performance half pairs with the WWDC sessions on <a class="xref" href="wwdc.html#10258-eliminate-hangs">eliminating hangs</a> and the <a class="xref" href="wwdc.html#10181-ultimate-performance-survival-guide">performance survival guide</a>.</p><div class="pager"><span class="sp"></span><a href="#01-xctest-and-swift-testing"><span>Next</span>XCTest &amp; Swift Testing →</a></div></section>
-<section class="page" id="01-xctest-and-swift-testing" data-title="XCTest &amp; Swift Testing" data-num="01" data-hasdemo="0"><h1>XCTest &amp; Swift Testing</h1>
+<section class="page" id="01-xctest-and-swift-testing" data-title="XCTest &amp; Swift Testing" data-num="01" data-hasdemo="0" data-group=""><h1>XCTest &amp; Swift Testing</h1>
 <p>iOS has two test frameworks now. <strong>XCTest</strong> is the long-standing one (still used for UI and performance tests). <strong>Swift Testing</strong> (introduced 2024) is the modern, expressive successor for unit tests. Know both — you'll see XCTest in every existing codebase and Swift Testing in new ones.</p>
 <h2>Swift Testing (the modern way)</h2>
 <p>Macro-based, expressive, and parallel by default:</p>
@@ -114,7 +114,7 @@ final class CartXCTests: XCTestCase {
 <li><strong>XCTest interoperability</strong> — mix <code>#expect</code> and <code>XCTAssert</code> in the same codebase; migration no longer has to be all-or-nothing.</li>
 </ul>
 <p>See <a class="xref" href="wwdc.html#2026-whats-new-in-swift">What&#x27;s New in Swift (WWDC26)</a>.</p><div class="pager"><a href="#00-overview"><span>Prev</span>← Testing &amp; Instruments — Overview</a><a href="#02-unit-testing-patterns"><span>Next</span>Unit Testing Patterns →</a></div></section>
-<section class="page" id="02-unit-testing-patterns" data-title="Unit Testing Patterns" data-num="02" data-hasdemo="0"><h1>Unit Testing Patterns</h1>
+<section class="page" id="02-unit-testing-patterns" data-title="Unit Testing Patterns" data-num="02" data-hasdemo="0" data-group=""><h1>Unit Testing Patterns</h1>
 <p>Knowing the framework is easy; knowing <em>what</em> and <em>how</em> to test is the skill. Good unit tests are fast, isolated, deterministic, and read like a specification of behavior.</p>
 <h2>Arrange–Act–Assert</h2>
 <p>Every test has the same three-beat shape:</p>
@@ -166,7 +166,7 @@ final class CartXCTests: XCTestCase {
 <li>The seam that enables it: <a class="xref" href="architecture.html#03-dependency-injection">Dependency Injection</a></li>
 <li>Prev: <a class="xref" href="#01-xctest-and-swift-testing">01-xctest-and-swift-testing</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#01-xctest-and-swift-testing"><span>Prev</span>← XCTest &amp; Swift Testing</a><a href="#03-snapshot-and-ui-tests"><span>Next</span>Snapshot &amp; UI Tests →</a></div></section>
-<section class="page" id="03-snapshot-and-ui-tests" data-title="Snapshot &amp; UI Tests" data-num="03" data-hasdemo="0"><h1>Snapshot &amp; UI Tests</h1>
+<section class="page" id="03-snapshot-and-ui-tests" data-title="Snapshot &amp; UI Tests" data-num="03" data-hasdemo="0" data-group=""><h1>Snapshot &amp; UI Tests</h1>
 <p>Unit tests verify logic; these two verify the <em>rendered result</em>. Snapshot tests catch unintended visual changes; UI tests drive the real app like a user. Both are valuable and both are slower and more brittle than unit tests — use them deliberately.</p>
 <h2>Snapshot testing</h2>
 <p>A snapshot test renders a view to an image once (the "reference"), then fails future runs if the rendering differs. It's the fastest way to catch accidental visual regressions across many states.</p>
@@ -210,7 +210,7 @@ func testProfileCard() {
 <li>The fast foundation: <a class="xref" href="#02-unit-testing-patterns">02-unit-testing-patterns</a></li>
 <li>Prev: <a class="xref" href="#02-unit-testing-patterns">02-unit-testing-patterns</a> · Next: <a class="xref" href="#04-instruments">04-instruments</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#02-unit-testing-patterns"><span>Prev</span>← Unit Testing Patterns</a><a href="#04-instruments"><span>Next</span>Instruments →</a></div></section>
-<section class="page" id="04-instruments" data-title="Instruments" data-num="04" data-hasdemo="0"><h1>Instruments</h1>
+<section class="page" id="04-instruments" data-title="Instruments" data-num="04" data-hasdemo="0" data-group=""><h1>Instruments</h1>
 <p>Instruments is Xcode's profiler — a suite of tools that record what your app actually does at runtime: where CPU time goes, what's allocating memory, why the UI hitches. The golden rule of performance work: <strong>measure first.</strong> Optimizing without profiling is guessing, and you'll usually fix the wrong thing.</p>
 <h2>How to profile</h2>
 <p><code>Cmd-I</code> (Product → Profile) builds in <strong>Release</strong> configuration (optimizations on — critical; Debug numbers lie) and launches Instruments. Pick a template, record while you reproduce the problem, then read the trace.</p>
@@ -243,7 +243,7 @@ func testProfileCard() {
 <li>WWDC deep dive: <a class="xref" href="wwdc.html#10181-ultimate-performance-survival-guide">Performance Survival Guide</a></li>
 <li>Prev: <a class="xref" href="#03-snapshot-and-ui-tests">03-snapshot-and-ui-tests</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#03-snapshot-and-ui-tests"><span>Prev</span>← Snapshot &amp; UI Tests</a><a href="#05-performance-and-hangs"><span>Next</span>Performance &amp; Hangs →</a></div></section>
-<section class="page" id="05-performance-and-hangs" data-title="Performance &amp; Hangs" data-num="05" data-hasdemo="0"><h1>Performance &amp; Hangs</h1>
+<section class="page" id="05-performance-and-hangs" data-title="Performance &amp; Hangs" data-num="05" data-hasdemo="0" data-group=""><h1>Performance &amp; Hangs</h1>
 <p>Users don't read your code — they feel its performance. Three distinct problems show up as "the app feels bad": <strong>hangs</strong> (the UI freezes), <strong>hitches</strong> (a frame is dropped mid-animation), and <strong>memory growth</strong> (it gets slow then gets killed). Each has a different cause and a different fix.</p>
 <h2>Hangs: the main thread is blocked</h2>
 <p>A hang is the main thread doing synchronous work so nothing can respond. Anything over ~250ms is perceptible; over a few seconds the watchdog may kill the app. Causes and fixes:</p>

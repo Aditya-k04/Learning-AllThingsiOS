@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-overview" data-title="Concurrency in Practice — Overview" data-num="·" data-hasdemo="0"><h1>Concurrency in Practice — Overview</h1>
+<section class="page" id="00-overview" data-title="Concurrency in Practice — Overview" data-num="·" data-hasdemo="0" data-group=""><h1>Concurrency in Practice — Overview</h1>
 <p>Swift Concurrency (async/await, tasks, actors) replaced the old world of <code>DispatchQueue</code> callbacks and locks with a model the <em>compiler</em> can check for data races. Your <a class="xref" href="swift.html#20-concurrency-basics">Swift concurrency basics</a> notes cover the syntax; this course is about using it correctly in a real app — the patterns, the pitfalls, and the discipline that keeps the main thread smooth.</p>
 <h2>The three pillars</h2>
 <pre><code>async/await           – write asynchronous code that reads top-to-bottom
@@ -48,7 +48,7 @@ actors                 – reference types that serialize access to their state 
 </ol>
 <h2>How it connects</h2>
 <p>This underpins <a class="xref" href="networking.html#02-async-await-requests">networking</a> (every request is async), <a class="xref" href="persistence.html#02-swiftdata">SwiftData</a> (context actor isolation), and SwiftUI itself (<code>.task</code>, <code>@MainActor</code> views). Strict concurrency checking — on by default in the Swift 6 language mode — is the through-line of modern Apple code.</p><div class="pager"><span class="sp"></span><a href="#01-async-await-model"><span>Next</span>The Async/Await Model →</a></div></section>
-<section class="page" id="01-async-await-model" data-title="The Async/Await Model" data-num="01" data-hasdemo="0"><h1>The Async/Await Model</h1>
+<section class="page" id="01-async-await-model" data-title="The Async/Await Model" data-num="01" data-hasdemo="0" data-group=""><h1>The Async/Await Model</h1>
 <p><code>async</code>/<code>await</code> lets you write asynchronous code that reads top-to-bottom, like synchronous code, while never blocking a thread. The key is understanding what <code>await</code> actually does — it's a <em>suspension point</em>, not a pause.</p>
 <h2>Suspension, not blocking</h2>
 <p>When you <code>await</code>, the function may <strong>suspend</strong>: it gives up its thread, lets other work run, and resumes later — possibly on a <em>different</em> thread — when the awaited result is ready. No thread sits idle waiting.</p>
@@ -87,7 +87,7 @@ let (a2, b2) = await (x, y)
 <li>Syntax foundation: <a class="xref" href="swift.html#20-concurrency-basics">Concurrency Basics</a></li>
 <li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Concurrency in Practice — Overview</a><a href="#02-structured-concurrency"><span>Next</span>Structured Concurrency →</a></div></section>
-<section class="page" id="02-structured-concurrency" data-title="Structured Concurrency" data-num="02" data-hasdemo="1"><h1>Structured Concurrency</h1><div class="demo-mount" data-demo="cc-async"></div>
+<section class="page" id="02-structured-concurrency" data-title="Structured Concurrency" data-num="02" data-hasdemo="1" data-group=""><h1>Structured Concurrency</h1><div class="demo-mount" data-demo="cc-async"></div>
 <p>Structured concurrency means child tasks live within a <em>scope</em>: they can't outlive it, errors propagate out of it, and cancelling the parent cancels the children. This structure is what makes concurrent Swift code safe and leak-free, compared to fire-and-forget threads.</p>
 <h2>async let: a few concurrent children</h2>
 <p><code>async let</code> starts work immediately and binds a promise; you <code>await</code> it where you need the value. All <code>async let</code>s in a scope run concurrently:</p>
@@ -126,7 +126,7 @@ if Task.isCancelled { return partialResult } // or bail gracefully
 <li>What protects shared state across these: <a class="xref" href="#03-actors-and-isolation">03-actors-and-isolation</a></li>
 <li>Prev: <a class="xref" href="#01-async-await-model">01-async-await-model</a> · Next: <a class="xref" href="#03-actors-and-isolation">03-actors-and-isolation</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#01-async-await-model"><span>Prev</span>← The Async/Await Model</a><a href="#03-actors-and-isolation"><span>Next</span>Actors &amp; Data Isolation →</a></div></section>
-<section class="page" id="03-actors-and-isolation" data-title="Actors &amp; Data Isolation" data-num="03" data-hasdemo="0"><h1>Actors &amp; Data Isolation</h1>
+<section class="page" id="03-actors-and-isolation" data-title="Actors &amp; Data Isolation" data-num="03" data-hasdemo="0" data-group=""><h1>Actors &amp; Data Isolation</h1>
 <p>An <strong>actor</strong> is a reference type that protects its mutable state by allowing only one task inside at a time. It's Swift's structural answer to data races: instead of remembering to take a lock, the <em>type system</em> guarantees serialized access.</p>
 <h2>The problem actors solve</h2>
 <p>Two tasks mutating the same <code>class</code> from different threads is a data race — undefined behavior, crashes, corruption. The old fix was manual locks (<code>NSLock</code>, serial queues), easy to get wrong. An actor makes the compiler enforce it:</p>
@@ -164,7 +164,7 @@ let cached = await cache.image(for: url)
 <li>A real coalescing use: <a class="xref" href="networking.html#05-caching-auth-and-testing">Auth token refresh</a></li>
 <li>Prev: <a class="xref" href="#02-structured-concurrency">02-structured-concurrency</a> · Next: <a class="xref" href="#04-mainactor-discipline">04-mainactor-discipline</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#02-structured-concurrency"><span>Prev</span>← Structured Concurrency</a><a href="#04-mainactor-discipline"><span>Next</span>@MainActor Discipline →</a></div></section>
-<section class="page" id="04-mainactor-discipline" data-title="@MainActor Discipline" data-num="04" data-hasdemo="0"><h1>@MainActor Discipline</h1>
+<section class="page" id="04-mainactor-discipline" data-title="@MainActor Discipline" data-num="04" data-hasdemo="0" data-group=""><h1>@MainActor Discipline</h1>
 <p>All UIKit and SwiftUI updates must happen on the main thread. <code>@MainActor</code> is how Swift Concurrency expresses and <em>enforces</em> that. The discipline is: keep UI on the main actor, push heavy work off it, and let results flow back — without ever freezing the main thread.</p>
 <h2>What @MainActor means</h2>
 <p><code>@MainActor</code> annotates a type, method, or property as running on the main thread. The compiler then <em>checks</em> it — calling main-actor code from a background context requires an <code>await</code> hop, and accidentally touching UI off-main becomes a compile error rather than a runtime glitch.</p>
@@ -211,7 +211,7 @@ Task { let report = generateHugeReport() ; self.report = report }
 <li>Common mistakes: <a class="xref" href="#05-pitfalls-and-patterns">05-pitfalls-and-patterns</a></li>
 <li>Prev: <a class="xref" href="#03-actors-and-isolation">03-actors-and-isolation</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#03-actors-and-isolation"><span>Prev</span>← Actors &amp; Data Isolation</a><a href="#05-pitfalls-and-patterns"><span>Next</span>Pitfalls &amp; Patterns →</a></div></section>
-<section class="page" id="05-pitfalls-and-patterns" data-title="Pitfalls &amp; Patterns" data-num="05" data-hasdemo="0"><h1>Pitfalls &amp; Patterns</h1>
+<section class="page" id="05-pitfalls-and-patterns" data-title="Pitfalls &amp; Patterns" data-num="05" data-hasdemo="0" data-group=""><h1>Pitfalls &amp; Patterns</h1>
 <p>A field guide to the concurrency mistakes everyone makes once, and the patterns that prevent them.</p>
 <h2>Pitfall: expecting sequential awaits to be parallel</h2>
 <pre><code class="language-swift">let a = await load(1)      // these run ONE AFTER ANOTHER

@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-overview" data-title="Persistence &amp; SwiftData — Overview" data-num="·" data-hasdemo="0"><h1>Persistence &amp; SwiftData — Overview</h1>
+<section class="page" id="00-overview" data-title="Persistence &amp; SwiftData — Overview" data-num="·" data-hasdemo="0" data-group=""><h1>Persistence &amp; SwiftData — Overview</h1>
 <p>Every app needs to remember things — between launches, offline, across devices. iOS gives you a ladder of options from a single value to a full object graph. The skill is matching the tool to the data, and knowing the Core Data engine that still sits under the modern API.</p>
 <h2>The ladder of options</h2>
 <pre><code>@AppStorage / UserDefaults   – small key-values: flags, prefs, last-selected tab
@@ -49,7 +49,7 @@ CloudKit (+ SwiftData)       – the above, synced across the user's devices
 <p>Persistence has two halves: a <strong>store</strong> (where bytes live) and a <strong>context</strong> (your in-memory working set that you mutate and then save). SwiftData and Core Data both follow this; understanding it explains saving, undo, and threading.</p>
 <h2>How it connects</h2>
 <p>Decoded network models (<a class="xref" href="networking.html#03-codable">Codable</a>) often land in SwiftData for offline use. Widgets read a <em>shared</em> store via an App Group (<a class="xref" href="widgetkit.html#05-interactivity-and-app-intents">widget interactivity</a>). And the <code>@Observable</code> models SwiftData produces plug straight into <a class="xref" href="swiftui-dataflow.html#05-observation-framework-internals">the Observation framework</a>.</p><div class="pager"><span class="sp"></span><a href="#01-where-data-lives"><span>Next</span>Where Data Lives →</a></div></section>
-<section class="page" id="01-where-data-lives" data-title="Where Data Lives" data-num="01" data-hasdemo="0"><h1>Where Data Lives</h1>
+<section class="page" id="01-where-data-lives" data-title="Where Data Lives" data-num="01" data-hasdemo="0" data-group=""><h1>Where Data Lives</h1>
 <p>Before reaching for a database, know the lightweight stores and the app sandbox. Putting data in the wrong directory is a real bug — it can get purged, fail to back up, or get your app rejected.</p>
 <h2>UserDefaults / @AppStorage</h2>
 <p>For small, simple values — preferences, flags, the last-selected tab. Backed by a property list, loaded into memory at launch.</p>
@@ -95,7 +95,7 @@ let dir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier
 <li>For object graphs, step up to: <a class="xref" href="#02-swiftdata">02-swiftdata</a></li>
 <li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Persistence &amp; SwiftData — Overview</a><a href="#02-swiftdata"><span>Next</span>SwiftData →</a></div></section>
-<section class="page" id="02-swiftdata" data-title="SwiftData" data-num="02" data-hasdemo="0"><h1>SwiftData</h1>
+<section class="page" id="02-swiftdata" data-title="SwiftData" data-num="02" data-hasdemo="0" data-group=""><h1>SwiftData</h1>
 <p>SwiftData (iOS 17+) is Apple's modern persistence framework: you annotate plain Swift classes with <code>@Model</code>, and they become a queryable, relational, observable store — with deep SwiftUI integration. It's the recommended default for structured data in new apps.</p>
 <h2>Define a model</h2>
 <pre><code class="language-swift">import SwiftData
@@ -148,7 +148,7 @@ struct ContentView: View {
 <li>The engine underneath: <a class="xref" href="#03-core-data-engine">03-core-data-engine</a></li>
 <li>Prev: <a class="xref" href="#01-where-data-lives">01-where-data-lives</a> · Next: <a class="xref" href="#03-core-data-engine">03-core-data-engine</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#01-where-data-lives"><span>Prev</span>← Where Data Lives</a><a href="#03-core-data-engine"><span>Next</span>The Core Data Engine →</a></div></section>
-<section class="page" id="03-core-data-engine" data-title="The Core Data Engine" data-num="03" data-hasdemo="0"><h1>The Core Data Engine</h1>
+<section class="page" id="03-core-data-engine" data-title="The Core Data Engine" data-num="03" data-hasdemo="0" data-group=""><h1>The Core Data Engine</h1>
 <p>SwiftData is a modern Swift skin over <strong>Core Data</strong>, the framework that has powered iOS persistence for over a decade. You'll still meet Core Data in existing codebases, in advanced scenarios SwiftData doesn't yet cover, and in the concepts that explain SwiftData's behavior.</p>
 <h2>The Core Data stack</h2>
 <pre><code>NSManagedObjectModel    – the schema (entities, attributes, relationships)
@@ -179,7 +179,7 @@ NSPersistentContainer   – bundles all of the above together (the modern entry 
 <li>Evolving the schema: <a class="xref" href="#05-migrations-and-performance">05-migrations-and-performance</a></li>
 <li>Prev: <a class="xref" href="#02-swiftdata">02-swiftdata</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#02-swiftdata"><span>Prev</span>← SwiftData</a><a href="#04-files-and-codable"><span>Next</span>Files &amp; Codable Storage →</a></div></section>
-<section class="page" id="04-files-and-codable" data-title="Files &amp; Codable Storage" data-num="04" data-hasdemo="0"><h1>Files &amp; Codable Storage</h1>
+<section class="page" id="04-files-and-codable" data-title="Files &amp; Codable Storage" data-num="04" data-hasdemo="0" data-group=""><h1>Files &amp; Codable Storage</h1>
 <p>Sometimes a database is overkill. For documents, exported data, caches, and sharing between your app and its extensions, writing <code>Codable</code> values straight to disk is simpler, transparent, and fast.</p>
 <h2>Codable → disk in three lines</h2>
 <pre><code class="language-swift">func save&lt;T: Encodable&gt;(_ value: T, to url: URL) throws {
@@ -217,7 +217,7 @@ try save(model, to: dir.appendingPathComponent(&quot;widget-feed.json&quot;))
 <li>The lighter and heavier options around it: <a class="xref" href="#01-where-data-lives">01-where-data-lives</a>, <a class="xref" href="#02-swiftdata">02-swiftdata</a></li>
 <li>Prev: <a class="xref" href="#03-core-data-engine">03-core-data-engine</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#03-core-data-engine"><span>Prev</span>← The Core Data Engine</a><a href="#05-migrations-and-performance"><span>Next</span>Migrations &amp; Performance →</a></div></section>
-<section class="page" id="05-migrations-and-performance" data-title="Migrations &amp; Performance" data-num="05" data-hasdemo="0"><h1>Migrations &amp; Performance</h1>
+<section class="page" id="05-migrations-and-performance" data-title="Migrations &amp; Performance" data-num="05" data-hasdemo="0" data-group=""><h1>Migrations &amp; Performance</h1>
 <p>Two things separate a toy store from a shippable one: it can <strong>evolve</strong> without losing user data when you change the schema, and it stays <strong>fast</strong> as data grows. Both need a little upfront thought.</p>
 <h2>Why migrations matter</h2>
 <p>The moment you ship, users have data on disk in your <em>current</em> schema. Add a property, rename an entity, or change a relationship, and the new app's schema no longer matches the old store. Without a migration plan, the store fails to open — and the app crashes on launch or wipes data.</p>

@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-overview" data-title="App Architecture — Overview" data-num="·" data-hasdemo="0"><h1>App Architecture — Overview</h1>
+<section class="page" id="00-overview" data-title="App Architecture — Overview" data-num="·" data-hasdemo="0" data-group=""><h1>App Architecture — Overview</h1>
 <p>Architecture is how you arrange code so an app stays understandable and changeable as it grows. There's no single "right" pattern — there are trade-offs. This course covers the spectrum, from the MVC you inherit to the strict unidirectional flows of modern SwiftUI, so you can choose deliberately instead of by default.</p>
 <h2>The questions architecture answers</h2>
 <blockquote>
@@ -44,7 +44,7 @@
 <p>Keep <strong>logic</strong> out of views and <strong>side effects</strong> at the edges. A view should render state and emit intent; it shouldn't know how to talk to the network or the database. That single rule — pushing I/O to the boundary, keeping a testable core — is what most architectures are really enforcing.</p>
 <h2>How it connects</h2>
 <p>The data-flow patterns here are the application-level version of <a class="xref" href="swiftui-dataflow.html#01-the-dependency-graph">SwiftUI&#x27;s dependency graph</a>. Dependency injection is what makes the networking (<a class="xref" href="networking.html#02-async-await-requests">API client</a>) and persistence layers swappable for the tests in <a class="xref" href="testing.html#02-unit-testing-patterns">unit testing</a>.</p><div class="pager"><span class="sp"></span><a href="#01-mvc-to-mvvm"><span>Next</span>MVC → MVVM →</a></div></section>
-<section class="page" id="01-mvc-to-mvvm" data-title="MVC → MVVM" data-num="01" data-hasdemo="0"><h1>MVC → MVVM</h1>
+<section class="page" id="01-mvc-to-mvvm" data-title="MVC → MVVM" data-num="01" data-hasdemo="0" data-group=""><h1>MVC → MVVM</h1>
 <p>Apple's original pattern is <strong>MVC</strong> — Model, View, Controller. It's simple and it's everywhere in UIKit, but it has a famous failure mode. MVVM is the most common response, and understanding <em>why</em> it exists matters more than the acronym.</p>
 <h2>Classic MVC and its failure mode</h2>
 <p>In theory: the Model holds data, the View displays it, the Controller mediates. In practice on iOS, <code>UIViewController</code> owns the views <em>and</em> becomes the dumping ground for networking, formatting, navigation, and business logic — the dreaded <strong>Massive View Controller</strong>. A 2,000-line controller that can't be tested because everything is tangled with <code>UIView</code>s.</p>
@@ -92,7 +92,7 @@ final class ProfileViewModel: ObservableObject {
 <li>The SwiftUI state machinery: <a class="xref" href="swiftui-dataflow.html#06-observable-ownership">Observable Ownership</a></li>
 <li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#00-overview"><span>Prev</span>← App Architecture — Overview</a><a href="#02-unidirectional-data-flow"><span>Next</span>Unidirectional Data Flow →</a></div></section>
-<section class="page" id="02-unidirectional-data-flow" data-title="Unidirectional Data Flow" data-num="02" data-hasdemo="1"><h1>Unidirectional Data Flow</h1><div class="demo-mount" data-demo="df-graph"></div>
+<section class="page" id="02-unidirectional-data-flow" data-title="Unidirectional Data Flow" data-num="02" data-hasdemo="1" data-group=""><h1>Unidirectional Data Flow</h1><div class="demo-mount" data-demo="df-graph"></div>
 <p>Unidirectional data flow (UDF) adds a rule MVVM lacks: data moves in <strong>one direction</strong>. State flows <em>down</em> into the view; the view sends <em>actions up</em>; actions produce a new state. No two-way bindings tangling who-changed-what. It's the model SwiftUI itself is built around, and it makes complex screens predictable.</p>
 <h2>The loop</h2>
 <pre><code>        ┌─────────── State ───────────┐
@@ -145,7 +145,7 @@ let store = Store(CounterState()) { state, action in
 <li>The framework that productionizes this: <a class="xref" href="#04-tca">04-tca</a></li>
 <li>Prev: <a class="xref" href="#01-mvc-to-mvvm">01-mvc-to-mvvm</a> · Next: <a class="xref" href="#03-dependency-injection">03-dependency-injection</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#01-mvc-to-mvvm"><span>Prev</span>← MVC → MVVM</a><a href="#03-dependency-injection"><span>Next</span>Dependency Injection →</a></div></section>
-<section class="page" id="03-dependency-injection" data-title="Dependency Injection" data-num="03" data-hasdemo="0"><h1>Dependency Injection</h1>
+<section class="page" id="03-dependency-injection" data-title="Dependency Injection" data-num="03" data-hasdemo="0" data-group=""><h1>Dependency Injection</h1>
 <p>Dependency injection (DI) means a component receives the things it needs from outside, instead of creating them itself. It's the single most important technique for testable, decoupled code — and it's mostly just "pass it in," no framework required.</p>
 <h2>The problem with hard-coded dependencies</h2>
 <pre><code class="language-swift">final class FeedViewModel {
@@ -194,7 +194,7 @@ ContentView().environment(\.api, MockAPIClient())   // swap for previews/tests
 <li>Why it matters for tests: <a class="xref" href="testing.html#02-unit-testing-patterns">Unit Testing Patterns</a></li>
 <li>Prev: <a class="xref" href="#02-unidirectional-data-flow">02-unidirectional-data-flow</a> · Next: <a class="xref" href="#04-tca">04-tca</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#02-unidirectional-data-flow"><span>Prev</span>← Unidirectional Data Flow</a><a href="#04-tca"><span>Next</span>The Composable Architecture (TCA) →</a></div></section>
-<section class="page" id="04-tca" data-title="The Composable Architecture (TCA)" data-num="04" data-hasdemo="0"><h1>The Composable Architecture (TCA)</h1>
+<section class="page" id="04-tca" data-title="The Composable Architecture (TCA)" data-num="04" data-hasdemo="0" data-group=""><h1>The Composable Architecture (TCA)</h1>
 <p>TCA is a popular open-source library (by Point-Free) that takes unidirectional data flow and makes it rigorous, composable, and testable to an exhaustive degree. It's opinionated and has a learning curve — worth knowing whether or not you adopt it, because it crystallizes the ideas.</p>
 <h2>The core types</h2>
 <pre><code>State    – a value type describing everything a feature needs
@@ -241,7 +241,7 @@ struct Counter {
 <li>Testing philosophy it embodies: <a class="xref" href="testing.html#02-unit-testing-patterns">Unit Testing</a></li>
 <li>Prev: <a class="xref" href="#03-dependency-injection">03-dependency-injection</a> · Next: <a class="xref" href="#05-modularization">05-modularization</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#03-dependency-injection"><span>Prev</span>← Dependency Injection</a><a href="#05-modularization"><span>Next</span>Modularization →</a></div></section>
-<section class="page" id="05-modularization" data-title="Modularization" data-num="05" data-hasdemo="0"><h1>Modularization</h1>
+<section class="page" id="05-modularization" data-title="Modularization" data-num="05" data-hasdemo="0" data-group=""><h1>Modularization</h1>
 <p>As an app grows, a single target becomes slow to build and easy to tangle. <strong>Modularization</strong> — splitting the app into Swift packages with explicit dependencies — restores fast builds, enforced boundaries, and independently testable, previewable features.</p>
 <h2>Why split up</h2>
 <ul>

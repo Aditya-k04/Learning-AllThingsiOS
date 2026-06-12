@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-overview" data-title="WidgetKit &amp; Live Activities — Overview" data-num="·" data-hasdemo="0"><h1>WidgetKit &amp; Live Activities — Overview</h1>
+<section class="page" id="00-overview" data-title="WidgetKit &amp; Live Activities — Overview" data-num="·" data-hasdemo="0" data-group=""><h1>WidgetKit &amp; Live Activities — Overview</h1>
 <p>Widgets, Live Activities, and the Dynamic Island are some of the highest-craft surfaces on iOS — tiny, glanceable, and unforgiving of sloppiness. They share one runtime model: <strong>your code runs briefly, produces SwiftUI views and a schedule, and the system renders them later, without your app running.</strong></p>
 <h2>The fundamental constraint</h2>
 <blockquote>
@@ -44,7 +44,7 @@
 <p>All of this lives in a <strong>widget extension</strong> — a separate target/process from your app, with its own memory budget. Sharing data with the main app means an <strong>App Group</strong> container (shared <code>UserDefaults</code> or a shared SwiftData/file store), covered alongside <a class="xref" href="persistence.html#04-files-and-codable">persistence</a>.</p>
 <h2>Why it's worth your time</h2>
 <p>These surfaces are pure SwiftUI (<a class="xref" href="swiftui.html#00-roadmap">SwiftUI</a>) under tight constraints, they're extremely product-facing, and the Dynamic Island in particular is a showcase of the fluid, physical motion you care about. They reward craft more than almost anything else on the platform.</p><div class="pager"><span class="sp"></span><a href="#01-timeline-provider"><span>Next</span>The Timeline Provider →</a></div></section>
-<section class="page" id="01-timeline-provider" data-title="The Timeline Provider" data-num="01" data-hasdemo="0"><h1>The Timeline Provider</h1>
+<section class="page" id="01-timeline-provider" data-title="The Timeline Provider" data-num="01" data-hasdemo="0" data-group=""><h1>The Timeline Provider</h1>
 <p>The <code>TimelineProvider</code> is the engine of a widget. It answers one question: <em>"what should this widget show, and when should it change?"</em> You return a list of timed entries; the system caches them and renders each at its date — no further code of yours runs in between.</p>
 <h2>Three methods</h2>
 <pre><code class="language-swift">struct Provider: TimelineProvider {
@@ -89,7 +89,7 @@
 <li>What the entries render into: <a class="xref" href="#02-widget-views-families">02-widget-views-families</a></li>
 <li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#00-overview"><span>Prev</span>← WidgetKit &amp; Live Activities — Overview</a><a href="#02-widget-views-families"><span>Next</span>Widget Views &amp; Families →</a></div></section>
-<section class="page" id="02-widget-views-families" data-title="Widget Views &amp; Families" data-num="02" data-hasdemo="0"><h1>Widget Views &amp; Families</h1>
+<section class="page" id="02-widget-views-families" data-title="Widget Views &amp; Families" data-num="02" data-hasdemo="0" data-group=""><h1>Widget Views &amp; Families</h1>
 <p>A widget's appearance is a SwiftUI view fed one timeline entry. The discipline is making one view adapt across several <strong>families</strong> (sizes), and following the platform rules that keep widgets crisp and legible.</p>
 <h2>The widget definition</h2>
 <pre><code class="language-swift">@main
@@ -136,7 +136,7 @@ struct ForecastWidget: Widget {
 <li>Live, updating variant: <a class="xref" href="#03-live-activities">03-live-activities</a></li>
 <li>Prev: <a class="xref" href="#01-timeline-provider">01-timeline-provider</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#01-timeline-provider"><span>Prev</span>← The Timeline Provider</a><a href="#03-live-activities"><span>Next</span>Live Activities →</a></div></section>
-<section class="page" id="03-live-activities" data-title="Live Activities" data-num="03" data-hasdemo="0"><h1>Live Activities</h1>
+<section class="page" id="03-live-activities" data-title="Live Activities" data-num="03" data-hasdemo="0" data-group=""><h1>Live Activities</h1>
 <p>A Live Activity is a glanceable, <em>updating</em> view on the Lock Screen and in the Dynamic Island — a ride approaching, a game score, a timer, a delivery. It's WidgetKit's views plus a live update channel (ActivityKit), bounded by strict time and size limits.</p>
 <h2>The shape</h2>
 <p>You define the activity's data in two parts: <strong>attributes</strong> (fixed for the activity's life) and <strong>content state</strong> (the part that updates):</p>
@@ -185,7 +185,7 @@ await activity.end(.init(state: .init(status: &quot;Delivered&quot;, etaMinutes:
 <li>The Dynamic Island presentations: <a class="xref" href="#04-dynamic-island">04-dynamic-island</a></li>
 <li>Prev: <a class="xref" href="#02-widget-views-families">02-widget-views-families</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#02-widget-views-families"><span>Prev</span>← Widget Views &amp; Families</a><a href="#04-dynamic-island"><span>Next</span>The Dynamic Island →</a></div></section>
-<section class="page" id="04-dynamic-island" data-title="The Dynamic Island" data-num="04" data-hasdemo="0"><h1>The Dynamic Island</h1>
+<section class="page" id="04-dynamic-island" data-title="The Dynamic Island" data-num="04" data-hasdemo="0" data-group=""><h1>The Dynamic Island</h1>
 <p>The Dynamic Island is the live, morphing pill around the front camera. It's the presentation layer of a Live Activity, and it's a masterclass in fluid motion — shapes that grow, merge, and split with physical springs. You author three discrete states; the system handles the morphing between them.</p>
 <h2>The three presentations</h2>
 <pre><code class="language-swift">dynamicIsland: { context in
@@ -228,7 +228,7 @@ await activity.end(.init(state: .init(status: &quot;Delivered&quot;, etaMinutes:
 <li>The motion model: <a class="xref" href="wwdc.html#10158-animate-with-springs">Animate with Springs</a></li>
 <li>Prev: <a class="xref" href="#03-live-activities">03-live-activities</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#03-live-activities"><span>Prev</span>← Live Activities</a><a href="#05-interactivity-and-app-intents"><span>Next</span>Interactivity &amp; App Intents →</a></div></section>
-<section class="page" id="05-interactivity-and-app-intents" data-title="Interactivity &amp; App Intents" data-num="05" data-hasdemo="0"><h1>Interactivity &amp; App Intents</h1>
+<section class="page" id="05-interactivity-and-app-intents" data-title="Interactivity &amp; App Intents" data-num="05" data-hasdemo="0" data-group=""><h1>Interactivity &amp; App Intents</h1>
 <p>Before iOS 17 a widget could only deep-link into the app. Now a widget or Live Activity can contain <strong><code>Button</code>s and <code>Toggle</code>s</strong> that run code <em>in place</em> — check off a reminder, toggle a light — without launching the app. The mechanism is <strong>App Intents</strong>.</p>
 <h2>Buttons backed by intents</h2>
 <p>A widget button doesn't take a closure (there's no running app to run it). It takes an <code>AppIntent</code> — a serializable description of an action the system performs on your behalf:</p>

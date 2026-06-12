@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-overview" data-title="Gestures &amp; Haptics — Overview" data-num="·" data-hasdemo="0"><h1>Gestures &amp; Haptics — Overview</h1>
+<section class="page" id="00-overview" data-title="Gestures &amp; Haptics — Overview" data-num="·" data-hasdemo="0" data-group=""><h1>Gestures &amp; Haptics — Overview</h1>
 <p>Fluid interfaces feel alive because they respond <em>continuously</em> to the user and confirm actions <em>physically</em>. That's two systems working together: <strong>gesture recognition</strong> (turning raw touches into intent) and <strong>haptics</strong> (turning events into felt feedback). This course covers both — the input side of the "feel" you keep chasing in your interaction work.</p>
 <h2>The big idea</h2>
 <blockquote>
@@ -42,7 +42,7 @@
 </ol>
 <h2>Why it connects</h2>
 <p>The math of velocity, projection, and rubber-banding is <a class="xref" href="interaction-math.html#00-roadmap">Interaction Math</a> applied. The spring that catches a released gesture is <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">the same critically-damped spring</a> you already studied. And the place gestures actually live — <code>UIScrollView</code>, hit-testing — is <a class="xref" href="uikit-internals.html#02-responder-chain">the responder chain</a>.</p><div class="pager"><span class="sp"></span><a href="#01-gesture-recognizers"><span>Next</span>Gesture Recognizers →</a></div></section>
-<section class="page" id="01-gesture-recognizers" data-title="Gesture Recognizers" data-num="01" data-hasdemo="0"><h1>Gesture Recognizers</h1>
+<section class="page" id="01-gesture-recognizers" data-title="Gesture Recognizers" data-num="01" data-hasdemo="0" data-group=""><h1>Gesture Recognizers</h1>
 <p>A <code>UIGestureRecognizer</code> watches the raw touch stream on a view and collapses it into a single, meaningful gesture — a tap, a pan, a pinch. It saves you from implementing <code>touchesBegan/Moved/Ended</code> by hand and, crucially, coordinates with other recognizers.</p>
 <h2>The state machine</h2>
 <p>Every recognizer is a small state machine. The two shapes:</p>
@@ -84,7 +84,7 @@ g.setTranslation(.zero, in: view)   // now translation is the delta since last c
 <li>The conflict-resolution layer: <a class="xref" href="#02-simultaneity-and-dependencies">02-simultaneity-and-dependencies</a></li>
 <li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Gestures &amp; Haptics — Overview</a><a href="#02-simultaneity-and-dependencies"><span>Next</span>Simultaneity &amp; Dependencies →</a></div></section>
-<section class="page" id="02-simultaneity-and-dependencies" data-title="Simultaneity &amp; Dependencies" data-num="02" data-hasdemo="0"><h1>Simultaneity &amp; Dependencies</h1>
+<section class="page" id="02-simultaneity-and-dependencies" data-title="Simultaneity &amp; Dependencies" data-num="02" data-hasdemo="0" data-group=""><h1>Simultaneity &amp; Dependencies</h1>
 <p>A single view often has several recognizers, and they compete for the same touches. By default, <strong>only one recognizer wins</strong> a touch sequence. Coordinating them — letting some run together, making one wait for another to fail — is where most real gesture work happens, and it's all done through <code>UIGestureRecognizerDelegate</code>.</p>
 <h2>The default: mutual exclusion</h2>
 <p>If a view has both a tap and a pan, UIKit lets exactly one recognize. A pinch and a rotation on the same view won't both fire unless you explicitly allow it. The fix is one delegate method:</p>
@@ -124,7 +124,7 @@ myPan.require(toFail: edgePan)
 <li>The values you extract: <a class="xref" href="#03-velocity-and-rubber-banding">03-velocity-and-rubber-banding</a></li>
 <li>Prev: <a class="xref" href="#01-gesture-recognizers">01-gesture-recognizers</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#01-gesture-recognizers"><span>Prev</span>← Gesture Recognizers</a><a href="#03-velocity-and-rubber-banding"><span>Next</span>Velocity &amp; Rubber-Banding →</a></div></section>
-<section class="page" id="03-velocity-and-rubber-banding" data-title="Velocity &amp; Rubber-Banding" data-num="03" data-hasdemo="1"><h1>Velocity &amp; Rubber-Banding</h1><div class="demo-mount" data-demo="su-drag"></div>
+<section class="page" id="03-velocity-and-rubber-banding" data-title="Velocity &amp; Rubber-Banding" data-num="03" data-hasdemo="1" data-group=""><h1>Velocity &amp; Rubber-Banding</h1><div class="demo-mount" data-demo="su-drag"></div>
 <p>The difference between a gesture that feels mechanical and one that feels <em>alive</em> comes down to two things: respecting the <strong>velocity</strong> of the finger when it lifts, and resisting — with <strong>rubber-banding</strong> — when the content reaches a boundary. Both are simple formulas, and both are everywhere in iOS.</p>
 <h2>Velocity: the handoff to physics</h2>
 <p>When a drag ends, the finger has a velocity (points/second). A canned animation ignores it; a fluid one <em>continues</em> the motion at that speed and lets a spring or deceleration take over. This is the gesture→physics handoff.</p>
@@ -165,7 +165,7 @@ func rubberBand(_ x: CGFloat, dim d: CGFloat, c: CGFloat = 0.55) -&gt; CGFloat {
 <li>The deceleration model: <a class="xref" href="uikit-internals.html#03-uiscrollview-mechanics">UIScrollView Mechanics</a></li>
 <li>Prev: <a class="xref" href="#02-simultaneity-and-dependencies">02-simultaneity-and-dependencies</a> · Next: <a class="xref" href="#04-core-haptics">04-core-haptics</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#02-simultaneity-and-dependencies"><span>Prev</span>← Simultaneity &amp; Dependencies</a><a href="#04-core-haptics"><span>Next</span>Core Haptics →</a></div></section>
-<section class="page" id="04-core-haptics" data-title="Core Haptics" data-num="04" data-hasdemo="0"><h1>Core Haptics</h1>
+<section class="page" id="04-core-haptics" data-title="Core Haptics" data-num="04" data-hasdemo="0" data-group=""><h1>Core Haptics</h1>
 <p>Haptics are the felt half of feedback — the tap you feel when a picker lands, the buzz when an action fails. Used well they make an interface feel physical and confident; overused they're annoying. iOS gives you two tiers: simple semantic generators and the full Core Haptics engine.</p>
 <h2>Tier 1: UIFeedbackGenerator (use this 90% of the time)</h2>
 <p>Three semantic generators cover most needs. They map to system-tuned patterns and respect the user's settings:</p>
@@ -210,7 +210,7 @@ try engine.makePlayer(with: pattern).start(atTime: 0)
 <li>Fire them at the right moment: <a class="xref" href="#05-designing-the-feel">05-designing-the-feel</a></li>
 <li>Prev: <a class="xref" href="#03-velocity-and-rubber-banding">03-velocity-and-rubber-banding</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#03-velocity-and-rubber-banding"><span>Prev</span>← Velocity &amp; Rubber-Banding</a><a href="#05-designing-the-feel"><span>Next</span>Designing the Feel →</a></div></section>
-<section class="page" id="05-designing-the-feel" data-title="Designing the Feel" data-num="05" data-hasdemo="0"><h1>Designing the Feel</h1>
+<section class="page" id="05-designing-the-feel" data-title="Designing the Feel" data-num="05" data-hasdemo="0" data-group=""><h1>Designing the Feel</h1>
 <p>This is the synthesis lesson: take a gesture, a spring, and a haptic and combine them into one interaction that feels like a physical object. Everything in this course and your interaction-math notes comes together here.</p>
 <h2>The recipe</h2>
 <blockquote>

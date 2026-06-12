@@ -89,7 +89,15 @@ sInput.addEventListener("keydown",function(e){
 document.addEventListener("click",function(e){if(!searchWrap.contains(e.target))sRes.classList.remove("show");});
 
 /* ---------- sidebar nav ---------- */
+var curGroup=null;
 sections.forEach(function(s){
+  var g=s.dataset.group||"";
+  if(g && g!==curGroup){
+    curGroup=g;
+    var hli=document.createElement("li");hli.className="nav-group-li";
+    var hd=document.createElement("div");hd.className="nav-group";hd.textContent=g;
+    hli.appendChild(hd);navlist.appendChild(hli);
+  }
   var li=document.createElement("li");var a=document.createElement("a");
   a.href="#"+s.id;a.dataset.id=s.id;
   var demo=s.dataset.hasdemo==="1"?'<span class="hasdemo" title="interactive demo"></span>':"";

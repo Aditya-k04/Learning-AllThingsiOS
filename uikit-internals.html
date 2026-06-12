@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-overview" data-title="UIKit Internals — Overview" data-num="·" data-hasdemo="0"><h1>UIKit Internals — Overview</h1>
+<section class="page" id="00-overview" data-title="UIKit Internals — Overview" data-num="·" data-hasdemo="0" data-group=""><h1>UIKit Internals — Overview</h1>
 <p>SwiftUI is the future, but it is a <em>thin declarative skin</em> over machinery that is still pure UIKit and Core Animation underneath. Every <code>ScrollView</code>, every navigation push, every gesture you write in SwiftUI ultimately becomes a <code>UIScrollView</code>, a <code>UINavigationController</code> transition, or a <code>UIGestureRecognizer</code>. When an interaction misbehaves — a scroll that fights your gesture, a cell that recycles wrong, a hit-test that misses — the answer is almost always one layer down, in UIKit.</p>
 <p>This course is the substrate. It explains <em>how UIKit actually works</em> so that the fluid interactions you build on top behave predictably.</p>
 <h2>The mental model</h2>
@@ -45,7 +45,7 @@
 </ol>
 <h2>Why this connects to the rest of your stack</h2>
 <p>The geometry here (<code>bounds</code>, <code>frame</code>, <code>transform</code>) is the same geometry covered in <a class="xref" href="coreanimation.html#03-layer-geometry">Core Animation: Layer Geometry</a> — UIView is just a thin wrapper around a backing <code>CALayer</code>. The gesture math shows up again in <a class="xref" href="interaction-math.html#00-roadmap">Interaction Math</a>, and the scroll-as-a-function-of-offset idea is the same one from <a class="xref" href="stack-decisions.html#04-who-drives-time">Who Drives Time</a>.</p><div class="pager"><span class="sp"></span><a href="#01-view-controller-lifecycle"><span>Next</span>View Controller Lifecycle →</a></div></section>
-<section class="page" id="01-view-controller-lifecycle" data-title="View Controller Lifecycle" data-num="01" data-hasdemo="0"><h1>View Controller Lifecycle</h1>
+<section class="page" id="01-view-controller-lifecycle" data-title="View Controller Lifecycle" data-num="01" data-hasdemo="0" data-group=""><h1>View Controller Lifecycle</h1>
 <p>A <code>UIViewController</code> is a coordinator between a chunk of screen (its <code>view</code>) and the rest of your app. Its lifecycle methods fire in a precise order, and the single most common UIKit bug is doing the right work in the wrong method.</p>
 <h2>The order of events</h2>
 <pre><code>init(coder:) / init(nibName:bundle:)   // object created, view NOT loaded yet
@@ -92,7 +92,7 @@ child.didMove(toParent: self)
 <li>The view's geometry: <a class="xref" href="coreanimation.html#03-layer-geometry">Layer Geometry</a></li>
 <li>Next: <a class="xref" href="#02-responder-chain">02-responder-chain</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#00-overview"><span>Prev</span>← UIKit Internals — Overview</a><a href="#02-responder-chain"><span>Next</span>The Responder Chain →</a></div></section>
-<section class="page" id="02-responder-chain" data-title="The Responder Chain" data-num="02" data-hasdemo="0"><h1>The Responder Chain</h1>
+<section class="page" id="02-responder-chain" data-title="The Responder Chain" data-num="02" data-hasdemo="0" data-group=""><h1>The Responder Chain</h1>
 <p>Every interactive object in UIKit — views, view controllers, the app itself — is a <code>UIResponder</code>. Events (touches, presses, motion, remote-control) travel along a <strong>chain</strong> of responders until something handles them. Understanding the chain explains hit-testing, <code>becomeFirstResponder</code>, <code>target/action</code> with <code>nil</code>, and the keyboard.</p>
 <h2>Two phases: find, then bubble</h2>
 <p><strong>Phase 1 — hit-testing (top down).</strong> When a touch lands, UIKit walks the view hierarchy from the window <em>downward</em> to find the deepest view that contains the point and is eligible:</p>
@@ -125,7 +125,7 @@ view.endEditing(true)              // resign whoever is first responder
 <li>Touches feed gestures: <a class="xref" href="#03-uiscrollview-mechanics">03-uiscrollview-mechanics</a></li>
 <li>Prev: <a class="xref" href="#01-view-controller-lifecycle">01-view-controller-lifecycle</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#01-view-controller-lifecycle"><span>Prev</span>← View Controller Lifecycle</a><a href="#03-uiscrollview-mechanics"><span>Next</span>UIScrollView Mechanics →</a></div></section>
-<section class="page" id="03-uiscrollview-mechanics" data-title="UIScrollView Mechanics" data-num="03" data-hasdemo="1"><h1>UIScrollView Mechanics</h1><div class="demo-mount" data-demo="su-scroll"></div>
+<section class="page" id="03-uiscrollview-mechanics" data-title="UIScrollView Mechanics" data-num="03" data-hasdemo="1" data-group=""><h1>UIScrollView Mechanics</h1><div class="demo-mount" data-demo="su-scroll"></div>
 <p><code>UIScrollView</code> is the most important view in UIKit. <code>UITableView</code>, <code>UICollectionView</code>, <code>UITextView</code>, and SwiftUI's <code>ScrollView</code> are all built on it. Scroll-linked animations — parallax, sticky headers, the stretchy hero image, the wavy carousel — are all just <em>functions of <code>contentOffset</code></em>.</p>
 <h2>The core geometry</h2>
 <pre><code>contentSize    – the size of the scrollable content (bigger than the bounds)
@@ -172,7 +172,7 @@ scrollViewDidEndDecelerating
 <li>The math of scroll-driven scaling: <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">Interpolation &amp; Easing</a></li>
 <li>Next: <a class="xref" href="#04-compositional-layout">04-compositional-layout</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#02-responder-chain"><span>Prev</span>← The Responder Chain</a><a href="#04-compositional-layout"><span>Next</span>Compositional Layout →</a></div></section>
-<section class="page" id="04-compositional-layout" data-title="Compositional Layout" data-num="04" data-hasdemo="1"><h1>Compositional Layout</h1><div class="demo-mount" data-demo="ui-compositional"></div>
+<section class="page" id="04-compositional-layout" data-title="Compositional Layout" data-num="04" data-hasdemo="1" data-group=""><h1>Compositional Layout</h1><div class="demo-mount" data-demo="ui-compositional"></div>
 <p><code>UICollectionViewCompositionalLayout</code> (iOS 13+) replaced the pain of custom <code>UICollectionViewLayout</code> subclasses for 90% of cases. It is built from a strict, composable hierarchy — once you internalize it, almost any grid, list, carousel, or magazine layout becomes a few lines.</p>
 <h2>The hierarchy: Item → Group → Section</h2>
 <blockquote>
@@ -224,7 +224,7 @@ let layout = UICollectionViewCompositionalLayout(section: section)
 <li>The geometry underneath: <a class="xref" href="coreanimation.html#03-layer-geometry">Layer Geometry</a></li>
 <li>Prev: <a class="xref" href="#03-uiscrollview-mechanics">03-uiscrollview-mechanics</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#03-uiscrollview-mechanics"><span>Prev</span>← UIScrollView Mechanics</a><a href="#05-diffable-data-sources"><span>Next</span>Diffable Data Sources →</a></div></section>
-<section class="page" id="05-diffable-data-sources" data-title="Diffable Data Sources" data-num="05" data-hasdemo="0"><h1>Diffable Data Sources</h1>
+<section class="page" id="05-diffable-data-sources" data-title="Diffable Data Sources" data-num="05" data-hasdemo="0" data-group=""><h1>Diffable Data Sources</h1>
 <p>The classic <code>UICollectionViewDataSource</code> / <code>UITableViewDataSource</code> API made <em>you</em> responsible for keeping your model and the view in sync via <code>performBatchUpdates</code>. Get the counts wrong and you crash: <em>"invalid number of items."</em> Diffable data sources (iOS 13+) flip the model: you describe the desired <strong>state</strong> as a snapshot, and UIKit computes the diff and animates it.</p>
 <h2>Snapshots describe state, not changes</h2>
 <pre><code class="language-swift">enum Section { case main }
@@ -266,7 +266,7 @@ func apply(_ items: [Item], animate: Bool = true) {
 <li>The layout it feeds: <a class="xref" href="#04-compositional-layout">04-compositional-layout</a></li>
 <li>Prev: <a class="xref" href="#04-compositional-layout">04-compositional-layout</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#04-compositional-layout"><span>Prev</span>← Compositional Layout</a><a href="#06-uikit-swiftui-interop"><span>Next</span>UIKit ↔ SwiftUI Interop →</a></div></section>
-<section class="page" id="06-uikit-swiftui-interop" data-title="UIKit ↔ SwiftUI Interop" data-num="06" data-hasdemo="0"><h1>UIKit ↔ SwiftUI Interop</h1>
+<section class="page" id="06-uikit-swiftui-interop" data-title="UIKit ↔ SwiftUI Interop" data-num="06" data-hasdemo="0" data-group=""><h1>UIKit ↔ SwiftUI Interop</h1>
 <p>You rarely rewrite an app wholesale. Real apps are <em>hybrids</em>: a SwiftUI screen hosting a <code>MKMapView</code>, or a UIKit app embedding a new SwiftUI feature. Three bridges connect the two worlds, and knowing which to reach for keeps the boundary clean.</p>
 <h2>SwiftUI hosting UIKit: UIViewRepresentable</h2>
 <p>Wrap any <code>UIView</code> so SwiftUI can place it:</p>

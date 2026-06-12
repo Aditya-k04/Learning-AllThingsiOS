@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-roadmap" data-title="SwiftUI — Learning Roadmap" data-num="·" data-hasdemo="0"><h1>SwiftUI — Learning Roadmap</h1>
+<section class="page" id="00-roadmap" data-title="SwiftUI — Learning Roadmap" data-num="·" data-hasdemo="0" data-group=""><h1>SwiftUI — Learning Roadmap</h1>
 <p>A self-paced curriculum from your first <code>Text("Hello")</code> to building production SwiftUI apps. 6 parts, 25 lessons.</p>
 <hr />
 <h2>Prerequisites</h2>
@@ -261,7 +261,7 @@
 - [x] You can see the live preview in the Canvas pane (Editor &gt; Canvas)
 - [x] You have completed Learning-Swift lessons 01-14 or have equivalent knowledge
 - [x] You understand that SwiftUI is a declarative framework — you describe what, not how</p><div class="pager"><span class="sp"></span><a href="#01-swiftui-philosophy"><span>Next</span>01 — SwiftUI Philosophy: Declarative UI and the View Protocol →</a></div></section>
-<section class="page" id="01-swiftui-philosophy" data-title="01 — SwiftUI Philosophy: Declarative UI and the View Protocol" data-num="01" data-hasdemo="0"><h1>01 — SwiftUI Philosophy: Declarative UI and the View Protocol</h1>
+<section class="page" id="01-swiftui-philosophy" data-title="01 — SwiftUI Philosophy: Declarative UI and the View Protocol" data-num="01" data-hasdemo="0" data-group=""><h1>01 — SwiftUI Philosophy: Declarative UI and the View Protocol</h1>
 <p>SwiftUI is a declarative UI framework. Instead of writing step-by-step instructions to build your interface, you describe what the interface should look like for a given state. SwiftUI handles the how.</p>
 <hr />
 <h2>Declarative vs Imperative</h2>
@@ -502,7 +502,7 @@ VStack(content: {
 - [x] <code>body</code> is called on EVERY state change — never do expensive work there
 - [x] <code>@main</code> and <code>App</code> protocol define the app's entry point
 - [x] SwiftUI uses trailing closures and <code>@ViewBuilder</code> for composing child views</p><div class="pager"><a href="#00-roadmap"><span>Prev</span>← SwiftUI — Learning Roadmap</a><a href="#02-views-and-modifiers"><span>Next</span>02 — Views and Modifiers: Building Blocks of SwiftUI →</a></div></section>
-<section class="page" id="02-views-and-modifiers" data-title="02 — Views and Modifiers: Building Blocks of SwiftUI" data-num="02" data-hasdemo="0"><h1>02 — Views and Modifiers: Building Blocks of SwiftUI</h1>
+<section class="page" id="02-views-and-modifiers" data-title="02 — Views and Modifiers: Building Blocks of SwiftUI" data-num="02" data-hasdemo="0" data-group=""><h1>02 — Views and Modifiers: Building Blocks of SwiftUI</h1>
 <p>Every SwiftUI interface is built from views and modifiers. A view describes what appears on screen. A modifier transforms a view into a new view with different appearance or behavior.</p>
 <hr />
 <h2>What Is a Modifier?</h2>
@@ -759,7 +759,7 @@ Text(&quot;Custom&quot;)
 - [x] Custom <code>ViewModifier</code> protocol lets you create reusable modifier stacks
 - [x] Environment modifiers like <code>.font()</code> cascade to children; layout modifiers don't
 - [x] <code>Self._printChanges()</code> helps debug unnecessary view recomputations</p><div class="pager"><a href="#01-swiftui-philosophy"><span>Prev</span>← 01 — SwiftUI Philosophy: Declarative UI and the View Protocol</a><a href="#03-text-and-images"><span>Next</span>03 — Text and Images: Displaying Content in SwiftUI →</a></div></section>
-<section class="page" id="03-text-and-images" data-title="03 — Text and Images: Displaying Content in SwiftUI" data-num="03" data-hasdemo="0"><h1>03 — Text and Images: Displaying Content in SwiftUI</h1>
+<section class="page" id="03-text-and-images" data-title="03 — Text and Images: Displaying Content in SwiftUI" data-num="03" data-hasdemo="0" data-group=""><h1>03 — Text and Images: Displaying Content in SwiftUI</h1>
 <p>Text and images are the most fundamental building blocks of any interface. SwiftUI makes both simple to create and rich to customize.</p>
 <hr />
 <h2>Text Basics</h2>
@@ -991,7 +991,7 @@ Image(systemName: &quot;chevron.right&quot;)
     .asyncImageURLSession(session)   // session configured with a custom URLCache
 </code></pre>
 <p>Pairs with <a class="xref" href="networking.html#05-caching-auth-and-testing">caching</a>. Full list: <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#02-views-and-modifiers"><span>Prev</span>← 02 — Views and Modifiers: Building Blocks of SwiftUI</a><a href="#04-layout-fundamentals"><span>Next</span>04 — Layout Fundamentals: Stacks, Spacers, and Frames →</a></div></section>
-<section class="page" id="04-layout-fundamentals" data-title="04 — Layout Fundamentals: Stacks, Spacers, and Frames" data-num="04" data-hasdemo="1"><h1>04 — Layout Fundamentals: Stacks, Spacers, and Frames</h1><div class="demo-mount" data-demo="su-layout"></div>
+<section class="page" id="04-layout-fundamentals" data-title="04 — Layout Fundamentals: Stacks, Spacers, and Frames" data-num="04" data-hasdemo="1" data-group=""><h1>04 — Layout Fundamentals: Stacks, Spacers, and Frames</h1><div class="demo-mount" data-demo="su-layout"></div>
 <p>SwiftUI uses a stack-based layout system. Instead of Auto Layout constraints, you compose views using horizontal, vertical, and layered stacks. Understanding how SwiftUI negotiates size between parent and child is the key to mastering layout.</p>
 <hr />
 <h2>VStack: Vertical Layout</h2>
@@ -1284,7 +1284,7 @@ HStack(spacing: 12) {
 - [x] Children choose their own size — parents cannot force a size on children
 - [x] <code>.layoutPriority()</code> determines which views get space first when constrained
 - [x] Complex layouts are built by nesting simple stacks</p><div class="pager"><a href="#03-text-and-images"><span>Prev</span>← 03 — Text and Images: Displaying Content in SwiftUI</a><a href="#05-state-and-binding"><span>Next</span>05 — State and Binding: Making Views Dynamic →</a></div></section>
-<section class="page" id="05-state-and-binding" data-title="05 — State and Binding: Making Views Dynamic" data-num="05" data-hasdemo="0"><h1>05 — State and Binding: Making Views Dynamic</h1>
+<section class="page" id="05-state-and-binding" data-title="05 — State and Binding: Making Views Dynamic" data-num="05" data-hasdemo="0" data-group=""><h1>05 — State and Binding: Making Views Dynamic</h1>
 <p>State is the engine of SwiftUI. When state changes, the UI updates automatically. Understanding where state lives and how it flows between views is the most important concept in SwiftUI.</p>
 <hr />
 <h2>The Core Concept: Single Source of Truth</h2>
@@ -1562,7 +1562,7 @@ See <a href="16-data-flow.md">16-data-flow</a> for state management patterns.</p
 <li>Still avoid assigning a model in the view's <code>init()</code> — it re-runs and SwiftUI ignores all but the first instance, risking <strong>stale</strong> data. Use <code>task(id:)</code> for dependency-driven models.</li>
 </ul>
 <p>Details: <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#04-layout-fundamentals"><span>Prev</span>← 04 — Layout Fundamentals: Stacks, Spacers, and Frames</a><a href="#06-controls"><span>Next</span>06 — Controls: Buttons, Toggles, Pickers, and Text Input →</a></div></section>
-<section class="page" id="06-controls" data-title="06 — Controls: Buttons, Toggles, Pickers, and Text Input" data-num="06" data-hasdemo="0"><h1>06 — Controls: Buttons, Toggles, Pickers, and Text Input</h1>
+<section class="page" id="06-controls" data-title="06 — Controls: Buttons, Toggles, Pickers, and Text Input" data-num="06" data-hasdemo="0" data-group=""><h1>06 — Controls: Buttons, Toggles, Pickers, and Text Input</h1>
 <p>SwiftUI provides a rich set of built-in controls. Every control follows the same pattern: it displays data from your state and writes changes back through bindings.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/07-closures.md">07-closures</a> — almost every control uses trailing closure syntax for its action or label.</p>
@@ -1970,7 +1970,7 @@ Link(destination: URL(string: &quot;https://apple.com&quot;)!) {
 - [x] <code>DatePicker</code> selects dates/times with optional range constraints
 - [x] <code>ColorPicker</code>, <code>ProgressView</code>, and <code>Link</code> cover color selection, progress, and URLs
 - [x] All controls use <code>@Binding</code> (via <code>$</code>) to stay connected to the source of truth</p><div class="pager"><a href="#05-state-and-binding"><span>Prev</span>← 05 — State and Binding: Making Views Dynamic</a><a href="#07-lists-and-foreach"><span>Next</span>Lists and ForEach →</a></div></section>
-<section class="page" id="07-lists-and-foreach" data-title="Lists and ForEach" data-num="07" data-hasdemo="0"><h1>Lists and ForEach</h1>
+<section class="page" id="07-lists-and-foreach" data-title="Lists and ForEach" data-num="07" data-hasdemo="0" data-group=""><h1>Lists and ForEach</h1>
 <p><code>List</code> is SwiftUI's primary container for displaying scrollable, vertically arranged rows of data. It is backed by UITableView on iOS and provides built-in support for selection, swipe actions, editing, and lazy loading. <code>ForEach</code> is the companion construct that generates views from collections.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/04-collection-types.md">04-collection-types</a> for the array and dictionary foundations that feed into lists.</p>
@@ -2229,7 +2229,7 @@ ScrollView {
 .swipeActionsContainer()
 </code></pre>
 <p>Full rundown: <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#06-controls"><span>Prev</span>← 06 — Controls: Buttons, Toggles, Pickers, and Text Input</a><a href="#08-navigation"><span>Next</span>Navigation →</a></div></section>
-<section class="page" id="08-navigation" data-title="Navigation" data-num="08" data-hasdemo="0"><h1>Navigation</h1>
+<section class="page" id="08-navigation" data-title="Navigation" data-num="08" data-hasdemo="0" data-group=""><h1>Navigation</h1>
 <p>Navigation is how users move between screens in your app. SwiftUI's navigation system (iOS 16+) is built around <code>NavigationStack</code> and value-based <code>NavigationLink</code>, replacing the older <code>NavigationView</code>. The new system supports programmatic navigation, deep linking, and state restoration.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/09-enums.md">09-enums</a> for enum-based route definitions, which are the cleanest way to model navigation destinations.</p>
@@ -2519,7 +2519,7 @@ NavigationStack {
 <pre><code class="language-swift">.sheet(isPresented: $show) { DetailView().navigationTransition(.crossFade) }
 </code></pre>
 <p>You still can't fully hand-drive navigation transitions, but there are more built-in options now. See <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#07-lists-and-foreach"><span>Prev</span>← Lists and ForEach</a><a href="#09-sheets-and-alerts"><span>Next</span>Sheets and Alerts →</a></div></section>
-<section class="page" id="09-sheets-and-alerts" data-title="Sheets and Alerts" data-num="09" data-hasdemo="0"><h1>Sheets and Alerts</h1>
+<section class="page" id="09-sheets-and-alerts" data-title="Sheets and Alerts" data-num="09" data-hasdemo="0" data-group=""><h1>Sheets and Alerts</h1>
 <p>Sheets, alerts, and popovers are SwiftUI's modal presentation tools. Unlike navigation, which pushes screens onto a stack, modals appear on top of the current content and demand attention before the user returns.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/07-closures.md">07-closures</a> for trailing closure syntax -- every modal API uses closures to define content.</p>
@@ -2810,7 +2810,7 @@ struct MultiSheetView: View {
 <li>[x] I can pass data to sheets via item-based presentation or <code>@Binding</code></li>
 <li>[x] I know the enum pattern for handling multiple sheets on one view</li>
 </ul><div class="pager"><a href="#08-navigation"><span>Prev</span>← Navigation</a><a href="#10-drawing-and-shapes"><span>Next</span>Drawing and Shapes →</a></div></section>
-<section class="page" id="10-drawing-and-shapes" data-title="Drawing and Shapes" data-num="10" data-hasdemo="0"><h1>Drawing and Shapes</h1>
+<section class="page" id="10-drawing-and-shapes" data-title="Drawing and Shapes" data-num="10" data-hasdemo="0" data-group=""><h1>Drawing and Shapes</h1>
 <p>SwiftUI provides a rich set of built-in shapes and a <code>Path</code> API for drawing custom geometry. Shapes conform to the <code>Shape</code> protocol, which means they are views -- you can use them anywhere you would use <code>Text</code> or <code>Image</code>, and apply modifiers like <code>.fill()</code>, <code>.stroke()</code>, and <code>.frame()</code>.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">13-protocols</a> -- the <code>Shape</code> protocol is a great example of protocol-oriented design. You implement one method and get a full-featured view.</p>
@@ -3064,7 +3064,7 @@ Circle()
 <li>[x] I can clip views to shapes with <code>.clipShape()</code></li>
 <li>[x] I can fill shapes with gradients</li>
 </ul><div class="pager"><a href="#09-sheets-and-alerts"><span>Prev</span>← Sheets and Alerts</a><a href="#11-colors-and-materials"><span>Next</span>Colors and Materials →</a></div></section>
-<section class="page" id="11-colors-and-materials" data-title="Colors and Materials" data-num="11" data-hasdemo="0"><h1>Colors and Materials</h1>
+<section class="page" id="11-colors-and-materials" data-title="Colors and Materials" data-num="11" data-hasdemo="0" data-group=""><h1>Colors and Materials</h1>
 <p>Color in SwiftUI is more than just decoration -- it is a view, a shape style, and a bridge to the system's dynamic appearance. This lesson covers system colors, custom colors, gradients, materials, and how everything adapts to dark mode.</p>
 <hr />
 <h2>System Colors</h2>
@@ -3299,7 +3299,7 @@ Color.blue.ignoresSafeArea()  // extends into safe area
 <li>[x] I know how to use <code>.tint()</code> for interactive control colors</li>
 <li>[x] I know that <code>Color</code> is a <code>View</code> and can fill space</li>
 </ul><div class="pager"><a href="#10-drawing-and-shapes"><span>Prev</span>← Drawing and Shapes</a><a href="#12-animation-basics"><span>Next</span>Animation Basics →</a></div></section>
-<section class="page" id="12-animation-basics" data-title="Animation Basics" data-num="12" data-hasdemo="1"><h1>Animation Basics</h1><div class="demo-mount" data-demo="easing"></div>
+<section class="page" id="12-animation-basics" data-title="Animation Basics" data-num="12" data-hasdemo="1" data-group=""><h1>Animation Basics</h1><div class="demo-mount" data-demo="easing"></div>
 <p>Animation in SwiftUI works by interpolating between old and new values when state changes. You do not write frame-by-frame logic. Instead, you change state, and SwiftUI smoothly transitions every affected property from its old value to its new value.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/10-structs-vs-classes.md">10-structs-vs-classes</a> -- views are structs. When state changes, SwiftUI creates a new struct, diffs it against the old one, and animates the differences.</p>
@@ -3550,7 +3550,7 @@ withAnimation(.spring().speed(2.0)) {
 <li>[x] I understand <code>matchedGeometryEffect</code> for hero animations</li>
 <li>[x] I know the common mistakes: wrong value parameter, misplaced modifier, over-applying animation</li>
 </ul><div class="pager"><a href="#11-colors-and-materials"><span>Prev</span>← Colors and Materials</a><a href="#13-animation-advanced"><span>Next</span>Animation Advanced →</a></div></section>
-<section class="page" id="13-animation-advanced" data-title="Animation Advanced" data-num="13" data-hasdemo="1"><h1>Animation Advanced</h1><div class="demo-mount" data-demo="spring"></div>
+<section class="page" id="13-animation-advanced" data-title="Animation Advanced" data-num="13" data-hasdemo="1" data-group=""><h1>Animation Advanced</h1><div class="demo-mount" data-demo="spring"></div>
 <p>This lesson builds on animation basics with the powerful animation APIs introduced in iOS 17: phase animators for multi-step sequences, keyframe animators for timeline-based motion, symbol effects for SF Symbol animations, and transaction control for fine-grained animation management.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/12-animation-basics.md">12-animation-basics</a> for implicit/explicit animations, springs, transitions, and matchedGeometryEffect.</p>
@@ -3889,7 +3889,7 @@ ZStack {
 <li>[x] I can build complex animations like card flips and morphing buttons</li>
 <li>[x] I know performance strategies: <code>.drawingGroup()</code>, minimal hierarchy, profiling</li>
 </ul><div class="pager"><a href="#12-animation-basics"><span>Prev</span>← Animation Basics</a><a href="#14-gestures"><span>Next</span>Gestures →</a></div></section>
-<section class="page" id="14-gestures" data-title="Gestures" data-num="14" data-hasdemo="1"><h1>Gestures</h1><div class="demo-mount" data-demo="su-drag"></div>
+<section class="page" id="14-gestures" data-title="Gestures" data-num="14" data-hasdemo="1" data-group=""><h1>Gestures</h1><div class="demo-mount" data-demo="su-drag"></div>
 <p>SwiftUI provides a rich gesture system that lets users interact with your app through taps, drags, pinches, and rotations. Gestures in SwiftUI are structs that conform to the <code>Gesture</code> protocol, making them composable and type-safe.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/10-structs-vs-classes.md">10-structs-vs-classes</a> -- gestures are value types (structs) conforming to the Gesture protocol.</p>
@@ -4124,7 +4124,7 @@ ZStack {
 <li>[x] Control gesture priority with <code>.gesture</code>, <code>.highPriorityGesture</code>, <code>.simultaneousGesture</code></li>
 <li>[x] Build real-world gesture interactions like swipe-to-dismiss</li>
 </ul><div class="pager"><a href="#13-animation-advanced"><span>Prev</span>← Animation Advanced</a><a href="#15-observable-and-environment"><span>Next</span>Observable and Environment →</a></div></section>
-<section class="page" id="15-observable-and-environment" data-title="Observable and Environment" data-num="15" data-hasdemo="0"><h1>Observable and Environment</h1>
+<section class="page" id="15-observable-and-environment" data-title="Observable and Environment" data-num="15" data-hasdemo="0" data-group=""><h1>Observable and Environment</h1>
 <p>SwiftUI's data observation system has evolved significantly. The modern approach, introduced in iOS 17, uses the <code>@Observable</code> macro to replace the older <code>ObservableObject</code> protocol. Understanding both systems is essential since most codebases still contain legacy patterns.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/24-property-wrappers.md">24-property-wrappers</a> -- <code>@Observable</code> is a macro that generates property wrapper-like observation code at compile time.</p>
@@ -4422,7 +4422,7 @@ struct SomeChild: View {
 <li>[x] Recognize and maintain legacy <code>ObservableObject</code>/<code>@Published</code>/<code>@StateObject</code> code</li>
 <li>[x] Choose the right property wrapper for each scenario</li>
 </ul><div class="pager"><a href="#14-gestures"><span>Prev</span>← Gestures</a><a href="#16-data-flow"><span>Next</span>Data Flow →</a></div></section>
-<section class="page" id="16-data-flow" data-title="Data Flow" data-num="16" data-hasdemo="0"><h1>Data Flow</h1>
+<section class="page" id="16-data-flow" data-title="Data Flow" data-num="16" data-hasdemo="0" data-group=""><h1>Data Flow</h1>
 <p>SwiftUI's declarative paradigm relies on a strict data flow model: state drives the UI, and user actions modify state, which triggers re-rendering. Understanding where to place state, how to share it, and how to structure communication between views is the key to writing maintainable SwiftUI apps.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/05-state-and-binding.md">05-state-and-binding</a> -- fundamentals of @State and @Binding.</p>
@@ -4735,7 +4735,7 @@ struct ScoreView: View {
 <li>[x] Recognize and avoid common anti-patterns: duplicated state, wrong ownership, unnecessary abstractions</li>
 <li>[x] Understand property-level observation efficiency in <code>@Observable</code></li>
 </ul><div class="pager"><a href="#15-observable-and-environment"><span>Prev</span>← Observable and Environment</a><a href="#17-grids-and-adaptive-layout"><span>Next</span>Grids and Adaptive Layout →</a></div></section>
-<section class="page" id="17-grids-and-adaptive-layout" data-title="Grids and Adaptive Layout" data-num="17" data-hasdemo="0"><h1>Grids and Adaptive Layout</h1>
+<section class="page" id="17-grids-and-adaptive-layout" data-title="Grids and Adaptive Layout" data-num="17" data-hasdemo="0" data-group=""><h1>Grids and Adaptive Layout</h1>
 <p>SwiftUI offers multiple grid systems: <code>LazyVGrid</code> and <code>LazyHGrid</code> for scrollable grids, <code>Grid</code> for precise alignment-based layouts, and layout protocols like <code>ViewThatFits</code> and <code>AnyLayout</code> for adaptive design across device sizes.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/04-layout-fundamentals.md">04-layout-fundamentals</a> -- stacks, frames, alignment, and spacing fundamentals.</p>
@@ -5035,7 +5035,7 @@ struct RadialDemo: View {
 <li>[x] Understand the <code>Layout</code> protocol for fully custom layouts</li>
 <li>[x] Adapt layouts for iPhone vs iPad using <code>horizontalSizeClass</code></li>
 </ul><div class="pager"><a href="#16-data-flow"><span>Prev</span>← Data Flow</a><a href="#18-scrollview"><span>Next</span>ScrollView →</a></div></section>
-<section class="page" id="18-scrollview" data-title="ScrollView" data-num="18" data-hasdemo="1"><h1>ScrollView</h1><div class="demo-mount" data-demo="su-scroll"></div>
+<section class="page" id="18-scrollview" data-title="ScrollView" data-num="18" data-hasdemo="1" data-group=""><h1>ScrollView</h1><div class="demo-mount" data-demo="su-scroll"></div>
 <p><code>ScrollView</code> is SwiftUI's container for scrollable content. Unlike <code>List</code>, it gives you full control over layout and appearance, but you must handle laziness and performance yourself by pairing it with <code>LazyVStack</code> or <code>LazyHStack</code>.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/07-lists-and-foreach.md">07-lists-and-foreach</a> -- <code>List</code> is a specialized scrolling container with built-in cell styling, selection, and swipe actions.</p>
@@ -5308,7 +5308,7 @@ ScrollView {
 <li>[x] Apply content padding with <code>.contentMargins()</code></li>
 <li>[x] Follow performance best practices: lazy containers, stable IDs, extracted subviews</li>
 </ul><div class="pager"><a href="#17-grids-and-adaptive-layout"><span>Prev</span>← Grids and Adaptive Layout</a><a href="#19-tabview-and-toolbars"><span>Next</span>TabView and Toolbars →</a></div></section>
-<section class="page" id="19-tabview-and-toolbars" data-title="TabView and Toolbars" data-num="19" data-hasdemo="0"><h1>TabView and Toolbars</h1>
+<section class="page" id="19-tabview-and-toolbars" data-title="TabView and Toolbars" data-num="19" data-hasdemo="0" data-group=""><h1>TabView and Toolbars</h1>
 <p>Tab bars and toolbars are the primary navigation chrome in most apps. SwiftUI's <code>TabView</code> manages top-level screen switching, while the <code>.toolbar</code> modifier places buttons, menus, and controls in navigation bars, bottom bars, and the keyboard area.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/08-navigation.md">08-navigation</a> -- <code>NavigationStack</code> and <code>NavigationSplitView</code> for hierarchical navigation.</p>
@@ -5665,7 +5665,7 @@ struct OnboardingPage: View {
 <li><strong>Toolbar visibility control</strong> — <code>visibilityPriority(.high)</code> keeps key items visible on small screens, <code>ToolbarOverflowMenu { … }</code> pushes secondary items into an overflow, and the <code>.topBarPinnedTrailing</code> placement pins an item to the trailing edge.</li>
 </ul>
 <p>See <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#18-scrollview"><span>Prev</span>← ScrollView</a><a href="#20-search-and-filtering"><span>Next</span>Search and Filtering →</a></div></section>
-<section class="page" id="20-search-and-filtering" data-title="Search and Filtering" data-num="20" data-hasdemo="0"><h1>Search and Filtering</h1>
+<section class="page" id="20-search-and-filtering" data-title="Search and Filtering" data-num="20" data-hasdemo="0" data-group=""><h1>Search and Filtering</h1>
 <p>Search is one of the most common interactions in any app. SwiftUI provides the <code>.searchable</code> modifier that adds a platform-native search bar to navigation containers. Combined with Swift's collection filtering, you can build powerful, responsive search experiences with very little code.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/23-functional-programming.md">23-functional-programming</a> for <code>filter</code>, <code>map</code>, and other higher-order functions used to filter data.
@@ -5979,7 +5979,7 @@ struct FullContactSearchView: View {
 <li>[x] I can filter sectioned lists and remove empty sections</li>
 <li>[x] I can combine scopes, suggestions, and text filtering in a real app</li>
 </ul><div class="pager"><a href="#19-tabview-and-toolbars"><span>Prev</span>← TabView and Toolbars</a><a href="#21-async-patterns"><span>Next</span>Async Patterns in SwiftUI →</a></div></section>
-<section class="page" id="21-async-patterns" data-title="Async Patterns in SwiftUI" data-num="21" data-hasdemo="0"><h1>Async Patterns in SwiftUI</h1>
+<section class="page" id="21-async-patterns" data-title="Async Patterns in SwiftUI" data-num="21" data-hasdemo="0" data-group=""><h1>Async Patterns in SwiftUI</h1>
 <p>SwiftUI provides first-class support for asynchronous work through modifiers like <code>.task</code>, <code>.refreshable</code>, and <code>AsyncImage</code>. These integrate seamlessly with Swift's structured concurrency, handling cancellation and lifecycle automatically so you can focus on the data flow rather than manual task management.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/20-concurrency-basics.md">20-concurrency-basics</a> for <code>async</code>/<code>await</code>, <code>Task</code>, and structured concurrency fundamentals.
@@ -6319,7 +6319,7 @@ struct RepoListView: View {
 <li>[x] I can combine <code>.task</code> with <code>@Observable</code> view models using <code>@MainActor</code></li>
 <li>[x] I understand automatic cancellation and when to check <code>Task.isCancelled</code> manually</li>
 </ul><div class="pager"><a href="#20-search-and-filtering"><span>Prev</span>← Search and Filtering</a><a href="#22-geometry-and-preferences"><span>Next</span>Geometry and Preferences →</a></div></section>
-<section class="page" id="22-geometry-and-preferences" data-title="Geometry and Preferences" data-num="22" data-hasdemo="0"><h1>Geometry and Preferences</h1>
+<section class="page" id="22-geometry-and-preferences" data-title="Geometry and Preferences" data-num="22" data-hasdemo="0" data-group=""><h1>Geometry and Preferences</h1>
 <p>SwiftUI's layout system is declarative — views propose sizes down and report sizes up. But sometimes you need to read a view's actual size or position at runtime. <code>GeometryReader</code> gives you access to this information. Preference keys let child views send data up to ancestors. Together, they enable scroll effects, adaptive layouts, sticky headers, and other advanced patterns.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">13-protocols</a> for protocol conformance, which is how you define <code>PreferenceKey</code>.
@@ -6583,7 +6583,7 @@ struct MeasuredView: View {
 <li>[x] I can use <code>.visualEffect</code> (iOS 17+) for geometry-aware visual changes without layout impact</li>
 <li>[x] I can build common patterns like parallax headers and view size measurement</li>
 </ul><div class="pager"><a href="#21-async-patterns"><span>Prev</span>← Async Patterns in SwiftUI</a><a href="#23-view-composition"><span>Next</span>View Composition →</a></div></section>
-<section class="page" id="23-view-composition" data-title="View Composition" data-num="23" data-hasdemo="0"><h1>View Composition</h1>
+<section class="page" id="23-view-composition" data-title="View Composition" data-num="23" data-hasdemo="0" data-group=""><h1>View Composition</h1>
 <p>SwiftUI's power comes from composing small, focused views into complex interfaces. Every view you write is a struct with a <code>body</code> — and that body can contain other custom views. Mastering composition means your code stays readable, reusable, and performant even as your app grows.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/14-generics.md">14-generics</a> for generic type parameters used in reusable view containers.
@@ -6963,7 +6963,7 @@ struct OrderSummaryView: View {
 <li>[x] I can create reusable view modifier extensions</li>
 <li>[x] I can build multi-slot container views for real-world component libraries</li>
 </ul><div class="pager"><a href="#22-geometry-and-preferences"><span>Prev</span>← Geometry and Preferences</a><a href="#24-uikit-integration"><span>Next</span>UIKit Integration →</a></div></section>
-<section class="page" id="24-uikit-integration" data-title="UIKit Integration" data-num="24" data-hasdemo="0"><h1>UIKit Integration</h1>
+<section class="page" id="24-uikit-integration" data-title="UIKit Integration" data-num="24" data-hasdemo="0" data-group=""><h1>UIKit Integration</h1>
 <p>SwiftUI doesn't cover every UIKit feature. When you need a UIKit view (like <code>MKMapView</code>, <code>WKWebView</code>, or a custom <code>UITextView</code>) inside SwiftUI, you wrap it with <code>UIViewRepresentable</code>. When you need a UIKit view controller (like <code>UIImagePickerController</code>), you use <code>UIViewControllerRepresentable</code>. And when you need SwiftUI inside a UIKit app, you use <code>UIHostingController</code>.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">13-protocols</a> for protocol conformance — both representable protocols require specific method implementations.
@@ -7254,7 +7254,7 @@ hostingController.didMove(toParent: self)
 <li>[x] I can use <code>UIHostingConfiguration</code> for SwiftUI inside collection view cells</li>
 <li>[x] I understand common pitfalls: update cycles, coordinator lifecycle, and sizing</li>
 </ul><div class="pager"><a href="#23-view-composition"><span>Prev</span>← View Composition</a><a href="#25-real-world-architecture"><span>Next</span>Real-World Architecture →</a></div></section>
-<section class="page" id="25-real-world-architecture" data-title="Real-World Architecture" data-num="25" data-hasdemo="0"><h1>Real-World Architecture</h1>
+<section class="page" id="25-real-world-architecture" data-title="Real-World Architecture" data-num="25" data-hasdemo="0" data-group=""><h1>Real-World Architecture</h1>
 <p>Building a real app requires more than knowing individual SwiftUI views. You need patterns for organizing code, managing data flow, handling accessibility, optimizing performance, and structuring the app lifecycle. This chapter brings together everything from the curriculum into practical architecture guidance.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/05-state-and-binding.md">05-state-and-binding</a> for the foundation of SwiftUI's data flow.
@@ -7643,7 +7643,7 @@ ZStack {
 <li>[x] I know SwiftUI performance best practices: lazy stacks, drawing groups, avoiding AnyView</li>
 <li>[x] I understand the ideal app structure: features, models, services, components</li>
 </ul><div class="pager"><a href="#24-uikit-integration"><span>Prev</span>← UIKit Integration</a><a href="#enzomangano-demos-reference"><span>Next</span>enzomanuelmangano/demos — Animation Reference for Swift/SwiftUI/UIKit →</a></div></section>
-<section class="page" id="enzomangano-demos-reference" data-title="enzomanuelmangano/demos — Animation Reference for Swift/SwiftUI/UIKit" data-num="·" data-hasdemo="0"><h1>enzomanuelmangano/demos — Animation Reference for Swift/SwiftUI/UIKit</h1>
+<section class="page" id="enzomangano-demos-reference" data-title="enzomanuelmangano/demos — Animation Reference for Swift/SwiftUI/UIKit" data-num="·" data-hasdemo="0" data-group=""><h1>enzomanuelmangano/demos — Animation Reference for Swift/SwiftUI/UIKit</h1>
 <blockquote>
 <p>120+ React Native animation demos. The animation math, spring configs, and interaction patterns translate directly to SwiftUI/UIKit. This doc catalogs the most useful ones with Swift translation notes.</p>
 </blockquote>

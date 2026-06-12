@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-overview" data-title="Networking — Overview" data-num="·" data-hasdemo="0"><h1>Networking — Overview</h1>
+<section class="page" id="00-overview" data-title="Networking — Overview" data-num="·" data-hasdemo="0" data-group=""><h1>Networking — Overview</h1>
 <p>Almost every app talks to a server. Apple's <code>URLSession</code> is a capable, modern HTTP stack — with async/await it's genuinely pleasant, and you rarely need a third-party library like Alamofire for typical REST work. This course builds a clean, testable networking layer from the primitives up.</p>
 <h2>What you'll learn</h2>
 <ol>
@@ -49,7 +49,7 @@
 <p>Keep the <em>transport</em> (sending bytes) separate from <em>modelling</em> (Codable) and <em>policy</em> (retries, auth). That separation is what makes the layer testable.</p>
 <h2>How it connects</h2>
 <p>Networking is almost entirely async, so it leans on <a class="xref" href="concurrency.html#01-async-await-model">the async/await model</a> and structured cancellation. The decoded models often flow into <a class="xref" href="persistence.html#02-swiftdata">SwiftData</a> for offline use, and the whole layer is a prime target for the dependency injection in <a class="xref" href="architecture.html#03-dependency-injection">App Architecture</a> so you can swap in a fake for tests.</p><div class="pager"><span class="sp"></span><a href="#01-urlsession"><span>Next</span>URLSession →</a></div></section>
-<section class="page" id="01-urlsession" data-title="URLSession" data-num="01" data-hasdemo="0"><h1>URLSession</h1>
+<section class="page" id="01-urlsession" data-title="URLSession" data-num="01" data-hasdemo="0" data-group=""><h1>URLSession</h1>
 <p><code>URLSession</code> is the engine. It manages a pool of connections, applies a configuration (caching, timeouts, headers), and hands you data via tasks. Understanding its pieces means you almost never reach for a third-party HTTP library.</p>
 <h2>Sessions and configurations</h2>
 <pre><code class="language-swift">// .shared is fine for simple cases; a custom session lets you set policy.
@@ -87,7 +87,7 @@ guard (200..&lt;300).contains(http.statusCode) else { throw NetError.status(http
 <li>The modern call style: <a class="xref" href="#02-async-await-requests">02-async-await-requests</a></li>
 <li>Prev: <a class="xref" href="#00-overview">00-overview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Networking — Overview</a><a href="#02-async-await-requests"><span>Next</span>Async/Await Requests →</a></div></section>
-<section class="page" id="02-async-await-requests" data-title="Async/Await Requests" data-num="02" data-hasdemo="0"><h1>Async/Await Requests</h1>
+<section class="page" id="02-async-await-requests" data-title="Async/Await Requests" data-num="02" data-hasdemo="0" data-group=""><h1>Async/Await Requests</h1>
 <p><code>URLSession</code>'s async methods turn callback spaghetti into linear, readable code that supports cancellation for free. This lesson builds a small, typed request layer you'd actually ship.</p>
 <h2>The basic call</h2>
 <pre><code class="language-swift">func fetchUser(id: Int) async throws -&gt; User {
@@ -146,7 +146,7 @@ let screen = try await ProfileScreen(profile: profile, posts: posts)
 <li>Concurrency underneath: <a class="xref" href="concurrency.html#02-structured-concurrency">Structured Concurrency</a></li>
 <li>Prev: <a class="xref" href="#01-urlsession">01-urlsession</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#01-urlsession"><span>Prev</span>← URLSession</a><a href="#03-codable"><span>Next</span>Codable →</a></div></section>
-<section class="page" id="03-codable" data-title="Codable" data-num="03" data-hasdemo="0"><h1>Codable</h1>
+<section class="page" id="03-codable" data-title="Codable" data-num="03" data-hasdemo="0" data-group=""><h1>Codable</h1>
 <p><code>Codable</code> (= <code>Encodable &amp; Decodable</code>) is Swift's built-in serialization. For JSON APIs it turns bytes into typed models with almost no boilerplate — and gives you precise escape hatches when the JSON is messy.</p>
 <h2>The happy path</h2>
 <pre><code class="language-swift">struct User: Codable, Identifiable {
@@ -205,7 +205,7 @@ decoder.dateDecodingStrategy = .formatted(myFormatter)
 <li>Persisting decoded models: <a class="xref" href="persistence.html#02-swiftdata">SwiftData</a></li>
 <li>Prev: <a class="xref" href="#02-async-await-requests">02-async-await-requests</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#02-async-await-requests"><span>Prev</span>← Async/Await Requests</a><a href="#04-errors-and-retries"><span>Next</span>Errors &amp; Retries →</a></div></section>
-<section class="page" id="04-errors-and-retries" data-title="Errors &amp; Retries" data-num="04" data-hasdemo="0"><h1>Errors &amp; Retries</h1>
+<section class="page" id="04-errors-and-retries" data-title="Errors &amp; Retries" data-num="04" data-hasdemo="0" data-group=""><h1>Errors &amp; Retries</h1>
 <p>Networking fails constantly — flaky connections, expired tokens, server hiccups, rate limits. Production-grade code treats failure as a first-class path, with a clear error taxonomy and a retry policy that doesn't make things worse.</p>
 <h2>A real error taxonomy</h2>
 <p>Collapse the many failure modes into a domain error your UI can reason about:</p>
@@ -274,7 +274,7 @@ decoder.dateDecodingStrategy = .formatted(myFormatter)
 <li>Sleeping/awaiting: <a class="xref" href="concurrency.html#01-async-await-model">Async/Await</a></li>
 <li>Prev: <a class="xref" href="#03-codable">03-codable</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#03-codable"><span>Prev</span>← Codable</a><a href="#05-caching-auth-and-testing"><span>Next</span>Caching, Auth &amp; Testing →</a></div></section>
-<section class="page" id="05-caching-auth-and-testing" data-title="Caching, Auth &amp; Testing" data-num="05" data-hasdemo="0"><h1>Caching, Auth &amp; Testing</h1>
+<section class="page" id="05-caching-auth-and-testing" data-title="Caching, Auth &amp; Testing" data-num="05" data-hasdemo="0" data-group=""><h1>Caching, Auth &amp; Testing</h1>
 <p>Three pieces that turn a working request into a production layer: caching (speed + offline), authentication (tokens done right), and testing (proving it works without hitting a real server).</p>
 <h2>Caching with URLCache</h2>
 <p><code>URLSession</code> has an HTTP cache out of the box. If the server sends proper <code>Cache-Control</code>/<code>ETag</code> headers, responses are cached and revalidated automatically:</p>

@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-roadmap" data-title="Choosing the Right Rendering Stack — Learning Roadmap" data-num="·" data-hasdemo="0"><h1>Choosing the Right Rendering Stack — Learning Roadmap</h1>
+<section class="page" id="00-roadmap" data-title="Choosing the Right Rendering Stack — Learning Roadmap" data-num="·" data-hasdemo="0" data-group=""><h1>Choosing the Right Rendering Stack — Learning Roadmap</h1>
 <p>This curriculum teaches you to <strong>decide which technology stack to use for any interaction or animation — <em>before</em> you write a line of code.</strong> The goal: when you imagine an interaction, you already see the stack in your head ("this is SwiftUI for layout + a Metal <code>.layerEffect</code> for the reveal", or "this is explicit Core Animation because I need staggered per-layer timing").</p>
 <p>This is the meta-skill that sits <em>above</em> the other Learning folders. Once you have it, <a class="xref" href="coreanimation.html#00-roadmap">Core Animation</a>, <a class="xref" href="shaders.html#00-roadmap">Shaders</a>, and <a class="xref" href="swiftui.html#00-roadmap">SwiftUI</a> stop being separate worlds and become <strong>rungs on one ladder</strong> you climb up and down deliberately.</p>
 <hr />
@@ -166,7 +166,7 @@
 <li><span class="xref-missing" title="note not in this site">Maths-Physics</span> — the math behind the physics rung</li>
 <li><span class="xref-missing" title="note not in this site">apple-private-animation-guide</span> — how Apple's own apps choose stacks</li>
 </ul><div class="pager"><span class="sp"></span><a href="#01-the-rendering-stack-map"><span>Next</span>01 — The Rendering Stack Map →</a></div></section>
-<section class="page" id="01-the-rendering-stack-map" data-title="01 — The Rendering Stack Map" data-num="01" data-hasdemo="0"><h1>01 — The Rendering Stack Map</h1>
+<section class="page" id="01-the-rendering-stack-map" data-title="01 — The Rendering Stack Map" data-num="01" data-hasdemo="0" data-group=""><h1>01 — The Rendering Stack Map</h1>
 <p>Everything visual on iOS/macOS/tvOS/watchOS becomes <strong>CALayers composited by the GPU in a separate process (the render server / <code>backboardd</code>)</strong>. Every animation API you know is a <em>different altitude</em> on one ladder that bottoms out there. Learn the ladder and stack choice stops being mysterious.</p>
 <blockquote>
 <p>Foundation: <a class="xref" href="coreanimation.html#01-how-rendering-works">01-how-rendering-works</a> explains the app → render-server → GPU → display pipeline. This lesson assumes that floor and builds the ladder on top of it.</p>
@@ -251,7 +251,7 @@
 - Explain the two clocks and which rungs use which.
 - Articulate why "SwiftUI + Metal" is vertical composition, not an either/or.</p>
 <p>Next: <a class="xref" href="#02-three-questions-framework">02-three-questions-framework</a> — the three questions that map any interaction onto these rungs.</p><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Choosing the Right Rendering Stack — Learning Roadmap</a><a href="#02-three-questions-framework"><span>Next</span>02 — The Three Questions Framework →</a></div></section>
-<section class="page" id="02-three-questions-framework" data-title="02 — The Three Questions Framework" data-num="02" data-hasdemo="1"><h1>02 — The Three Questions Framework</h1><div class="demo-mount" data-demo="sd-flow"></div>
+<section class="page" id="02-three-questions-framework" data-title="02 — The Three Questions Framework" data-num="02" data-hasdemo="1" data-group=""><h1>02 — The Three Questions Framework</h1><div class="demo-mount" data-demo="sd-flow"></div>
 <p>Given any interaction, three questions deterministically narrow your stack. Each maps to one axis of the <a class="xref" href="#01-the-rendering-stack-map">ladder</a>. Ask them <em>in order</em>, before any code.</p>
 <pre><code>Q1. WHAT am I changing?          → picks the WHAT axis   (&lt;a class=&quot;xref&quot; href=&quot;#03-what-are-you-changing&quot;&gt;03-what-are-you-changing&lt;/a&gt;)
 Q2. WHAT drives it over time?    → picks the TIMING axis (&lt;a class=&quot;xref&quot; href=&quot;#04-who-drives-time&quot;&gt;04-who-drives-time&lt;/a&gt;)
@@ -419,7 +419,7 @@ Q3. HOW does the user touch it?  → picks the TOUCH axis  (&lt;a class=&quot;xr
 <li>You understand the answers combine <em>per concern</em>, not as a single global choice.</li>
 </ul>
 <p>Next: <a class="xref" href="#03-what-are-you-changing">03-what-are-you-changing</a> — Q1 in full depth.</p><div class="pager"><a href="#01-the-rendering-stack-map"><span>Prev</span>← 01 — The Rendering Stack Map</a><a href="#03-what-are-you-changing"><span>Next</span>03 — Q1: What Are You Changing? (The *What* Axis) →</a></div></section>
-<section class="page" id="03-what-are-you-changing" data-title="03 — Q1: What Are You Changing? (The *What* Axis)" data-num="03" data-hasdemo="0"><h1>03 — Q1: What Are You Changing? (The <em>What</em> Axis)</h1>
+<section class="page" id="03-what-are-you-changing" data-title="03 — Q1: What Are You Changing? (The *What* Axis)" data-num="03" data-hasdemo="0" data-group=""><h1>03 — Q1: What Are You Changing? (The <em>What</em> Axis)</h1>
 <p>The single most decisive question. It determines whether you stay in the cheap, high rungs or must descend to pixels. Get this wrong and you either over-engineer (writing a shader to move a box) or hit a wall (trying to ripple pixels with <code>.offset</code>).</p>
 <hr />
 <h2>The five categories</h2>
@@ -496,7 +496,7 @@ Q3. HOW does the user touch it?  → picks the TOUCH axis  (&lt;a class=&quot;xr
 <li>You know transforms/opacity are free and never justify dropping rungs.</li>
 </ul>
 <p>Next: <a class="xref" href="#04-who-drives-time">04-who-drives-time</a> — once you know <em>what</em>, decide <em>what drives it</em>.</p><div class="pager"><a href="#02-three-questions-framework"><span>Prev</span>← 02 — The Three Questions Framework</a><a href="#04-who-drives-time"><span>Next</span>04 — Q2: What Drives the Change Over Time? (The *Timing* Axis) →</a></div></section>
-<section class="page" id="04-who-drives-time" data-title="04 — Q2: What Drives the Change Over Time? (The *Timing* Axis)" data-num="04" data-hasdemo="0"><h1>04 — Q2: What Drives the Change Over Time? (The <em>Timing</em> Axis)</h1>
+<section class="page" id="04-who-drives-time" data-title="04 — Q2: What Drives the Change Over Time? (The *Timing* Axis)" data-num="04" data-hasdemo="0" data-group=""><h1>04 — Q2: What Drives the Change Over Time? (The <em>Timing</em> Axis)</h1>
 <p>Once <a class="xref" href="#03-what-are-you-changing">Q1</a> tells you <em>what</em> tier you're in, Q2 picks the <strong>clock</strong> — who advances the animation each frame. This is where most "it stutters / it can't be interrupted / it feels robotic" problems are actually decided.</p>
 <hr />
 <h2>The two clocks (recap from <a class="xref" href="#01-the-rendering-stack-map">01-the-rendering-stack-map</a>)</h2>
@@ -583,7 +583,7 @@ Q3. HOW does the user touch it?  → picks the TOUCH axis  (&lt;a class=&quot;xr
 <li>You know scrub ≠ playback: the user is the playhead.</li>
 </ul>
 <p>Next: <a class="xref" href="#05-how-the-user-touches-it">05-how-the-user-touches-it</a> — the interaction model that separates fire-and-forget from interruptible.</p><div class="pager"><a href="#03-what-are-you-changing"><span>Prev</span>← 03 — Q1: What Are You Changing? (The *What* Axis)</a><a href="#05-how-the-user-touches-it"><span>Next</span>05 — Q3: How Does the User Touch It? (The *Interaction* Axis) →</a></div></section>
-<section class="page" id="05-how-the-user-touches-it" data-title="05 — Q3: How Does the User Touch It? (The *Interaction* Axis)" data-num="05" data-hasdemo="0"><h1>05 — Q3: How Does the User Touch It? (The <em>Interaction</em> Axis)</h1>
+<section class="page" id="05-how-the-user-touches-it" data-title="05 — Q3: How Does the User Touch It? (The *Interaction* Axis)" data-num="05" data-hasdemo="0" data-group=""><h1>05 — Q3: How Does the User Touch It? (The <em>Interaction</em> Axis)</h1>
 <p>Two interactions can change the same thing (<a class="xref" href="#03-what-are-you-changing">Q1</a>) with the same driver (<a class="xref" href="#04-who-drives-time">Q2</a>) and still need different stacks — because of <em>how the user touches them</em>. This axis is the tiebreaker, and it's the one most often discovered too late.</p>
 <hr />
 <h2>The three interaction models</h2>
@@ -651,7 +651,7 @@ Q3. HOW does the user touch it?  → picks the TOUCH axis  (&lt;a class=&quot;xr
 <li>You ask "can the user touch it mid-flight?" <em>before</em> implementing.</li>
 </ul>
 <p>Next: <a class="xref" href="#06-cost-model-cpu-gpu">06-cost-model-cpu-gpu</a> — the cost floor that constrains all of the above.</p><div class="pager"><a href="#04-who-drives-time"><span>Prev</span>← 04 — Q2: What Drives the Change Over Time? (The *Timing* Axis)</a><a href="#06-cost-model-cpu-gpu"><span>Next</span>06 — The Cost Model: What&#x27;s Free, What&#x27;s Expensive, Where It Runs →</a></div></section>
-<section class="page" id="06-cost-model-cpu-gpu" data-title="06 — The Cost Model: What&#x27;s Free, What&#x27;s Expensive, Where It Runs" data-num="06" data-hasdemo="0"><h1>06 — The Cost Model: What's Free, What's Expensive, Where It Runs</h1>
+<section class="page" id="06-cost-model-cpu-gpu" data-title="06 — The Cost Model: What&#x27;s Free, What&#x27;s Expensive, Where It Runs" data-num="06" data-hasdemo="0" data-group=""><h1>06 — The Cost Model: What's Free, What's Expensive, Where It Runs</h1>
 <p>The three questions (<a class="xref" href="#02-three-questions-framework">02-three-questions-framework</a>) tell you <em>which</em> stack. This lesson tells you what each rung <em>costs</em> — so your choice survives contact with 60/120fps. The golden rule of smoothness: <strong>keep work off the CPU's main thread and let the GPU compositor do what it does for free.</strong></p>
 <blockquote>
 <p>Foundation: <span class="xref-missing" title="note not in this site">core-animation-smooth-60-120fps</span> and <a class="xref" href="coreanimation.html#01-how-rendering-works">01-how-rendering-works</a> cover the pipeline. This lesson is the <em>budget</em> view.</p>
@@ -814,7 +814,7 @@ Display (60 or 120 Hz)                ← you have 16.6ms / 8.3ms per frame
 <li>You can sketch a shader's cost as complexity × pixels.</li>
 </ul>
 <p>Next: <a class="xref" href="#07-escalation-ladder">07-escalation-ladder</a> — the discipline that ties the whole framework together.</p><div class="pager"><a href="#05-how-the-user-touches-it"><span>Prev</span>← 05 — Q3: How Does the User Touch It? (The *Interaction* Axis)</a><a href="#07-escalation-ladder"><span>Next</span>07 — The Escalation Ladder (The Discipline) →</a></div></section>
-<section class="page" id="07-escalation-ladder" data-title="07 — The Escalation Ladder (The Discipline)" data-num="07" data-hasdemo="0"><h1>07 — The Escalation Ladder (The Discipline)</h1>
+<section class="page" id="07-escalation-ladder" data-title="07 — The Escalation Ladder (The Discipline)" data-num="07" data-hasdemo="0" data-group=""><h1>07 — The Escalation Ladder (The Discipline)</h1>
 <p>The three questions tell you <em>where</em> on the <a class="xref" href="#01-the-rendering-stack-map">ladder</a> to land. This lesson is the <em>discipline</em> that keeps you honest: <strong>start at the highest rung that can express the effect, and descend only when you hit a specific, nameable limitation.</strong></p>
 <hr />
 <h2>The rule, restated</h2>
@@ -924,7 +924,7 @@ Raw Metal (MTKView / CAMetalLayer)
 <li>You ascend back up for concerns that didn't need the low rung.</li>
 </ul>
 <p>Next: <a class="xref" href="#08-stack-combos-cookbook">08-stack-combos-cookbook</a> — the concrete combos, each with its winning condition.</p><div class="pager"><a href="#06-cost-model-cpu-gpu"><span>Prev</span>← 06 — The Cost Model: What&#x27;s Free, What&#x27;s Expensive, Where It Runs</a><a href="#08-stack-combos-cookbook"><span>Next</span>08 — Stack Combos Cookbook →</a></div></section>
-<section class="page" id="08-stack-combos-cookbook" data-title="08 — Stack Combos Cookbook" data-num="08" data-hasdemo="0"><h1>08 — Stack Combos Cookbook</h1>
+<section class="page" id="08-stack-combos-cookbook" data-title="08 — Stack Combos Cookbook" data-num="08" data-hasdemo="0" data-group=""><h1>08 — Stack Combos Cookbook</h1>
 <p>Reference sheet. Each combo lists <strong>when it wins</strong>, <strong>when <em>not</em> to use it</strong>, and <strong>how the pieces compose vertically</strong> (<a class="xref" href="#01-the-rendering-stack-map">recall: rungs stack</a>). Keep this open while planning.</p>
 <hr />
 <h2>1. SwiftUI alone</h2>
@@ -1118,7 +1118,7 @@ Raw Metal (MTKView / CAMetalLayer)
 <p>The lesson of this table: <strong>a single interaction routinely spans several rows.</strong> Name the rung for each concern, not one rung for the whole feature.</p>
 </blockquote>
 <p>Next: <a class="xref" href="#09-decision-flowchart-and-cases">09-decision-flowchart-and-cases</a> — the flowchart and 12 fully worked interactions.</p><div class="pager"><a href="#07-escalation-ladder"><span>Prev</span>← 07 — The Escalation Ladder (The Discipline)</a><a href="#09-decision-flowchart-and-cases"><span>Next</span>09 — The Decision Flowchart + 12 Worked Cases →</a></div></section>
-<section class="page" id="09-decision-flowchart-and-cases" data-title="09 — The Decision Flowchart + 12 Worked Cases" data-num="09" data-hasdemo="1"><h1>09 — The Decision Flowchart + 12 Worked Cases</h1><div class="demo-mount" data-demo="sd-flow"></div>
+<section class="page" id="09-decision-flowchart-and-cases" data-title="09 — The Decision Flowchart + 12 Worked Cases" data-num="09" data-hasdemo="1" data-group=""><h1>09 — The Decision Flowchart + 12 Worked Cases</h1><div class="demo-mount" data-demo="sd-flow"></div>
 <p>The framework compressed into a single flowchart, then applied to 12 real interactions. This is the lesson to reread whenever you plan something new.</p>
 <hr />
 <h2>The master flowchart</h2>

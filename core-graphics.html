@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-overview" data-title="Core Graphics &amp; Core Image — Overview" data-num="·" data-hasdemo="0"><h1>Core Graphics &amp; Core Image — Overview</h1>
+<section class="page" id="00-overview" data-title="Core Graphics &amp; Core Image — Overview" data-num="·" data-hasdemo="0" data-group=""><h1>Core Graphics &amp; Core Image — Overview</h1>
 <p>Below Core Animation's compositing of layers sits the layer that actually <em>draws pixels</em>: <strong>Core Graphics</strong> (a.k.a. Quartz 2D), a C-based 2D drawing engine for paths, gradients, text, and images on the CPU. Alongside it, <strong>Core Image</strong> is a GPU-accelerated <em>image processing</em> pipeline of filters. Together they cover everything between "arrange rectangles" (Core Animation) and "write a shader" (Metal).</p>
 <h2>Where each fits</h2>
 <pre><code>Metal / shaders   → per-pixel, on the GPU, maximum control      (your Shaders course)
@@ -49,7 +49,7 @@ Core Animation    → COMPOSITE &amp; animate layers                  (your CA c
 </blockquote>
 <h2>How it connects</h2>
 <p>The shapes you draw here back <code>CAShapeLayer</code> (<a class="xref" href="coreanimation.html#16-cashapelayer">CAShapeLayer</a>). The Bézier math is the same as <a class="xref" href="interaction-math.html#05-parametric-curves-and-splines">Parametric Curves</a>. Core Image's per-pixel kernels are conceptually the fragment shaders from your <a class="xref" href="shaders.html#00-roadmap">Shaders roadmap</a> — just expressed through a different API.</p><div class="pager"><span class="sp"></span><a href="#01-drawing-model"><span>Next</span>The Drawing Model →</a></div></section>
-<section class="page" id="01-drawing-model" data-title="The Drawing Model" data-num="01" data-hasdemo="0"><h1>The Drawing Model</h1>
+<section class="page" id="01-drawing-model" data-title="The Drawing Model" data-num="01" data-hasdemo="0" data-group=""><h1>The Drawing Model</h1>
 <p>Core Graphics draws into a <strong>graphics context</strong> (<code>CGContext</code>) — an opaque destination for drawing commands. The context can be the screen (inside <code>draw(_:)</code>), an off-screen bitmap, a PDF, or a print page. The same drawing code targets any of them.</p>
 <h2>The painter's model</h2>
 <p>Core Graphics is <em>stateful</em> and <em>sequential</em>. You set state (fill color, line width, transform), then issue a paint command, and pixels are laid down immediately, on top of whatever is already there:</p>
@@ -90,7 +90,7 @@ let image = renderer.image { ctx in
 <ul>
 <li>Next: <a class="xref" href="#02-paths-and-curves">02-paths-and-curves</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Core Graphics &amp; Core Image — Overview</a><a href="#02-paths-and-curves"><span>Next</span>Paths &amp; Curves →</a></div></section>
-<section class="page" id="02-paths-and-curves" data-title="Paths &amp; Curves" data-num="02" data-hasdemo="1"><h1>Paths &amp; Curves</h1><div class="demo-mount" data-demo="bezier"></div>
+<section class="page" id="02-paths-and-curves" data-title="Paths &amp; Curves" data-num="02" data-hasdemo="1" data-group=""><h1>Paths &amp; Curves</h1><div class="demo-mount" data-demo="bezier"></div>
 <p>A <strong>path</strong> is a sequence of lines and curves that you can stroke (outline), fill (interior), or use as a clip. <code>CGPath</code> is the low-level type; <code>UIBezierPath</code> is the friendly UIKit wrapper. Paths back <code>CAShapeLayer</code>, animated strokes, custom buttons, charts, and any non-rectangular shape.</p>
 <h2>Building a path</h2>
 <pre><code class="language-swift">let path = UIBezierPath()
@@ -140,7 +140,7 @@ shape.add(draw, forKey: &quot;draw&quot;)
 <li>The math: <a class="xref" href="interaction-math.html#05-parametric-curves-and-splines">Parametric Curves &amp; Splines</a></li>
 <li>Prev: <a class="xref" href="#01-drawing-model">01-drawing-model</a> · Next: <a class="xref" href="#03-gradients-shadows-blends">03-gradients-shadows-blends</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#01-drawing-model"><span>Prev</span>← The Drawing Model</a><a href="#03-gradients-shadows-blends"><span>Next</span>Gradients, Shadows &amp; Blend Modes →</a></div></section>
-<section class="page" id="03-gradients-shadows-blends" data-title="Gradients, Shadows &amp; Blend Modes" data-num="03" data-hasdemo="0"><h1>Gradients, Shadows &amp; Blend Modes</h1>
+<section class="page" id="03-gradients-shadows-blends" data-title="Gradients, Shadows &amp; Blend Modes" data-num="03" data-hasdemo="0" data-group=""><h1>Gradients, Shadows &amp; Blend Modes</h1>
 <p>These three give flat shapes depth and richness. They're cheap to describe and, used well, are the difference between a "drawn rectangle" and a polished surface.</p>
 <h2>Gradients</h2>
 <p>Two kinds: <strong>axial</strong> (linear, along a line) and <strong>radial</strong> (out from a center). In Core Graphics you draw a <code>CGGradient</code> into a (usually clipped) region:</p>
@@ -180,7 +180,7 @@ ctx.setBlendMode(.destinationOut)  // ERASE: punch a hole / mask
 <li>GPU-composited gradients/shadows: <a class="xref" href="coreanimation.html#05-layer-appearance">Layer Appearance</a></li>
 <li>Prev: <a class="xref" href="#02-paths-and-curves">02-paths-and-curves</a> · Next: <a class="xref" href="#04-images-and-bitmaps">04-images-and-bitmaps</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#02-paths-and-curves"><span>Prev</span>← Paths &amp; Curves</a><a href="#04-images-and-bitmaps"><span>Next</span>Images &amp; Bitmaps →</a></div></section>
-<section class="page" id="04-images-and-bitmaps" data-title="Images &amp; Bitmaps" data-num="04" data-hasdemo="0"><h1>Images &amp; Bitmaps</h1>
+<section class="page" id="04-images-and-bitmaps" data-title="Images &amp; Bitmaps" data-num="04" data-hasdemo="0" data-group=""><h1>Images &amp; Bitmaps</h1>
 <p>A <code>UIImage</code> is a high-level, immutable picture; a <code>CGImage</code> is the raw bitmap underneath; a <em>bitmap context</em> is a canvas you can draw into and read back. Knowing the difference is the key to resizing correctly, avoiding memory blow-ups, and getting color right.</p>
 <h2>Scale: points vs pixels</h2>
 <p>A <code>UIImage</code> carries a <code>scale</code> (1, 2, or 3). Its <code>size</code> is in <strong>points</strong>; the underlying pixel dimensions are <code>size × scale</code>. The number one image bug is ignoring scale — drawing at <code>image.size</code> on a 3× screen and getting a blurry or mis-sized result. <code>UIGraphicsImageRenderer</code> handles scale for you:</p>
@@ -224,7 +224,7 @@ ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: w, height: h))
 <li>Processing images with filters: <a class="xref" href="#05-core-image-filters">05-core-image-filters</a></li>
 <li>Prev: <a class="xref" href="#03-gradients-shadows-blends">03-gradients-shadows-blends</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#03-gradients-shadows-blends"><span>Prev</span>← Gradients, Shadows &amp; Blend Modes</a><a href="#05-core-image-filters"><span>Next</span>Core Image Filters →</a></div></section>
-<section class="page" id="05-core-image-filters" data-title="Core Image Filters" data-num="05" data-hasdemo="1"><h1>Core Image Filters</h1><div class="demo-mount" data-demo="sh-blur"></div>
+<section class="page" id="05-core-image-filters" data-title="Core Image Filters" data-num="05" data-hasdemo="1" data-group=""><h1>Core Image Filters</h1><div class="demo-mount" data-demo="sh-blur"></div>
 <p>Core Image (CI) is a <em>non-destructive, GPU-accelerated</em> image-processing pipeline. You describe a graph of filters; CI fuses them into an optimized program and runs it on the GPU only when you ask for output. It's the bridge between Core Graphics drawing and full Metal shaders.</p>
 <h2>The three core types</h2>
 <pre><code>CIImage    – a recipe for an image (lazy; not yet rendered)
@@ -277,7 +277,7 @@ extern &quot;C&quot; float4 tint(coreimage::sample_t s, float3 color) {
 <li>The shader equivalent: <a class="xref" href="shaders.html#13-blur-effects">Blur Effects</a>, <a class="xref" href="shaders.html#06-fragment-shaders">Fragment Shaders</a></li>
 <li>Prev: <a class="xref" href="#04-images-and-bitmaps">04-images-and-bitmaps</a> · Next: <a class="xref" href="#06-performance">06-performance</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#04-images-and-bitmaps"><span>Prev</span>← Images &amp; Bitmaps</a><a href="#06-performance"><span>Next</span>Drawing Performance →</a></div></section>
-<section class="page" id="06-performance" data-title="Drawing Performance" data-num="06" data-hasdemo="0"><h1>Drawing Performance</h1>
+<section class="page" id="06-performance" data-title="Drawing Performance" data-num="06" data-hasdemo="0" data-group=""><h1>Drawing Performance</h1>
 <p>Custom drawing is powerful and easy to make slow. The whole game is: <strong>draw as little as possible, as rarely as possible, off the main thread when you can, and let the GPU composite the rest.</strong></p>
 <h2>Know what's expensive</h2>
 <ul>

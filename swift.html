@@ -25,7 +25,7 @@
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-roadmap" data-title="Swift Programming Language — Learning Roadmap" data-num="·" data-hasdemo="0"><h1>Swift Programming Language — Learning Roadmap</h1>
+<section class="page" id="00-roadmap" data-title="Swift Programming Language — Learning Roadmap" data-num="·" data-hasdemo="0" data-group=""><h1>Swift Programming Language — Learning Roadmap</h1>
 <p>A self-paced curriculum from zero to writing production-quality Swift. Designed as a foundation for SwiftUI development.</p>
 <hr />
 <h2>How to Use This Series</h2>
@@ -259,7 +259,7 @@
 - [x] You can create a new Playground (File &gt; New &gt; Playground)
 - [x] You can run code in a Playground (press the play button)
 - [x] You understand this curriculum is a foundation for SwiftUI development</p><div class="pager"><span class="sp"></span><a href="#01-why-swift"><span>Next</span>01 — Why Swift: History, Safety, and the Ecosystem →</a></div></section>
-<section class="page" id="01-why-swift" data-title="01 — Why Swift: History, Safety, and the Ecosystem" data-num="01" data-hasdemo="0"><h1>01 — Why Swift: History, Safety, and the Ecosystem</h1>
+<section class="page" id="01-why-swift" data-title="01 — Why Swift: History, Safety, and the Ecosystem" data-num="01" data-hasdemo="0" data-group=""><h1>01 — Why Swift: History, Safety, and the Ecosystem</h1>
 <p>Swift is the language Apple created to replace Objective-C. Understanding <em>why</em> it exists helps you understand <em>why</em> its features work the way they do.</p>
 <hr />
 <h2>A Brief History</h2>
@@ -523,7 +523,7 @@ func fetchData() async throws -&gt; Data {
 - [x] Swift uses ARC for memory management — no manual retain/release, no GC pauses
 - [x] The ecosystem includes SPM, Xcode, Playgrounds, and server-side Swift
 - [x] Swift's features (structs, protocols, closures, property wrappers) are the building blocks of SwiftUI</p><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Swift Programming Language — Learning Roadmap</a><a href="#02-variables-and-types"><span>Next</span>02 — Variables and Types →</a></div></section>
-<section class="page" id="02-variables-and-types" data-title="02 — Variables and Types" data-num="02" data-hasdemo="0"><h1>02 — Variables and Types</h1>
+<section class="page" id="02-variables-and-types" data-title="02 — Variables and Types" data-num="02" data-hasdemo="0" data-group=""><h1>02 — Variables and Types</h1>
 <p>Every Swift program starts with data. This lesson covers how to declare variables, what types exist, and how Swift's type system keeps you safe.</p>
 <hr />
 <h2><code>let</code> (Constant) vs <code>var</code> (Variable)</h2>
@@ -745,7 +745,7 @@ let d: Double = 1.0 / 3.0   // 0.3333333333333333 (15 decimal digits)
 - [x] Tuples group multiple values; use named elements and decomposition
 - [x] <code>typealias</code> creates readable names for existing types
 - [x] Numeric literals support binary (<code>0b</code>), octal (<code>0o</code>), hex (<code>0x</code>), and underscores</p><div class="pager"><a href="#01-why-swift"><span>Prev</span>← 01 — Why Swift: History, Safety, and the Ecosystem</a><a href="#03-strings"><span>Next</span>03 — Strings →</a></div></section>
-<section class="page" id="03-strings" data-title="03 — Strings" data-num="03" data-hasdemo="0"><h1>03 — Strings</h1>
+<section class="page" id="03-strings" data-title="03 — Strings" data-num="03" data-hasdemo="0" data-group=""><h1>03 — Strings</h1>
 <p>Strings in Swift are powerful, Unicode-correct, and safer than in most languages. The tradeoff is that string indexing works differently than you might expect.</p>
 <hr />
 <h2>Strings are Value Types</h2>
@@ -1023,7 +1023,7 @@ for i in 0..&lt;1000 {
 - [x] Substrings share storage with the original string
 - [x] Key operations: <code>contains</code>, <code>hasPrefix</code>, <code>hasSuffix</code>, <code>split</code>, <code>joined</code>
 - [x] String comparison is case-sensitive by default</p><div class="pager"><a href="#02-variables-and-types"><span>Prev</span>← 02 — Variables and Types</a><a href="#04-collection-types"><span>Next</span>04 — Collection Types →</a></div></section>
-<section class="page" id="04-collection-types" data-title="04 — Collection Types" data-num="04" data-hasdemo="0"><h1>04 — Collection Types</h1>
+<section class="page" id="04-collection-types" data-title="04 — Collection Types" data-num="04" data-hasdemo="0" data-group=""><h1>04 — Collection Types</h1>
 <p>Swift has three primary collection types: <code>Array</code> (ordered), <code>Set</code> (unordered, unique), and <code>Dictionary</code> (key-value pairs). All three are generic, type-safe, and value types.</p>
 <hr />
 <h2>Arrays</h2>
@@ -1378,7 +1378,7 @@ let unique = items.filter { seen.insert($0).inserted }
 - [x] Set operations: <code>union</code>, <code>intersection</code>, <code>subtracting</code>, <code>symmetricDifference</code>
 - [x] Dictionary default values: <code>dict[key, default: value]</code>
 - [x] Choose Array for order, Set for uniqueness, Dictionary for key-value lookup</p><div class="pager"><a href="#03-strings"><span>Prev</span>← 03 — Strings</a><a href="#05-control-flow"><span>Next</span>05 — Control Flow →</a></div></section>
-<section class="page" id="05-control-flow" data-title="05 — Control Flow" data-num="05" data-hasdemo="0"><h1>05 — Control Flow</h1>
+<section class="page" id="05-control-flow" data-title="05 — Control Flow" data-num="05" data-hasdemo="0" data-group=""><h1>05 — Control Flow</h1>
 <p>Swift's control flow is familiar if you know other languages, but with important differences: <code>switch</code> is exhaustive and has no implicit fallthrough, <code>guard</code> encourages early returns, and <code>defer</code> runs cleanup code automatically.</p>
 <hr />
 <h2>if / else if / else</h2>
@@ -1715,7 +1715,7 @@ default:
 - [x] Labeled statements let you <code>break</code>/<code>continue</code> outer loops
 - [x] <code>defer</code> runs cleanup code when a scope exits, in LIFO order
 - [x] <code>#available</code> checks OS version for API availability</p><div class="pager"><a href="#04-collection-types"><span>Prev</span>← 04 — Collection Types</a><a href="#06-functions"><span>Next</span>06 — Functions →</a></div></section>
-<section class="page" id="06-functions" data-title="06 — Functions" data-num="06" data-hasdemo="0"><h1>06 — Functions</h1>
+<section class="page" id="06-functions" data-title="06 — Functions" data-num="06" data-hasdemo="0" data-group=""><h1>06 — Functions</h1>
 <p>Functions are the building blocks of Swift programs. Swift functions have a distinctive feature: <strong>argument labels</strong> that make call sites read like prose.</p>
 <hr />
 <h2>Basic Syntax</h2>
@@ -2015,7 +2015,7 @@ formatNames(&quot;alice&quot;, &quot;bob&quot;, transform: { $0.capitalized })
 - [x] Function types: <code>(Int, Int) -&gt; Int</code> describes the signature
 - [x] Nested functions can capture outer variables
 - [x] Functions are named closures — the next lesson covers anonymous ones</p><div class="pager"><a href="#05-control-flow"><span>Prev</span>← 05 — Control Flow</a><a href="#07-closures"><span>Next</span>Closures →</a></div></section>
-<section class="page" id="07-closures" data-title="Closures" data-num="07" data-hasdemo="0"><h1>Closures</h1>
+<section class="page" id="07-closures" data-title="Closures" data-num="07" data-hasdemo="0" data-group=""><h1>Closures</h1>
 <p>Closures are self-contained blocks of functionality that can be passed around and used in your code. They capture and store references to variables and constants from the surrounding context. Functions are actually a special case of closures -- every function you have written so far is a closure with a name.</p>
 <hr />
 <h2>Full Closure Syntax</h2>
@@ -2210,7 +2210,7 @@ let sum = numbers.reduce(0, +)                 // 21
 <li>[x] I know what <code>@Sendable</code> closures are</li>
 <li>[x] I can use closures with map, filter, and reduce</li>
 </ul><div class="pager"><a href="#06-functions"><span>Prev</span>← 06 — Functions</a><a href="#08-optionals"><span>Next</span>Optionals →</a></div></section>
-<section class="page" id="08-optionals" data-title="Optionals" data-num="08" data-hasdemo="1"><h1>Optionals</h1><div class="demo-mount" data-demo="sw-optionals"></div>
+<section class="page" id="08-optionals" data-title="Optionals" data-num="08" data-hasdemo="1" data-group=""><h1>Optionals</h1><div class="demo-mount" data-demo="sw-optionals"></div>
 <p>Swift uses optionals to handle the absence of a value. Unlike languages that use <code>null</code> or <code>nil</code> implicitly, Swift makes the possibility of "no value" explicit in the type system. This eliminates an entire class of bugs at compile time rather than at runtime.</p>
 <hr />
 <h2>What Is nil?</h2>
@@ -2426,7 +2426,7 @@ process(data)
 <li>[x] I can use map and flatMap on optionals</li>
 <li>[x] I avoid the pyramid of doom by using guard or multiple bindings</li>
 </ul><div class="pager"><a href="#07-closures"><span>Prev</span>← Closures</a><a href="#09-enums"><span>Next</span>Enums →</a></div></section>
-<section class="page" id="09-enums" data-title="Enums" data-num="09" data-hasdemo="0"><h1>Enums</h1>
+<section class="page" id="09-enums" data-title="Enums" data-num="09" data-hasdemo="0" data-group=""><h1>Enums</h1>
 <p>Enumerations in Swift are far more powerful than in most languages. They are first-class types that can have associated values, raw values, computed properties, methods, initializers, and protocol conformances. Enums are value types, like structs.</p>
 <hr />
 <h2>Basic Enum Declaration</h2>
@@ -2725,7 +2725,7 @@ enum MathError: Error {
 <li>[x] I know when to choose enum over struct or class</li>
 <li>[x] I can use enums with pattern matching</li>
 </ul><div class="pager"><a href="#08-optionals"><span>Prev</span>← Optionals</a><a href="#10-structs-vs-classes"><span>Next</span>Structs vs Classes →</a></div></section>
-<section class="page" id="10-structs-vs-classes" data-title="Structs vs Classes" data-num="10" data-hasdemo="1"><h1>Structs vs Classes</h1><div class="demo-mount" data-demo="sw-valueref"></div>
+<section class="page" id="10-structs-vs-classes" data-title="Structs vs Classes" data-num="10" data-hasdemo="1" data-group=""><h1>Structs vs Classes</h1><div class="demo-mount" data-demo="sw-valueref"></div>
 <p>Swift gives you two primary ways to define custom types with properties and methods: structs and classes. The fundamental difference is that structs are value types (copied on assignment) and classes are reference types (shared on assignment). This distinction affects everything from memory behavior to thread safety to API design.</p>
 <hr />
 <h2>Structs: Value Types</h2>
@@ -2962,7 +2962,7 @@ class Label {
 <li>[x] I understand how self differs between structs and classes</li>
 <li>[x] I know that SwiftUI views are structs and why</li>
 </ul><div class="pager"><a href="#09-enums"><span>Prev</span>← Enums</a><a href="#11-properties"><span>Next</span>Properties →</a></div></section>
-<section class="page" id="11-properties" data-title="Properties" data-num="11" data-hasdemo="0"><h1>Properties</h1>
+<section class="page" id="11-properties" data-title="Properties" data-num="11" data-hasdemo="0" data-group=""><h1>Properties</h1>
 <p>Properties associate values with a type. Swift has several kinds of properties, each serving a different purpose: stored properties hold data, computed properties calculate values on demand, and property observers react to changes. Mastering properties is essential because they form the backbone of every type you write.</p>
 <hr />
 <h2>Stored Properties</h2>
@@ -3202,7 +3202,7 @@ print(wrapped.age)   // 36
 <li>[x] I can use key paths to refer to properties dynamically</li>
 <li>[x] I understand when to use each kind of property</li>
 </ul><div class="pager"><a href="#10-structs-vs-classes"><span>Prev</span>← Structs vs Classes</a><a href="#12-methods"><span>Next</span>Methods →</a></div></section>
-<section class="page" id="12-methods" data-title="Methods" data-num="12" data-hasdemo="0"><h1>Methods</h1>
+<section class="page" id="12-methods" data-title="Methods" data-num="12" data-hasdemo="0" data-group=""><h1>Methods</h1>
 <p>Methods are functions that belong to a type. They define the behaviors and actions that instances (or the type itself) can perform. Swift supports instance methods, type methods, subscripts, and custom operators -- all of which let you build expressive, readable APIs.</p>
 <hr />
 <h2>Instance Methods</h2>
@@ -3497,7 +3497,7 @@ infix operator **: ExponentiationPrecedence
 <li>[x] I can overload existing operators and define custom ones</li>
 <li>[x] I understand precedence groups and associativity</li>
 </ul><div class="pager"><a href="#11-properties"><span>Prev</span>← Properties</a><a href="#13-protocols"><span>Next</span>Protocols →</a></div></section>
-<section class="page" id="13-protocols" data-title="Protocols" data-num="13" data-hasdemo="0"><h1>Protocols</h1>
+<section class="page" id="13-protocols" data-title="Protocols" data-num="13" data-hasdemo="0" data-group=""><h1>Protocols</h1>
 <p>Protocols define a blueprint of methods, properties, and other requirements that a type must fulfill. They are the foundation of Swift's protocol-oriented programming paradigm. Where other languages lean on inheritance hierarchies, Swift encourages composition through protocols.</p>
 <hr />
 <h2>Protocol Declaration</h2>
@@ -3785,7 +3785,7 @@ class ViewController: DownloadDelegate {
 <li>[x] I can implement the delegation pattern</li>
 <li>[x] I understand how protocol-oriented programming differs from OOP</li>
 </ul><div class="pager"><a href="#12-methods"><span>Prev</span>← Methods</a><a href="#14-generics"><span>Next</span>Generics →</a></div></section>
-<section class="page" id="14-generics" data-title="Generics" data-num="14" data-hasdemo="0"><h1>Generics</h1>
+<section class="page" id="14-generics" data-title="Generics" data-num="14" data-hasdemo="0" data-group=""><h1>Generics</h1>
 <p>Generics let you write flexible, reusable functions and types that work with any type, while still being fully type-safe at compile time. They are one of Swift's most powerful features and the foundation of its standard library.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">13-protocols</a> for protocol-based constraints used throughout this file.</p>
@@ -4070,7 +4070,7 @@ print(a == b)  // true
 <li>[x] Know that the compiler specializes generics for performance</li>
 <li>[x] Apply conditional conformance to generic types</li>
 </ul><div class="pager"><a href="#13-protocols"><span>Prev</span>← Protocols</a><a href="#15-extensions"><span>Next</span>Extensions →</a></div></section>
-<section class="page" id="15-extensions" data-title="Extensions" data-num="15" data-hasdemo="0"><h1>Extensions</h1>
+<section class="page" id="15-extensions" data-title="Extensions" data-num="15" data-hasdemo="0" data-group=""><h1>Extensions</h1>
 <p>Extensions add new functionality to existing types -- even types you don't own, like <code>String</code>, <code>Array</code>, or <code>Int</code>. They are Swift's primary mechanism for organizing code, adding protocol conformance after the fact, and extending generic types with conditional capabilities.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">13-protocols</a> for protocol conformance and <a href="../Learning-Swift/14-generics.md">14-generics</a> for generic type extensions.</p>
@@ -4381,7 +4381,7 @@ p.info()        // &quot;Protocol info&quot; -- static dispatch! (not a requirem
 <li>[x] Organize code by grouping protocol conformances in separate extensions</li>
 <li>[x] Understand limitations: no stored properties, no overrides, static dispatch pitfall</li>
 </ul><div class="pager"><a href="#14-generics"><span>Prev</span>← Generics</a><a href="#16-error-handling"><span>Next</span>Error Handling →</a></div></section>
-<section class="page" id="16-error-handling" data-title="Error Handling" data-num="16" data-hasdemo="0"><h1>Error Handling</h1>
+<section class="page" id="16-error-handling" data-title="Error Handling" data-num="16" data-hasdemo="0" data-group=""><h1>Error Handling</h1>
 <p>Swift treats errors as values that can be thrown, caught, and transformed. Unlike exceptions in many languages, Swift errors don't unwind the call stack unpredictably -- the compiler forces you to handle every possible failure path explicitly.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/09-enums.md">09-enums</a> -- errors are almost always defined as enums with associated values.</p>
@@ -4649,7 +4649,7 @@ See <a href="../Learning-SwiftUI/21-async-patterns.md">21-async-patterns</a> for
 <li>[x] Know about typed throws in Swift 6 for exhaustive handling</li>
 <li>[x] Handle errors in async functions with <code>async throws</code></li>
 </ul><div class="pager"><a href="#15-extensions"><span>Prev</span>← Extensions</a><a href="#17-access-control"><span>Next</span>Access Control →</a></div></section>
-<section class="page" id="17-access-control" data-title="Access Control" data-num="17" data-hasdemo="0"><h1>Access Control</h1>
+<section class="page" id="17-access-control" data-title="Access Control" data-num="17" data-hasdemo="0" data-group=""><h1>Access Control</h1>
 <p>Access control restricts which parts of your code can access other parts. It lets you hide implementation details and expose a clean public interface. Swift has five access levels, giving you fine-grained control over visibility at the module and file level.</p>
 <hr />
 <h2>The Five Access Levels</h2>
@@ -4967,7 +4967,7 @@ class UserTests: XCTestCase {
 <li>[x] Use <code>@testable import</code> to test internal code</li>
 <li>[x] Follow the principle: start private, open up as needed</li>
 </ul><div class="pager"><a href="#16-error-handling"><span>Prev</span>← Error Handling</a><a href="#18-memory-management"><span>Next</span>Memory Management →</a></div></section>
-<section class="page" id="18-memory-management" data-title="Memory Management" data-num="18" data-hasdemo="1"><h1>Memory Management</h1><div class="demo-mount" data-demo="sw-arc"></div><div class="demo-mount" data-demo="sw-arc-cycle"></div>
+<section class="page" id="18-memory-management" data-title="Memory Management" data-num="18" data-hasdemo="1" data-group=""><h1>Memory Management</h1><div class="demo-mount" data-demo="sw-arc"></div><div class="demo-mount" data-demo="sw-arc-cycle"></div>
 <p>Swift uses Automatic Reference Counting (ARC) to manage memory for class instances. ARC is deterministic -- objects are deallocated the instant their reference count hits zero. Understanding ARC is essential because reference cycles can cause memory leaks that silently degrade your app.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/07-closures.md">07-closures</a> for closure capture semantics and <a href="../Learning-Swift/10-structs-vs-classes.md">10-structs-vs-classes</a> for why this only applies to reference types.</p>
@@ -5319,7 +5319,7 @@ See <a href="../Learning-SwiftUI/15-observable-and-environment.md">15-observable
 <li>[x] Debug retain cycles using deinit prints, Memory Graph, and Instruments</li>
 <li>[x] Understand that value types are immune to reference cycles</li>
 </ul><div class="pager"><a href="#17-access-control"><span>Prev</span>← Access Control</a><a href="#19-value-semantics"><span>Next</span>Value Semantics →</a></div></section>
-<section class="page" id="19-value-semantics" data-title="Value Semantics" data-num="19" data-hasdemo="1"><h1>Value Semantics</h1><div class="demo-mount" data-demo="sw-valueref"></div>
+<section class="page" id="19-value-semantics" data-title="Value Semantics" data-num="19" data-hasdemo="1" data-group=""><h1>Value Semantics</h1><div class="demo-mount" data-demo="sw-valueref"></div>
 <p>Value semantics means that when you copy a value, the copy is fully independent -- mutations to the copy never affect the original. Structs, enums, and tuples in Swift have value semantics by default. This property is fundamental to Swift's safety model and is the foundation of SwiftUI's data flow.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/10-structs-vs-classes.md">10-structs-vs-classes</a> for the struct vs class decision and <a href="../Learning-Swift/13-protocols.md">13-protocols</a> for protocol conformance discussed below.</p>
@@ -5612,7 +5612,7 @@ See <a href="../Learning-SwiftUI/16-data-flow.md">16-data-flow</a> for how Swift
 <li>[x] Recognize when value semantics break: structs containing reference types</li>
 <li>[x] Connect <code>Sendable</code> to value types for safe concurrency</li>
 </ul><div class="pager"><a href="#18-memory-management"><span>Prev</span>← Memory Management</a><a href="#20-concurrency-basics"><span>Next</span>Concurrency Basics →</a></div></section>
-<section class="page" id="20-concurrency-basics" data-title="Concurrency Basics" data-num="20" data-hasdemo="0"><h1>Concurrency Basics</h1>
+<section class="page" id="20-concurrency-basics" data-title="Concurrency Basics" data-num="20" data-hasdemo="0" data-group=""><h1>Concurrency Basics</h1>
 <p>Swift's modern concurrency system (Swift 5.5+) replaces callback-heavy GCD patterns with structured, readable async/await code.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/07-closures.md">closures</a> for closure syntax used in completion handlers.
@@ -5753,7 +5753,7 @@ See <a href="../Learning-SwiftUI/21-async-patterns.md">async-patterns</a> for <c
 <li><strong>Better diagnostics</strong> — the compiler now flags catching errors inside a <code>Task</code> and saving a task for later rendezvous.</li>
 </ul>
 <p>Details: <a class="xref" href="wwdc.html#2026-whats-new-in-swift">What&#x27;s New in Swift (WWDC26)</a>.</p><div class="pager"><a href="#19-value-semantics"><span>Prev</span>← Value Semantics</a><a href="#21-concurrency-advanced"><span>Next</span>Concurrency Advanced →</a></div></section>
-<section class="page" id="21-concurrency-advanced" data-title="Concurrency Advanced" data-num="21" data-hasdemo="0"><h1>Concurrency Advanced</h1>
+<section class="page" id="21-concurrency-advanced" data-title="Concurrency Advanced" data-num="21" data-hasdemo="0" data-group=""><h1>Concurrency Advanced</h1>
 <p>Actors, Sendable, <code>@MainActor</code>, AsyncSequence, and Swift 6 strict concurrency. These make concurrent code safe by construction.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/10-structs-vs-classes.md">structs-vs-classes</a> for reference semantics that make actors necessary.
@@ -5912,7 +5912,7 @@ for await loc in locationUpdates() { print(loc.coordinate) }
 <li><strong>Data-isolation tightened with less ceremony</strong> — more correctness, fewer annotations than Swift 6's strict mode required.</li>
 </ul>
 <p>Also new platform-wide: <strong><code>anyAppleOS</code></strong> availability shorthand, <strong>module selectors</strong> (<code>Foo::Bar</code>), and the <strong><code>@c</code></strong> attribute. See <a class="xref" href="wwdc.html#2026-whats-new-in-swift">What&#x27;s New in Swift (WWDC26)</a>.</p><div class="pager"><a href="#20-concurrency-basics"><span>Prev</span>← Concurrency Basics</a><a href="#22-pattern-matching"><span>Next</span>Pattern Matching →</a></div></section>
-<section class="page" id="22-pattern-matching" data-title="Pattern Matching" data-num="22" data-hasdemo="0"><h1>Pattern Matching</h1>
+<section class="page" id="22-pattern-matching" data-title="Pattern Matching" data-num="22" data-hasdemo="0" data-group=""><h1>Pattern Matching</h1>
 <p>Swift's pattern matching goes far beyond equality checks. Destructure values, bind variables, filter by type, and express complex conditions concisely. The <code>switch</code> statement is the primary tool, but patterns appear throughout the language.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/05-control-flow.md">control-flow</a> for basic switch and if/guard syntax.
@@ -6056,7 +6056,7 @@ func process(_ response: Response) {
 <li>[x] Use <code>if case let</code>, <code>for case let</code>, and <code>guard case let</code></li>
 <li>[x] Apply pattern matching to real-world state machines and parsing</li>
 </ul><div class="pager"><a href="#21-concurrency-advanced"><span>Prev</span>← Concurrency Advanced</a><a href="#23-functional-programming"><span>Next</span>Functional Programming →</a></div></section>
-<section class="page" id="23-functional-programming" data-title="Functional Programming" data-num="23" data-hasdemo="0"><h1>Functional Programming</h1>
+<section class="page" id="23-functional-programming" data-title="Functional Programming" data-num="23" data-hasdemo="0" data-group=""><h1>Functional Programming</h1>
 <p>Swift embraces functional patterns deeply. First-class functions, closures, and a rich standard library of higher-order functions make functional style natural and expressive.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/04-collection-types.md">collection-types</a> for the types these functions operate on.
@@ -6184,7 +6184,7 @@ let lazyResult = nums.lazy.filter { $0 &gt; 0 }.map { $0 * 2 }.reduce(0, +)
 <li>[x] Use <code>zip</code>, <code>enumerated()</code>, <code>prefix</code>, <code>suffix</code>, <code>drop</code></li>
 <li>[x] Choose functional vs imperative style based on context</li>
 </ul><div class="pager"><a href="#22-pattern-matching"><span>Prev</span>← Pattern Matching</a><a href="#24-property-wrappers"><span>Next</span>Property Wrappers →</a></div></section>
-<section class="page" id="24-property-wrappers" data-title="Property Wrappers" data-num="24" data-hasdemo="0"><h1>Property Wrappers</h1>
+<section class="page" id="24-property-wrappers" data-title="Property Wrappers" data-num="24" data-hasdemo="0" data-group=""><h1>Property Wrappers</h1>
 <p>Property wrappers define reusable logic for property access. They are the mechanism behind SwiftUI's <code>@State</code>, <code>@Binding</code>, and <code>@Environment</code>. This chapter also covers key paths and dynamic member lookup.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/11-properties.md">properties</a> for computed properties and observers that wrappers build on.
@@ -6332,7 +6332,7 @@ f(&quot;hello&quot;, &quot;world&quot;) // &quot;print(hello, world)&quot;
 <li>[x] Understand <code>@dynamicCallable</code> for callable instances</li>
 <li>[x] Recognize how SwiftUI's property wrappers build on these foundations</li>
 </ul><div class="pager"><a href="#23-functional-programming"><span>Prev</span>← Functional Programming</a><a href="#25-swift-internals"><span>Next</span>Swift Internals →</a></div></section>
-<section class="page" id="25-swift-internals" data-title="Swift Internals" data-num="25" data-hasdemo="0"><h1>Swift Internals</h1>
+<section class="page" id="25-swift-internals" data-title="Swift Internals" data-num="25" data-hasdemo="0" data-group=""><h1>Swift Internals</h1>
 <p>Under the hood: ABI stability, type metadata, dispatch mechanisms, existential containers, result builders, and runtime reflection. Understanding these makes you a better Swift programmer and demystifies SwiftUI's DSL.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">protocols</a> for the protocol system that witness tables support.
