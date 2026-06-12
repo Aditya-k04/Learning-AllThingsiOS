@@ -11,6 +11,8 @@ var prefersReduce = window.matchMedia && window.matchMedia("(prefers-reduced-mot
 var theme = getLS("lar-theme", prefersDark?"dark":"light");
 document.documentElement.setAttribute("data-theme", theme);
 window.__PAUSED = (getLS("lar-motion", prefersReduce?"off":"on")==="off");
+function setSidebar(s){ document.documentElement.setAttribute("data-sidebar", s); setLS("lar-sidebar", s); }
+document.documentElement.setAttribute("data-sidebar", getLS("lar-sidebar","shown"));
 
 var sections = Array.prototype.slice.call(document.querySelectorAll("section.page"));
 var slug = (location.pathname.split("/").pop()||"").replace(".html","")||"index";
@@ -38,8 +40,14 @@ function paintTools(){tTheme.textContent = theme==="dark"?"☀":"☾";tMotion.te
 tTheme.addEventListener("click",function(){theme=theme==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",theme);setLS("lar-theme",theme);paintTools();});
 tMotion.addEventListener("click",function(){window.__PAUSED=!window.__PAUSED;setLS("lar-motion",window.__PAUSED?"off":"on");paintTools();});
 paintTools();toolbar.appendChild(tTheme);toolbar.appendChild(tMotion);
+var tCollapse=document.createElement("button");tCollapse.className="tool collapse";tCollapse.title="Hide sidebar";tCollapse.textContent="«";
+tCollapse.addEventListener("click",function(){ setSidebar("hidden"); });
+toolbar.appendChild(tCollapse);
 var headEl=sidebar.querySelector(".coursehead");
 sidebar.insertBefore(toolbar, headEl.nextSibling);
+var showBtn=document.createElement("button");showBtn.className="sidebar-show";showBtn.title="Show sidebar";showBtn.textContent="»";
+showBtn.addEventListener("click",function(){ setSidebar("shown"); });
+document.body.appendChild(showBtn);
 
 /* ---------- search ---------- */
 var searchWrap=document.createElement("div");searchWrap.className="search";
