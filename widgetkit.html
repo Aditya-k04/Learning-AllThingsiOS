@@ -135,7 +135,10 @@ struct ForecastWidget: Widget {
 <li>The data that feeds it: <a class="xref" href="#01-timeline-provider">01-timeline-provider</a></li>
 <li>Live, updating variant: <a class="xref" href="#03-live-activities">03-live-activities</a></li>
 <li>Prev: <a class="xref" href="#01-timeline-provider">01-timeline-provider</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#01-timeline-provider"><span>Prev</span>← The Timeline Provider</a><a href="#03-live-activities"><span>Next</span>Live Activities →</a></div></section>
+</ul>
+<hr />
+<h2>🆕 Liquid Glass rendering (iOS 26+)</h2>
+<p>On iOS 26 and later, widgets adopt the <strong>Liquid Glass</strong> material and the system's <strong>accented/tinted rendering modes</strong> automatically. Design for it: read <code>\.widgetRenderingMode</code> and use <code>.widgetAccentable()</code> so your content recolors correctly in tinted and accented Home Screen modes, and keep contrast legible against the translucent material (the same "respect the substrate" point as <a class="xref" href="wwdc.html#2026-liquid-glass-and-siri">Liquid Glass &amp; Siri</a>). The required <code>containerBackground(for: .widget)</code> is what lets the system apply the material correctly.</p><div class="pager"><a href="#01-timeline-provider"><span>Prev</span>← The Timeline Provider</a><a href="#03-live-activities"><span>Next</span>Live Activities →</a></div></section>
 <section class="page" id="03-live-activities" data-title="Live Activities" data-num="03" data-hasdemo="0" data-group=""><h1>Live Activities</h1>
 <p>A Live Activity is a glanceable, <em>updating</em> view on the Lock Screen and in the Dynamic Island — a ride approaching, a game score, a timer, a delivery. It's WidgetKit's views plus a live update channel (ActivityKit), bounded by strict time and size limits.</p>
 <h2>The shape</h2>
@@ -269,7 +272,26 @@ Link(destination: URL(string: &quot;myapp://task/\(task.id)&quot;)!) { RowView(t
 <li>The intents system in full: <a class="xref" href="shipping.html#01-app-intents-and-siri">App Intents &amp; Siri</a></li>
 <li>Shared storage: <a class="xref" href="persistence.html#04-files-and-codable">Files &amp; Shared Storage</a></li>
 <li>Prev: <a class="xref" href="#04-dynamic-island">04-dynamic-island</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#04-dynamic-island"><span>Prev</span>← The Dynamic Island</a><span class="sp"></span></div></section>
+</ul>
+<hr />
+<h2>🆕 Control widgets (iOS 18+)</h2>
+<p>Beyond Home/Lock-Screen widgets, WidgetKit now builds <strong>Controls</strong> — the toggles and buttons that live in <strong>Control Center, the Lock Screen, and on the Action button</strong>. They're a <code>ControlWidget</code>, and like interactive widgets they're driven entirely by <strong>App Intents</strong>:</p>
+<pre><code class="language-swift">struct FlashlightControl: ControlWidget {
+    var body: some ControlWidgetConfiguration {
+        StaticControlConfiguration(kind: &quot;com.you.flashlight&quot;) {
+            ControlWidgetToggle(&quot;Flashlight&quot;, isOn: FlashlightState.isOn,
+                                action: ToggleFlashlightIntent()) { isOn in
+                Image(systemName: isOn ? &quot;flashlight.on.fill&quot; : &quot;flashlight.off.fill&quot;)
+            }
+        }
+    }
+}
+</code></pre>
+<ul>
+<li><strong><code>ControlWidgetButton</code></strong> — a one-shot action (run an <code>AppIntent</code>).</li>
+<li><strong><code>ControlWidgetToggle</code></strong> — a binary state bound to an <code>AppIntent</code>.</li>
+</ul>
+<p>This is the same "one App Intent, many surfaces" idea: the intent you write for a widget button can also power a Control and a Siri phrase. See <a class="xref" href="shipping.html#01-app-intents-and-siri">App Intents &amp; Siri</a>.</p><div class="pager"><a href="#04-dynamic-island"><span>Prev</span>← The Dynamic Island</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

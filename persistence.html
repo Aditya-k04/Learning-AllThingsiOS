@@ -147,7 +147,18 @@ struct ContentView: View {
 <ul>
 <li>The engine underneath: <a class="xref" href="#03-core-data-engine">03-core-data-engine</a></li>
 <li>Prev: <a class="xref" href="#01-where-data-lives">01-where-data-lives</a> · Next: <a class="xref" href="#03-core-data-engine">03-core-data-engine</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#01-where-data-lives"><span>Prev</span>← Where Data Lives</a><a href="#03-core-data-engine"><span>Next</span>The Core Data Engine →</a></div></section>
+</ul>
+<hr />
+<h2>🆕 Staying current (iOS 26 / WWDC26)</h2>
+<p>SwiftData kept growing after its iOS 17 debut — these are current as of 2026:</p>
+<ul>
+<li><strong>Model inheritance</strong> (WWDC25) — <code>@Model</code> classes can subclass, which affects how you query and migrate; model a hierarchy directly instead of flattening it.</li>
+<li><strong>Sectioned queries</strong> (WWDC26) — fetch results pre-grouped into sections for SwiftUI lists, instead of grouping by hand.</li>
+<li><strong><code>ResultsObserver</code></strong> (WWDC26) — observe query results <strong>outside</strong> SwiftUI views (services, background logic) via the Observation framework — no view required.</li>
+<li><strong><code>HistoryObserver</code></strong> (WWDC26) — react to persistent-history transactions (new/changed/deleted), filterable by model type and author — ideal for sync and reacting to changes made elsewhere.</li>
+<li><strong><code>@Attribute(.codable)</code></strong> (WWDC26) — an escape hatch to persist external/third-party <code>Codable</code> types you can't model directly. Note: such blobs can't participate in predicates, sorting, or migration.</li>
+</ul>
+<p>See <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">WWDC26 notes</a> (and Apple's "What's new in SwiftData", WWDC26 session 274). The core model — <code>@Model</code>, <code>ModelContainer</code>/<code>ModelContext</code>, <code>@Query</code> — is unchanged; these are additions.</p><div class="pager"><a href="#01-where-data-lives"><span>Prev</span>← Where Data Lives</a><a href="#03-core-data-engine"><span>Next</span>The Core Data Engine →</a></div></section>
 <section class="page" id="03-core-data-engine" data-title="The Core Data Engine" data-num="03" data-hasdemo="0" data-group=""><h1>The Core Data Engine</h1>
 <p>SwiftData is a modern Swift skin over <strong>Core Data</strong>, the framework that has powered iOS persistence for over a decade. You'll still meet Core Data in existing codebases, in advanced scenarios SwiftData doesn't yet cover, and in the concepts that explain SwiftData's behavior.</p>
 <h2>The Core Data stack</h2>
