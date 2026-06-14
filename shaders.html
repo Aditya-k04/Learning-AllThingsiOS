@@ -7300,7 +7300,157 @@ kernel void logarithmicSpiral(
 <li><a class="xref" href="swiftui.html#enzomangano-demos-reference">enzomangano-demos-reference</a> — Full repo reference</li>
 </ul>
 <hr />
-<p><em>Source: enzomanuelmangano/demos/spiral</em></p><div class="pager"><a href="#06-blur-circles"><span>Prev</span>← Blur Circles — Noise-Driven Organic Motion</a><span class="sp"></span></div></section>
+<p><em>Source: enzomanuelmangano/demos/spiral</em></p><div class="pager"><a href="#06-blur-circles"><span>Prev</span>← Blur Circles — Noise-Driven Organic Motion</a><a href="#08-bottom-ambient-light"><span>Next</span>Bottom Ambient Light — SwiftUI `layerEffect` Glow →</a></div></section>
+<section class="page" id="08-bottom-ambient-light" data-title="Bottom Ambient Light — SwiftUI `layerEffect` Glow" data-num="08" data-hasdemo="1" data-group="Practice — Effect Recreations"><h1>Bottom Ambient Light — SwiftUI <code>layerEffect</code> Glow</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<blockquote>
+<p>A soft, animated ambient light rising from the bottom edge of the screen — built as a SwiftUI <code>layerEffect</code> powered by a single <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> Metal shader. No image assets: every wisp, mote, and bloom is generated procedurally from math. Great for notification reveals, media surfaces, or controller/game UI underglow.</p>
+</blockquote>
+<h2>How It Works</h2>
+<h3>Architecture</h3>
+<p>The whole effect is <strong>one shader applied to a plain white rectangle</strong>. SwiftUI's job is tiny — drive time and a reveal value into the shader; Metal does all the shape, noise, and motion. This is the <a class="xref" href="#18-metal-in-swiftui">Metal-in-SwiftUI</a> <code>layerEffect</code> path, and exactly the "creative pipeline" idea from <a class="xref" href="wwdc.html#2026-compose-graphics-effects-swiftui">WWDC26: Compose Advanced Graphics Effects</a>.</p>
+<pre><code class="language-swift">struct BottomAmbientLightView: View {
+    var tint: Color = .cyan
+    var progress: CGFloat = 1
+
+    var body: some View {
+        TimelineView(.animation) { timeline in            // drives time, every frame
+            GeometryReader { geometry in
+                Rectangle()
+                    .fill(.white)                          // the &quot;source layer&quot; = a mask
+                    .layerEffect(
+                        ShaderLibrary.bottomAmbientLighting(
+                            .float2(Float(geometry.size.width), Float(geometry.size.height)),
+                            .float(timeline.date.timeIntervalSinceReferenceDate
+                                .truncatingRemainder(dividingBy: 100_000)),   // wrapped time
+                            .float(Float(progress)),
+                            .color(tint)
+                        ),
+                        maxSampleOffset: .zero            // shader only reads its own pixel
+                    )
+            }
+        }
+    }
+}
+</code></pre>
+<p>Three things worth noticing:</p>
+<ul>
+<li><strong>The white <code>Rectangle</code> is a stand-in mask.</strong> The shader reads <code>layer.sample(position).a</code> to confine the glow to the view's bounds; the rectangle's <em>color</em> is ignored. (<a class="xref" href="#16-blending-and-compositing">compositing</a>)</li>
+<li><strong><code>TimelineView(.animation)</code></strong> is the time source. Shaders are stateless, so animation has to be fed in as a uniform — the same pattern as <a class="xref" href="#23-animation-in-shaders">animation in shaders</a>.</li>
+<li><strong>Wrapped time</strong> (<code>truncatingRemainder(dividingBy: 100_000)</code>) keeps the float small so <code>sin</code>/<code>fract</code> don't lose precision after the app has run for hours.</li>
+<li><strong><code>maxSampleOffset: .zero</code></strong> tells SwiftUI the shader never samples neighboring pixels — it only ever calls <code>layer.sample(position)</code> — which lets the system optimize.</li>
+</ul>
+<h3>The shader signature</h3>
+<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 bottomAmbientLighting(
+    float2 position, SwiftUI::Layer layer,
+    float2 size, float time, float progress, half4 tint
+) { ... }
+</code></pre>
+<p><code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> exposes it to <code>ShaderLibrary</code>; <code>SwiftUI::Layer</code> is the rasterized source; it returns a <strong>premultiplied</strong> <code>half4</code> (color already scaled by alpha). The extra parameters after <code>layer</code> are the uniforms passed from Swift, in order.</p>
+<h3>Stage 1 — coordinates &amp; vertical falloff</h3>
+<pre><code class="language-cpp">float2 uv = position / max(size, float2(1.0));   // 0..1 across the view
+float bottomDistance = 1.0 - uv.y;               // 0 at bottom, 1 at top
+float deepBloom  = exp(-bottomDistance * 4.4);   // bright near the bottom, decays fast
+float upperMist  = exp(-bottomDistance * 3.0) * 0.2;
+float verticalFade = 1.0 - smoothstep(0.0, 0.62, bottomDistance);
+</code></pre>
+<p><strong>Exponential falloff</strong> (<code>exp(-d·k)</code>) is the core of the glow — it's intense at the edge and fades smoothly upward, far more natural than a linear gradient. This is the shaping-function thinking from <a class="xref" href="#05-math-for-shaders">math for shaders</a>.</p>
+<h3>Stage 2 — wide overlapping sources (no single spotlight)</h3>
+<pre><code class="language-cpp">float2 leftCenter   = float2(0.08 + horizontalFlow, 1.08);   // centers BELOW the screen (y&gt;1)
+float2 middleCenter = float2(0.52 - horizontalFlow*0.45, 1.12);
+float2 rightCenter  = float2(0.94 + horizontalFlow*0.35, 1.06);
+float sourceGlow = leftGlow*0.7 + middleGlow*0.82 + rightGlow*0.64;  // soft circles, summed
+</code></pre>
+<p>Three <strong>soft circles</strong> (<code>1 - smoothstep(0, r, distance)</code>) placed just <em>off-screen below</em> the bottom edge, gently drifting via <code>horizontalFlow</code> sines. Summing several wide, offset glows avoids a tell-tale single "flame/spotlight" shape — a key trick for believable ambient light. Soft circles + distance fields are the <a class="xref" href="#04-metaball">metaball</a>/<a class="xref" href="#05-math-for-shaders">distance</a> toolkit.</p>
+<h3>Stage 3 — life: mist, breathing, ribbons</h3>
+<pre><code class="language-cpp">float breathing = 0.92 + sin(time * 0.64) * 0.08;            // slow global pulse
+float risingBands = 0.5 + sin(bottomDistance*15.0 - time*2.15
+    + sin(wispWarp*9.0 + time*0.36) * 1.1) * 0.5;            // sin-of-sin = domain warp
+float wisps = risingBands * exp(-bottomDistance * 3.2);
+</code></pre>
+<p>Layered sines at <strong>incommensurate frequencies</strong> (0.64, 2.15, 0.36…) make it feel alive and never visibly loop — the summed-sine idea from your interaction-math <a class="xref" href="#15-noise-and-patterns">noise &amp; patterns</a>. Feeding one <code>sin</code> into another's phase is cheap <strong>domain warping</strong>, the same technique in <a class="xref" href="#14-distortion-effects">distortion effects</a>.</p>
+<h3>Stage 4 — the organic upward reveal</h3>
+<pre><code class="language-cpp">float revealHeight = mix(0.0, 0.86, revealProgress);
+float revealWarp   = sin(uv.x*5.0 - time*1.4)*0.055 + sin(uv.x*13.0 + time*0.86)*0.025;
+float organicReveal = 1.0 - smoothstep(revealHeight - 0.14, revealHeight + 0.1,
+                                       bottomDistance + revealWarp);
+</code></pre>
+<p>Instead of revealing a rectangular mask, <code>progress</code> moves a <strong>wavy boundary</strong> upward: the <code>smoothstep</code> edge is perturbed by <code>revealWarp</code>, so the light grows in with an organic, liquid front. <code>progress</code> is the gesture/animation handle the Swift side animates.</p>
+<h3>Stage 5 — particles: light pockets &amp; motes (per-pixel loops)</h3>
+<pre><code class="language-cpp">for (ushort i = 0; i &lt; 6; i++) {                 // 6 drifting &quot;light pockets&quot;
+    float pr = fract(time*speed + hash(seed));   // each loops on its own clock
+    float pocketY = mix(1.14, -0.16, pr);        // rises from below to above
+    lightPockets += exp(-dot(p, p) * 1.8) * fade;// gaussian blob, fades in/out
+}
+// ... and 18 tiny &quot;motes&quot; with aspect-corrected soft circles
+</code></pre>
+<p>Each particle is hashed (<code>fract(sin(seed)*43758.5453)</code> — the classic GPU hash) for position/speed variation, rises on its own <code>fract(time·speed)</code> clock, and fades in/out at the ends of its life. Loops-as-particles is a standard fragment-shader pattern (<a class="xref" href="#06-fragment-shaders">fragment shaders</a>); <code>moteSpace = float2(uv.x*aspectRatio, uv.y)</code> keeps circles round on non-square screens.</p>
+<h3>Stage 6 — compose &amp; output (premultiplied alpha)</h3>
+<pre><code class="language-cpp">half volumeAlpha = half(saturate(volume * 0.48));
+half sourceMask  = layer.sample(position).a;     // confine to the view's bounds
+volumeAlpha *= tint.a * sourceMask;
+half alpha = saturate(volumeAlpha + moteAlpha);
+return half4(tint.rgb * volumeAlpha + half3(1.0) * moteAlpha, alpha);  // premultiplied
+</code></pre>
+<p>The glow takes the <strong>tint</strong> color; the motes are white. The output is premultiplied (<code>rgb</code> already scaled by alpha), which is what <code>layerEffect</code> expects — get this wrong and you get dark fringes (<a class="xref" href="#16-blending-and-compositing">blending &amp; compositing</a>).</p>
+<h2>The Swift orchestration</h2>
+<p>The reveal is animated entirely on the SwiftUI side by ramping <code>progress</code>, with a staged sequence and accessibility respected:</p>
+<pre><code class="language-swift">withAnimation(.easeOut(duration: 1.15)) { lightReveal = 1 }       // grow the light in
+try? await Task.sleep(for: .milliseconds(280))
+withAnimation(.spring(duration: 0.78, bounce: 0.16)) { isContentVisible = true }
+</code></pre>
+<p>It checks <code>@Environment(\.accessibilityReduceMotion)</code> and jumps straight to the final state when reduced — the same courtesy as <a class="xref" href="#24-shader-performance">good shader hygiene</a> and our accessibility notes. The demo's chrome uses <code>glassEffect</code> (Liquid Glass).</p>
+<h2>Techniques catalog (what to steal)</h2>
+<table>
+<thead>
+<tr>
+<th>Technique</th>
+<th>Where it's taught</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Exponential falloff <code>exp(-d·k)</code></td>
+<td><a class="xref" href="#05-math-for-shaders">05-math-for-shaders</a></td>
+</tr>
+<tr>
+<td>Soft circles via <code>smoothstep(distance)</code></td>
+<td><a class="xref" href="#05-math-for-shaders">05-math-for-shaders</a>, <a class="xref" href="#04-metaball">04-metaball</a></td>
+</tr>
+<tr>
+<td>Summed/incommensurate sines, domain warp</td>
+<td><a class="xref" href="#15-noise-and-patterns">15-noise-and-patterns</a>, <a class="xref" href="#14-distortion-effects">14-distortion-effects</a></td>
+</tr>
+<tr>
+<td><code>fract(sin(x)*43758.5)</code> hash for variation</td>
+<td><a class="xref" href="#15-noise-and-patterns">15-noise-and-patterns</a></td>
+</tr>
+<tr>
+<td>Loops as particles</td>
+<td><a class="xref" href="#06-fragment-shaders">06-fragment-shaders</a></td>
+</tr>
+<tr>
+<td>Aspect correction</td>
+<td><a class="xref" href="#04-coordinates-and-color">04-coordinates-and-color</a></td>
+</tr>
+<tr>
+<td><code>layerEffect</code> + <code>SwiftUI::Layer</code> + time uniform</td>
+<td><a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>, <a class="xref" href="#23-animation-in-shaders">23-animation-in-shaders</a></td>
+</tr>
+<tr>
+<td>Premultiplied-alpha output</td>
+<td><a class="xref" href="#16-blending-and-compositing">16-blending-and-compositing</a></td>
+</tr>
+</tbody>
+</table>
+<h2>Why it's clever</h2>
+<p>No textures, no image assets, no particle system objects — just one stitchable shader on a white rectangle, with all the organic shape coming from exponential falloffs, summed sines, and hashed loops. The SwiftUI side stays tiny (drive <code>time</code> + <code>progress</code>), which makes the effect trivially reusable and tintable. It's a perfect study piece for how far you can get with the <a class="xref" href="#05-math-for-shaders">shaping-function toolkit</a> alone.</p>
+<h2>Related</h2>
+<ul>
+<li>The SwiftUI shader entry point: <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a></li>
+<li>WWDC26 on this exact pattern: <a class="xref" href="wwdc.html#2026-compose-graphics-effects-swiftui">Compose Advanced Graphics Effects</a></li>
+<li>Source: <a href="https://github.com/radiofun/BottomGradientShader">radiofun/BottomGradientShader</a> (MIT)</li>
+<li>Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
+</ul><div class="pager"><a href="#07-spiral"><span>Prev</span>← Spiral — Logarithmic Spiral with Spring Physics</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
