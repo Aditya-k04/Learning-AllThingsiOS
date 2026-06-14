@@ -58,6 +58,10 @@
 <td><a class="xref" href="#2026-liquid-glass-and-siri">2026-liquid-glass-and-siri</a></td>
 <td>Refined Liquid Glass + opacity slider; Siri AI app; App Intents over SiriKit; AI accessibility</td>
 </tr>
+<tr>
+<td><a class="xref" href="#2026-compose-graphics-effects-swiftui">2026-compose-graphics-effects-swiftui</a></td>
+<td>Creative pipelines: layer shaders, noise/domain-warp, TimelineView animation, alignment guides</td>
+</tr>
 </tbody>
 </table>
 <hr />
@@ -132,6 +136,11 @@
 <td><a class="xref" href="#10151-custom-visual-effects-swiftui">10151-custom-visual-effects-swiftui</a></td>
 <td>2024</td>
 <td>Metal shaders in SwiftUI, ShaderLibrary, mesh gradients, text rendering</td>
+</tr>
+<tr>
+<td><a class="xref" href="#2026-compose-graphics-effects-swiftui">2026-compose-graphics-effects-swiftui</a></td>
+<td>2026</td>
+<td>Composing layer shaders + noise + timelines into a "creative pipeline"</td>
 </tr>
 </tbody>
 </table>
@@ -4221,8 +4230,104 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MXMetricManagerSubscriber
 <li><a href="https://developer.apple.com/documentation/xcode/analyzing-responsiveness-issues-in-your-shipping-app">Apple Documentation: Analyzing responsiveness issues in your shipping app</a></li>
 <li><a href="https://developer.apple.com/documentation/metrickit/mxhangdiagnostic">Apple Documentation: MXHangDiagnostic</a></li>
 <li><a href="https://developer.apple.com/tutorials/instruments/identifying-a-hang">Apple Tutorial: Identifying a hang</a></li>
-</ul><div class="pager"><a href="#10181-ultimate-performance-survival-guide"><span>Prev</span>← Ultimate Application Performance Survival Guide</a><a href="#2026-foundation-models"><span>Next</span>Foundation Models Framework (WWDC26) →</a></div></section>
-<section class="page" id="2026-foundation-models" data-title="Foundation Models Framework (WWDC26)" data-num="10" data-hasdemo="0" data-group=""><h1>Foundation Models Framework (WWDC26)</h1>
+</ul><div class="pager"><a href="#10181-ultimate-performance-survival-guide"><span>Prev</span>← Ultimate Application Performance Survival Guide</a><a href="#2026-compose-graphics-effects-swiftui"><span>Next</span>Compose Advanced Graphics Effects with SwiftUI (WWDC26) →</a></div></section>
+<section class="page" id="2026-compose-graphics-effects-swiftui" data-title="Compose Advanced Graphics Effects with SwiftUI (WWDC26)" data-num="10" data-hasdemo="1" data-group=""><h1>Compose Advanced Graphics Effects with SwiftUI (WWDC26)</h1><div class="demo-mount" data-demo="sh-noise"></div>
+<p>Session 322. The big idea: stop thinking of a rich, custom visual as one monolithic thing, and start thinking of it as a <strong>creative pipeline</strong> — a chain of small, composable stages that each take data in, transform it, and pass it along. The session rebuilds a podcast app's "now playing" screen — an audio-reactive background, a time-synced transcript, floating timestamps — entirely by chaining built-in SwiftUI layout and graphics APIs.</p>
+<h2>The mental model: a creative pipeline</h2>
+<blockquote>
+<p>Each stage's <strong>output becomes the next stage's input.</strong> A <em>shader pipe</em> turns the cover art into a flowing visualizer; a <em>time pipe</em> drives its motion; another <em>time pipe</em> syncs the transcript's scrolling. Decompose a finished design into these stages and each piece becomes simple.</p>
+</blockquote>
+<p>This is the same composition mindset as the rest of your stack — small building blocks wired together — applied to graphics.</p>
+<h2>Three shader modifiers (pick by what you need)</h2>
+<p>Shaders run <strong>per pixel on the GPU</strong>. SwiftUI exposes them through three modifiers, each with different inputs and trade-offs:</p>
+<ul>
+<li><strong><code>.colorEffect</code></strong> — recolor a pixel from its own color (tints, gradients, duotone).</li>
+<li><strong><code>.distortionEffect</code></strong> — move pixels around (ripple, warp) but read only the original.</li>
+<li><strong><code>.layerEffect</code></strong> — the most powerful: you get a <code>SwiftUI::Layer</code> you can <strong>sample at arbitrary offsets</strong>, so a pixel's output can depend on <em>other</em> pixels (blur, refraction, the "background warp" below).</li>
+</ul>
+<p>These are the same <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> Metal shaders from your <a class="xref" href="shaders.html#18-metal-in-swiftui">Metal in SwiftUI</a> notes.</p>
+<h2>Building a layer-effect "background warp"</h2>
+<p>Start from the cover art, soften it, then warp it with a shader that samples a noise texture for organic, per-pixel offsets:</p>
+<pre><code class="language-swift">GeometryReader { proxy in
+    CoverArtView()
+        .layerEffect(
+            ShaderLibrary.backgroundWarp(
+                .float2(proxy.size),
+                .image(Image(&quot;NoiseTexture&quot;))
+            ),
+            maxSampleOffset: .zero
+        )
+}
+.ignoresSafeArea()
+</code></pre>
+<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 backgroundWarp(
+    float2 position, SwiftUI::Layer layer,
+    float2 size, texture2d&lt;half&gt; noiseTex
+) {
+    constexpr sampler s(address::repeat, filter::linear);
+    float2 uv = position / size;
+    half4 n = noiseTex.sample(s, uv);
+    float2 offset = (float2(n.r, n.g) - 0.5) * 200.0;
+    return layer.sample(position + offset);   // sample the layer at a shifted point
+}
+</code></pre>
+<p><strong>Domain warping</strong> — feeding noise back into the noise lookup — turns a flat distortion into a liquid, billowing one (the exact technique in your <a class="xref" href="shaders.html#15-noise-and-patterns">noise &amp; patterns</a> notes):</p>
+<pre><code class="language-cpp">float2 q = float2(n.r, n.g);
+n = noiseTex.sample(s, uv + q);            // warp the domain, then sample again
+float2 offset = (float2(n.r, n.g) - 0.5) * 200.0;
+</code></pre>
+<h2>Shaders are stateless — time comes from outside</h2>
+<p>A shader has no memory between frames, so animation must be <em>driven in</em>. <code>TimelineView(.animation)</code> fires every frame with a timestamp you pass to the shader as a uniform:</p>
+<pre><code class="language-swift">@State private var startDate = Date.now
+
+TimelineView(.animation) { timeline in
+    let elapsed = timeline.date.timeIntervalSince(startDate)
+    CoverArtView()
+        .layerEffect(
+            ShaderLibrary.backgroundWarp(.float2(proxy.size),
+                                         .image(Image(&quot;NoiseTexture&quot;)),
+                                         .float(elapsed)),       // time → shader
+            maxSampleOffset: .zero
+        )
+}
+</code></pre>
+<p>This is the same "the math says <em>what</em> the value is; a driver says <em>how</em> it changes over time" split from <a class="xref" href="interaction-math.html#09-what-drives-the-value">What Drives the Value</a> — here the driver is a timeline, and <a class="xref" href="shaders.html#23-animation-in-shaders">animation in shaders</a>.</p>
+<h2>Time-synced transcript</h2>
+<p>The foreground is plain <code>Text</code> in a <code>LazyVStack</code> inside a <code>ScrollView</code>. The playback timestamp highlights the current line (fading the rest), and <code>onChange</code> scrolls it to center:</p>
+<pre><code class="language-swift">ScrollViewReader { scrollProxy in
+    ScrollView {
+        LazyVStack(alignment: .leading, spacing: 12) {
+            ForEach(sampleTranscript) { line in
+                Text(line.text)
+                    .transcriptLineStyle(isCurrent: line.id == playback.currentLineIndex)
+            }
+        }
+    }
+    .onChange(of: playback.currentLineIndex) { _, i in
+        scrollProxy.scrollTo(i, anchor: .center)
+    }
+}
+</code></pre>
+<h2>Floating timestamps with alignment guides</h2>
+<p>Instead of hand-tuned offsets, the session uses SwiftUI's <strong>alignment system</strong> to pin a timestamp neatly outside its line. The trick is overriding one guide <em>semantically</em> — move the subview's <code>.bottom</code> guide to its own <code>.top</code> edge so it floats above where it's anchored:</p>
+<pre><code class="language-swift">Text(line.text)
+    .overlay(alignment: .bottomLeading) {
+        Text(line.formattedTimestamp)
+            .alignmentGuide(.bottom) { $0[.top] }   // bottom guide → its top edge
+    }
+</code></pre>
+<p><code>alignmentGuide</code> is the clean, layout-driven alternative to magic-number <code>.offset()</code>.</p>
+<h2>Why it's worth watching</h2>
+<p>It ties together three things you've studied separately — Metal layer shaders, noise/domain-warping, and SwiftUI layout — into one coherent "pipeline" workflow, and shows that a small, well-placed visual effect (a few lines of shader + a timeline) can transform an ordinary screen. The pattern generalizes: swap audio for gyroscope data, a warp for a ripple, a scroll view for a freeform canvas.</p>
+<h2>Related</h2>
+<ul>
+<li>The SwiftUI shader entry point: <a class="xref" href="shaders.html#18-metal-in-swiftui">Metal Shaders in SwiftUI</a></li>
+<li>Techniques used: <a class="xref" href="shaders.html#15-noise-and-patterns">Noise &amp; Patterns</a>, <a class="xref" href="shaders.html#14-distortion-effects">Distortion Effects</a>, <a class="xref" href="shaders.html#23-animation-in-shaders">Animation in Shaders</a></li>
+<li>Predecessor: <a class="xref" href="#10151-custom-visual-effects-swiftui">Create Custom Visual Effects with SwiftUI (WWDC24)</a></li>
+<li>Apple docs: "Composing advanced graphics effects with SwiftUI", <code>Shader</code>, <code>Alignment</code></li>
+<li>Hub: <a class="xref" href="#00-index">00-index</a></li>
+</ul><div class="pager"><a href="#10258-eliminate-hangs"><span>Prev</span>← Understand and Eliminate Hangs from Your App</a><a href="#2026-foundation-models"><span>Next</span>Foundation Models Framework (WWDC26) →</a></div></section>
+<section class="page" id="2026-foundation-models" data-title="Foundation Models Framework (WWDC26)" data-num="11" data-hasdemo="0" data-group=""><h1>Foundation Models Framework (WWDC26)</h1>
 <p>The biggest developer story of WWDC26: the Foundation Models framework opened up. What launched in 2025 as on-device-only inference is now a single API surface over <strong>on-device</strong>, <strong>server-side</strong>, and <strong>third-party</strong> models.</p>
 <h2>One protocol, any model</h2>
 <p>A new public <strong><code>LanguageModel</code></strong> protocol is the common inference surface. Apps target it; providers implement it. That means you can run against Apple's on-device model, Apple's server model, or third-party providers like <strong>Claude</strong> and <strong>Gemini</strong> — or any provider that adopts the protocol — without rewriting your call sites.</p>
@@ -4249,8 +4354,8 @@ let reply = try await session.respond(to: &quot;Summarize this note: \(text)&quo
 <li>Companion: <a class="xref" href="#2026-xcode-27">2026-xcode-27</a>, <a class="xref" href="#2026-liquid-glass-and-siri">2026-liquid-glass-and-siri</a></li>
 <li>Source: Apple Newsroom "new intelligence frameworks"; WWDC26 session 241</li>
 <li>Hub: <a class="xref" href="#00-index">00-index</a></li>
-</ul><div class="pager"><a href="#10258-eliminate-hangs"><span>Prev</span>← Understand and Eliminate Hangs from Your App</a><a href="#2026-liquid-glass-and-siri"><span>Next</span>Liquid Glass &amp; Siri AI (WWDC26) →</a></div></section>
-<section class="page" id="2026-liquid-glass-and-siri" data-title="Liquid Glass &amp; Siri AI (WWDC26)" data-num="11" data-hasdemo="0" data-group=""><h1>Liquid Glass &amp; Siri AI (WWDC26)</h1>
+</ul><div class="pager"><a href="#2026-compose-graphics-effects-swiftui"><span>Prev</span>← Compose Advanced Graphics Effects with SwiftUI (WWDC26)</a><a href="#2026-liquid-glass-and-siri"><span>Next</span>Liquid Glass &amp; Siri AI (WWDC26) →</a></div></section>
+<section class="page" id="2026-liquid-glass-and-siri" data-title="Liquid Glass &amp; Siri AI (WWDC26)" data-num="12" data-hasdemo="0" data-group=""><h1>Liquid Glass &amp; Siri AI (WWDC26)</h1>
 <p>The consumer-facing headlines of WWDC26: a refreshed <strong>Liquid Glass</strong> design and a long-promised <strong>Siri</strong> overhaul, shipping across <strong>iOS 27, iPadOS 27, macOS 27, watchOS 27, visionOS 27, and tvOS 27</strong>.</p>
 <h2>Liquid Glass, refined</h2>
 <p>Liquid Glass (introduced in the "26" release) got tuned based on a year of feedback. The default look is <strong>less aggressively translucent</strong>, and there's now a system <strong>opacity slider</strong> so users can dial how transparent the material is. For developers this is mostly free — SwiftUI adopts the refinements automatically when you build against the new SDK (see <a class="xref" href="#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI</a>). The lesson for our own work: respect the material, don't fight it, and test legibility at both opacity extremes — the same "respect the substrate" point as <a class="xref" href="coreanimation.html#05-layer-appearance">layer appearance</a>.</p>
@@ -4270,7 +4375,7 @@ let reply = try await session.respond(to: &quot;Summarize this note: \(text)&quo
 <li>Source: Apple WWDC26 keynote; press recaps (Engadget, MacRumors, CNBC)</li>
 <li>Hub: <a class="xref" href="#00-index">00-index</a></li>
 </ul><div class="pager"><a href="#2026-foundation-models"><span>Prev</span>← Foundation Models Framework (WWDC26)</a><a href="#2026-whats-new-in-swift"><span>Next</span>What&#x27;s New in Swift (WWDC26) →</a></div></section>
-<section class="page" id="2026-whats-new-in-swift" data-title="What&#x27;s New in Swift (WWDC26)" data-num="12" data-hasdemo="0" data-group=""><h1>What's New in Swift (WWDC26)</h1>
+<section class="page" id="2026-whats-new-in-swift" data-title="What&#x27;s New in Swift (WWDC26)" data-num="13" data-hasdemo="0" data-group=""><h1>What's New in Swift (WWDC26)</h1>
 <p>Swift <strong>6.3</strong> and <strong>6.4</strong> were covered at WWDC26 with one theme: <em>less boilerplate, fewer surprises, more control.</em> Four areas — language, libraries, performance, cross-platform.</p>
 <h2>Concurrency: more correctness, less ceremony</h2>
 <p>The compiler catches more mistakes (e.g. catching errors inside a <code>Task</code>, saving a task for later rendezvous) and the model tightens data-isolation guarantees while <em>reducing</em> annotation burden. Concrete additions:</p>
@@ -4306,7 +4411,7 @@ let reply = try await session.respond(to: &quot;Summarize this note: \(text)&quo
 <li>Source: Apple "What's new in Swift" (WWDC26); Swift 6.3/6.4 release notes</li>
 <li>Hub: <a class="xref" href="#00-index">00-index</a></li>
 </ul><div class="pager"><a href="#2026-liquid-glass-and-siri"><span>Prev</span>← Liquid Glass &amp; Siri AI (WWDC26)</a><a href="#2026-whats-new-in-swiftui"><span>Next</span>What&#x27;s New in SwiftUI (WWDC26) →</a></div></section>
-<section class="page" id="2026-whats-new-in-swiftui" data-title="What&#x27;s New in SwiftUI (WWDC26)" data-num="13" data-hasdemo="0" data-group=""><h1>What's New in SwiftUI (WWDC26)</h1>
+<section class="page" id="2026-whats-new-in-swiftui" data-title="What&#x27;s New in SwiftUI (WWDC26)" data-num="14" data-hasdemo="0" data-group=""><h1>What's New in SwiftUI (WWDC26)</h1>
 <p>WWDC26's SwiftUI release is a "remove the limitations" year — no single headline feature, but a pile of changes that delete long-standing constraints around containers, navigation, toolbars, and documents. It also auto-adopts the refreshed Liquid Glass look.</p>
 <h2>Liquid Glass, for free</h2>
 <p>The Liquid Glass design gained refinements (and a system-wide opacity control). SwiftUI <strong>adopts most of it automatically</strong> — glass tints and material treatments apply to standard controls with no code changes. You mostly get the new look by rebuilding against the iOS 27 SDK.</p>
@@ -4374,7 +4479,7 @@ let reply = try await session.respond(to: &quot;Summarize this note: \(text)&quo
 <li>Source: Apple "What's new in SwiftUI" (WWDC26, session 269)</li>
 <li>Hub: <a class="xref" href="#00-index">00-index</a></li>
 </ul><div class="pager"><a href="#2026-whats-new-in-swift"><span>Prev</span>← What&#x27;s New in Swift (WWDC26)</a><a href="#2026-xcode-27"><span>Next</span>Xcode 27 — Agentic Coding (WWDC26) →</a></div></section>
-<section class="page" id="2026-xcode-27" data-title="Xcode 27 — Agentic Coding (WWDC26)" data-num="14" data-hasdemo="0" data-group=""><h1>Xcode 27 — Agentic Coding (WWDC26)</h1>
+<section class="page" id="2026-xcode-27" data-title="Xcode 27 — Agentic Coding (WWDC26)" data-num="15" data-hasdemo="0" data-group=""><h1>Xcode 27 — Agentic Coding (WWDC26)</h1>
 <p>Xcode 27 brings AI assistance into the IDE in two tiers, with a clear privacy boundary: fast on-device completions that never leave your Mac, and opt-in agentic tasks that route to cloud coding agents when you ask.</p>
 <h2>Two tiers, one boundary</h2>
 <ul>
@@ -4393,7 +4498,7 @@ let reply = try await session.respond(to: &quot;Summarize this note: \(text)&quo
 <li>Source: Apple Newsroom; WWDC26 session "What's new in Xcode" (258)</li>
 <li>Hub: <a class="xref" href="#00-index">00-index</a></li>
 </ul><div class="pager"><a href="#2026-whats-new-in-swiftui"><span>Prev</span>← What&#x27;s New in SwiftUI (WWDC26)</a><a href="#250-principles-of-great-design"><span>Next</span>Principles of Great Design (WWDC26 — 250) →</a></div></section>
-<section class="page" id="250-principles-of-great-design" data-title="Principles of Great Design (WWDC26 — 250)" data-num="15" data-hasdemo="0" data-group=""><h1>Principles of Great Design (WWDC26 — 250)</h1>
+<section class="page" id="250-principles-of-great-design" data-title="Principles of Great Design (WWDC26 — 250)" data-num="16" data-hasdemo="0" data-group=""><h1>Principles of Great Design (WWDC26 — 250)</h1>
 <blockquote>
 <p>A ~16-minute design-philosophy talk. Not an API session — it's the <em>why</em> that should sit above every stack decision you make. Eight principles, in order, each building toward the last.</p>
 </blockquote>
@@ -4514,7 +4619,7 @@ let reply = try await session.respond(to: &quot;Summarize this note: \(text)&quo
 <li><a href="https://developer.apple.com/design/human-interface-guidelines/design-principles">Human Interface Guidelines — Design principles</a></li>
 <li><a href="https://developer.apple.com/videos/play/wwdc2026/250/">Session video</a></li>
 </ul><div class="pager"><a href="#2026-xcode-27"><span>Prev</span>← Xcode 27 — Agentic Coding (WWDC26)</a><a href="#803-designing-fluid-interfaces"><span>Next</span>WWDC18 Session 803 -- Designing Fluid Interfaces →</a></div></section>
-<section class="page" id="803-designing-fluid-interfaces" data-title="WWDC18 Session 803 -- Designing Fluid Interfaces" data-num="16" data-hasdemo="1" data-group=""><h1>WWDC18 Session 803 -- Designing Fluid Interfaces</h1><div class="demo-mount" data-demo="su-drag"></div>
+<section class="page" id="803-designing-fluid-interfaces" data-title="WWDC18 Session 803 -- Designing Fluid Interfaces" data-num="17" data-hasdemo="1" data-group=""><h1>WWDC18 Session 803 -- Designing Fluid Interfaces</h1><div class="demo-mount" data-demo="su-drag"></div>
 <blockquote>
 <p>"When you align the interface to the way we think and move, something kind of magical happens. It really stops feeling like a computer, and starts feeling like a seamless extension of us."</p>
 </blockquote>
