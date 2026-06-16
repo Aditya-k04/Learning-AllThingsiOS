@@ -133,6 +133,52 @@ arc length ∫|y'|dx   →  distance ALONG the path (even spacing)
 integral         accumulation →  arc length, area, &quot;summed-up&quot; quantities
 </code></pre>
 <p>Each one hands you a <em>new geometric handle</em> on the same object. That progression is the "level of thinking" you're chasing.</p>
+<h2>Memory aid: drive a car along the curve</h2>
+<p>If the chain is hard to hold in your head, map it to the physics you already know — each step is just "the rate of change of the thing above it":</p>
+<table>
+<thead>
+<tr>
+<th>Geometry term</th>
+<th>Physics analogy</th>
+<th>The car</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>y(x)</code> — position</td>
+<td>position</td>
+<td>where the car <em>is</em> on the map</td>
+</tr>
+<tr>
+<td><code>y'(x)</code> — tangent</td>
+<td><strong>velocity</strong> (1st deriv)</td>
+<td>the speedo + which way the nose points</td>
+</tr>
+<tr>
+<td><code>y''(x)</code> — curvature</td>
+<td><strong>acceleration</strong> (2nd deriv)</td>
+<td>how hard you turn the wheel</td>
+</tr>
+<tr>
+<td><code>∫|y'|dx</code> — arc length</td>
+<td><strong>distance travelled</strong></td>
+<td>the <strong>odometer</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Position → velocity → acceleration</strong> are each one more derivative: how fast it moves, then how fast <em>that</em> changes.</li>
+<li><strong>Arc length is the odd one out — it's an <em>integral</em>, not another derivative.</strong> Derivatives break a quantity <em>down</em>; the integral builds it back <em>up</em> by accumulating speed over the trip. That's literally an odometer.</li>
+<li>Next rung if you ever need it: <strong>jerk</strong> (3rd derivative) = how abruptly the bending changes = the <em>smoothness</em> of the ride. Minimizing jerk is what makes premium easing feel buttery (see <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>).</li>
+</ul>
+<h3>Why "acceleration = turning the wheel" (the honest version)</h3>
+<p>Fair objection: isn't acceleration about changing <em>speed</em>? Yes — but <strong>velocity is a vector</strong> (speed <strong>and</strong> direction), and acceleration is the rate of change of that whole vector. So acceleration splits into two parts:</p>
+<ul>
+<li><strong>Tangential</strong> (along the motion) — changing <em>speed</em>: the gas/brake pedal.</li>
+<li><strong>Normal / centripetal</strong> (perpendicular) — changing <em>direction</em>: turning the wheel. (You feel this as the sideways push in a corner even at constant speed.)</li>
+</ul>
+<p><strong>Curvature corresponds to the direction-changing part.</strong> The geometry chain <code>y, y', y''</code> describes the <em>shape of the path</em> regardless of how fast you drive it, so it only "sees" the turning — not the gas. That's why curvature maps to the steering, and the speed-changing component simply doesn't appear in a static curve <code>y(x)</code> (it would only show up if you also tracked how fast a point travels <em>along</em> the path over time).</p>
+<p>Two more caveats: the physics chain differentiates w.r.t. <em>time</em>, the geometry chain w.r.t. <em>x</em> (same idea, different variable); and curvature isn't literally <code>y''</code> but <code>y''/(1+y'²)^{3/2}</code>. Full treatment in <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>.</p>
 <h2>Worked micro-example</h2>
 <p>Cells follow a wave <code>y(x) = A·sin(ω·x + φ)</code>.</p>
 <ul>
