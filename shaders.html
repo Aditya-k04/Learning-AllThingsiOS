@@ -7450,7 +7450,109 @@ withAnimation(.spring(duration: 0.78, bounce: 0.16)) { isContentVisible = true }
 <li>WWDC26 on this exact pattern: <a class="xref" href="wwdc.html#2026-compose-graphics-effects-swiftui">Compose Advanced Graphics Effects</a></li>
 <li>Source: <a href="https://github.com/radiofun/BottomGradientShader">radiofun/BottomGradientShader</a> (MIT)</li>
 <li>Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
-</ul><div class="pager"><a href="#07-spiral"><span>Prev</span>← Spiral — Logarithmic Spiral with Spring Physics</a><span class="sp"></span></div></section>
+</ul><div class="pager"><a href="#07-spiral"><span>Prev</span>← Spiral — Logarithmic Spiral with Spring Physics</a><a href="#09-liquid-glass"><span>Next</span>Liquid Glass — the Math Behind It →</a></div></section>
+<section class="page" id="09-liquid-glass" data-title="Liquid Glass — the Math Behind It" data-num="09" data-hasdemo="1" data-group="Practice — Effect Recreations"><h1>Liquid Glass — the Math Behind It</h1><div class="demo-mount" data-demo="sh-glass"></div>
+<blockquote>
+<p>Apple's <strong>Liquid Glass</strong> (iOS 26+) looks like a real pane of glass floating over your content: the background <strong>bends</strong> at its edges, picks up a faint <strong>prismatic fringe</strong>, <strong>blurs</strong> softly, and catches a bright <strong>rim of light</strong>. Apple's exact shader is private, but the look is a well-understood stack of graphics-math tricks you can recreate. This breaks down the recipe.</p>
+</blockquote>
+<h2>The five ingredients</h2>
+<pre><code>1. Shape      → a rounded-rect Signed Distance Field (SDF)
+2. Refraction → offset the background sample along the SDF's gradient (fake Snell's law)
+3. Dispersion → sample R/G/B at slightly different offsets (chromatic aberration), edges only
+4. Fresnel    → brighten the rim (glass reflects most at grazing angles)
+5. Blur       → soften what shows through (frosted glass)
+</code></pre>
+<p>Everything keys off <strong>one number per pixel</strong>: the signed distance to the glass shape.</p>
+<h2>1. The shape: a rounded-rect SDF</h2>
+<p>A <strong>signed distance field</strong> returns, for any point, the distance to the shape's surface — <em>negative inside</em>, <em>zero on the edge</em>, <em>positive outside</em>. For a rounded rectangle (half-size <code>b</code>, corner radius <code>r</code>):</p>
+<pre><code class="language-cpp">float sdRoundedRect(float2 p, float2 b, float r) {
+    float2 q = abs(p) - b + r;
+    return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
+}
+</code></pre>
+<p>This is the same SDF toolkit as <a class="xref" href="#04-metaball">04-metaball</a> and the <a class="xref" href="#05-math-for-shaders">shaping functions</a> — one cheap formula gives you the shape <em>and</em> a smooth notion of "how close am I to the edge," which every other step needs.</p>
+<h2>2. Refraction: bend the background</h2>
+<p>Real glass bends light by <strong>Snell's law</strong>. In a shader you <em>fake</em> it: instead of bending light, you <strong>move where you read the background from</strong>. The direction to push is the <strong>gradient of the SDF</strong> (which points straight out of the surface — the normal); the amount is largest at the edges, where a lens bends most:</p>
+<pre><code class="language-cpp">float d = sdRoundedRect(p, b, r);
+float2 n = normalize(gradient(d));            // SDF gradient = surface normal
+float edge = exp(d / falloff);                // d&lt;0 inside; ~1 at rim, ~0 in the center
+float2 uv2 = uv + n * strength * edge;        // read the background from a shifted spot
+half4 color = background.sample(uv2);
+</code></pre>
+<p>You compute the gradient with a tiny finite difference (sample the SDF a hair to each side and subtract) — the same "derivative = direction" idea from <a class="xref" href="interaction-math.html#03-derivative-as-tangent">the derivative chain</a>. The flat center barely shifts; the curved rim shifts a lot — exactly how a real lens behaves, and why straight lines in the background <strong>bow</strong> as they pass under the edge.</p>
+<h2>3. Dispersion: edge chromatic aberration</h2>
+<p>A prism splits white light because each color bends by a slightly different amount. Reproduce it by sampling the three channels at <strong>slightly different offsets</strong>, and only near the edge (where bending is strong):</p>
+<pre><code class="language-cpp">float r = background.sample(uv + n * off * 1.10).r;
+float g = background.sample(uv + n * off       ).g;
+float b = background.sample(uv + n * off * 0.90).b;
+half3 color = half3(r, g, b);
+</code></pre>
+<p>That faint rainbow fringe on the rim is what sells "this is glass" rather than "this is a blur."</p>
+<h2>4. Fresnel: the bright rim</h2>
+<p>Glass reflects very little when you look straight through it, but almost like a mirror at <strong>grazing angles</strong> — the <strong>Fresnel</strong> effect. On a flat panel there's no view angle to use, so the look is approximated as an <strong>edge highlight</strong>: brightness that spikes where <code>|d|</code> is near zero.</p>
+<pre><code class="language-cpp">float rim = exp(d / (falloff * 0.35)) * rimStrength;   // bright hairline at the edge
+color += rim;
+</code></pre>
+<h2>5. Blur</h2>
+<p>Frosted glass scatters light, so the background that shows through is <strong>blurred</strong> — the multi-tap averaging from <a class="xref" href="#13-blur-effects">13-blur-effects</a>. In SwiftUI you often get this for free by putting the shader over a <code>.blur</code>/material layer, then doing refraction on top.</p>
+<h2>Putting it together (SwiftUI)</h2>
+<p>This is a <code>layerEffect</code> over whatever is behind it — same plumbing as <a class="xref" href="#18-metal-in-swiftui">Metal in SwiftUI</a> and the WWDC26 <a class="xref" href="wwdc.html#2026-compose-graphics-effects-swiftui">compose graphics effects</a> session. The shader receives the rasterized background as <code>SwiftUI::Layer</code> and the panel size; everything above happens per pixel.</p>
+<h2>Try it</h2>
+<p>The demo above is this exact pipeline in 2D: a rounded-rect SDF over a grid background, with sliders for refraction strength, corner radius, and edge falloff, plus a chromatic-aberration toggle. Watch the grid lines bow at the rim and the colors fringe.</p>
+<h2>Why it's a great study piece</h2>
+<p>Liquid Glass is <em>one SDF reused four ways</em> — shape, refraction direction, dispersion amount, and rim light all fall out of the single distance value. That economy (compute one good number, derive everything from it) is the same lesson as the <a class="xref" href="#08-bottom-ambient-light">bottom ambient light</a> and the whole <a class="xref" href="interaction-math.html#01-modeling-visuals-as-functions">model-it-as-a-function</a> mindset.</p>
+<h2>Related</h2>
+<ul>
+<li>SDFs &amp; shaping: <a class="xref" href="#04-metaball">04-metaball</a>, <a class="xref" href="#05-math-for-shaders">05-math-for-shaders</a></li>
+<li>Refraction in depth: <a class="xref" href="#21-glass-and-refraction">21-glass-and-refraction</a> · Blur: <a class="xref" href="#13-blur-effects">13-blur-effects</a> · Variable blur: <a class="xref" href="#20-variable-blur">20-variable-blur</a></li>
+<li>SwiftUI delivery: <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>, <a class="xref" href="wwdc.html#2026-compose-graphics-effects-swiftui">Compose Graphics Effects (WWDC26)</a></li>
+<li>Sibling decode: <a class="xref" href="#10-apple-intelligence-glow">10-apple-intelligence-glow</a></li>
+<li>Sources: imadrahmoune.com "How Apple's Liquid Glass (probably) works"; Victor Baro "SDF in Metal: Adding the Liquid to the Glass"</li>
+<li>Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
+</ul><div class="pager"><a href="#08-bottom-ambient-light"><span>Prev</span>← Bottom Ambient Light — SwiftUI `layerEffect` Glow</a><a href="#10-apple-intelligence-glow"><span>Next</span>Apple-Intelligence / Siri Glow — Flowing Edge Light →</a></div></section>
+<section class="page" id="10-apple-intelligence-glow" data-title="Apple-Intelligence / Siri Glow — Flowing Edge Light" data-num="10" data-hasdemo="1" data-group="Practice — Effect Recreations"><h1>Apple-Intelligence / Siri Glow — Flowing Edge Light</h1><div class="demo-mount" data-demo="sh-edgeglow"></div>
+<blockquote>
+<p>When Siri / Apple Intelligence is listening, a soft multi-colour light flows around the <strong>edges of the screen</strong>. It's the spiritual successor to the old Siri orb. The math is surprisingly approachable — a screen-edge mask, a hue that <em>flows</em> around the perimeter over time, and additive bloom. (Apple's exact version is private; this is how you recreate the feel.)</p>
+</blockquote>
+<h2>The three ingredients</h2>
+<pre><code>1. Mask   → distance to the nearest screen edge → a glow that hugs the border
+2. Colour → a hue that flows around the perimeter, animated over time + a little noise
+3. Bloom  → add it onto black so overlapping light brightens (additive)
+</code></pre>
+<h2>1. The edge mask</h2>
+<p>The glow lives near the border, so the key quantity is <strong>how far each pixel is from the nearest edge</strong>. In normalized <code>uv</code> (0–1), that's just:</p>
+<pre><code class="language-cpp">float edgeDist = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+float glow = exp(-edgeDist / thickness);     // 1 at the edge, fading inward
+</code></pre>
+<p><code>exp(-d/thickness)</code> is the same <strong>exponential falloff</strong> as the <a class="xref" href="#08-bottom-ambient-light">ambient light</a> and <a class="xref" href="#05-math-for-shaders">shaping functions</a> — bright at the border, smoothly gone by the center. (For real screens you'd build this from a rounded-rect SDF, <a class="xref" href="#09-liquid-glass">like Liquid Glass</a>, so the glow rounds the corners.)</p>
+<h2>2. Colour that flows around the edge</h2>
+<p>The signature move is colour <strong>traveling around the perimeter</strong>. Parameterize position around the border by the angle from center, then make the hue a function of that angle <strong>plus time</strong>:</p>
+<pre><code class="language-cpp">float ang = atan2(uv.y - 0.5, uv.x - 0.5) / (2.0 * M_PI_F) + 0.5;   // 0..1 around
+float flow = 0.12 * sin(ang * 18.0 + time * 1.3)
+           + 0.08 * sin(ang * 7.0  - time * 0.8);                    // summed sines = shimmer
+float hue = fract(ang + time * speed + flow);
+half3 color = hsv2rgb(half3(hue, 0.85, 1.0));
+</code></pre>
+<p>The <code>ang + time*speed</code> term sweeps the rainbow around the edge; the <strong>summed sines</strong> (incommensurate frequencies, <a class="xref" href="#15-noise-and-patterns">15-noise-and-patterns</a>) add the living, non-mechanical shimmer — exactly the "gently alive, never looping" trick from your interaction-math <a class="xref" href="interaction-math.html#07-oscillations-noise-and-organic-motion">oscillation &amp; noise</a> notes. Apple's real version reads more like a <strong>mesh gradient</strong> (a few moving colour anchors) than a pure hue sweep, but the principle — <em>a small set of flowing colours mapped around the border</em> — is the same.</p>
+<h2>3. Bloom (additive)</h2>
+<p>Output the colour <strong>multiplied by the glow mask onto black</strong>, so where light overlaps it <em>adds</em> and brightens — additive blending (<a class="xref" href="#16-blending-and-compositing">16-blending-and-compositing</a>):</p>
+<pre><code class="language-cpp">return half4(color * glow, glow);            // premultiplied; add over dark UI
+</code></pre>
+<p>A second, wider, dimmer pass (larger <code>thickness</code>, lower intensity) gives the soft outer halo that real bloom has.</p>
+<h2>Putting it together</h2>
+<p>It's a full-screen <code>layerEffect</code> (or an overlay view) behind/around your content, driven by <code>TimelineView(.animation)</code> for <code>time</code> — same delivery as <a class="xref" href="#18-metal-in-swiftui">Metal in SwiftUI</a> and <a class="xref" href="#23-animation-in-shaders">animation in shaders</a>. Fade the whole thing in/out with a <code>progress</code> uniform when Siri starts/stops, just like the <a class="xref" href="#08-bottom-ambient-light">ambient light</a>'s reveal.</p>
+<h2>Try it</h2>
+<p>The demo above is this recipe: edge-distance mask × flowing hue × bloom, with thickness, flow-speed, and intensity sliders. Crank the speed and watch the colour chase around the border.</p>
+<h2>Why it's a great study piece</h2>
+<p>It's the <strong>same three-part pattern</strong> as the ambient light (mask → flowing colour → bloom), just shaped to the screen border instead of the bottom. Once you see that "Apple glow effects = a distance mask + flowing colour + additive bloom," you can build the family — listening states, focus rings, notification reveals — from one mental template.</p>
+<h2>Related</h2>
+<ul>
+<li>Sibling decode: <a class="xref" href="#09-liquid-glass">09-liquid-glass</a> · <a class="xref" href="#08-bottom-ambient-light">08-bottom-ambient-light</a></li>
+<li>Falloff &amp; flow: <a class="xref" href="#05-math-for-shaders">05-math-for-shaders</a>, <a class="xref" href="#15-noise-and-patterns">15-noise-and-patterns</a>, <a class="xref" href="interaction-math.html#07-oscillations-noise-and-organic-motion">Oscillations &amp; Noise</a></li>
+<li>Compositing: <a class="xref" href="#16-blending-and-compositing">16-blending-and-compositing</a> · Delivery: <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a></li>
+<li>Source: jacobamobin/AppleIntelligenceGlowEffect (open-source recreation)</li>
+<li>Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
+</ul><div class="pager"><a href="#09-liquid-glass"><span>Prev</span>← Liquid Glass — the Math Behind It</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

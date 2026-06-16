@@ -742,4 +742,56 @@ D["cc-async"]=function(m){
   });
 };
 
+/* ============================================================
+   APPLE EFFECT DECODES (added)
+   ============================================================ */
+function _hsv(h,s,v){var i=Math.floor(h*6),f=h*6-i,p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);switch(((i%6)+6)%6){case 0:return[v,t,p];case 1:return[q,v,p];case 2:return[p,v,t];case 3:return[p,q,v];case 4:return[t,p,v];default:return[v,p,q];}}
+
+D["sh-glass"]=function(m){
+  var d=box(m,"Liquid Glass — SDF refraction"),c=addCanvas(d,240),ctrls=addControls(d),row=addRow(d);
+  var strength=slider(ctrls,{label:"refraction",min:0,max:0.14,step:0.002,value:0.06,fmt:function(v){return v.toFixed(3);}});
+  var radius=slider(ctrls,{label:"corner radius",min:0,max:0.2,step:0.005,value:0.1,fmt:function(v){return v.toFixed(3);}});
+  var edge=slider(ctrls,{label:"edge falloff",min:0.03,max:0.45,step:0.005,value:0.14,fmt:function(v){return v.toFixed(3);}});
+  var chroma=true,cb=btn(row,"chromatic aberration: on",true);
+  cb.addEventListener("click",function(){chroma=!chroma;cb.classList.toggle("on",chroma);cb.textContent="chromatic aberration: "+(chroma?"on":"off");});
+  cap(d,"A rounded-rect SDF defines the glass panel; near its edge the background's sample point is offset along the SDF gradient (faked refraction). Grid lines bend at the rim; chromatic aberration + a specular edge finish the look.");
+  function bg(u,v,t){var h=(0.6*u+0.25*v+0.08*Math.sin((u*5+t)))%1;if(h<0)h+=1;var col=_hsv(h,0.55,0.9);
+    var grid=(Math.abs(((u*12)%1)-0.5)<0.05||Math.abs(((v*12)%1)-0.5)<0.05)?0.55:1.0;
+    return [col[0]*grid,col[1]*grid,col[2]*grid];}
+  function sd(px,py,hx,hy,r){var qx=Math.abs(px)-hx+r,qy=Math.abs(py)-hy+r;return Math.min(Math.max(qx,qy),0)+Math.hypot(Math.max(qx,0),Math.max(qy,0))-r;}
+  var render=pixelDemo(c,function(u,v,t,p){
+    var ar=p.ar,x=(u-0.5)*ar,y=(v-0.5),hx=0.26*ar,hy=0.2,r=p.radius;
+    var d0=sd(x,y,hx,hy,r);
+    if(d0>0.004) return bg(u,v,t);
+    var e=0.001;
+    var gx=(sd(x+e,y,hx,hy,r)-sd(x-e,y,hx,hy,r))/(2*e);
+    var gy=(sd(x,y+e,hx,hy,r)-sd(x,y-e,hx,hy,r))/(2*e);
+    var gl=Math.hypot(gx,gy)||1;gx/=gl;gy/=gl;
+    var off=p.strength*Math.exp(d0/p.edge);               // strongest at the rim
+    function samp(o){return bg(u+gx*o,v+gy*o,t);}
+    var col=p.chroma?[samp(off*1.10)[0],samp(off)[1],samp(off*0.90)[2]]:samp(off);
+    var rim=Math.exp(d0/(p.edge*0.35))*0.5;               // specular edge
+    return [Math.min(1,col[0]*1.05+rim),Math.min(1,col[1]*1.05+rim),Math.min(1,col[2]*1.05+rim)];
+  });
+  loop(c,function(now){render(now,{ar:c._w/c._h,strength:+strength.value,radius:+radius.value,edge:+edge.value,chroma:chroma});});
+};
+
+D["sh-edgeglow"]=function(m){
+  var d=box(m,"Apple-Intelligence glow — flowing edge light"),c=addCanvas(d,240),ctrls=addControls(d);
+  var thick=slider(ctrls,{label:"thickness",min:0.02,max:0.34,step:0.005,value:0.13,fmt:function(v){return v.toFixed(3);}});
+  var speed=slider(ctrls,{label:"flow speed",min:0,max:1.5,step:0.01,value:0.4,fmt:function(v){return v.toFixed(2);}});
+  var intensity=slider(ctrls,{label:"intensity",min:0.3,max:2,step:0.05,value:1.1,fmt:function(v){return v.toFixed(2);}});
+  cap(d,"Distance-to-the-nearest-edge makes the glow mask; hue flows around the perimeter over time (plus summed sines for shimmer), added onto black. Same “gently alive” toolkit as the ambient light, shaped to the screen edge.");
+  var render=pixelDemo(c,function(u,v,t,p){
+    var edgeDist=Math.min(u,1-u,v,1-v);
+    var ang=Math.atan2(v-0.5,u-0.5)/(2*Math.PI)+0.5;
+    var flow=0.12*Math.sin(ang*18.0+t*1.3)+0.08*Math.sin(ang*7.0-t*0.8);
+    var hue=(ang+t*p.speed+flow)%1;if(hue<0)hue+=1;
+    var glow=Math.exp(-edgeDist/p.thick)*p.intensity;
+    var col=_hsv(hue,0.85,1.0);
+    return [Math.min(1,col[0]*glow),Math.min(1,col[1]*glow),Math.min(1,col[2]*glow)];
+  });
+  loop(c,function(now){render(now,{thick:+thick.value,speed:+speed.value,intensity:+intensity.value});});
+};
+
 })();
