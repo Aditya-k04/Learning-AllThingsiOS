@@ -39,7 +39,7 @@
 <pre><code>position   y(x)      →  WHERE a thing is
 tangent    y'(x)     →  which way it FACES   (rotation)
 curvature  y''(x)    →  how hard it BENDS    (squash / scale)
-arc length ∫|y'|dx   →  distance ALONG the path (even spacing)
+arc length ∫√(1+y'²)dx →  distance ALONG the path (even spacing)
 </code></pre>
 <p>Every interaction in this folder is an application of this. Internalize it and specs write themselves.</p>
 <hr />
@@ -170,7 +170,7 @@ integral         accumulation →  arc length, area, &quot;summed-up&quot; quant
 <td>how hard you turn the wheel</td>
 </tr>
 <tr>
-<td><code>∫|y'|dx</code> — arc length</td>
+<td><code>∫√(1+y'²)dx</code> — arc length</td>
 <td><strong>distance travelled</strong></td>
 <td>the <strong>odometer</strong></td>
 </tr>
@@ -178,7 +178,7 @@ integral         accumulation →  arc length, area, &quot;summed-up&quot; quant
 </table>
 <ul>
 <li><strong>Position → velocity → acceleration</strong> are each one more derivative: how fast it moves, then how fast <em>that</em> changes.</li>
-<li><strong>Arc length is the odd one out — it's an <em>integral</em>, not another derivative.</strong> Derivatives break a quantity <em>down</em>; the integral builds it back <em>up</em> by accumulating speed over the trip. That's literally an odometer.</li>
+<li><strong>Arc length is the odd one out — it's an <em>integral</em>, not another derivative.</strong> Derivatives break a quantity <em>down</em>; the integral builds it back <em>up</em> by accumulating tiny pieces over the trip. That's literally an odometer. (And it's <strong>not</strong> <code>∫y dx</code> — that's the <em>area under</em> the curve. Arc length is <code>∫√(1+y'²)dx</code>: each tiny step is the <strong>hypotenuse</strong> of a right triangle with legs <code>dx</code> and <code>dy = y'·dx</code>, so by Pythagoras its length is <code>√(1+y'²)·dx</code>. Sum them up. Full version: <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>.)</li>
 <li>Next rung if you ever need it: <strong>jerk</strong> (3rd derivative) = how abruptly the bending changes = the <em>smoothness</em> of the ride. Minimizing jerk is what makes premium easing feel buttery (see <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>).</li>
 </ul>
 <h3>Why "acceleration = turning the wheel" (the honest version)</h3>
