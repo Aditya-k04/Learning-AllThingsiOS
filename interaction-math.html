@@ -203,6 +203,20 @@ integral         accumulation →  arc length, area, &quot;summed-up&quot; quant
 <li>It makes them <strong>art-directable</strong>: you expose the parameters of the function (<code>A, ω, φ</code>) as sliders.</li>
 <li>It removes <strong>guesswork</strong>: no more "0.45 felt right" — you derive the relationship.</li>
 </ul>
+<h2>This isn't just about curves — it's a toolkit</h2>
+<p>The wave is the flagship example, but the derivative chain is only <em>one</em> pillar. "Math for interaction" is a small set of tools you mix and match; the unifying mindset is always the same — <strong>model the thing as numbers you can compute, expose the parameters, and derive the relationships instead of guessing.</strong> The pillars:</p>
+<ul>
+<li><strong>Functions &amp; the derivative chain</strong> <em>(this lesson + <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>)</em> — place, orient, bend, and evenly space things along a path.</li>
+<li><strong>Trigonometry &amp; the unit circle</strong> <em>(<a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a>)</em> — oscillation, rotation, waves, and radial/circular layout. <code>sin</code>/<code>cos</code> are everywhere.</li>
+<li><strong>Vectors &amp; linear algebra</strong> <em>(<a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a>)</em> — direction + magnitude; dot product = "how aligned?", cross = "which way does it turn?", rotation matrices, normals. The native language of 2D/3D space.</li>
+<li><strong>Parametric curves &amp; splines</strong> <em>(<a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a>)</em> — describe <em>any</em> path (loops, Béziers, hand-drawn strokes), not just <code>y = f(x)</code>.</li>
+<li><strong>Interpolation, remap &amp; easing</strong> <em>(<a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>)</em> — <code>lerp</code>, <code>inverseLerp</code>, <code>clamp</code>, <code>remap</code>, <code>smoothstep</code>. This is the real workhorse of everyday UI: <strong>map a gesture/scroll position to an effect, smoothly.</strong> If you learn one thing here, learn <code>remap</code> + <code>smoothstep</code>.</li>
+<li><strong>Springs &amp; physics</strong> <em>(<a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>)</em> — gesture-driven, interruptible, physical motion (the <em>feel</em>).</li>
+<li><strong>Oscillation, damping &amp; noise</strong> <em>(<a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a>)</em> — motion that feels alive instead of mechanical.</li>
+</ul>
+<blockquote>
+<p>The carousel happens to use the derivative chain. A pull-to-refresh uses <code>remap</code>+spring. A breathing logo uses a sine. A draggable sheet uses vectors + rubber-banding. Different tools, <strong>same habit</strong>: turn the visual into a function of some input, then compute.</p>
+</blockquote>
 <h2>Try it</h2>
 <p>In Desmos: plot <code>y = A sin(b x + c)</code> with sliders for <code>A, b, c</code>. Then plot its derivative <code>A b cos(b x + c)</code> underneath. Drag <code>A</code> and watch <em>both</em> change together. That coupling is the whole idea.</p>
 <h2>Related</h2>
