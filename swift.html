@@ -3784,7 +3784,171 @@ class ViewController: DownloadDelegate {
 <li>[x] I understand the difference between any and some</li>
 <li>[x] I can implement the delegation pattern</li>
 <li>[x] I understand how protocol-oriented programming differs from OOP</li>
-</ul><div class="pager"><a href="#12-methods"><span>Prev</span>← Methods</a><a href="#14-generics"><span>Next</span>Generics →</a></div></section>
+</ul><div class="pager"><a href="#12-methods"><span>Prev</span>← Methods</a><a href="#13a-common-protocols"><span>Next</span>Common Protocols →</a></div></section>
+<section class="page" id="13a-common-protocols" data-title="Common Protocols" data-num="13" data-hasdemo="0" data-group=""><h1>Common Protocols</h1>
+<p>The previous lesson covered <em>how</em> protocols work. This one is the practical companion: the <strong>standard-library protocols you actually conform to</strong> every day. Most of them the compiler can <strong>synthesize</strong> for you — you just declare conformance and get the behavior for free. Knowing this set is what makes everyday Swift feel effortless.</p>
+<h2>Equatable — "are two values the same?"</h2>
+<p>Gives you <code>==</code> (and <code>!=</code>). For a <code>struct</code> or <code>enum</code> whose members are all <code>Equatable</code>, the compiler <strong>synthesizes</strong> it — you write nothing but the conformance:</p>
+<pre><code class="language-swift">struct Point: Equatable { var x: Int; var y: Int }
+Point(x: 1, y: 2) == Point(x: 1, y: 2)   // true — synthesized member-by-member
+</code></pre>
+<p>Only write <code>static func ==</code> yourself when equality should ignore some fields (e.g. a cached value).</p>
+<h2>Hashable — keys for Set and Dictionary</h2>
+<p><code>Hashable</code> refines <code>Equatable</code> and adds a hash, which is what lets a type be a <code>Set</code> element or a <code>Dictionary</code> key. Also synthesized when all members are <code>Hashable</code>:</p>
+<pre><code class="language-swift">struct User: Hashable { let id: UUID; var name: String }
+var seen: Set&lt;User&gt; = []
+let byID: [User: Int] = [:]
+</code></pre>
+<blockquote>
+<p>Rule: if <code>a == b</code>, then <code>a.hashValue == b.hashValue</code>. The synthesized version guarantees this. If you hand-write <code>==</code>, hand-write <code>hash(into:)</code> over the <em>same</em> fields, or you'll get vanishing dictionary entries.</p>
+</blockquote>
+<pre><code class="language-swift">func hash(into hasher: inout Hasher) { hasher.combine(id) }   // hash only the identity field
+</code></pre>
+<h2>Comparable — ordering and sorting</h2>
+<p>Implement <code>&lt;</code> and you get sorting, <code>min()</code>, <code>max()</code>, ranges, <code>sorted()</code> — the rest is derived:</p>
+<pre><code class="language-swift">struct Version: Comparable {
+    let major: Int, minor: Int
+    static func &lt; (a: Version, b: Version) -&gt; Bool {
+        (a.major, a.minor) &lt; (b.major, b.minor)   // tuple comparison does it for you
+    }
+}
+[v3, v1, v2].sorted()   // ascending
+</code></pre>
+<h2>CaseIterable — every case of an enum</h2>
+<p>Add <code>CaseIterable</code> to an enum (without associated values) and the compiler synthesizes <code>allCases</code> — perfect for pickers, menus, and tests:</p>
+<pre><code class="language-swift">enum Theme: CaseIterable { case light, dark, system }
+Theme.allCases          // [.light, .dark, .system]
+Theme.allCases.count    // 3
+</code></pre>
+<p>Pairs naturally with <a class="xref" href="#09-enums">enums</a> and SwiftUI <code>ForEach(Theme.allCases, id: \.self)</code>.</p>
+<h2>RawRepresentable — enums backed by a value</h2>
+<p>Giving an enum a raw type makes it <code>RawRepresentable</code> automatically, with a failable <code>init?(rawValue:)</code>:</p>
+<pre><code class="language-swift">enum Status: String { case active, paused, archived }
+Status(rawValue: &quot;paused&quot;)   // .paused
+Status.active.rawValue       // &quot;active&quot;
+</code></pre>
+<p>Great for mapping to/from API strings or stored ints.</p>
+<h2>Codable — serialization</h2>
+<p><code>Codable</code> = <code>Encodable &amp; Decodable</code>. Synthesized when all members are <code>Codable</code>; it's how you turn JSON into models and back. Covered in depth in <a class="xref" href="networking.html#03-codable">Codable</a>:</p>
+<pre><code class="language-swift">struct Post: Codable { let id: Int; let title: String }
+let post = try JSONDecoder().decode(Post.self, from: data)
+let data = try JSONEncoder().encode(post)
+</code></pre>
+<h2>Identifiable — stable identity for SwiftUI</h2>
+<p>A single requirement, <code>var id</code>, that SwiftUI's <code>List</code>/<code>ForEach</code> use to track items across updates (and SwiftData/diffable data sources rely on):</p>
+<pre><code class="language-swift">struct Task: Identifiable { let id = UUID(); var title: String }
+List(tasks) { task in Text(task.title) }   // no `id:` needed — it's Identifiable
+</code></pre>
+<p><code>Identifiable</code> is about <em>identity</em> ("which item is this?"); <code>Equatable</code>/<code>Hashable</code> are about <em>value</em> ("are these equal?"). SwiftUI wants identity.</p>
+<h2>CustomStringConvertible — pretty printing</h2>
+<p>Provide <code>description</code> and <code>print(x)</code> / <code>"\(x)"</code> use it. (<code>CustomDebugStringConvertible</code> is the <code>po</code>/debugger sibling.)</p>
+<pre><code class="language-swift">struct Money: CustomStringConvertible {
+    let cents: Int
+    var description: String { String(format: &quot;$%.2f&quot;, Double(cents)/100) }
+}
+print(Money(cents: 1999))   // $19.99
+</code></pre>
+<h2>Sendable — safe to cross concurrency boundaries</h2>
+<p>The compiler-checked promise that a value can move between tasks/actors without a data race. Value types of <code>Sendable</code> parts are automatically <code>Sendable</code>. This is central to Swift 6 concurrency — see <a class="xref" href="#20-concurrency-basics">concurrency</a> and <a class="xref" href="concurrency.html#03-actors-and-isolation">actors &amp; isolation</a>.</p>
+<pre><code class="language-swift">struct Snapshot: Sendable { let count: Int; let label: String }
+</code></pre>
+<h2>Error — your own error types</h2>
+<p>Conforming an enum to <code>Error</code> lets you <code>throw</code> it; great with associated values for context:</p>
+<pre><code class="language-swift">enum NetError: Error { case offline, badStatus(Int) }
+throw NetError.badStatus(404)
+</code></pre>
+<h2>Making your own type iterable: Sequence / Collection</h2>
+<p>Conform to <code>Sequence</code> (implement <code>makeIterator()</code>) and you get <code>for…in</code>, <code>map</code>, <code>filter</code>, <code>reduce</code>, <code>contains</code>, and the rest for free. <code>Collection</code> adds indexing and <code>count</code>. You rarely need these for app code, but they're how <code>Array</code>, <code>Set</code>, and <code>Range</code> all share one toolbox.</p>
+<pre><code class="language-swift">struct Countdown: Sequence, IteratorProtocol {
+    var n: Int
+    mutating func next() -&gt; Int? {
+        guard n &gt; 0 else { return nil }
+        defer { n -= 1 }
+        return n
+    }
+}
+for i in Countdown(n: 3) { print(i) }   // 3, 2, 1
+</code></pre>
+<h2>Conditional conformance</h2>
+<p>A generic type can conform <em>only when</em> its contents do — this is why <code>[User]</code> is <code>Equatable</code>/<code>Hashable</code>/<code>Codable</code> exactly when <code>User</code> is:</p>
+<pre><code class="language-swift">extension Stack: Equatable where Element: Equatable {}
+</code></pre>
+<p>This composition is the bridge to <a class="xref" href="#14-generics">generics</a> — protocols + generics are how the standard library stays both safe and reusable.</p>
+<h2>The cheat sheet</h2>
+<table>
+<thead>
+<tr>
+<th>Protocol</th>
+<th>You get</th>
+<th>Synthesized?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Equatable</code></td>
+<td><code>==</code>, <code>!=</code></td>
+<td>✅ structs/enums</td>
+</tr>
+<tr>
+<td><code>Hashable</code></td>
+<td>Set/Dictionary keys</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>Comparable</code></td>
+<td>sorting, ranges, min/max</td>
+<td>implement <code>&lt;</code></td>
+</tr>
+<tr>
+<td><code>CaseIterable</code></td>
+<td><code>allCases</code></td>
+<td>✅ enums (no assoc. values)</td>
+</tr>
+<tr>
+<td><code>RawRepresentable</code></td>
+<td><code>rawValue</code>, <code>init?(rawValue:)</code></td>
+<td>✅ raw-valued enums</td>
+</tr>
+<tr>
+<td><code>Codable</code></td>
+<td>JSON encode/decode</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>Identifiable</code></td>
+<td><code>id</code> for SwiftUI</td>
+<td>implement <code>id</code></td>
+</tr>
+<tr>
+<td><code>CustomStringConvertible</code></td>
+<td><code>description</code></td>
+<td>implement it</td>
+</tr>
+<tr>
+<td><code>Sendable</code></td>
+<td>cross-actor safety</td>
+<td>✅ value types</td>
+</tr>
+<tr>
+<td><code>Error</code></td>
+<td><code>throw</code></td>
+<td>trivial</td>
+</tr>
+<tr>
+<td><code>Sequence</code>/<code>Collection</code></td>
+<td><code>for…in</code>, map/filter/…</td>
+<td>implement iterator</td>
+</tr>
+</tbody>
+</table>
+<h2>Related</h2>
+<ul>
+<li>The mechanics behind them: <a class="xref" href="#13-protocols">Protocols</a></li>
+<li>Where conditional conformance shines: <a class="xref" href="#14-generics">Generics</a></li>
+<li>Enums + <code>CaseIterable</code>/<code>RawRepresentable</code>: <a class="xref" href="#09-enums">Enums</a></li>
+<li><code>Codable</code> in depth: <a class="xref" href="networking.html#03-codable">Codable</a> · <code>Sendable</code>: <a class="xref" href="concurrency.html#03-actors-and-isolation">Actors &amp; Isolation</a></li>
+<li>Prev: <a class="xref" href="#13-protocols">13-protocols</a> · Next: <a class="xref" href="#14-generics">14-generics</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
+</ul><div class="pager"><a href="#13-protocols"><span>Prev</span>← Protocols</a><a href="#14-generics"><span>Next</span>Generics →</a></div></section>
 <section class="page" id="14-generics" data-title="Generics" data-num="14" data-hasdemo="0" data-group=""><h1>Generics</h1>
 <p>Generics let you write flexible, reusable functions and types that work with any type, while still being fully type-safe at compile time. They are one of Swift's most powerful features and the foundation of its standard library.</p>
 <blockquote>
@@ -4069,7 +4233,7 @@ print(a == b)  // true
 <li>[x] Distinguish <code>some</code> (opaque, static dispatch) from <code>any</code> (existential, dynamic dispatch)</li>
 <li>[x] Know that the compiler specializes generics for performance</li>
 <li>[x] Apply conditional conformance to generic types</li>
-</ul><div class="pager"><a href="#13-protocols"><span>Prev</span>← Protocols</a><a href="#15-extensions"><span>Next</span>Extensions →</a></div></section>
+</ul><div class="pager"><a href="#13a-common-protocols"><span>Prev</span>← Common Protocols</a><a href="#15-extensions"><span>Next</span>Extensions →</a></div></section>
 <section class="page" id="15-extensions" data-title="Extensions" data-num="15" data-hasdemo="0" data-group=""><h1>Extensions</h1>
 <p>Extensions add new functionality to existing types -- even types you don't own, like <code>String</code>, <code>Array</code>, or <code>Int</code>. They are Swift's primary mechanism for organizing code, adding protocol conformance after the fact, and extending generic types with conditional capabilities.</p>
 <blockquote>
