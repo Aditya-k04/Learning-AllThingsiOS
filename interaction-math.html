@@ -341,7 +341,106 @@ spring(target)       = let physics settle it
 <li>Who computes the value over time (iOS): <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></li>
 <li>How to practice it: <a class="xref" href="#10-study-method">10-study-method</a></li>
 <li>Prev: <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a> · Next: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
-</ul><div class="pager"><a href="#01-modeling-visuals-as-functions"><span>Prev</span>← 01 — Modeling Visuals as Functions</a><a href="#02-trigonometry-and-the-unit-circle"><span>Next</span>02 — Trigonometry &amp; the Unit Circle →</a></div></section>
+</ul><div class="pager"><a href="#01-modeling-visuals-as-functions"><span>Prev</span>← 01 — Modeling Visuals as Functions</a><a href="#01b-the-seven-building-blocks"><span>Next</span>01b — The Seven Building Blocks →</a></div></section>
+<section class="page" id="01b-the-seven-building-blocks" data-title="01b — The Seven Building Blocks" data-num="01" data-hasdemo="0" data-group=""><h1>01b — The Seven Building Blocks</h1>
+<p>Almost every interaction is built from the same handful of tiny functions. Learn these seven and you can express most of what you'll ever need. We'll do each one <strong>twice</strong>: first in plain English with an everyday example, then the actual math underneath.</p>
+<blockquote>
+<p>If you remember only one thing from this whole topic, make it <strong><code>remap</code></strong>: <em>"as THIS goes from A to B, make THAT go from C to D."</em> That single idea covers most interactions.</p>
+</blockquote>
+<hr />
+<h2>The simple version (read this first)</h2>
+<ul>
+<li><strong><code>lerp</code> — mix two values.</strong> Start, end, and a percent → the point that % of the way between them. <em>A dimmer switch: 0% off, 100% full, 50% halfway.</em></li>
+<li><strong><code>inverseLerp</code> — the opposite: turn a value into a percent.</strong> "How far between start and end is this number?" <em>You're at mile 150 on a 100→300 road → 25% along.</em></li>
+<li><strong><code>clamp</code> — don't go out of bounds.</strong> Too low → snap to the min; too high → snap to the max. <em>A volume knob that won't go below 0 or above 100.</em></li>
+<li><strong><code>remap</code> — translate one scale to another.</strong> "When the input goes from here→there, make the output go from this→that." (It's just the three above combined.) <em>"As I scroll 0→200, fade the header from full→half."</em></li>
+<li><strong><code>smoothstep</code> — remap, but with a soft start and stop.</strong> No jerk at the ends; eases in and out. <em>A car that pulls away gently and brakes gently.</em></li>
+<li><strong><code>sin</code> / <code>cos</code> — anything that repeats.</strong> A value that smoothly goes up and down, forever. <em>A pendulum, or breathing — in, out, in, out.</em></li>
+<li><strong><code>spring</code> — move like a real object.</strong> Pulled toward a target and naturally settles (with a little bounce if you want). <em>A screen door swinging shut: rushes, overshoots a touch, settles.</em></li>
+</ul>
+<p><strong>One-line cheat sheet:</strong> <code>lerp</code> = mix · <code>inverseLerp</code> = un-mix · <code>clamp</code> = stay in range · <strong><code>remap</code></strong> = mix + un-mix + clamp (the one you'll use most) · <code>smoothstep</code> = remap but smooth · <code>sin</code>/<code>cos</code> = repeat forever · <code>spring</code> = move like a real thing.</p>
+<hr />
+<h2>The detailed version</h2>
+<h3>1. <code>lerp(a, b, t)</code> — mix / blend</h3>
+<pre><code>lerp(a, b, t) = a + (b − a)·t
+</code></pre>
+<p>Walk a fraction <code>t</code> (a percent from 0 to 1) of the way from <code>a</code> to <code>b</code>. Read it as: <code>(b − a)</code> is the full gap, <code>·t</code> takes part of it, <code>+ a</code> starts you at <code>a</code>.</p>
+<pre><code>t = 0   → a        t = 0.5 → midpoint        t = 1 → b
+lerp(0, 100, 0.25) = 25
+</code></pre>
+<p>Works on anything you can subtract and scale — numbers, points (lerp x and y separately), colors (lerp each channel). <strong>Use it for:</strong> fading opacity, moving a position, blending two values.</p>
+<h3>2. <code>inverseLerp(a, b, v)</code> — un-mix (value → percent)</h3>
+<pre><code>inverseLerp(a, b, v) = (v − a) / (b − a)
+</code></pre>
+<p>The reverse of <code>lerp</code>: you have a value <code>v</code> between <code>a</code> and <code>b</code>, and you want the percent <code>t</code> that produced it.</p>
+<pre><code>inverseLerp(100, 300, 150) = 0.25      // 150 is 25% of the way from 100 to 300
+v = a → 0,   v = b → 1
+</code></pre>
+<p><strong>Use it for:</strong> turning a raw scroll offset (0–300) into a clean 0–1 progress you can feed elsewhere. ⚠️ If <code>a == b</code> you'd divide by zero, and the answer can fall outside 0–1 (that's what <code>clamp</code> fixes).</p>
+<h3>3. <code>clamp(v, lo, hi)</code> — stay in range</h3>
+<pre><code>clamp(v, lo, hi) = max(lo, min(hi, v))
+</code></pre>
+<p>Pin <code>v</code> between <code>lo</code> and <code>hi</code>. Read it inside-out: <code>min(hi, v)</code> caps the top, then <code>max(lo, …)</code> caps the bottom.</p>
+<pre><code>clamp(120, 0, 100) = 100      clamp(-5, 0, 100) = 0      clamp(50, 0, 100) = 50
+</code></pre>
+<p><strong>Use it for:</strong> keeping opacity in 0–1, keeping a drag inside bounds, cleaning up an <code>inverseLerp</code> result.</p>
+<h3>4. <code>remap(v, a,b, c,d)</code> — translate one range to another  ⭐</h3>
+<pre><code>remap(v, a,b, c,d) = lerp(c, d, clamp(inverseLerp(a,b, v), 0, 1))
+</code></pre>
+<p>The workhorse — and it's literally the three above stacked: find where <code>v</code> sits in <code>[a,b]</code> (un-mix), keep it in 0–1 (clamp), then mix that percent across <code>[c,d]</code>.</p>
+<pre><code>// scroll 0…200 makes the header grow 1.0…1.5:
+headerScale = remap(scrollY, 0, 200, 1.0, 1.5)
+
+// flip the direction by swapping the output ends:
+opacity = remap(distance, 0, 1, 1.0, 0.3)   // far away → faint
+</code></pre>
+<p><strong>Use it for:</strong> ~80% of interactions — "as this input moves through one range, drive that output through another."</p>
+<h3>5. <code>smoothstep(e0, e1, x)</code> — remap with eased ends</h3>
+<pre><code>t = clamp((x − e0) / (e1 − e0), 0, 1)
+return t·t·(3 − 2t)
+</code></pre>
+<p>Same idea as remapping into 0–1, but the result follows a gentle <strong>S-curve</strong>: slow start, quick middle, slow finish. The <code>t·t·(3 − 2t)</code> part is a cubic whose slope is <strong>0 at both ends</strong>, so there's no harsh snap. (<code>easeInOut</code> is basically this.)</p>
+<pre><code>smoothstep(0, 1, 0.1) ≈ 0.028     smoothstep(0, 1, 0.9) ≈ 0.972   // gentler near the edges
+</code></pre>
+<p><strong>Use it for:</strong> edge fades, glow falloffs, softening any transition.</p>
+<h3>6. <code>sin(t)</code> / <code>cos(t)</code> — repeat forever</h3>
+<p>A point going around a circle at angle <code>t</code> is <code>(cos t, sin t)</code>. The outputs smoothly swing between <strong>−1 and 1</strong> and repeat every <code>2π</code>. Shape a wave with three knobs:</p>
+<pre><code>value = A · sin(ω·t + φ)
+        A = height (amplitude)   ω = speed (frequency)   φ = shift (phase)
+</code></pre>
+<pre><code>scale = 1.0 + 0.03 · sin(time · 2)        // a gentle breathing pulse
+(x, y) = (R·cos θ, R·sin θ)               // lay something out on a circle
+</code></pre>
+<p><code>cos</code> is just <code>sin</code> shifted by a quarter-turn (it starts at the top). <strong>Use it for:</strong> anything that repeats, breathes, waves, or sits on a circle. → <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></p>
+<h3>7. <code>spring(target)</code> — move like a real object</h3>
+<p>Not a fixed path — a tiny <strong>simulation</strong> run each frame that pulls a value toward a target and lets it settle:</p>
+<pre><code>a = −k·(x − target) − c·v        // pull toward target, minus drag
+v += a·dt                        // k = stiffness, c = damping
+x += v·dt
+</code></pre>
+<ul>
+<li><strong>Critical damping</strong> <code>c = 2·√k</code> → fastest settle, no overshoot.</li>
+<li>Less damping → bouncy; more → sluggish.</li>
+</ul>
+<p>Springs beat fixed curves because they're <strong>interruptible, retargetable mid-motion, and respect velocity</strong> — so they feel physical and are perfect for gestures (grab a moving thing and redirect it). In SwiftUI: <code>.animation(.spring(duration: 0.4, bounce: 0.2))</code>.</p>
+<p><strong>Use it for:</strong> anything that should settle, bounce, or react to a flick. → <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></p>
+<hr />
+<h2>How they group in your head</h2>
+<ul>
+<li><code>lerp</code> / <code>inverseLerp</code> / <code>clamp</code> are the three <strong>atoms</strong>; <strong><code>remap</code></strong> is them combined and is what you reach for daily.</li>
+<li><code>smoothstep</code> = <code>remap</code> with nice ends.</li>
+<li><code>sin</code> / <code>cos</code> = the <strong>cyclic</strong> family (things that repeat).</li>
+<li><code>spring</code> = the <strong>physical</strong> family (a simulation, not a formula).</li>
+</ul>
+<h2>Try it</h2>
+<p>You already have interactive versions in <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>: drag the <strong>easing</strong> demo to feel <code>smoothstep</code> vs a straight line, and the <strong>spring</strong> demo to tune <code>k</code> (stiffness) and <code>c</code> (damping) by hand.</p>
+<h2>Related</h2>
+<ul>
+<li>When to reach for which: <a class="xref" href="#01a-choosing-the-math">Choosing the Math</a></li>
+<li>The deep dive + demos: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></li>
+<li>The cyclic family: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></li>
+<li>Prev: <a class="xref" href="#01a-choosing-the-math">01a-choosing-the-math</a> · Next: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#01a-choosing-the-math"><span>Prev</span>← 01a — Choosing the Math (a Decision Recipe)</a><a href="#02-trigonometry-and-the-unit-circle"><span>Next</span>02 — Trigonometry &amp; the Unit Circle →</a></div></section>
 <section class="page" id="02-trigonometry-and-the-unit-circle" data-title="02 — Trigonometry &amp; the Unit Circle" data-num="02" data-hasdemo="1" data-group=""><h1>02 — Trigonometry &amp; the Unit Circle</h1><div class="demo-mount" data-demo="trig"></div>
 <p>Not "SOH-CAH-TOA." The one idea that unlocks waves, rotation, and oscillation at once.</p>
 <h2>The core insight</h2>
@@ -390,7 +489,7 @@ for (i, dot) in dots.enumerated() {
 <li>Summed/ damped waves: <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a></li>
 <li>In shaders: <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
-</ul><div class="pager"><a href="#01a-choosing-the-math"><span>Prev</span>← 01a — Choosing the Math (a Decision Recipe)</a><a href="#03-derivative-as-tangent"><span>Next</span>03 — Calculus: the Derivative as Tangent →</a></div></section>
+</ul><div class="pager"><a href="#01b-the-seven-building-blocks"><span>Prev</span>← 01b — The Seven Building Blocks</a><a href="#03-derivative-as-tangent"><span>Next</span>03 — Calculus: the Derivative as Tangent →</a></div></section>
 <section class="page" id="03-derivative-as-tangent" data-title="03 — Calculus: the Derivative as Tangent" data-num="03" data-hasdemo="1" data-group=""><h1>03 — Calculus: the Derivative as Tangent</h1><div class="demo-mount" data-demo="derivative"></div>
 <p>You don't need symbol-pushing. You need the <strong>geometric meaning</strong> of three operations.</p>
 <h2>Derivative = slope = tangent direction</h2>
