@@ -226,7 +226,122 @@ integral         accumulation →  arc length, area, &quot;summed-up&quot; quant
 <li>The payoff: <a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a></li>
 <li>iOS framing: <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
-</ul><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Math for Interaction Design — Roadmap</a><a href="#02-trigonometry-and-the-unit-circle"><span>Next</span>02 — Trigonometry &amp; the Unit Circle →</a></div></section>
+</ul><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Math for Interaction Design — Roadmap</a><a href="#01a-choosing-the-math"><span>Next</span>01a — Choosing the Math (a Decision Recipe) →</a></div></section>
+<section class="page" id="01a-choosing-the-math" data-title="01a — Choosing the Math (a Decision Recipe)" data-num="01" data-hasdemo="0" data-group=""><h1>01a — Choosing the Math (a Decision Recipe)</h1>
+<p>The hardest part isn't the formulas — it's knowing <em>which</em> one to reach for. The secret: experienced people don't <em>recall</em> the right formula, they answer a few plain questions and the formula falls out. Here's that process, the way you'd build a formula from nothing.</p>
+<blockquote>
+<p>If you can't write the interaction as one sentence, you don't have an interaction yet — you have a vibe. Start with the sentence.</p>
+</blockquote>
+<h2>Step 1 — Write it as one sentence: "as INPUT changes, OUTPUT changes"</h2>
+<p>Force yourself to name <strong>both ends, with ranges</strong>:</p>
+<blockquote>
+<p>"As the finger drags down (input: 0 → 300 pt), the card shrinks (output: scale 1.0 → 0.5)."</p>
+</blockquote>
+<p>That sentence <em>is</em> the spec. In practice the <strong>input</strong> is almost always one of:</p>
+<ul>
+<li><strong>time</strong> (a clock ticking)</li>
+<li>a <strong>gesture / scroll position</strong> (drag offset, contentOffset)</li>
+<li>an <strong>index</strong> (item <em>i</em> of <em>n</em>)</li>
+<li>a <strong>distance</strong> from some point or edge</li>
+</ul>
+<p>…and the <strong>output</strong> is almost always: <strong>position, scale, rotation, opacity, or color.</strong></p>
+<h2>Step 2 — One fork question: does it MAP, CYCLE, or SIMULATE?</h2>
+<p>This single question picks the whole <em>family</em> of math:</p>
+<table>
+<thead>
+<tr>
+<th>If the output…</th>
+<th>…reach for</th>
+<th>The plain need it answers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>goes A→B as input goes a→b</td>
+<td><strong>lerp / remap / smoothstep</strong> (<a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>)</td>
+<td>"map this range onto that range"</td>
+</tr>
+<tr>
+<td>repeats, breathes, waves, goes in a circle</td>
+<td><strong>sin / cos</strong> (<a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a>)</td>
+<td>"something that cycles forever, smoothly"</td>
+</tr>
+<tr>
+<td>has a position/direction in space</td>
+<td><strong>vectors</strong> — dot = aligned?, cross = turn? (<a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a>)</td>
+<td>"where / which-way in 2D/3D"</td>
+</tr>
+<tr>
+<td>sits or moves along a path/shape</td>
+<td><strong>function + derivative chain</strong> (<a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>)</td>
+<td>"where it is, which way it faces, how it bends"</td>
+</tr>
+<tr>
+<td>should settle, bounce, react to a flick</td>
+<td><strong>a spring / physics</strong> (<a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>)</td>
+<td>"feel physical, not scripted"</td>
+</tr>
+<tr>
+<td>should feel alive / organic</td>
+<td><strong>noise + summed sines</strong> (<a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a>)</td>
+<td>"random, but smooth"</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>~80% of real UI is the first row.</strong> When in doubt, the answer is almost always <code>remap</code> + <code>smoothstep</code> — "map a gesture/scroll position onto an effect."</p>
+</blockquote>
+<h2>Step 3 — You don't memorize the building blocks; you can re-derive them</h2>
+<p>The pieces aren't magic. Each was invented to answer a plain sentence, and you can rebuild the simple ones yourself:</p>
+<ul>
+<li><em>"I want <code>t=0</code> → start, <code>t=1</code> → end, halfway → the middle."</em> Write it: <code>start + (end − start)·t</code>. <strong>You just invented <code>lerp</code>.</strong></li>
+<li><em>"I want a value that cycles forever and stays smooth."</em> A point going around a circle has a height that does exactly that → that's <strong><code>sin</code></strong>. Not arbitrary.</li>
+<li><em>"I want to map one range onto another."</em> That's <code>lerp</code> + "where is my input inside [a,b]?" (<code>inverseLerp</code>) + a <code>clamp</code>. Stack them → <strong><code>remap</code></strong>.</li>
+</ul>
+<p>So a beginner <em>builds</em> formulas by stating the need precisely and assembling a tiny vocabulary — not by recalling a textbook.</p>
+<h2>The tiny vocabulary (90% of everything)</h2>
+<pre><code>lerp(a, b, t)        = a + (b − a)·t                 // blend a→b
+inverseLerp(a,b,v)   = (v − a) / (b − a)             // &quot;where is v in [a,b]?&quot; → t
+clamp(v, lo, hi)     = max(lo, min(hi, v))           // keep it in range
+remap(v, a,b, c,d)   = lerp(c, d, clamp(inverseLerp(a,b,v),0,1))   // range → range
+smoothstep(e0,e1,x)  = remap with eased ends         // gentle start &amp; stop
+sin(t) / cos(t)      = cycles / circular motion
+spring(target)       = let physics settle it
+</code></pre>
+<p>Master those seven and you can express most interactions. Full detail: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>.</p>
+<h2>Step 4 — Model it, don't derive it</h2>
+<p>Don't try to calculate the perfect numbers in your head. Open <a href="https://www.desmos.com/calculator">Desmos</a> (or a slider playground), wire the smallest building block, then <strong>drag the sliders and tune by feel.</strong> You <em>discover</em> the exact relationship by watching it, then read it off. Premium interactions are tuned, not computed cold. (This is the heart of <a class="xref" href="#10-study-method">10-study-method</a>.)</p>
+<h2>Worked examples (sentence → formula)</h2>
+<p><strong>1. Card shrinks as you drag it away</strong>
+- Sentence: drag <code>0→300</code> makes scale <code>1.0→0.5</code>.
+- Fork: it <strong>maps</strong> a range → <code>remap</code>.
+- Build: <code>scale = remap(dragY, 0, 300, 1.0, 0.5)</code>. Want it gentle at the ends? wrap in <code>smoothstep</code>.
+- Release should spring back? That's a <em>second</em> interaction → fork says <strong>spring</strong>.</p>
+<p><strong>2. A logo that gently breathes</strong>
+- Sentence: over time, scale oscillates <code>0.97 ↔ 1.03</code>.
+- Fork: it <strong>cycles</strong> → <code>sin</code>.
+- Build: <code>scale = 1.0 + 0.03 * sin(time * speed)</code>.</p>
+<p><strong>3. Stories strip: items fade near the edges</strong>
+- Sentence: as an item's distance-from-center grows <code>0→1</code>, opacity drops <code>1→0.3</code>.
+- Fork: <strong>maps</strong> a range → <code>remap</code> + <code>smoothstep</code>.
+- Build: <code>opacity = remap(distanceFromCenter, 0, 1, 1.0, 0.3)</code>; smoothstep for softness.</p>
+<p><strong>4. Cells riding a wave (the carousel)</strong>
+- Sentence: cell at <code>x</code> sits on a wave and faces along it.
+- Fork: it <strong>follows a path</strong> → function + derivative.
+- Build: <code>y = A·sin(ω·x)</code>, facing <code>= atan2(y', 1)</code>. → <a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a></p>
+<h2>The whole recipe, in three questions</h2>
+<blockquote>
+<p><strong>What's my input? What's my output? Does it map, cycle, or simulate?</strong></p>
+</blockquote>
+<p>Answer those and the math chooses itself — and the pieces are few enough to re-derive. "Which formula?" was never the real question; <em>"what function describes this?"</em> is, and that's the mindset from <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a>.</p>
+<h2>Related</h2>
+<ul>
+<li>The mindset it operationalizes: <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a></li>
+<li>The building blocks: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></li>
+<li>Who computes the value over time (iOS): <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></li>
+<li>How to practice it: <a class="xref" href="#10-study-method">10-study-method</a></li>
+<li>Prev: <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a> · Next: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#01-modeling-visuals-as-functions"><span>Prev</span>← 01 — Modeling Visuals as Functions</a><a href="#02-trigonometry-and-the-unit-circle"><span>Next</span>02 — Trigonometry &amp; the Unit Circle →</a></div></section>
 <section class="page" id="02-trigonometry-and-the-unit-circle" data-title="02 — Trigonometry &amp; the Unit Circle" data-num="02" data-hasdemo="1" data-group=""><h1>02 — Trigonometry &amp; the Unit Circle</h1><div class="demo-mount" data-demo="trig"></div>
 <p>Not "SOH-CAH-TOA." The one idea that unlocks waves, rotation, and oscillation at once.</p>
 <h2>The core insight</h2>
@@ -275,7 +390,7 @@ for (i, dot) in dots.enumerated() {
 <li>Summed/ damped waves: <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a></li>
 <li>In shaders: <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
-</ul><div class="pager"><a href="#01-modeling-visuals-as-functions"><span>Prev</span>← 01 — Modeling Visuals as Functions</a><a href="#03-derivative-as-tangent"><span>Next</span>03 — Calculus: the Derivative as Tangent →</a></div></section>
+</ul><div class="pager"><a href="#01a-choosing-the-math"><span>Prev</span>← 01a — Choosing the Math (a Decision Recipe)</a><a href="#03-derivative-as-tangent"><span>Next</span>03 — Calculus: the Derivative as Tangent →</a></div></section>
 <section class="page" id="03-derivative-as-tangent" data-title="03 — Calculus: the Derivative as Tangent" data-num="03" data-hasdemo="1" data-group=""><h1>03 — Calculus: the Derivative as Tangent</h1><div class="demo-mount" data-demo="derivative"></div>
 <p>You don't need symbol-pushing. You need the <strong>geometric meaning</strong> of three operations.</p>
 <h2>Derivative = slope = tangent direction</h2>
