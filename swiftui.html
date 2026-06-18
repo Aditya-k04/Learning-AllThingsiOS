@@ -6582,7 +6582,140 @@ struct MeasuredView: View {
 <li>[x] I understand anchor preferences for geometry-dependent highlighting</li>
 <li>[x] I can use <code>.visualEffect</code> (iOS 17+) for geometry-aware visual changes without layout impact</li>
 <li>[x] I can build common patterns like parallax headers and view size measurement</li>
-</ul><div class="pager"><a href="#21-async-patterns"><span>Prev</span>← Async Patterns in SwiftUI</a><a href="#23-view-composition"><span>Next</span>View Composition →</a></div></section>
+</ul><div class="pager"><a href="#21-async-patterns"><span>Prev</span>← Async Patterns in SwiftUI</a><a href="#22a-matched-geometry-and-anchors"><span>Next</span>Matched Geometry &amp; Anchors →</a></div></section>
+<section class="page" id="22a-matched-geometry-and-anchors" data-title="Matched Geometry &amp; Anchors" data-num="22" data-hasdemo="0" data-group=""><h1>Matched Geometry &amp; Anchors</h1>
+<p>Two related tools for interactions that span <em>more than one view</em>: <strong><code>matchedGeometryEffect</code></strong> morphs a view from one place to another across a state change, and <strong>anchors</strong> (<code>anchorPreference</code>) let you read one view's frame and use it somewhere else in the hierarchy. Both solve the same underlying problem — "relate the geometry of views that don't directly contain each other" — and both power the slick hero transitions and floating highlights you see in polished apps.</p>
+<h2>Part 1 — <code>matchedGeometryEffect</code>: morph between two views</h2>
+<p>The idea: give <strong>two different views the same <code>id</code> in the same <code>@Namespace</code></strong>, and when one disappears as the other appears, SwiftUI <strong>interpolates the frame</strong> (position + size) between them. The result looks like a single element flying/growing from A to B — a hero animation — without you computing any coordinates.</p>
+<pre><code class="language-swift">struct HeroExample: View {
+    @Namespace private var ns               // the shared namespace
+    @State private var expanded = false
+
+    var body: some View {
+        ZStack {
+            if expanded {
+                RoundedRectangle(cornerRadius: 24)
+                    .matchedGeometryEffect(id: &quot;card&quot;, in: ns)   // destination
+                    .frame(width: 320, height: 420)
+            } else {
+                RoundedRectangle(cornerRadius: 12)
+                    .matchedGeometryEffect(id: &quot;card&quot;, in: ns)   // source — SAME id + ns
+                    .frame(width: 80, height: 80)
+            }
+        }
+        .onTapGesture { withAnimation(.spring) { expanded.toggle() } }
+    }
+}
+</code></pre>
+<p>The key rules:</p>
+<ul>
+<li><strong>Same <code>id</code> + same <code>@Namespace</code></strong> on both views = "these are the same thing; animate between them."</li>
+<li>The change must happen inside <strong><code>withAnimation</code></strong> (or be driven by an animated state) for the morph to play.</li>
+<li>Typically the two views are in an <strong><code>if/else</code></strong> so only one is on screen at a time — SwiftUI matches the outgoing frame to the incoming one.</li>
+</ul>
+<h3>What it interpolates: <code>properties</code></h3>
+<p>By default it matches the whole <strong><code>.frame</code></strong> (position <em>and</em> size). You can narrow it:</p>
+<pre><code class="language-swift">.matchedGeometryEffect(id: &quot;card&quot;, in: ns, properties: .position)  // move only
+.matchedGeometryEffect(id: &quot;card&quot;, in: ns, properties: .size)      // resize only
+.matchedGeometryEffect(id: &quot;card&quot;, in: ns, properties: .frame)     // both (default)
+</code></pre>
+<p><code>anchor:</code> controls <em>which point</em> is matched (<code>.center</code>, <code>.topLeading</code>, …), and <code>isSource:</code> lets you mark which view is the "truth" when both happen to exist briefly.</p>
+<h3>The classic use: a sliding selection highlight</h3>
+<p>A segmented control / tab bar where the highlight pill <strong>slides</strong> to the selected item is just one <code>matchedGeometryEffect</code> id shared by the background of whichever item is selected:</p>
+<pre><code class="language-swift">struct Segmented: View {
+    @Namespace private var ns
+    @State private var selected = &quot;Home&quot;
+    let tabs = [&quot;Home&quot;, &quot;Search&quot;, &quot;Profile&quot;]
+
+    var body: some View {
+        HStack {
+            ForEach(tabs, id: \.self) { tab in
+                Text(tab)
+                    .padding(.vertical, 8).padding(.horizontal, 14)
+                    .background {
+                        if selected == tab {
+                            Capsule().fill(.blue.opacity(0.2))
+                                .matchedGeometryEffect(id: &quot;highlight&quot;, in: ns)  // one highlight, moves
+                        }
+                    }
+                    .onTapGesture { withAnimation(.snappy) { selected = tab } }
+            }
+        }
+    }
+}
+</code></pre>
+<p>Only one <code>Capsule</code> ever exists (the selected tab's), so as <code>selected</code> changes, SwiftUI slides the highlight from the old tab's frame to the new one — no manual offsets.</p>
+<h3>Gotchas</h3>
+<ul>
+<li>Both id+namespace must match <em>exactly</em>; a typo just silently doesn't animate.</li>
+<li>If both views are visible at once with the same id, mark one <code>isSource: true</code>.</li>
+<li>Pair it with <code>.transition(...)</code> on surrounding content (e.g. fade the small card's label) so <em>everything</em> animates, not just the matched shape.</li>
+<li>It animates geometry, not content; a big text and a small text won't "morph" letters — they cross-fade while the frame interpolates.</li>
+</ul>
+<h2>Part 2 — Anchors: read a view's frame, use it elsewhere</h2>
+<p><code>matchedGeometryEffect</code> is great when one element <em>becomes</em> another. But sometimes you need a view's position/size <strong>as data</strong> to drive something else — draw a line between two views, place a tooltip over a deep child, or build a custom highlight. That's <strong>anchors</strong>.</p>
+<p>The problem anchors solve: you can't easily read a child's frame from an ancestor (the child is created deeper in the tree). An <strong><code>Anchor&lt;CGRect&gt;</code></strong> is a <em>deferred</em> geometry value — captured at the child, then <strong>resolved later</strong> in a common ancestor's coordinate space via a <code>GeometryProxy</code>.</p>
+<pre><code class="language-swift">// 1. A preference key that carries an Anchor up the tree
+struct BoundsKey: PreferenceKey {
+    static var defaultValue: Anchor&lt;CGRect&gt;? = nil
+    static func reduce(value: inout Anchor&lt;CGRect&gt;?, nextValue: () -&gt; Anchor&lt;CGRect&gt;?) {
+        value = value ?? nextValue()
+    }
+}
+
+struct AnchorHighlight: View {
+    @State private var selected = 0
+    var body: some View {
+        VStack(spacing: 12) {
+            ForEach(0..&lt;3) { i in
+                Text(&quot;Row \(i)&quot;)
+                    .padding()
+                    .anchorPreference(key: BoundsKey.self, value: .bounds) {   // capture this row's bounds
+                        i == selected ? $0 : nil
+                    }
+                    .onTapGesture { withAnimation(.spring) { selected = i } }
+            }
+        }
+        .overlayPreferenceValue(BoundsKey.self) { anchor in     // resolve + draw in the parent
+            GeometryReader { proxy in
+                if let anchor {
+                    let rect = proxy[anchor]                      // Anchor → CGRect in THIS space
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(.blue, lineWidth: 2)
+                        .frame(width: rect.width, height: rect.height)
+                        .position(x: rect.midX, y: rect.midY)
+                }
+            }
+        }
+    }
+}
+</code></pre>
+<p>The flow:
+1. <strong><code>anchorPreference(key:value:.bounds)</code></strong> on a child captures its frame as an <code>Anchor&lt;CGRect&gt;</code> and sends it up via a preference.
+2. <strong><code>overlayPreferenceValue</code> / <code>backgroundPreferenceValue</code></strong> in an ancestor receives it.
+3. <strong><code>proxy[anchor]</code></strong> resolves the anchor into a concrete <code>CGRect</code> <em>in the ancestor's coordinate space</em> — now you can draw, position, or measure relative to it.</p>
+<p>Use <code>.bounds</code> for a rect, or <code>.center</code>/<code>.top</code>/… for an <code>Anchor&lt;CGPoint&gt;</code>.</p>
+<h3>When to use which</h3>
+<ul>
+<li><strong><code>matchedGeometryEffect</code></strong> — one element transitions into another (hero image, expand/collapse, sliding tab pill). Least code; SwiftUI owns the animation.</li>
+<li><strong>Anchors</strong> — you need geometry <em>as a value</em> to drive separate UI (connector lines, tooltips/popovers anchored to a deep child, a highlight you draw yourself, coordinating across far-apart views).</li>
+<li><strong><code>GeometryReader</code> + named <code>coordinateSpace</code></strong> — simpler one-off "how big is this / where is this" measurements within a known container.</li>
+<li><strong><code>onGeometryChange(for:of:action:)</code></strong> (iOS 18+) — the modern way to <em>observe</em> a view's size/position changes and store them in state, without wrapping in a <code>GeometryReader</code>.</li>
+</ul>
+<p>These positions and frames are the same <code>CGRect</code> geometry as <a class="xref" href="coreanimation.html#03-layer-geometry">Core Animation&#x27;s layer geometry</a> underneath, and deciding <em>which</em> view drives the motion is the <a class="xref" href="stack-decisions.html#04-who-drives-time">who-drives-time</a> question again.</p>
+<h2>Try it (in Xcode)</h2>
+<ol>
+<li>Build the expand/collapse hero card; toggle <code>properties:</code> between <code>.frame</code>, <code>.position</code>, <code>.size</code> and feel the difference.</li>
+<li>Build the sliding-highlight segmented control.</li>
+<li>Rebuild that highlight a second way using anchors (<code>anchorPreference</code> + <code>overlayPreferenceValue</code>) and compare which feels cleaner for the job.</li>
+</ol>
+<h2>Related</h2>
+<ul>
+<li>Animation foundations: <a class="xref" href="#12-animation-basics">12-animation-basics</a>, <a class="xref" href="#13-animation-advanced">13-animation-advanced</a></li>
+<li>Measuring layout: <a class="xref" href="#22-geometry-and-preferences">22-geometry-and-preferences</a></li>
+<li>The geometry underneath: <a class="xref" href="coreanimation.html#03-layer-geometry">Layer Geometry</a></li>
+<li>Prev: <a class="xref" href="#22-geometry-and-preferences">22-geometry-and-preferences</a> · Next: <a class="xref" href="#23-view-composition">23-view-composition</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#22-geometry-and-preferences"><span>Prev</span>← Geometry and Preferences</a><a href="#23-view-composition"><span>Next</span>View Composition →</a></div></section>
 <section class="page" id="23-view-composition" data-title="View Composition" data-num="23" data-hasdemo="0" data-group=""><h1>View Composition</h1>
 <p>SwiftUI's power comes from composing small, focused views into complex interfaces. Every view you write is a struct with a <code>body</code> — and that body can contain other custom views. Mastering composition means your code stays readable, reusable, and performant even as your app grows.</p>
 <blockquote>
@@ -6962,7 +7095,7 @@ struct OrderSummaryView: View {
 <li>[x] I can use <code>Group</code> for shared modifiers and <code>EmptyView</code> for placeholders</li>
 <li>[x] I can create reusable view modifier extensions</li>
 <li>[x] I can build multi-slot container views for real-world component libraries</li>
-</ul><div class="pager"><a href="#22-geometry-and-preferences"><span>Prev</span>← Geometry and Preferences</a><a href="#24-uikit-integration"><span>Next</span>UIKit Integration →</a></div></section>
+</ul><div class="pager"><a href="#22a-matched-geometry-and-anchors"><span>Prev</span>← Matched Geometry &amp; Anchors</a><a href="#24-uikit-integration"><span>Next</span>UIKit Integration →</a></div></section>
 <section class="page" id="24-uikit-integration" data-title="UIKit Integration" data-num="24" data-hasdemo="0" data-group=""><h1>UIKit Integration</h1>
 <p>SwiftUI doesn't cover every UIKit feature. When you need a UIKit view (like <code>MKMapView</code>, <code>WKWebView</code>, or a custom <code>UITextView</code>) inside SwiftUI, you wrap it with <code>UIViewRepresentable</code>. When you need a UIKit view controller (like <code>UIImagePickerController</code>), you use <code>UIViewControllerRepresentable</code>. And when you need SwiftUI inside a UIKit app, you use <code>UIHostingController</code>.</p>
 <blockquote>
