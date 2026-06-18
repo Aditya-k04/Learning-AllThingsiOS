@@ -374,6 +374,10 @@ func smoothstep(_ e0: Double, _ e1: Double, _ x: Double) -&gt; Double {
 </code></pre>
 <p><strong>Trace it:</strong> <code>40 + 320·t</code> → <code>t=0</code> → <code>40</code> (left) · <code>t=0.5</code> → <code>200</code> (center) · <code>t=1</code> → <code>360</code> (right).</p>
 <p><strong>Use it for:</strong> moving, fading, or resizing between two known values. Works on numbers, points (lerp x and y separately), and colors (lerp each channel).</p>
+<p><strong>Real example — a dot that smoothly chases your finger.</strong> Every frame, move it 15% of the way toward the finger:</p>
+<pre><code class="language-swift">current = lerp(current, target, 0.15)   // run this each frame
+</code></pre>
+<p>Far away → 15% of a big gap is a big step (fast). Close → 15% of a tiny gap is a tiny step (eases in). The same trick smooths a jumpy sensor value, or eases a number counter up to a new total.</p>
 <hr />
 <h2>2. <code>inverseLerp</code> — un-mix: a value → a percent</h2>
 <p><strong>Idea:</strong> the reverse of lerp. You have a value between <code>a</code> and <code>b</code>; it tells you the percent that produced it.</p>
@@ -384,6 +388,11 @@ func smoothstep(_ e0: Double, _ e1: Double, _ x: Double) -&gt; Double {
 </code></pre>
 <p><strong>Trace it:</strong> <code>x / 300</code> → <code>x=0</code> → <code>0.0</code> · <code>x=150</code> → <code>0.5</code> (bar half-full) · <code>x=300</code> → <code>1.0</code>.</p>
 <p><strong>Use it for:</strong> turning a raw scroll/drag offset into a clean 0–1 progress you can feed elsewhere. ⚠️ Divide-by-zero if <code>a == b</code>; the result can fall outside 0–1 (that's what <code>clamp</code> fixes).</p>
+<p><strong>Real example — the reading-progress bar at the top of an article.</strong> You know the scroll offset (say 0…2400 pt). Turn it into a 0–1 fill for the bar:</p>
+<pre><code class="language-swift">let progress = inverseLerp(0, 2400, scrollY)   // 0.0 at top, 1.0 at bottom
+ProgressView(value: progress)
+</code></pre>
+<p>A raw position goes in, a clean percent comes out.</p>
 <hr />
 <h2>3. <code>clamp</code> — stay in range (the wall)</h2>
 <p><strong>Idea:</strong> pin a value between a min and a max. Too low → snap to min; too high → snap to max.</p>
@@ -394,6 +403,10 @@ func smoothstep(_ e0: Double, _ e1: Double, _ x: Double) -&gt; Double {
 </code></pre>
 <p><strong>Trace it:</strong> <code>v=30</code> → <code>30</code> (inside) · <code>v=200</code> → <code>80</code> (pinned right) · <code>v=−500</code> → <code>−80</code> (pinned left).</p>
 <p><strong>Use it for:</strong> keeping opacity in 0–1, a drag inside bounds, or sanitizing an <code>inverseLerp</code> result.</p>
+<p><strong>Real example — pinch-to-zoom that can't go too small or huge.</strong> Whatever wild number the gesture reports, keep it sane:</p>
+<pre><code class="language-swift">let zoom = clamp(pinchScale, 1, 5)   // never below 1×, never above 5×
+</code></pre>
+<p>The image zooms freely between 1× and 5× and just refuses to go past either limit.</p>
 <hr />
 <h2>4. <code>remap</code> — translate one range to another ⭐ (two rulers taped together)</h2>
 <p><strong>Idea:</strong> the workhorse. "As the input goes from <code>a</code>→<code>b</code>, make the output go from <code>c</code>→<code>d</code>." It's literally the three above stacked: un-mix → clamp → mix.</p>
@@ -404,6 +417,10 @@ func smoothstep(_ e0: Double, _ e1: Double, _ x: Double) -&gt; Double {
 </code></pre>
 <p><strong>Trace it:</strong> <code>scroll=0</code> → <code>1.0</code> (full) · <code>scroll=150</code> → <code>0.75</code> · <code>scroll=300</code> → <code>0.5</code> (half).</p>
 <p><strong>Use it for:</strong> ~80% of interactions — "as this input moves through one range, drive that output through another." Swap the output to <code>1.0, 1.5</code> and the header <em>grows</em> instead; swap <code>c</code> and <code>d</code> to flip the direction.</p>
+<p><strong>Real example — a "scroll to top" button that fades in as you scroll down.</strong> As <code>scrollY</code> goes 0→150, drive its opacity 0→1:</p>
+<pre><code class="language-swift">button.opacity = remap(scrollY, 0, 150, 0, 1)   // hidden at top, fully visible after 150pt
+</code></pre>
+<p>One input range, one output range, one line — and the <code>clamp</code> inside means it stays at 1.0 no matter how far you keep scrolling.</p>
 <hr />
 <h2>5. <code>smoothstep</code> — remap with eased ends (the gentle car)</h2>
 <p><strong>Idea:</strong> like remapping into 0–1, but the result follows an S-curve — slow start, quick middle, slow finish. (<code>easeInOut</code> is basically this.)</p>
@@ -416,6 +433,10 @@ Circle().position(x: 20 + w * smoothstep(0,1,t))  // eased (slow–fast–slow)
 </code></pre>
 <p><strong>Trace it (watch it bend away from linear):</strong> <code>t=0.1</code> → linear <code>0.10</code>, smooth <code>0.028</code> · <code>t=0.5</code> → both <code>0.50</code> (cross, fastest) · <code>t=0.9</code> → linear <code>0.90</code>, smooth <code>0.972</code>.</p>
 <p><strong>Use it for:</strong> edge fades, glow falloffs, softening any transition so it doesn't snap.</p>
+<p><strong>Real example — dimming the background as a sheet slides open.</strong> As the sheet goes 0→1 open, fade a black overlay in <em>gently</em> so it doesn't pop:</p>
+<pre><code class="language-swift">backdrop.opacity = smoothstep(0, 1, sheetProgress) * 0.5   // soft start, soft finish
+</code></pre>
+<p>Plain <code>remap</code> would fade linearly (a faint snap at the edges); <code>smoothstep</code> eases in and out so the dim feels natural.</p>
 <hr />
 <h2>6. <code>sin</code> / <code>cos</code> — repeat forever (the spinning wheel's shadow)</h2>
 <p><strong>Idea:</strong> a value that smoothly swings between −1 and +1 and repeats. A point on a circle at angle <code>t</code> is <code>(cos t, sin t)</code>.</p>
@@ -431,6 +452,10 @@ Circle().position(x: 20 + w * smoothstep(0,1,t))  // eased (slow–fast–slow)
 </code></pre>
 <p><strong>Trace it:</strong> in <code>1 + 0.2·sin</code> → <code>sin=0</code> → <code>1.0</code> (rest) · <code>sin=+1</code> → <code>1.2</code> (biggest) · <code>sin=−1</code> → <code>0.8</code> (smallest). The <code>·2</code> spins faster (frequency); the <code>0.2</code> is how big the breath is (amplitude).</p>
 <p><strong>Use it for:</strong> anything that repeats, breathes, waves, or sits on a circle. → <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></p>
+<p><strong>Real example — a "recording" dot that pulses so users know it's live.</strong> Each frame, gently grow and shrink forever:</p>
+<pre><code class="language-swift">dot.scaleEffect(1 + 0.1 * sin(time * 3))   // 0.9 ↔ 1.1, over and over
+</code></pre>
+<p><code>time * 3</code> sets the pulse speed; <code>0.1</code> sets how big the pulse is. (Use <code>cos</code> + <code>sin</code> together to place items evenly around a circle, like a radial menu.)</p>
 <hr />
 <h2>7. <code>spring</code> — move like a real object (the screen door)</h2>
 <p><strong>Idea:</strong> not a fixed path — a tiny simulation that pulls a value toward a target and lets it settle (with a little bounce if you want).</p>
@@ -444,6 +469,12 @@ x += v·dt                        // critical damping c = 2·√k → fastest, n
 </code></pre>
 <p><strong>Trace it:</strong> it measures the gap to the target and accelerates toward it; the closer it gets, the gentler the pull, so it slows naturally. <code>bounce = 0</code> → eases in and stops clean · <code>bounce = 0.5</code> → overshoots and wobbles first.</p>
 <p><strong>Use it for:</strong> anything that should settle, bounce, or react to a flick/gesture. You only set <code>target</code> — and you can retarget mid-flight, which a fixed animation can't. → <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></p>
+<p><strong>Real example — a "like" heart that pops when tapped.</strong> Bump the scale and let a spring carry it there with a little overshoot:</p>
+<pre><code class="language-swift">Image(systemName: &quot;heart.fill&quot;)
+    .scaleEffect(liked ? 1.3 : 1.0)
+    .animation(.spring(bounce: 0.5), value: liked)   // pops, overshoots, settles
+</code></pre>
+<p>You never animate the in-between frames — you flip <code>liked</code> and the spring makes it feel alive. Same idea snaps a bottom sheet open or a toggle into place.</p>
 <hr />
 <h2>How they group in your head</h2>
 <ul>
