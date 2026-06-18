@@ -425,6 +425,63 @@ x += v·dt
 <p>Springs beat fixed curves because they're <strong>interruptible, retargetable mid-motion, and respect velocity</strong> — so they feel physical and are perfect for gestures (grab a moving thing and redirect it). In SwiftUI: <code>.animation(.spring(duration: 0.4, bounce: 0.2))</code>.</p>
 <p><strong>Use it for:</strong> anything that should settle, bounce, or react to a flick. → <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></p>
 <hr />
+<h2>See it &amp; build it (picture + code + trace)</h2>
+<p>Each one below is a tiny runnable SwiftUI view. Paste it into an Xcode preview, then <strong>move the slider slowly while picturing the image</strong> — that's the moment the formula stops being symbols and becomes something you can <em>see</em>. (Use the helper functions from the top of this lesson.)</p>
+<h3>1. <code>lerp</code> — the dimmer slider</h3>
+<p><strong>Picture it:</strong> two pegs on a ruler — left = <code>a</code>, right = <code>b</code>. <code>t</code> is your finger sliding between them: "what fraction of the way am I?"</p>
+<pre><code class="language-swift">Circle().position(x: lerp(40, 360, t), y: 40)   // t from a Slider 0...1
+</code></pre>
+<p><strong>Trace it:</strong> <code>lerp(40, 360, t) = 40 + 320·t</code>
+- <code>t = 0</code> → <code>40</code> (left peg) · <code>t = 0.5</code> → <code>200</code> (center) · <code>t = 1</code> → <code>360</code> (right peg)</p>
+<p>The ball's x is "40, plus some fraction of the 320-wide gap." <strong>Use it</strong> to move/fade/resize between two known values.</p>
+<h3>2. <code>inverseLerp</code> — "how far am I?" (lerp backwards)</h3>
+<p><strong>Picture it:</strong> you're standing somewhere on that ruler and someone asks <em>"what percent of the way are you?"</em> You answer with a fraction.</p>
+<pre><code class="language-swift">ProgressView(value: inverseLerp(0, 300, x))   // x from a Slider 0...300
+</code></pre>
+<p><strong>Trace it:</strong> <code>inverseLerp(0, 300, x) = x / 300</code>
+- <code>x = 0</code> → <code>0.0</code> · <code>x = 150</code> → <code>0.5</code> (bar half-full) · <code>x = 300</code> → <code>1.0</code></p>
+<p>lerp turns a percent into a position; inverseLerp turns a position into a percent. <strong>Mirror images.</strong> This is the step that turns a raw scroll offset into a clean 0–1.</p>
+<h3>3. <code>clamp</code> — the wall</h3>
+<p><strong>Picture it:</strong> a ball on a leash inside a box. Pull as far as you like — it stops dead at the wall.</p>
+<pre><code class="language-swift">Circle().offset(x: clamp(drag.width, -80, 80))   // drag from a DragGesture
+</code></pre>
+<p><strong>Trace it:</strong> <code>clamp(v, -80, 80) = max(-80, min(80, v))</code>
+- <code>v = 30</code> → <code>30</code> (inside) · <code>v = 200</code> → <code>80</code> (pinned right) · <code>v = −500</code> → <code>−80</code> (pinned left)</p>
+<p>The dot tracks your finger exactly until ±80, then just sits there. <strong>Use it</strong> to keep any value safe (opacity in 0–1, drags in bounds).</p>
+<h3>4. <code>remap</code> — two rulers taped together ⭐</h3>
+<p><strong>Picture it:</strong> an <strong>input ruler</strong> (0…300, your scroll) above an <strong>output ruler</strong> (1.0…0.5, header scale). Point anywhere on the top; remap reads straight down to the matching spot below.</p>
+<pre><code class="language-swift">Text(&quot;Header&quot;).scaleEffect(remap(scroll, 0, 300, 1.0, 0.5))   // scroll 0...300
+</code></pre>
+<p><strong>Trace it:</strong> "find the % on the input ruler, read that % on the output ruler."
+- <code>scroll = 0</code> → <code>1.0</code> (full) · <code>scroll = 150</code> → <code>0.75</code> · <code>scroll = 300</code> → <code>0.5</code> (half)</p>
+<p>It's inverseLerp (top → %) feeding lerp (% → bottom), with a clamp so it can't overshoot. <strong>This is ~80% of real UI.</strong> Swap the output to <code>1.0, 1.5</code> and the header <em>grows</em> instead.</p>
+<h3>5. <code>smoothstep</code> — remap that eases in and out</h3>
+<p><strong>Picture it:</strong> a car between two stop signs. A <em>linear</em> car jumps to full speed and slams the brakes. A <em>smoothstep</em> car pulls away gently, cruises, eases to a stop.</p>
+<pre><code class="language-swift">Circle().position(x: 20 + w * t)                  // linear (even)
+Circle().position(x: 20 + w * smoothstep(0,1,t))  // eased (slow–fast–slow)
+</code></pre>
+<p><strong>Trace it (watch it bend away from linear):</strong>
+- <code>t = 0.1</code> → linear <code>0.10</code>, smooth <code>0.028</code> (gentle start) · <code>t = 0.5</code> → both <code>0.50</code> (cross, fastest) · <code>t = 0.9</code> → linear <code>0.90</code>, smooth <code>0.972</code> (gentle stop)</p>
+<p>Same <code>t</code>, but the eased dot hangs back at the edges and races the middle. That S-shape is why eased motion feels natural and linear feels robotic.</p>
+<h3>6. <code>sin</code> / <code>cos</code> — the spinning wheel's shadow</h3>
+<p><strong>Picture it:</strong> a peg on a spinning wheel. Shine a light from the side and watch its <strong>shadow on the wall</strong>: it slides up and down forever, slowest at the extremes, fastest in the middle. That shadow <em>is</em> <code>sin</code>. (<code>cos</code> is the same peg's shadow on the floor.)</p>
+<pre><code class="language-swift">Circle().scaleEffect(1 + 0.2 * sin(t * 2))        // breathing: 0.8 ↔ 1.2
+Circle().offset(x: 80*cos(t*2), y: 80*sin(t*2))   // orbit: floor-shadow + wall-shadow = circle
+</code></pre>
+<p><strong>Trace it:</strong> <code>sin</code> swings between <strong>−1 and +1</strong>, repeating. In <code>1 + 0.2·sin</code>:
+- <code>sin = 0</code> → <code>1.0</code> (rest) · <code>sin = +1</code> → <code>1.2</code> (biggest) · <code>sin = −1</code> → <code>0.8</code> (smallest)</p>
+<p>The <code>·2</code> spins the wheel faster (frequency); the <code>0.2</code> is how big the breath is (amplitude). The orbit uses <em>both</em> shadows at once → a circle. <strong>Use it</strong> for anything that repeats.</p>
+<h3>7. <code>spring</code> — the screen door</h3>
+<p><strong>Picture it:</strong> you let go of a screen door. No fixed track — it's <em>pulled</em> toward "closed," rushes over, maybe overshoots, wobbles, settles. You never drew the path; physics did.</p>
+<pre><code class="language-swift">Circle().position(target)
+    .animation(.spring(duration: 0.6, bounce: bounce), value: target)   // tap to set target
+</code></pre>
+<p><strong>Trace it (what the physics does each frame):</strong> it measures the gap to the target and accelerates toward it; the closer it gets, the gentler the pull, so it decelerates naturally.
+- <code>bounce = 0</code> → eases in and stops clean (critical) · <code>bounce = 0.5</code> → overshoots and wobbles before settling</p>
+<p>You only set <code>target</code>. Tap a new spot and the dot <em>chases</em> it — tap again mid-flight and it smoothly redirects (a fixed animation can't). That "chase and settle" is why springs feel alive and are right for gestures.</p>
+<blockquote>
+<p><strong>The whole set as one movie:</strong> <code>lerp</code> = slide between two pegs · <code>inverseLerp</code> = ask "what %?" · <code>clamp</code> = hit a wall · <code>remap</code> = two rulers taped together · <code>smoothstep</code> = ease away &amp; ease in · <code>sin/cos</code> = a spinning wheel's shadow · <code>spring</code> = a screen door settling.</p>
+</blockquote>
 <h2>How they group in your head</h2>
 <ul>
 <li><code>lerp</code> / <code>inverseLerp</code> / <code>clamp</code> are the three <strong>atoms</strong>; <strong><code>remap</code></strong> is them combined and is what you reach for daily.</li>
