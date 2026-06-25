@@ -26,6 +26,10 @@
   </aside>
   <main class="content"><div class="col">
 <section class="page" id="00-roadmap" data-title="Core Animation Curriculum Roadmap" data-num="·" data-hasdemo="0" data-group=""><h1>Core Animation Curriculum Roadmap</h1>
+<h2>Start here — the plain idea</h2>
+<p>Core Animation is the layer of code that actually puts pixels on the screen, no matter which framework you write in. Think of UIKit and SwiftUI as two different remote controls — but they both end up talking to the same TV. That TV is Core Animation.</p>
+<p>This roadmap is just the map of the territory. The big idea to hold onto: when you write <code>UIView.animate</code> or a SwiftUI <code>.animation()</code>, you're not doing the animating yourself — you're filling out a request form that gets handed down to Core Animation, which hands it to a separate render process, which hands it to the GPU. This course walks down that chain so the "magic" stops being magic.</p>
+<p>You don't need to memorize the lesson list. Just know there's a single road: pixels first (how rendering works), then the box that holds a picture (CALayer), then making that box move (animations).</p>
 <p>This curriculum takes you from zero to mastery of Core Animation — the rendering engine that powers every pixel on iOS, macOS, tvOS, and watchOS. Whether you see a UIKit view animate across the screen or a SwiftUI transition dissolve, Core Animation is doing the heavy lifting underneath.</p>
 <hr />
 <h2>Why Core Animation?</h2>
@@ -301,8 +305,21 @@
 <li>[x] I understand that Core Animation is the rendering engine beneath both UIKit and SwiftUI</li>
 <li>[x] I have Xcode installed and can run a single-view iOS project or playground</li>
 <li>[x] I know where to find cross-linked lessons in Learning-Swift, Learning-SwiftUI, and Learning-Shaders</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Core Animation</strong> = the one piece of plumbing every visual framework drains into; master it and you understand iOS rendering.</li>
+<li><strong>UIKit / SwiftUI animations</strong> = friendly remote controls that secretly build Core Animation requests for you.</li>
+<li><strong>CALayer tree</strong> = the description of what's on screen that your code builds and hands off — not the pixels themselves.</li>
+<li><strong>Render server + GPU</strong> = the crew downstream that turns your description into actual light on the display.</li>
+<li><strong>The 6 parts</strong> = a single path: see how pixels happen, learn the layer, then learn to move the layer.</li>
+<li><strong>Prerequisite mindset</strong> = you describe <em>what</em> you want; the system figures out <em>when</em> and <em>how</em>.</li>
 </ul><div class="pager"><span class="sp"></span><a href="#01-how-rendering-works"><span>Next</span>How Rendering Works →</a></div></section>
 <section class="page" id="01-how-rendering-works" data-title="How Rendering Works" data-num="01" data-hasdemo="0" data-group=""><h1>How Rendering Works</h1>
+<h2>Start here — the plain idea</h2>
+<p>Here's the thing that trips everyone up: your app doesn't actually draw to the screen. It never touches a single pixel. Instead, your app writes a <em>to-do list</em> — "this box is here, that one is half-transparent, this color is blue" — and slides that list under the door to a completely separate program. That other program (the render server) does the real drawing on the GPU.</p>
+<p>Think of it like ordering at a restaurant. You don't go into the kitchen and cook; you write down what you want and hand the ticket to the kitchen. The big payoff: the moment you hand off the ticket, you're free. Your app can move on to the next thing while the kitchen is still plating the last order. That hand-off is exactly why animations stay smooth even when your code is briefly busy.</p>
+<p>Almost everything in this lesson is a consequence of that one split: your app describes, someone else draws. The phases, the three layer trees, the "commit" — they're all just the machinery of writing a clean ticket and passing it along once per frame.</p>
 <p>Before writing a single animation, you need to understand what happens between your code changing a property and photons hitting the user's retina. This lesson maps the entire iOS rendering pipeline.</p>
 <hr />
 <h2>The Rendering Pipeline</h2>
@@ -529,8 +546,23 @@ link.add(to: .main, forMode: .common)
 <li>[x] I can list at least three triggers for off-screen rendering</li>
 <li>[x] I understand that the render server is a separate process and why that matters for animation smoothness</li>
 <li>[x] I can use CADisplayLink to synchronize work with the display refresh rate</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Render pipeline</strong> = the assembly line from "your code changes a property" to "light hits the eye"; your app is only the first station.</li>
+<li><strong>The four phases (Layout, Display, Prepare, Commit)</strong> = build the frame, draw any custom stuff, get images ready, then ship the whole ticket at once.</li>
+<li><strong>Commit</strong> = the single hand-off at the end of the run loop; that's why three property changes travel together, not separately.</li>
+<li><strong>Model layer</strong> = where you <em>want</em> things to end up (the final value your code sets).</li>
+<li><strong>Presentation layer</strong> = where things <em>actually are</em> right now mid-animation; ask it via <code>presentation()</code>.</li>
+<li><strong>Render layer</strong> = the kitchen's private copy in the render server that the GPU actually paints — you can't touch it.</li>
+<li><strong>Off-screen rendering</strong> = forcing the GPU to draw to a scratch canvas first, then copy it over; expensive because it happens every frame.</li>
+<li><strong>Frame budget</strong> = the deadline (16.67ms at 60Hz, 8.33ms at 120Hz); miss it and the user sees jank.</li>
 </ul><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Core Animation Curriculum Roadmap</a><a href="#02-calayer-fundamentals"><span>Next</span>CALayer Fundamentals →</a></div></section>
 <section class="page" id="02-calayer-fundamentals" data-title="CALayer Fundamentals" data-num="02" data-hasdemo="0" data-group=""><h1>CALayer Fundamentals</h1>
+<h2>Start here — the plain idea</h2>
+<p>A CALayer is just a lightweight box that holds a picture and some properties; the view is the heavy thing, the layer is what actually gets drawn. Every <code>UIView</code> you've ever used is secretly carrying one of these boxes around — when you set the view's background color, the view quietly turns around and sets it on its layer.</p>
+<p>So why care about the box directly? Because the view comes with a lot of baggage it doesn't always need: touch handling, accessibility, the responder chain, Auto Layout. If all you want is something pretty on screen — a colored shape, a shadow, an image — a bare layer is the cheaper tool. It's like the difference between hiring a full employee versus printing a poster. The poster can't answer the phone, but if you only need it to look good on the wall, that's fine.</p>
+<p>One thing to tuck away early: a layer is a <em>class</em>, a reference type. Two variables pointing at the same layer point at the <em>same box</em> — change it through one and the other sees it too. That bites people, so notice it now.</p>
 <p>CALayer is the fundamental unit of visual content in Core Animation. Every <code>UIView</code> is backed by a CALayer. But layers can also exist independently — and understanding them directly unlocks the full power of the rendering engine.</p>
 <hr />
 <h2>What Is CALayer?</h2>
@@ -809,8 +841,23 @@ DispatchQueue.global().async {
 <li>[x] I understand that layers don't handle touches or accessibility</li>
 <li>[x] I know that layer properties must be set on the main thread</li>
 <li>[x] I can list at least 10 key CALayer properties from memory</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>CALayer</strong> = a lightweight box that holds a bitmap plus geometry and visual properties; cheaper than a view.</li>
+<li><strong>Backing store</strong> = the actual bitmap inside the box that the GPU composites onto the screen.</li>
+<li><strong>Every UIView has a layer</strong> = the view is a thin wrapper; <code>view.alpha</code> is really just <code>layer.opacity</code> underneath.</li>
+<li><strong>Standalone layer</strong> = a layer with no view attached — perfect for pure decoration that never needs to handle a tap.</li>
+<li><strong>CGColor, not UIColor</strong> = layers are shared across iOS and macOS, so they speak the cross-platform color type.</li>
+<li><strong>CALayerDelegate</strong> = the hook where you do custom Core Graphics drawing for a layer's contents.</li>
+<li><strong>setNeedsDisplay()</strong> = "this box is dirty, redraw it next cycle" — batched, so ten calls still draw once.</li>
+<li><strong>Reference type</strong> = layers are classes; two variables can point at the very same box.</li>
 </ul><div class="pager"><a href="#01-how-rendering-works"><span>Prev</span>← How Rendering Works</a><a href="#03-layer-geometry"><span>Next</span>Layer Geometry →</a></div></section>
 <section class="page" id="03-layer-geometry" data-title="Layer Geometry" data-num="03" data-hasdemo="1" data-group=""><h1>Layer Geometry</h1><div class="demo-mount" data-demo="ca-geometry"></div>
+<h2>Start here — the plain idea</h2>
+<p>Here's the mental model that makes all of this click: a layer is held up by a single pin. The <code>position</code> is where the pin is stuck into the parent. The <code>anchorPoint</code> is <em>where on the layer</em> that pin pokes through — dead center by default, but you can move it to a corner. The <code>bounds</code> is just how big the layer is. Everything about where a layer sits comes from those three facts.</p>
+<p>And <code>frame</code>? Frame is <em>not real</em>. It's not stored anywhere — it's a convenience that the system calculates on the fly from the pin location, the pin's spot on the layer, and the size. Think of it as a derived readout, like a speedometer: useful to glance at, but it's reporting something, not controlling it. This is why frame goes haywire the moment you rotate a layer — a tilted box doesn't have a clean upright rectangle anymore.</p>
+<p>Once "position is where the pin is, anchorPoint is where the pin goes through the layer" lives in your head, the famous gotcha (move the anchorPoint and the layer jumps) stops being surprising — you moved the hole, not the pin, so the box swings to a new spot.</p>
 <p>Understanding layer geometry is understanding where things appear on screen and why. The relationship between <code>bounds</code>, <code>position</code>, <code>anchorPoint</code>, and <code>frame</code> is the single most important spatial concept in Core Animation.</p>
 <hr />
 <h2>The Four Geometry Properties</h2>
@@ -1042,8 +1089,23 @@ layerA.zPosition = 1  // Now red draws on top of blue
 <li>[x] I understand <code>hitTest(_:)</code> and <code>contains(_:)</code> for layer-level hit detection</li>
 <li>[x] I know that <code>zPosition</code> affects visual ordering but not the sublayers array</li>
 <li>[x] I can use <code>contentsCenter</code> for 9-slice stretching</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>bounds</strong> = the layer's own size and internal coordinate system; how big it thinks it is.</li>
+<li><strong>position</strong> = where the layer's pin is stuck into the parent's coordinate space.</li>
+<li><strong>anchorPoint</strong> = where on the layer (0–1, default center) that pin pokes through.</li>
+<li><strong>frame</strong> = a derived readout computed from the other three; not stored, and meaningless once you rotate or scale.</li>
+<li><strong>The anchorPoint gotcha</strong> = moving the anchor moves the layer, because the pin stayed put but now goes through a different hole — recompute position to hold it still.</li>
+<li><strong>convert(_:from:)</strong> = translate a point or rect between two layers' coordinate spaces.</li>
+<li><strong>hitTest(_:)</strong> = "which layer is under this point" — walks the tree and returns the deepest match; ignores user-interaction flags.</li>
+<li><strong>zPosition</strong> = changes who draws on top without reordering the sublayers array.</li>
 </ul><div class="pager"><a href="#02-calayer-fundamentals"><span>Prev</span>← CALayer Fundamentals</a><a href="#04-layer-contents"><span>Next</span>Layer Contents →</a></div></section>
 <section class="page" id="04-layer-contents" data-title="Layer Contents" data-num="04" data-hasdemo="0" data-group=""><h1>Layer Contents</h1>
+<h2>Start here — the plain idea</h2>
+<p>A layer is basically an empty picture frame. This lesson is all about the different ways to slide a picture into that frame. The simplest way is to hand it a finished image (a <code>CGImage</code>) — like dropping a printed photo into the frame. The other way is to draw the picture yourself, stroke by stroke, with Core Graphics — like painting directly onto the canvas inside the frame.</p>
+<p>The properties around <code>contents</code> are just the framing controls. <code>contentsGravity</code> is "how should the photo sit in the frame — stretched, centered, cropped?" <code>contentsRect</code> is "only show <em>this corner</em> of the photo" (which is the whole trick behind sprite sheets — one image, show one tile at a time). <code>contentsScale</code> is the easy-to-forget one: it tells the layer how many real pixels live in each point, and forgetting it is the number one reason a layer looks blurry on a Retina screen.</p>
+<p><code>shouldRasterize</code> is a different idea: "this picture is expensive to draw and it isn't changing, so draw it once and photocopy the result." Great for static complexity, terrible for anything that animates — because then you're re-photocopying every frame.</p>
 <p>A layer is a rectangle of visual content. This lesson covers every way to get content <em>into</em> that rectangle — from assigning images to drawing with Core Graphics to rasterization for performance.</p>
 <hr />
 <h2>The <code>contents</code> Property</h2>
@@ -1349,8 +1411,22 @@ complexLayer.rasterizationScale = UIScreen.main.scale  // IMPORTANT!
 <li>[x] I can draw custom content via <code>CALayerDelegate.draw(_:in:)</code> or a CALayer subclass</li>
 <li>[x] I understand <code>shouldRasterize</code> — when it helps, when it hurts, and the memory cost</li>
 <li>[x] I know the difference between <code>setNeedsDisplay()</code> and <code>displayIfNeeded()</code></li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>contents</strong> = the picture in the frame; you hand it a <code>CGImage</code>, not a <code>UIImage</code>.</li>
+<li><strong>contentsScale</strong> = pixels per point; set it or your layer looks blurry on Retina — the #1 gotcha.</li>
+<li><strong>contentsGravity</strong> = how the picture sits in the frame: stretch, fit, fill, or pin to an edge.</li>
+<li><strong>contentsRect</strong> = "show only this slice of the image" (0–1 coords); the engine behind sprite sheets.</li>
+<li><strong>contentsCenter</strong> = 9-slice stretching — corners stay crisp while the middle stretches.</li>
+<li><strong>Custom drawing</strong> = paint the picture yourself with Core Graphics, via a delegate or a CALayer subclass.</li>
+<li><strong>shouldRasterize</strong> = draw the expensive thing once and reuse the photocopy; only worth it when the content holds still.</li>
 </ul><div class="pager"><a href="#03-layer-geometry"><span>Prev</span>← Layer Geometry</a><a href="#05-layer-appearance"><span>Next</span>Layer Appearance →</a></div></section>
 <section class="page" id="05-layer-appearance" data-title="Layer Appearance" data-num="05" data-hasdemo="0" data-group=""><h1>Layer Appearance</h1>
+<h2>Start here — the plain idea</h2>
+<p>This lesson is the styling toolbox: color, rounded corners, borders, shadows, transparency, and masks. Think of it like CSS for a layer — each property is a knob that changes how the box <em>looks</em> without changing what's inside it.</p>
+<p>Two ideas are worth getting straight up front. First, the <em>mask</em>: a mask is just a stencil. Wherever the stencil is solid, the layer shows through; wherever it's see-through, the layer is hidden. The stencil's color doesn't matter at all — only its transparency does. That single rule explains rounded-corner masks, fade-out gradients, and any weird shape you want.</p>
+<p>Second, the recurring villain of this lesson is <em>off-screen rendering</em>. Some effects (a shadow with no <code>shadowPath</code>, group opacity, certain corner-clipping) force the GPU to draw to a scratch pad first and then copy it back — every frame. That's slow. The fix is almost always "tell the GPU the shape ahead of time" (that's what <code>shadowPath</code> does) so it doesn't have to figure it out from scratch. The famous two-layer shadow trick exists for the same reason: clipping and shadowing fight each other, so you split them across two layers.</p>
 <p>This lesson covers every visual property you can set on a CALayer to control its look — colors, corners, borders, shadows, opacity, and masks. You'll also learn the critical performance considerations and the classic two-layer shadow trick.</p>
 <hr />
 <h2>backgroundColor</h2>
@@ -1646,8 +1722,23 @@ broken.shadowOpacity = 0.3     // shadow is ALSO clipped! invisible!
 <li>[x] I can implement the two-layer trick for rounded corners + shadows</li>
 <li>[x] I know what <code>isOpaque</code> does (performance hint, not visual change)</li>
 <li>[x] I understand <code>opacity</code> and group opacity considerations</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>backgroundColor / borderColor / shadowColor</strong> = all take <code>CGColor</code>, because layers are cross-platform.</li>
+<li><strong>cornerRadius</strong> = rounds corners; on its own it only rounds the background and border, not the content.</li>
+<li><strong>masksToBounds</strong> = the clip switch; turn it on to actually trim sublayers and content to the rounded shape.</li>
+<li><strong>cornerCurve = .continuous</strong> = Apple's "squircle"; smoother than a plain circular arc, the native-feeling choice.</li>
+<li><strong>shadowPath</strong> = hand the GPU the shadow's shape so it stops recomputing it every frame — the cheap-shadow fix.</li>
+<li><strong>mask</strong> = a stencil layer; its alpha decides what shows through, its color is irrelevant.</li>
+<li><strong>isOpaque</strong> = a performance promise ("no transparent pixels here"), not a visual change.</li>
+<li><strong>Two-layer shadow trick</strong> = clipping and shadows conflict, so put the shadow on an outer layer and the clipped content on an inner one.</li>
 </ul><div class="pager"><a href="#04-layer-contents"><span>Prev</span>← Layer Contents</a><a href="#06-sublayer-management"><span>Next</span>Sublayer Management →</a></div></section>
 <section class="page" id="06-sublayer-management" data-title="Sublayer Management" data-num="06" data-hasdemo="0" data-group=""><h1>Sublayer Management</h1>
+<h2>Start here — the plain idea</h2>
+<p>Layers are organized like a family tree, or like nested folders. Every layer can hold child layers inside it, and each child knows its one parent. When you build any real interface — a card with a header, body, and avatar — you're really just arranging this tree.</p>
+<p>The one rule that controls <em>who covers whom</em> is dead simple: layers are painted in the order they sit in the <code>sublayers</code> list, back to front. The last one added paints last, so it lands on top — exactly like stacking sheets of paper. If you want to cheat that order without rearranging the list, <code>zPosition</code> is the override: bump a layer's zPosition and it floats to the front visually while staying put in the array.</p>
+<p>Two niceties worth knowing the <em>purpose</em> of: <code>layoutSublayers()</code> is the spot where you reposition children when the parent resizes (so your card adapts to any size), and <code>sublayerTransform</code> is a single transform applied to <em>all</em> children at once — its main job is faking 3D perspective for a whole group instead of setting it on each child.</p>
 <p>Layers form a tree — every layer can have sublayers, and every sublayer has exactly one superlayer. Managing this tree is how you compose complex visual hierarchies. This lesson covers adding, removing, ordering, and laying out sublayers.</p>
 <hr />
 <h2>Adding Sublayers</h2>
@@ -1973,8 +2064,23 @@ view.layer.printTree()
 <li>[x] I know that <code>superlayer</code> is a weak reference and <code>sublayers</code> holds strong references</li>
 <li>[x] I can use <code>sublayerTransform</code> to apply perspective to all sublayers</li>
 <li>[x] I can debug a layer tree by printing its hierarchy</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Layer tree</strong> = nested boxes; every layer has many children but exactly one parent.</li>
+<li><strong>sublayers array</strong> = the child list, and its order <em>is</em> the paint order: later = on top.</li>
+<li><strong>addSublayer / insertSublayer</strong> = put a child in the tree, optionally above/below a sibling or at an index.</li>
+<li><strong>removeFromSuperlayer()</strong> = pull a child out; if nothing else holds it, it's gone.</li>
+<li><strong>superlayer is weak, sublayers is strong</strong> = parents own children, children just point back — so the tree doesn't leak.</li>
+<li><strong>zPosition</strong> = visually reshuffle who's on top without touching the array order.</li>
+<li><strong>layoutSublayers()</strong> = the hook to reposition children when the parent's size changes.</li>
+<li><strong>sublayerTransform</strong> = one transform applied to every child at once; the usual trick for group 3D perspective.</li>
 </ul><div class="pager"><a href="#05-layer-appearance"><span>Prev</span>← Layer Appearance</a><a href="#07-implicit-animations"><span>Next</span>Implicit Animations →</a></div></section>
 <section class="page" id="07-implicit-animations" data-title="Implicit Animations" data-num="07" data-hasdemo="0" data-group=""><h1>Implicit Animations</h1>
+<h2>Start here — the plain idea</h2>
+<p>Implicit animation = change a layer property and Core Animation tweens it for you, no code. Set a standalone layer's color to red and it doesn't snap — it <em>fades</em> to red over a quarter second, automatically. That's the "implicit" part: you never asked for an animation, you just changed a value, and the system filled in all the in-between frames.</p>
+<p>What's really happening under the hood is a tiny lookup. Every time you set an animatable property, the layer quietly asks, "is there an <em>action</em> I should run for this change?" If it finds one (and by default it does), it builds an animation from the old value to the new value and plays it. Think of it as the layer having a standing instruction: "whenever my color changes, ease into it."</p>
+<p>This also explains the famous surprise: <code>view.layer.opacity = 0</code> doesn't animate, but a standalone layer's does. The reason is that UIView deliberately answers "no action" to that lookup — it wants you to use <code>UIView.animate</code> instead. So implicit animations are alive and well; UIView just mutes them on its own layer.</p>
 <p>Core Animation was designed around a radical idea: changing a property should animate automatically. When you set a layer's <code>opacity</code> to <code>0.0</code>, it doesn't snap -- it fades. This behavior is called an implicit animation, and it is the default for every standalone <code>CALayer</code>.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/02-calayer-fundamentals.md">02-calayer-fundamentals.md</a> -- this lesson builds on the layer properties introduced there.</p>
@@ -2234,8 +2340,23 @@ layer.opacity = 0.5  // Should print &quot;Property changed: opacity&quot;
 <li>[x] I can disable specific implicit animations using the actions dictionary with NSNull</li>
 <li>[x] I understand how UIView.animate creates a CATransaction and modifies the action search internally</li>
 <li>[x] I can customize implicit animation duration with CATransaction.setAnimationDuration</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Implicit animation</strong> = change an animatable property and the system tweens it for you, no animation code.</li>
+<li><strong>Default duration</strong> = 0.25 seconds; that's the quiet quarter-second behind every automatic fade and slide.</li>
+<li><strong>Animatable properties</strong> = position, bounds, opacity, backgroundColor, cornerRadius, transform, shadows… (isHidden, name, etc. don't).</li>
+<li><strong>CAAction lookup</strong> = on every property change the layer asks "is there an action for this?"; finding one means an animation runs.</li>
+<li><strong>Action search order</strong> = delegate, then <code>actions</code> dict, then <code>style</code>, then the class default.</li>
+<li><strong>Why UIView layers don't animate</strong> = the view's delegate answers <code>NSNull()</code> ("no action") so it can steer you to <code>UIView.animate</code>.</li>
+<li><strong>Disable with NSNull()</strong> = drop <code>NSNull()</code> into the <code>actions</code> dictionary for a key to mute that one property's animation.</li>
+<li><strong>CATransaction</strong> = the wrapper for turning all implicit animations off, or for changing their duration.</li>
 </ul><div class="pager"><a href="#06-sublayer-management"><span>Prev</span>← Sublayer Management</a><a href="#08-catransaction"><span>Next</span>CATransaction →</a></div></section>
 <section class="page" id="08-catransaction" data-title="CATransaction" data-num="08" data-hasdemo="0" data-group=""><h1>CATransaction</h1>
+<h2>Start here — the plain idea</h2>
+<p>A CATransaction is just an envelope. You stuff a bunch of layer changes into it, seal it, and Core Animation delivers them all together in one frame. Without an envelope, changes might trickle out one at a time and the screen would tear or flicker. Think of it like saving a document: you make a batch of edits, then hit save once — everything lands at the same moment.</p>
+<p>Here's the part people don't realize: you're <em>always</em> inside an envelope, even when you don't make one. Every run loop tick, Core Animation quietly opens an implicit transaction, collects everything you changed, and commits it at the end. So when three property changes animate together "for free," that's the implicit envelope doing its job.</p>
+<p>You only reach for an <em>explicit</em> transaction (<code>begin()</code> … <code>commit()</code>) when you want to set the rules on that envelope: make the animations last longer, give them an easing curve, turn animation off entirely for setup code, or run a completion block when they finish. And the punchline: <code>UIView.animate</code> is literally a friendly wrapper that opens one of these envelopes for you.</p>
 <p>Every property change you make on a <code>CALayer</code> is part of a transaction. <code>CATransaction</code> is the mechanism Core Animation uses to batch property changes into atomic commits, ensuring that related changes are rendered together in the same frame. Without transactions, each property change would render independently, causing visual tearing and inconsistency.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/07-implicit-animations.md">07-implicit-animations.md</a> -- implicit animations rely on transactions to control their timing and behavior.</p>
@@ -2501,8 +2622,24 @@ CATransaction.unlock()
 <li>[x] I understand nested transactions and how inner settings override outer ones</li>
 <li>[x] I know the relationship between UIView.animate and CATransaction</li>
 <li>[x] I understand that setAnimationDuration only affects implicit animations, not explicit CABasicAnimations</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>CATransaction</strong> = an envelope that batches layer changes so they commit together in one frame.</li>
+<li><strong>Implicit transaction</strong> = the envelope the run loop opens for you automatically every cycle; you're always in one.</li>
+<li><strong>Explicit transaction</strong> = <code>begin()</code> … <code>commit()</code>, used when you want to set the envelope's rules.</li>
+<li><strong>setAnimationDuration</strong> = how long the implicit animations in this envelope last (default 0.25s).</li>
+<li><strong>setAnimationTimingFunction</strong> = the easing curve (linear, easeIn, easeOut, easeInEaseOut) for the batch.</li>
+<li><strong>setDisableActions(true)</strong> = "no animations in this envelope" — the standard move for initial layer setup.</li>
+<li><strong>setCompletionBlock</strong> = code that runs once after the longest animation in the envelope finishes.</li>
+<li><strong>Nesting</strong> = inner envelopes inherit outer settings unless they override; every <code>begin()</code> needs a <code>commit()</code>.</li>
+<li><strong>UIView.animate</strong> = a convenience wrapper that opens a CATransaction and rewires the action lookup behind the scenes.</li>
 </ul><div class="pager"><a href="#07-implicit-animations"><span>Prev</span>← Implicit Animations</a><a href="#09-cabasicanimation"><span>Next</span>CABasicAnimation →</a></div></section>
 <section class="page" id="09-cabasicanimation" data-title="CABasicAnimation" data-num="09" data-hasdemo="0" data-group=""><h1>CABasicAnimation</h1>
+<h2>Start here — the plain idea</h2>
+<p><code>CABasicAnimation</code> is you taking the wheel. Implicit animations animate for you automatically; here you fill out the form yourself: "animate <em>this</em> property, from <em>here</em>, to <em>there</em>, over <em>this long</em>," then hand the form to the layer. That's the whole object — a from, a to, a duration, and a key path naming the property to move.</p>
+<p>The one idea that will save you hours is the model-vs-presentation split. When you add an animation, it only paints the <em>presentation</em> layer — the temporary on-screen copy. The real value (the <em>model</em> layer) never changed. So the moment the animation ends, the layer snaps back to where it "truly" was, and beginners think their code is broken. It isn't. The fix is simple: also set the property on the model layer to its final value, so when the animation lifts, there's nothing to snap back to. Think of the animation as a movie playing over a still photo — when the movie ends, you see the photo, so make sure the photo already shows the ending.</p>
+<p>Everything fancier — springs, keyframes, groups — is built on this same form. Learn this one well.</p>
 <p><code>CABasicAnimation</code> is the explicit animation workhorse of Core Animation. Unlike implicit animations where you just change a property, explicit animations give you full control: you create an animation object, configure its parameters, and add it to a layer. This is the foundation that <code>CASpringAnimation</code>, <code>CAKeyframeAnimation</code>, and <code>CAAnimationGroup</code> all build upon.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/12-animation-basics.md">12-animation-basics.md</a> -- SwiftUI's animation system creates Core Animation objects under the hood.</p>
@@ -2869,8 +3006,23 @@ See <a href="../Learning-CoreAnimation/11-caspringanimation.md">11-caspringanima
 <li>[x] I can use CAAnimationDelegate to respond to animation start and stop events</li>
 <li>[x] I can add, query, and remove animations by key</li>
 <li>[x] I understand isAdditive and why it matters for interruptible animations</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>CABasicAnimation</strong> = an explicit animation form: one property, a from, a to, a duration.</li>
+<li><strong>keyPath</strong> = the property to animate ("opacity", "position", "transform.scale"); not the same as the <code>forKey</code> label.</li>
+<li><strong>fromValue / toValue / byValue</strong> = the endpoints; toValue-only means "from wherever it is now."</li>
+<li><strong>Model layer</strong> = the true value your code sets; <strong>presentation layer</strong> = the temporary on-screen copy the animation paints.</li>
+<li><strong>The jump-back problem</strong> = the layer snaps back at the end because only the presentation layer moved — the model never did.</li>
+<li><strong>Fix 1</strong> = set the property to its final value on the model layer <em>before</em> adding the animation; do this, not fillMode hacks.</li>
+<li><strong>CAAnimationDelegate</strong> = callbacks for start/stop; the <code>finished</code> flag tells you if it completed or was interrupted.</li>
+<li><strong>isAdditive</strong> = the animation's values are added onto the model value, so interrupted animations compose instead of snapping.</li>
 </ul><div class="pager"><a href="#08-catransaction"><span>Prev</span>← CATransaction</a><a href="#10-cakeyframeanimation"><span>Next</span>CAKeyframeAnimation →</a></div></section>
 <section class="page" id="10-cakeyframeanimation" data-title="CAKeyframeAnimation" data-num="10" data-hasdemo="1" data-group=""><h1>CAKeyframeAnimation</h1><div class="demo-mount" data-demo="ca-keyframe"></div>
+<h2>Start here — the plain idea</h2>
+<p>If <code>CABasicAnimation</code> is "go from A to B," then <code>CAKeyframeAnimation</code> is "hit these stops along the way: A, then C, then F, then B." You hand it a <em>list</em> of values and it walks through all of them in order. Think of it like setting waypoints on a road trip instead of just a start and a destination.</p>
+<p>Two extra dials make it powerful. <code>keyTimes</code> lets you say <em>when</em> each stop happens (spend 80% of the time on the first leg, then rush the rest) — it's like marking each waypoint with a clock time. And instead of a list of values, you can hand it an actual <em>path</em> (a <code>CGPath</code>) and the layer will ride along it like a train on a track — perfect for arcs, orbits, and figure-eights.</p>
+<p>The classic uses fall right out of this: a shake is just a list of left-right wiggles; a bounce is a list of heights that get smaller; a blinking cursor is "discrete mode" — no smooth blending, just snap between on and off. Same tool, different waypoints.</p>
 <p><code>CABasicAnimation</code> interpolates between two values. <code>CAKeyframeAnimation</code> interpolates through an arbitrary number of values, giving you frame-by-frame control over the animation curve. You can also animate along a <code>CGPath</code>, making it the go-to tool for path-based motion, shake effects, and any animation that needs more than a simple A-to-B transition.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/09-cabasicanimation.md">09-cabasicanimation.md</a> -- CAKeyframeAnimation inherits from CAPropertyAnimation, the same parent as CABasicAnimation.</p>
@@ -3134,8 +3286,23 @@ layer.add(group, forKey: &quot;moveAndFade&quot;)
 <li>[x] I can build a shake animation using transform.translation.x keyframes</li>
 <li>[x] I can apply per-segment timing functions (one fewer than the number of values)</li>
 <li>[x] I understand that path animations override values for position-based key paths</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>CAKeyframeAnimation</strong> = animate through a list of waypoint values, not just A-to-B.</li>
+<li><strong>values</strong> = the ordered stops the property passes through.</li>
+<li><strong>keyTimes</strong> = when each stop happens (0 to 1); must start at 0, end at 1, and match the values count.</li>
+<li><strong>path</strong> = ride the layer along a <code>CGPath</code> like a train on a track — ideal for arcs and orbits.</li>
+<li><strong>rotationMode = .rotateAuto</strong> = turn the layer to face the direction it's traveling.</li>
+<li><strong>calculationMode</strong> = how to blend between stops: linear, discrete (snap), paced (constant speed), cubic (smooth).</li>
+<li><strong>timingFunctions</strong> = a separate easing curve per segment; one fewer than the number of values.</li>
+<li><strong>transform.translation trick</strong> = animate translation (which resets to 0) for shakes, so you skip updating the model layer.</li>
 </ul><div class="pager"><a href="#09-cabasicanimation"><span>Prev</span>← CABasicAnimation</a><a href="#11-caspringanimation"><span>Next</span>CASpringAnimation →</a></div></section>
 <section class="page" id="11-caspringanimation" data-title="CASpringAnimation" data-num="11" data-hasdemo="1" data-group=""><h1>CASpringAnimation</h1><div class="demo-mount" data-demo="spring"></div>
+<h2>Start here — the plain idea</h2>
+<p>A <code>CASpringAnimation</code> is what you reach for when you want motion that feels <em>alive</em> instead of mechanical. With a basic animation you describe the curve directly ("ease in, ease out"). With a spring you don't draw the curve at all — you describe a tiny physics toy (a weight on a spring) and let the simulation produce the curve for you. That's why springs feel natural: real things move like this.</p>
+<p>There are only four dials, and they map to physical intuition. <code>mass</code> is how heavy the thing is (heavy = slow and lumbering). <code>stiffness</code> is how strong the spring is (stiff = snappy). <code>damping</code> is friction (low = lots of bouncing, high = it just glides in and stops). <code>initialVelocity</code> is how fast it's already moving when the animation starts — which is the secret to handing a flick gesture off to a spring without a visible hiccup.</p>
+<p>One rule to internalize early: let the spring decide how long it runs. Set <code>duration = settlingDuration</code> and the system computes exactly when the bouncing has died down. Pick a number yourself and you'll either cut the bounce off mid-air or leave it sitting still wasting time.</p>
 <p><code>CASpringAnimation</code> simulates a physical spring attached to a layer property. Instead of defining an animation curve mathematically, you define physical properties -- mass, stiffness, damping, and initial velocity -- and the simulation produces natural, organic motion. This is the same physics engine that powers UIKit's spring animations and SwiftUI's <code>.spring()</code> modifier.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/09-cabasicanimation.md">09-cabasicanimation.md</a> -- CASpringAnimation is a subclass of CABasicAnimation, so everything from that lesson applies here.</p>
@@ -3376,8 +3543,23 @@ spring.duration = spring.settlingDuration
 <li>[x] I can apply common spring presets for buttons, transitions, and Apple-like feels</li>
 <li>[x] I can use gesture velocity as initialVelocity for seamless gesture-to-animation handoff</li>
 <li>[x] I can convert between SwiftUI spring parameters (response, dampingFraction) and CA spring parameters</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>CASpringAnimation</strong> = describe a physics toy (weight on a spring) and let the simulation draw the motion curve.</li>
+<li><strong>mass</strong> = how heavy it is; heavier means slower, more lumbering motion.</li>
+<li><strong>stiffness</strong> = how strong the spring pull is; stiffer means snappier.</li>
+<li><strong>damping</strong> = friction; low damping bounces a lot, high damping glides in without overshoot.</li>
+<li><strong>initialVelocity</strong> = how fast it's already moving at the start — the trick for seamless gesture-to-spring handoff.</li>
+<li><strong>settlingDuration</strong> = the system-computed "how long until the bouncing dies down"; always use it as the duration.</li>
+<li><strong>Damping ratio</strong> = damping / (2·√(mass·stiffness)); under 1 bounces, exactly 1 is the fastest no-overshoot, over 1 is sluggish.</li>
+<li><strong>CA damping vs UIKit dampingRatio</strong> = different numbers; UIKit/SwiftUI take a 0–1 ratio, CA takes the raw coefficient — convert between them.</li>
 </ul><div class="pager"><a href="#10-cakeyframeanimation"><span>Prev</span>← CAKeyframeAnimation</a><a href="#12-caanimationgroup"><span>Next</span>CAAnimationGroup →</a></div></section>
 <section class="page" id="12-caanimationgroup" data-title="CAAnimationGroup" data-num="12" data-hasdemo="0" data-group=""><h1>CAAnimationGroup</h1>
+<h2>Start here — the plain idea</h2>
+<p>A single animation moves one property. But real UI moments — a card appearing, a spinner spinning — usually move several things at once: it fades <em>and</em> scales <em>and</em> slides. A <code>CAAnimationGroup</code> is just a bag you drop several animations into so they play as one coordinated unit, sharing a clock and a single finish line. Think of it like a conductor in front of an orchestra: each player (animation) has its own part, but they all start and stop on the conductor's beat.</p>
+<p>The group's <code>duration</code> is that master clock. A sub-animation that's shorter finishes early and waits; one that's longer gets cut off when the clock runs out. And here's the trick that makes groups feel designed rather than dumped-together: <code>beginTime</code> lets you delay individual animations so they cascade — fade first, then scale a beat later, then slide — instead of everything firing at once. That tiny stagger is the difference between "amateur" and "Apple."</p>
+<p>Two reusable ideas ride along in this lesson. <code>speed</code>/<code>timeOffset</code> let you pause and scrub an animation like a video player. And <em>additive</em> animations ("move by this much from wherever you are, ending at zero offset") are the secret to interruptible motion — tap again mid-flight and it redirects smoothly instead of snapping.</p>
 <p>Individual animations target a single property. <code>CAAnimationGroup</code> lets you synchronize multiple animations -- position, scale, opacity, color -- so they play together as a coordinated unit with shared timing, a single completion callback, and the ability to stagger start times. Any <code>CAAnimation</code> subclass can be included: <code>CABasicAnimation</code>, <code>CAKeyframeAnimation</code>, <code>CASpringAnimation</code>, or even nested groups.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/09-cabasicanimation.md">09-cabasicanimation.md</a>, <a href="../Learning-CoreAnimation/10-cakeyframeanimation.md">10-cakeyframeanimation.md</a>, and <a href="../Learning-CoreAnimation/11-caspringanimation.md">11-caspringanimation.md</a> -- groups combine these individual animation types.</p>
@@ -3648,8 +3830,22 @@ moveRelative.isAdditive = true
 <li>[x] I can implement the pause/resume pattern using speed, timeOffset, and beginTime</li>
 <li>[x] I understand additive animations and the "fromValue = -delta, toValue = 0" pattern</li>
 <li>[x] I can build real-world grouped animations like spinners and card reveals</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>CAAnimationGroup</strong> = a bag of animations played as one coordinated unit with a shared clock and finish.</li>
+<li><strong>group duration</strong> = the master clock; shorter sub-animations finish early and hold, longer ones get clipped.</li>
+<li><strong>beginTime</strong> = delay a sub-animation relative to the group's start, so motions cascade instead of firing together.</li>
+<li><strong>repeatCount / autoreverses</strong> = loop or bounce the whole group; each forward+backward pair is one repeat.</li>
+<li><strong>speed</strong> = playback multiplier; 0 pauses, 2 is double-time, 0.5 is slow-mo.</li>
+<li><strong>timeOffset</strong> = jump to a moment in the timeline; with speed 0 it lets you scrub like a video player.</li>
+<li><strong>pause/resume pattern</strong> = freeze with speed 0 + timeOffset, then restore by rebasing beginTime.</li>
+<li><strong>additive animation</strong> = animate an offset that decays to zero so interrupted motions redirect smoothly instead of snapping.</li>
 </ul><div class="pager"><a href="#11-caspringanimation"><span>Prev</span>← CASpringAnimation</a><a href="#13-catransition"><span>Next</span>CATransition →</a></div></section>
 <section class="page" id="13-catransition" data-title="CATransition" data-num="13" data-hasdemo="0" data-group=""><h1>CATransition</h1>
+<h2>Start here — the plain idea</h2>
+<p>Most animations move a thing from A to B — a position, an opacity, a scale. <code>CATransition</code> answers a different question: what do you show when the <em>content itself</em> gets swapped? You had photo A, now you want photo B. There's no number to interpolate between two pictures, so the trick is sleight of hand.</p>
+<p>Think of it as a stage magician's cape. The moment before you change the content, Core Animation snapshots the old look, drapes that snapshot over the layer, then reveals the new content underneath while the snapshot fades, pushes, or curls away. You don't animate the swap; you animate the <em>cover-up of the swap</em>. That's why the pattern is always "add the transition, then change the content" — the transition is the cape going up right before the switch.</p>
 <p><code>CABasicAnimation</code> and <code>CAKeyframeAnimation</code> animate property changes -- a layer moves, fades, or scales. <code>CATransition</code> is a different paradigm: it animates content changes. When you swap an image, change text, or replace a sublayer, a transition provides the visual bridge between old content and new content. Think page curls, pushes, fades, and reveals.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/09-cabasicanimation.md">09-cabasicanimation.md</a> -- CATransition inherits from CAAnimation but operates on layer content rather than individual properties.</p>
@@ -3985,6 +4181,17 @@ layer.contents = newImage
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CATransition</strong> = animates a <em>content</em> swap, not a property change — it's the cape that hides the switch.</li>
+<li><strong>type</strong> = the style of the swap: <code>.fade</code> (cross-dissolve), <code>.moveIn</code>, <code>.push</code>, <code>.reveal</code>.</li>
+<li><strong>subtype</strong> = the direction (<code>.fromLeft</code>, <code>.fromRight</code>, <code>.fromTop</code>, <code>.fromBottom</code>); <code>.fade</code> ignores it because a dissolve has no direction.</li>
+<li><strong>snapshot mechanism</strong> = Core Animation grabs a picture of the old content, then animates from that picture to the new content underneath.</li>
+<li><strong>kCATransition</strong> = the conventional key so a new transition replaces the old one instead of stacking.</li>
+<li><strong>startProgress / endProgress</strong> = play only a slice of the transition (e.g. start with the new content already 30% in).</li>
+<li><strong>private types</strong> ("cube", "flip", "pageCurl", "rippleEffect") = real but undocumented effects; fine for learning, risky for the App Store.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I understand that CATransition animates content changes, not property changes</li>
@@ -3998,6 +4205,10 @@ layer.contents = newImage
 <li>[x] I can build custom transitions using snapshot layers when built-in types are insufficient</li>
 </ul><div class="pager"><a href="#12-caanimationgroup"><span>Prev</span>← CAAnimationGroup</a><a href="#14-animation-timing"><span>Next</span>Animation Timing →</a></div></section>
 <section class="page" id="14-animation-timing" data-title="Animation Timing" data-num="14" data-hasdemo="1" data-group=""><h1>Animation Timing</h1><div class="demo-mount" data-demo="ca-timing"></div>
+<h2>Start here — the plain idea</h2>
+<p>An animation has two separate questions baked into it: <em>where</em> it goes (0 to 1, start to finish) and <em>how it gets there</em> over time. Timing is all about that second question. A timing function is like a gas pedal — same trip, but you can ease out of the driveway, floor it in the middle, or coast to a gentle stop. Linear motion feels robotic precisely because the pedal never moves.</p>
+<p>The deeper idea is that every layer has its own private clock, and you can mess with that clock. Speed is the playback rate (set it to 0 and time freezes; set it to 0.5 for slow-mo). <code>timeOffset</code> is the scrubber bar — it says "show me the frame at this moment." Freeze the clock with <code>speed = 0</code> and drag <code>timeOffset</code> with your finger, and suddenly you're hand-scrubbing the animation, which is exactly how interactive swipe-to-dismiss works.</p>
+<p><code>fillMode</code> is the side question: what should the layer show <em>before</em> the animation starts and <em>after</em> it ends? By default the animation vanishes on completion and the layer snaps back to its real ("model") value — which surprises everyone the first time.</p>
 <p>Animation timing is the difference between an animation that feels mechanical and one that feels alive. This lesson covers <code>CAMediaTimingFunction</code> for pacing curves and the <code>CAMediaTiming</code> protocol for controlling playback — start time, speed, repetition, fill modes, and the powerful technique of scrubbing animations by hand.</p>
 <hr />
 <h2>CAMediaTimingFunction</h2>
@@ -4234,6 +4445,18 @@ container.addSublayer(child)
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CAMediaTimingFunction</strong> = the gas pedal — a bezier curve that decides the pacing (ease-in, ease-out, linear, or your own control points).</li>
+<li><strong>beginTime</strong> = a delay; <em>when</em> the animation starts on the parent's clock.</li>
+<li><strong>duration</strong> = how long one cycle lasts in seconds.</li>
+<li><strong>speed</strong> = playback rate; 1 is normal, 0.5 is slow-mo, 0 is frozen.</li>
+<li><strong>timeOffset</strong> = the scrubber; which moment of the cycle is showing right now.</li>
+<li><strong>fillMode</strong> = what the layer displays before and after the animation (<code>.backwards</code> shows the start value during a delay; <code>.forwards</code> holds the end value).</li>
+<li><strong>isRemovedOnCompletion</strong> = whether the animation detaches when done; keep it attached only with care, since the real model value hasn't actually changed.</li>
+<li><strong>hierarchical timing</strong> = a parent layer's speed multiplies its children's, so one clock can slow an entire subtree.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can create custom cubic bezier timing functions with control points</li>
@@ -4246,6 +4469,10 @@ container.addSublayer(child)
 <li>[x] I understand hierarchical timing and how parent layer speed affects children</li>
 </ul><div class="pager"><a href="#13-catransition"><span>Prev</span>← CATransition</a><a href="#15-transform-3d"><span>Next</span>3D Transforms →</a></div></section>
 <section class="page" id="15-transform-3d" data-title="3D Transforms" data-num="15" data-hasdemo="1" data-group=""><h1>3D Transforms</h1><div class="demo-mount" data-demo="ca-transform3d"></div>
+<h2>Start here — the plain idea</h2>
+<p>A transform is just a recipe for "take every point of this layer and move it here instead." A 2D transform can shift, scale, and spin flat on the glass. <code>CATransform3D</code> adds a third axis (Z, depth) so layers can also lean toward or away from you. The screen is still flat, of course — Core Animation is faking depth by squishing the far edge smaller, exactly like your eyes do.</p>
+<p>The matrix is a 4x4 grid of numbers, but you almost never touch the numbers — you call helpers like <code>CATransform3DMakeRotation</code>. The one number worth knowing by name is <code>m34</code>: it's the perspective dial. Leave it at 0 and a rotation just looks like a layer getting narrower (flat, lifeless). Set it to a tiny negative value like <code>-1/500</code> and the same rotation suddenly has a near edge and a far edge — real depth. Think of <code>m34</code>'s denominator as how far the viewer is standing from the screen; closer means more dramatic foreshortening.</p>
+<p>Last gotcha: order matters. Combining transforms is matrix multiplication, and "rotate then move" lands somewhere different than "move then rotate" — because rotating first tilts the very axis you're about to move along.</p>
 <p><code>CATransform3D</code> is a 4x4 matrix that positions layers in three-dimensional space. While the screen is flat, Core Animation can simulate perspective projection, letting you build card flips, rotating carousels, and cube transitions entirely on the GPU.</p>
 <hr />
 <h2>CATransform3D Basics</h2>
@@ -4512,6 +4739,18 @@ if CATransform3DIsAffine(transform3D) {
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CATransform3D</strong> = a 4x4 recipe that repositions a layer in 3D space; you use helper functions, not raw numbers.</li>
+<li><strong>CATransform3DIdentity</strong> = "no transform" — the reset state.</li>
+<li><strong>Make functions</strong> (<code>CATransform3DMakeTranslation/Scale/Rotation</code>) = build a fresh transform; the non-Make versions stack onto an existing one.</li>
+<li><strong>m34</strong> = the perspective dial; <code>-1.0 / distance</code> turns flat squishing into real depth.</li>
+<li><strong>CATransform3DConcat</strong> = combine transforms by multiplying — and order changes the result.</li>
+<li><strong>sublayerTransform</strong> = set perspective once on the parent so all children share one vanishing point.</li>
+<li><strong>isDoubleSided</strong> = whether the back of a rotated layer is visible; set <code>false</code> for card flips.</li>
+<li><strong>anchorPoint</strong> = the pivot all transforms rotate and scale around (e.g. left edge = door hinge).</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can create translation, scale, and rotation transforms with <code>CATransform3DMake*</code> functions</li>
@@ -4524,6 +4763,9 @@ if CATransform3DIsAffine(transform3D) {
 <li>[x] I can convert between <code>CATransform3D</code> and <code>CGAffineTransform</code></li>
 </ul><div class="pager"><a href="#14-animation-timing"><span>Prev</span>← Animation Timing</a><a href="#16-cashapelayer"><span>Next</span>CAShapeLayer →</a></div></section>
 <section class="page" id="16-cashapelayer" data-title="CAShapeLayer" data-num="16" data-hasdemo="0" data-group=""><h1>CAShapeLayer</h1>
+<h2>Start here — the plain idea</h2>
+<p>A normal layer shows a bitmap — a grid of pixels you handed it. A <code>CAShapeLayer</code> is different: you give it a <em>path</em> (a vector outline, "go here, curve to there"), and it draws that outline live on the GPU. Because it's math, not pixels, it stays crisp at any size and costs almost nothing to redraw. Think of it as the difference between a photo of a circle and the instruction "draw a circle of radius 50."</p>
+<p>The magic property is <code>strokeEnd</code> (and its partner <code>strokeStart</code>). They're a fraction from 0 to 1 saying "how much of this outline should I actually draw?" Set <code>strokeEnd</code> to 0.5 and you see the first half of the path. Animate it from 0 to 1 and the line appears to draw itself, like an invisible pen tracing the shape. That single trick is the whole secret behind progress rings, signature replays, and the satisfying animated checkmark — you're not moving anything, just revealing more of a path over time.</p>
 <p><code>CAShapeLayer</code> draws vector shapes defined by <code>CGPath</code> objects. Strokes and fills are GPU-accelerated, and key properties like <code>strokeEnd</code> are animatable — making it the go-to layer for progress indicators, custom drawing, and path-based animations.</p>
 <hr />
 <h2>Basics: Path, Fill, and Stroke</h2>
@@ -4771,6 +5013,17 @@ shapeLayer.path = path.cgPath
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CAShapeLayer</strong> = a layer that draws a vector path instead of a bitmap, so it stays crisp at any size and is cheap to redraw.</li>
+<li><strong>path</strong> = the outline to draw, usually built with <code>UIBezierPath</code> then handed over as <code>.cgPath</code>.</li>
+<li><strong>fillColor / strokeColor</strong> = the inside color and the outline color; set either to <code>nil</code> to skip it.</li>
+<li><strong>strokeStart / strokeEnd</strong> = fractions (0–1) of the path that get drawn; animating <code>strokeEnd</code> makes a line draw itself.</li>
+<li><strong>lineCap / lineJoin</strong> = the shape of line ends and corners (<code>.round</code> for a polished look).</li>
+<li><strong>lineDashPattern + lineDashPhase</strong> = dashed strokes; animate the phase for "marching ants."</li>
+<li><strong>fillRule</strong> = <code>.nonZero</code> vs <code>.evenOdd</code> — the latter punches holes where paths overlap (donuts).</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can create a <code>CAShapeLayer</code> with a <code>UIBezierPath</code> and set fill/stroke properties</li>
@@ -4783,6 +5036,9 @@ shapeLayer.path = path.cgPath
 <li>[x] I can build an animated checkmark using path drawing</li>
 </ul><div class="pager"><a href="#15-transform-3d"><span>Prev</span>← 3D Transforms</a><a href="#17-catextlayer"><span>Next</span>CATextLayer →</a></div></section>
 <section class="page" id="17-catextlayer" data-title="CATextLayer" data-num="17" data-hasdemo="0" data-group=""><h1>CATextLayer</h1>
+<h2>Start here — the plain idea</h2>
+<p>A <code>CATextLayer</code> is the bare-metal way to put text on screen. A <code>UILabel</code> is a whole view — it carries accessibility, Auto Layout, touch handling, the entire UIKit lifecycle. A <code>CATextLayer</code> skips all that and just paints letters straight into the layer tree. Think of it as the difference between hiring an employee and renting a vending machine: lighter, faster, but it won't answer questions (no VoiceOver, no constraints).</p>
+<p>Under the hood it works by rasterizing your text into a bitmap once, then letting the GPU composite that bitmap like any other layer. That detail explains the single most common bug: you must set <code>contentsScale = UIScreen.main.scale</code>, or it rasterizes at 1x and looks blurry on every Retina screen. It also explains why changing the <code>string</code> isn't directly animatable — there's no number between "Hello" and "Goodbye" to interpolate, so you reach for a <code>CATransition</code> to fade the swap instead.</p>
 <p><code>CATextLayer</code> renders text directly in the layer tree using hardware-accelerated compositing. It supports plain strings, attributed strings, and multiple alignment and truncation modes. When you need text rendering without the overhead of UIKit views, <code>CATextLayer</code> is the tool.</p>
 <hr />
 <h2>Basic Setup</h2>
@@ -5028,6 +5284,17 @@ textLayer.add(sizeAnim, forKey: &quot;grow&quot;)
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CATextLayer</strong> = a lightweight layer that paints text directly, skipping the whole UIView lifecycle.</li>
+<li><strong>contentsScale</strong> = must equal <code>UIScreen.main.scale</code>, or text rasterizes at 1x and looks blurry on Retina.</li>
+<li><strong>string</strong> = plain text or an <code>NSAttributedString</code> for mixed fonts, colors, and spacing.</li>
+<li><strong>font / fontSize / foregroundColor</strong> = defaults that attributed ranges can override.</li>
+<li><strong>alignmentMode + isWrapped + truncationMode</strong> = how text aligns, wraps, and where the ellipsis lands.</li>
+<li><strong>animating text</strong> = <code>foregroundColor</code> and <code>fontSize</code> are animatable; the <code>string</code> is not, so swap it under a <code>CATransition</code>.</li>
+<li><strong>vs UILabel</strong> = pick CATextLayer for pure layer trees and performance HUDs; pick UILabel when you need accessibility, Auto Layout, or touch.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can create and configure a <code>CATextLayer</code> with font, size, color, and alignment</li>
@@ -5039,6 +5306,9 @@ textLayer.add(sizeAnim, forKey: &quot;grow&quot;)
 <li>[x] I understand that text is rasterized on the CPU and know the performance implications</li>
 </ul><div class="pager"><a href="#16-cashapelayer"><span>Prev</span>← CAShapeLayer</a><a href="#18-cagradientlayer"><span>Next</span>CAGradientLayer →</a></div></section>
 <section class="page" id="18-cagradientlayer" data-title="CAGradientLayer" data-num="18" data-hasdemo="1" data-group=""><h1>CAGradientLayer</h1><div class="demo-mount" data-demo="ca-gradient"></div>
+<h2>Start here — the plain idea</h2>
+<p>A <code>CAGradientLayer</code> is a layer that fills itself with a smooth color ramp — you hand it a list of colors and it blends between them. The key thing to internalize: you're not drawing a gradient or generating a bitmap of one. You're just declaring "go from blue to purple," and the GPU computes every in-between pixel for free during compositing. That's why gradients are one of the cheapest effects you can use — no rasterization, no off-screen pass.</p>
+<p>Two ideas unlock most of it. First, <code>startPoint</code> and <code>endPoint</code> live in <em>unit</em> coordinates — <code>(0,0)</code> is top-left, <code>(1,1)</code> is bottom-right — so the direction scales automatically with the layer and you never recompute it on resize. Second, <code>locations</code> lets you say <em>where</em> along that line each color sits. Push a color's stop around and you slide the band. That second idea is the whole trick behind a shimmer: animate the locations (even past the 0–1 edges) and a bright band appears to slide across, which is exactly how skeleton-loading screens shimmer.</p>
 <p><code>CAGradientLayer</code> renders smooth color transitions directly on the GPU. It supports linear (axial), radial, and conic gradients, and its properties are all animatable — making it the foundation for shimmer effects, gradient masks, and dynamic color transitions.</p>
 <hr />
 <h2>Basic Linear Gradient</h2>
@@ -5271,6 +5541,17 @@ view.layer.addSublayer(gradientLayer)
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CAGradientLayer</strong> = a layer that fills itself with a color ramp, on the GPU, for free.</li>
+<li><strong>colors</strong> = the list of <code>CGColor</code> values to blend between (not <code>UIColor</code>).</li>
+<li><strong>startPoint / endPoint</strong> = direction in unit coordinates (<code>(0,0)</code> top-left → <code>(1,1)</code> bottom-right), so it scales with the layer.</li>
+<li><strong>locations</strong> = where each color stops along that line; slide them to shift the bands.</li>
+<li><strong>type</strong> = <code>.axial</code> (linear), <code>.radial</code> (out from a center), or <code>.conic</code> (sweeping around) — for color wheels and angular progress.</li>
+<li><strong>shimmer trick</strong> = animate <code>locations</code> past the 0–1 edges to slide a highlight across (skeleton loading).</li>
+<li><strong>mask</strong> = use a gradient as a layer's mask for fade-to-transparent edges or gradient-filled text.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can create a <code>CAGradientLayer</code> with colors, locations, and direction</li>
@@ -5282,6 +5563,9 @@ view.layer.addSublayer(gradientLayer)
 <li>[x] I know that gradient layers are GPU-rendered and lightweight</li>
 </ul><div class="pager"><a href="#17-catextlayer"><span>Prev</span>← CATextLayer</a><a href="#19-careplicatorlayer"><span>Next</span>CAReplicatorLayer →</a></div></section>
 <section class="page" id="19-careplicatorlayer" data-title="CAReplicatorLayer" data-num="19" data-hasdemo="1" data-group=""><h1>CAReplicatorLayer</h1><div class="demo-mount" data-demo="ca-replicator"></div>
+<h2>Start here — the plain idea</h2>
+<p>A <code>CAReplicatorLayer</code> is a copy machine for layers. You build <em>one</em> sublayer, tell it "make 12 copies," and it stamps that copy out 12 times — each one nudged a little further by the same transform. The deep part: it doesn't actually create 12 layer objects. The GPU draws your one layer's pixels and re-stamps them with different transforms, so 100 copies cost almost the same as 1. Think of it like a rubber stamp versus hand-painting 100 dots.</p>
+<p>Two dials do the heavy lifting. <code>instanceTransform</code> is applied <em>cumulatively</em> — copy 1 gets it once, copy 2 gets it twice — so a small rotation per copy fans your layers into a circle, and a small translation lines them into a row. <code>instanceDelay</code> staggers the <em>animation</em> across copies: copy 2 starts its bounce a beat after copy 1. Combine "rotate each copy around a center" with "delay each copy slightly" and you've built a loading spinner without ever writing a loop. That stagger is the soul of every replicator effect — ripples, EQ bars, cascades.</p>
 <p><code>CAReplicatorLayer</code> efficiently clones its sublayers with incremental transforms, color shifts, and animation delays. You provide one sublayer, and the replicator draws N copies — each offset, rotated, or tinted from the previous. This is vastly more efficient than creating N separate layers, and the staggered animation delay produces elegant ripple and cascade effects.</p>
 <hr />
 <h2>Core Properties</h2>
@@ -5562,6 +5846,17 @@ replicator.instanceAlphaOffset = -0.1    // each copy is more transparent
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CAReplicatorLayer</strong> = a GPU copy machine that stamps one sublayer N times for almost the cost of one.</li>
+<li><strong>instanceCount</strong> = how many copies, including the original.</li>
+<li><strong>instanceTransform</strong> = the per-copy nudge, applied cumulatively — small rotation fans a circle, small translation makes a row.</li>
+<li><strong>instanceDelay</strong> = staggers each copy's animation start; the secret behind ripples, spinners, and cascades.</li>
+<li><strong>color offsets</strong> (<code>instanceRedOffset</code>, <code>instanceAlphaOffset</code>, etc.) = tint or fade each successive copy progressively.</li>
+<li><strong>nested replicators</strong> = put one inside another to stamp a 2D grid (rows × columns).</li>
+<li><strong>why it's cheap</strong> = no extra layer objects in memory; constant memory regardless of instance count.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can create a <code>CAReplicatorLayer</code> with <code>instanceCount</code> and <code>instanceTransform</code></li>
@@ -5574,6 +5869,9 @@ replicator.instanceAlphaOffset = -0.1    // each copy is more transparent
 <li>[x] I understand why CAReplicatorLayer is far more efficient than N separate layers</li>
 </ul><div class="pager"><a href="#18-cagradientlayer"><span>Prev</span>← CAGradientLayer</a><a href="#20-caemitterlayer"><span>Next</span>CAEmitterLayer →</a></div></section>
 <section class="page" id="20-caemitterlayer" data-title="CAEmitterLayer" data-num="20" data-hasdemo="1" data-group=""><h1>CAEmitterLayer</h1><div class="demo-mount" data-demo="ca-emitter"></div>
+<h2>Start here — the plain idea</h2>
+<p>A <code>CAEmitterLayer</code> is a particle fountain. You don't animate each speck of confetti or each snowflake by hand — there could be thousands. Instead you describe the <em>rules</em> once ("spawn 30 a second, send them up at this speed, fade them over 2 seconds, let gravity pull them down") and the GPU runs the whole simulation for you, frame after frame, with zero per-frame CPU cost. Think of it as setting up a sprinkler and walking away, versus throwing each water droplet yourself.</p>
+<p>The mental model has exactly two parts. The <strong>emitter</strong> is the nozzle — it decides <em>where</em> particles are born and how the whole spray renders. The <strong>cell</strong> is the blueprint for a single particle — <em>what</em> it looks like and how it behaves (speed, lifetime, color, spin). One nozzle can hold several blueprints (confetti in six colors = six cells), and a cell can even spawn its own sub-particles, which is how a firework rocket bursts into sparks. Almost every property comes with a <code>...Range</code> sibling that adds randomness, because nothing looks alive when every particle is identical.</p>
 <p><code>CAEmitterLayer</code> is Core Animation's GPU-accelerated particle system. It lets you spawn thousands of particles with randomized motion, color, scale, and lifetime -- all composited on the GPU with zero per-frame CPU cost after setup. Every confetti burst, snow scene, or fire effect you see in iOS apps likely uses this class.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/02-calayer-fundamentals.md">02-calayer-fundamentals.md</a> -- CAEmitterLayer is a CALayer subclass. Everything about the layer tree, geometry, and compositing applies here.</p>
@@ -5985,6 +6283,19 @@ emitter.add(fadeOut, forKey: &quot;fadeOut&quot;)
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CAEmitterLayer</strong> = the nozzle — controls <em>where</em> particles spawn and how the whole spray renders.</li>
+<li><strong>CAEmitterCell</strong> = the blueprint for one particle — <em>what</em> it looks like and how it moves.</li>
+<li><strong>birthRate / lifetime</strong> = how many spawn per second and how long each lives; their product ≈ active particle count.</li>
+<li><strong>velocity / emissionLongitude / emissionRange</strong> = launch speed, primary direction, and the cone of spread around it.</li>
+<li><strong>xAcceleration / yAcceleration</strong> = ongoing forces like wind and gravity.</li>
+<li><strong><code>...Range</code> properties</strong> = add per-particle randomness so the effect looks alive instead of cloned.</li>
+<li><strong>renderMode <code>.additive</code></strong> = overlapping particles glow brighter — the trick for fire and sparks.</li>
+<li><strong>sub-emitters</strong> = a cell with its own <code>emitterCells</code>, so particles spawn particles (fireworks).</li>
+<li><strong>birthRate = 0</strong> = stop spawning gracefully and let existing particles finish their lifetime.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I understand the two-object model: CAEmitterLayer (where) and CAEmitterCell (what)</li>
@@ -5997,6 +6308,9 @@ emitter.add(fadeOut, forKey: &quot;fadeOut&quot;)
 <li>[x] I can estimate active particle count as birthRate * lifetime</li>
 </ul><div class="pager"><a href="#19-careplicatorlayer"><span>Prev</span>← CAReplicatorLayer</a><a href="#21-catiledlayer"><span>Next</span>CATiledLayer →</a></div></section>
 <section class="page" id="21-catiledlayer" data-title="CATiledLayer" data-num="21" data-hasdemo="0" data-group=""><h1>CATiledLayer</h1>
+<h2>Start here — the plain idea</h2>
+<p><code>CATiledLayer</code> exists for one problem: showing something far too big to hold in memory all at once — a gigapixel photo, a city map, a 50-page PDF zoomed way in. If you loaded the whole thing as one bitmap, you'd need hundreds of megabytes of RAM. The fix is the same one map apps use: chop the content into a grid of small tiles and only draw the handful you can actually see right now.</p>
+<p>The mental shift is this — instead of "draw the whole image," CATiledLayer calls your <code>draw(in:)</code> once <em>per visible tile</em>, handing you a tiny rect and saying "just fill this square." You draw only that piece. Two twists trip people up. First, those draw calls happen on <em>background threads</em> (several at once), so anything shared and mutable you touch in there is a data race waiting to happen. Second, it has levels of detail — when the user zooms out, it draws low-res tiles instead of shrinking the giant ones, saving memory and time. Think of it as a just-in-time delivery system for pixels: nothing gets drawn until it's about to be seen.</p>
 <p><code>CATiledLayer</code> is designed for one specific problem: displaying content that is far too large to fit in memory as a single bitmap. Maps, PDF documents, gigapixel images -- anything where the full resolution would consume hundreds of megabytes of RAM. CATiledLayer solves this by breaking the content into tiles and drawing each one on demand, on a background thread.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/04-layer-contents.md">04-layer-contents.md</a> -- CATiledLayer replaces the standard approach of setting <code>layer.contents</code> to a single CGImage with a dynamic tiling system.</p>
@@ -6309,6 +6623,18 @@ tiledLayer.setNeedsDisplay()
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CATiledLayer</strong> = draws huge content as a grid of small tiles, on demand, so it never holds the whole thing in memory.</li>
+<li><strong>draw(_ rect:)</strong> = called once <em>per tile</em>; the rect is one square to fill, not the full bounds.</li>
+<li><strong>background threads</strong> = those draw calls run off the main thread (often several at once), so guard any shared mutable state.</li>
+<li><strong>tileSize</strong> = grid granularity, default 256×256; bigger means fewer draw calls but more memory per tile.</li>
+<li><strong>levelsOfDetail</strong> = extra zoom-<em>out</em> levels (low-res tiles when zoomed out).</li>
+<li><strong>levelsOfDetailBias</strong> = extra zoom-<em>in</em> levels (sharper tiles when zoomed in).</li>
+<li><strong>fadeDuration</strong> = how long new tiles fade in; set to 0 for instant.</li>
+<li><strong>setNeedsDisplay(rect)</strong> = redraw just one region instead of dumping the whole tile cache.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I understand that CATiledLayer breaks large content into tiles drawn on background threads</li>
@@ -6322,6 +6648,9 @@ tiledLayer.setNeedsDisplay()
 <li>[x] I can choose between CATiledLayer, MKMapView, and Metal for large content scenarios</li>
 </ul><div class="pager"><a href="#20-caemitterlayer"><span>Prev</span>← CAEmitterLayer</a><a href="#22-cafilter-private"><span>Next</span>CAFilter (Private API) →</a></div></section>
 <section class="page" id="22-cafilter-private" data-title="CAFilter (Private API)" data-num="22" data-hasdemo="0" data-group=""><h1>CAFilter (Private API)</h1>
+<h2>Start here — the plain idea</h2>
+<p><code>CAFilter</code> is the hidden engine behind almost every visual effect you've admired in iOS — the frosted blur behind the lock screen clock, the saturated glassy tab bar, the dimmed notification background. It's a little GPU effect you attach to a layer: blur me, desaturate me, boost my contrast. Apple uses it everywhere but never exposed it publicly, so you reach it through the Objective-C runtime by name. That's also why it's off-limits for the App Store — treat this whole lesson as "looking under the hood," not shipping code.</p>
+<p>Two distinctions clear up the confusion. First, a filter on a layer changes <em>that layer's own</em> content. To blur whatever is <em>behind</em> a layer (real frosted glass), you need a <code>CABackdropLayer</code> — a special layer that captures the backdrop first, then filters it. That backdrop-capture is literally what <code>UIVisualEffectView</code> does internally. Second, filters chain: stack <code>[blur, saturate, brightness]</code> and the output of one feeds the next, so order matters — blurring then saturating looks different from the reverse. Think of it as a pedalboard for a layer's pixels.</p>
 <p><strong>WARNING: Everything in this lesson uses private Apple APIs. These are NOT allowed in App Store submissions. Use them for learning, reverse engineering, personal tools, and portfolio projects only. Apple can change or remove these APIs at any time without notice.</strong></p>
 <p>CAFilter is a private Core Animation class that applies GPU-backed visual effects to layers. It is the mechanism Apple uses internally for blur, saturation, brightness, and compositing effects throughout iOS -- from the lock screen blur to notification backgrounds to the tab bar translucency. Understanding CAFilter reveals how Apple builds its visual design system.</p>
 <blockquote>
@@ -6741,6 +7070,18 @@ if let types = (CAFilter as AnyObject).perform(
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CAFilter</strong> = a private GPU effect you attach to a layer (blur, saturate, brighten); the engine behind iOS's whole look.</li>
+<li><strong>private API</strong> = reached via <code>NSClassFromString</code>; for learning and personal tools only, never the App Store.</li>
+<li><strong>filters key</strong> = an array set by KVC on a layer; effects apply in order, output of one feeding the next.</li>
+<li><strong>gaussianBlur / variableBlur</strong> = uniform blur vs. a mask-driven blur that varies across the layer.</li>
+<li><strong>color filters</strong> = <code>colorSaturate</code>, <code>colorBrightness</code>, <code>colorContrast</code>, <code>colorHueRotate</code>, <code>colorInvert</code>.</li>
+<li><strong>CABackdropLayer</strong> = captures what's <em>behind</em> the layer so you can blur the backdrop — the heart of <code>UIVisualEffectView</code>.</li>
+<li><strong>compositingFilter</strong> = how the layer blends with what's beneath it (<code>plusL</code> = additive light).</li>
+<li><strong>animating filters</strong> = key path <code>filters.&lt;filterName&gt;.&lt;property&gt;</code> lets you animate, e.g., blur radius.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I understand that CAFilter is a private API and must not be used in App Store apps</li>
@@ -6754,6 +7095,9 @@ if let types = (CAFilter as AnyObject).perform(
 <li>[x] I can discover available filter types using CAFilter.filterTypes()</li>
 </ul><div class="pager"><a href="#21-catiledlayer"><span>Prev</span>← CATiledLayer</a><a href="#23-layer-backed-views"><span>Next</span>Layer-Backed Views →</a></div></section>
 <section class="page" id="23-layer-backed-views" data-title="Layer-Backed Views" data-num="23" data-hasdemo="0" data-group=""><h1>Layer-Backed Views</h1>
+<h2>Start here — the plain idea</h2>
+<p>Here's the secret most people learn late: a <code>UIView</code> doesn't actually draw anything. Every view has a <code>CALayer</code> riding inside it, and <em>that</em> is what shows up on screen. The view is the manager — it handles touches, layout, and lifecycle — while the layer is the worker that holds the pixels. Think of the view as the driver and the layer as the engine: you talk to the driver, but the engine does the moving.</p>
+<p>This explains a lot of "why does it work that way" moments. <code>view.alpha</code> is just a polite wrapper that sets <code>layer.opacity</code>; <code>view.backgroundColor</code> sets <code>layer.backgroundColor</code>. Some powers only exist on the engine — shadows, 3D transforms, anchor points, per-corner rounding — so for those you drop down to <code>view.layer</code>. And <code>UIView.animate { }</code> isn't magic either: inside that closure UIKit quietly opens a CATransaction and asks the layer for <code>CABasicAnimation</code> objects, which is exactly why your property changes only animate when they happen <em>inside</em> the block. Knowing the engine is there turns Core Animation from mysterious into obvious.</p>
 <p>Every <code>UIView</code> is backed by a <code>CALayer</code>. The view is the controller; the layer is the renderer. Understanding this relationship is essential because many visual capabilities -- shadows, 3D transforms, custom corner radii, anchor points -- only exist at the layer level. And knowing how UIView's animation system wraps Core Animation explains why certain things work the way they do.</p>
 <blockquote>
 <p>See <a href="../Learning-CoreAnimation/01-how-rendering-works.md">01-how-rendering-works.md</a> -- the full rendering pipeline from view layout through GPU compositing.</p>
@@ -7087,6 +7431,18 @@ view.layer.cornerRadius = 16
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>backing layer</strong> = every UIView has a CALayer doing the actual drawing; the view manages, the layer renders.</li>
+<li><strong>property proxying</strong> = <code>view.alpha</code>/<code>backgroundColor</code>/<code>isHidden</code>/<code>clipsToBounds</code> just set the matching layer property.</li>
+<li><strong>frame vs. transform</strong> = once a transform is applied, <code>view.frame</code> is the bounding box; set <code>bounds</code> and <code>center</code> instead.</li>
+<li><strong>layerClass</strong> = override it so a view's backing layer <em>is</em> a CAShapeLayer/CAGradientLayer/CAMetalLayer — no extra sublayer.</li>
+<li><strong>UIView.animate</strong> = sugar over CATransaction + CABasicAnimation, which is why changes must happen inside the closure.</li>
+<li><strong>layer-only features</strong> = shadows, 3D transforms, <code>sublayerTransform</code>, <code>anchorPoint</code>, <code>maskedCorners</code>, borders.</li>
+<li><strong>offscreen rendering</strong> = shadow without <code>shadowPath</code>, or <code>cornerRadius</code> + <code>masksToBounds</code>, force an expensive extra pass.</li>
+<li><strong>shouldRasterize</strong> = flatten and cache a complex <em>static</em> layer tree; set <code>rasterizationScale</code> or it goes blurry.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I know that every UIView has a CALayer as its backing layer</li>
@@ -7100,6 +7456,9 @@ view.layer.cornerRadius = 16
 <li>[x] I can build complex layer trees inside UIView subclasses and update frames in layoutSubviews</li>
 </ul><div class="pager"><a href="#22-cafilter-private"><span>Prev</span>← CAFilter (Private API)</a><a href="#24-metal-and-calayer"><span>Next</span>Metal and CALayer →</a></div></section>
 <section class="page" id="24-metal-and-calayer" data-title="Metal and CALayer" data-num="24" data-hasdemo="0" data-group=""><h1>Metal and CALayer</h1>
+<h2>Start here — the plain idea</h2>
+<p>Most layers hold pixels that Core Animation drew for you. A <code>CAMetalLayer</code> is different: it hands <em>you</em> the canvas and steps back. It's the doorway through which your own GPU code — Metal shaders — gets its rendered frames onto the screen and composited alongside ordinary UIKit layers. Even <code>MTKView</code>, the "easy" Metal view, is just a <code>CAMetalLayer</code> with a tidy wrapper bolted on; learning the layer directly means you control the timing, pixel format, and color yourself.</p>
+<p>The core ritual is the <strong>drawable</strong>. A drawable is one frame's worth of canvas — a texture you draw into, then "present" so Core Animation shows it. The layer keeps a small pool of two or three of these and <code>nextDrawable()</code> blocks until one is free, which is actually your built-in frame pacing. Pair that with a <code>CADisplayLink</code> — a timer locked to the screen's refresh — and you get a clean loop: the screen says "I'm about to refresh," you render a fresh frame into a drawable, you present it, repeat. That's the whole heartbeat of every Metal app, games included.</p>
 <p><code>CAMetalLayer</code> is the bridge between Metal's GPU rendering pipeline and Core Animation's compositing system. Every Metal-rendered pixel that appears on screen goes through a <code>CAMetalLayer</code>. Even <code>MTKView</code> is just a convenience wrapper around it. Understanding <code>CAMetalLayer</code> directly gives you full control over presentation timing, pixel format, color space, and display features like ProMotion and EDR.</p>
 <blockquote>
 <p>See <a href="../Learning-Shaders/03-your-first-shader.md">03-your-first-shader.md</a> -- for Metal device creation, command queues, and pipeline setup.</p>
@@ -7519,6 +7878,19 @@ func displayTexture(_ texture: MTLTexture) {
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>CAMetalLayer</strong> = the doorway that puts your own GPU-rendered frames on screen and composites them with UIKit.</li>
+<li><strong>drawable</strong> = one frame's canvas (a texture); you render into it, then present it.</li>
+<li><strong>nextDrawable()</strong> = grabs a free drawable from the small pool, blocking if none are ready — your frame pacing.</li>
+<li><strong>present + commit</strong> = <code>present(drawable)</code> schedules display once the GPU finishes; <code>commit()</code> submits the work.</li>
+<li><strong>CADisplayLink</strong> = a callback synced to the screen refresh; the heartbeat that drives the render loop.</li>
+<li><strong>essential config</strong> = <code>device</code>, <code>pixelFormat</code>, <code>framebufferOnly</code>, and <code>contentsScale</code> (set it or it's blurry).</li>
+<li><strong>drawableSize</strong> = actual pixel dimensions; lower it to render at reduced resolution for performance.</li>
+<li><strong>vs MTKView</strong> = MTKView is CAMetalLayer plus automatic setup; use the raw layer for full control or sublayer embedding.</li>
+<li><strong>EDR / wide color</strong> = <code>wantsExtendedDynamicRangeContent</code> + <code>.rgba16Float</code> for HDR; Display P3 for a wider gamut.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can create a CAMetalLayer either as a sublayer or via layerClass override</li>
@@ -7533,6 +7905,9 @@ func displayTexture(_ texture: MTLTexture) {
 <li>[x] I understand ProMotion frame rate control via preferredFrameRateRange</li>
 </ul><div class="pager"><a href="#23-layer-backed-views"><span>Prev</span>← Layer-Backed Views</a><a href="#25-real-world-recipes"><span>Next</span>Real-World Recipes →</a></div></section>
 <section class="page" id="25-real-world-recipes" data-title="Real-World Recipes" data-num="25" data-hasdemo="0" data-group=""><h1>Real-World Recipes</h1>
+<h2>Start here — the plain idea</h2>
+<p>This is the payoff lesson. Everything you've learned — springs, shape layers, gradients, keyframes, backdrop filters — gets assembled into the actual effects you see in Apple apps every day: the App Store card that swells to full screen, the pull-to-refresh spinner, the shimmer on a loading screen, the badge that pops, the iMessage bubble that springs in.</p>
+<p>The thing to notice as you read is that none of these are exotic. They're combinations. A card expand is just position + bounds + cornerRadius + shadow, all springing together. A shimmer is a gradient with animated <code>locations</code> behind a mask. A staggered list is the same appear-animation given a slightly later <code>beginTime</code> per cell. The craft isn't in discovering new APIs — it's in <em>layering simple pieces and tuning the numbers</em>. The spring parameter table at the end is the cheat sheet for that tuning: higher stiffness feels faster, lower damping bounces more, higher mass feels heavier. Steal these, then dial them to taste.</p>
 <p>This lesson is a collection of complete, copy-paste-ready recipes that recreate common Apple animations and effects using Core Animation. Each recipe includes the visual goal, complete code, animation parameters, and notes on what Apple does differently or better.</p>
 <blockquote>
 <p>See <a href="../Learning-Shaders/25-real-world-apple-effects.md">25-real-world-apple-effects.md</a> -- for shader-based versions of similar effects using Metal.</p>
@@ -8221,6 +8596,18 @@ class StaggeredListViewController: UITableViewController {
 <p><strong>Complete pull-to-refresh integration.</strong> Integrate Recipe 2 into a real UITableView with a UIRefreshControl replacement. Sync the arc progress with scroll offset and trigger the spin on release past a threshold.</p>
 </li>
 </ol>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>recipes = combinations</strong> = every effect here is just simple layers and animations stacked, not new APIs.</li>
+<li><strong>card expand</strong> = position + bounds + cornerRadius + shadow, all springing in sync.</li>
+<li><strong>pull-to-refresh</strong> = a <code>CAShapeLayer</code> arc whose <code>strokeEnd</code> grows with the pull, then spins on release.</li>
+<li><strong>shimmer</strong> = a <code>CAGradientLayer</code> with animated <code>locations</code> swept behind a placeholder mask.</li>
+<li><strong>badge / bubble pop</strong> = <code>CASpringAnimation</code> on <code>transform.scale</code>, lower damping for more bounce.</li>
+<li><strong>tab bar bounce</strong> = a <code>CAKeyframeAnimation</code> with hand-chosen values that mimic a damped spring.</li>
+<li><strong>staggered appear</strong> = the same per-item animation with an increasing <code>beginTime</code> delay and <code>.backwards</code> fill.</li>
+<li><strong>spring tuning</strong> = higher stiffness = faster, lower damping = more overshoot, higher mass = more inertia.</li>
+</ul>
 <hr />
 <h2>Checkpoint</h2>
 <ul>

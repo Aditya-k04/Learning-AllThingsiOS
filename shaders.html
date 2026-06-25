@@ -26,6 +26,9 @@
   </aside>
   <main class="content"><div class="col">
 <section class="page" id="00-roadmap" data-title="Metal Shading Language (MSL) — Learning Roadmap" data-num="·" data-hasdemo="0" data-group="Curriculum"><h1>Metal Shading Language (MSL) — Learning Roadmap</h1>
+<h2>Start here — the plain idea</h2>
+<p>Think of this page as the map for a long road trip. You're not learning anything technical yet — you're just seeing the route, the stops, and the order to drive them in. Each lesson is one stop, and the stops are arranged so each one only assumes what you've already seen.</p>
+<p>The big picture: a shader is a tiny program that runs on the graphics chip (the GPU). The course starts with <em>why</em> that chip exists and how to think for it, then teaches the language, then walks through real visual effects you can copy. Don't try to memorize the table below — just know it's here when you want to find your place.</p>
 <p>A self-paced curriculum from zero to writing production-quality shaders for iOS.</p>
 <hr />
 <h2>How to Use This Series</h2>
@@ -246,8 +249,21 @@
 <li><strong>Metal Debugger</strong> (Xcode &gt; GPU Frame Capture) — inspect shader execution</li>
 <li><strong>Shader Playground</strong> apps — for rapid iteration</li>
 <li><strong>Instruments &gt; Metal System Trace</strong> — for performance analysis</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Shader</strong> = a small program that runs on the GPU, once per pixel or vertex.</li>
+<li><strong>Curriculum order</strong> = each file assumes the ones before it — drive the stops in sequence.</li>
+<li><strong>Part 1 (Foundations)</strong> = how the GPU thinks and the basics of the language, before any effects.</li>
+<li><strong>Part 2 (Shader types)</strong> = the three jobs a shader can do: fragment (pixel color), vertex (geometry), compute (anything).</li>
+<li><strong>Effect parts (4–6)</strong> = recipes — color tweaks, blur, distortion, noise — built on the foundations.</li>
+<li><strong>Checkpoint</strong> = the "you should get this before moving on" gate at the end of each lesson.</li>
 </ul><div class="pager"><span class="sp"></span><a href="#01-gpu-vs-cpu"><span>Next</span>01 — GPU vs CPU: Why Shaders Exist →</a></div></section>
 <section class="page" id="01-gpu-vs-cpu" data-title="01 — GPU vs CPU: Why Shaders Exist" data-num="01" data-hasdemo="0" data-group="Curriculum"><h1>01 — GPU vs CPU: Why Shaders Exist</h1>
+<h2>Start here — the plain idea</h2>
+<p>Imagine you have to paint a stadium full of seats one color. A CPU is like a handful of geniuses who can do anything but only work one seat at a time. A GPU is like ten thousand simple painters who all dab their one assigned seat at the same instant. For "do the same simple thing to a million pixels," the army of simple painters wins by a mile.</p>
+<p>A shader is just the instruction sheet you hand every painter. You write the rule for <em>one</em> pixel — "what color should you be?" — and the GPU runs your rule on every pixel simultaneously. That's the whole mental shift: stop thinking "loop over all pixels," start thinking "what's true for one pixel, anywhere."</p>
+<p>The catch: each painter works alone and can't peek at what its neighbor painted (they all go at once). That one rule explains most of what's weird about shader programming.</p>
 <h2>The Core Problem</h2>
 <p>Your iPhone screen has ~2.7 million pixels (1179 x 2556 on iPhone 15 Pro). At 120fps, that's <strong>324 million pixel calculations per second</strong>. A CPU processes things one at a time (or a few at a time with multiple cores). A GPU processes <strong>thousands at a time</strong>.</p>
 <hr />
@@ -406,8 +422,22 @@ Use: Image processing, physics simulation, machine learning
 - [x] A shader is a function that runs on every pixel/vertex/data point in parallel
 - [x] There are 3 types: fragment (pixel color), vertex (geometry), compute (general purpose)
 - [x] MSL is based on C++ with GPU-specific additions
-- [x] You write code for ONE pixel; the GPU handles running it on all pixels</p><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Metal Shading Language (MSL) — Learning Roadmap</a><a href="#02-msl-syntax-basics"><span>Next</span>02 — MSL Syntax Basics →</a></div></section>
+- [x] You write code for ONE pixel; the GPU handles running it on all pixels</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>CPU</strong> = a few fast, clever workers, great at complex step-by-step logic, slow at bulk repetition.</li>
+<li><strong>GPU</strong> = thousands of simple workers running the same instruction on different data at once.</li>
+<li><strong>SIMD</strong> = "Single Instruction, Multiple Data" — the one-rule-many-pixels pattern that makes GPUs fast.</li>
+<li><strong>Shader</strong> = the per-pixel (or per-vertex) rule you write; the GPU runs millions of copies in parallel.</li>
+<li><strong>No shared state</strong> = each pixel computes alone and can't read a neighbor's result — they all run simultaneously.</li>
+<li><strong>Fragment / vertex / compute</strong> = the three shader jobs: pixel color, geometry transform, general number-crunching.</li>
+<li><strong>MSL</strong> = Apple's shader language — C++14 with GPU types and qualifiers, no recursion or dynamic memory.</li>
+</ul><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Metal Shading Language (MSL) — Learning Roadmap</a><a href="#02-msl-syntax-basics"><span>Next</span>02 — MSL Syntax Basics →</a></div></section>
 <section class="page" id="02-msl-syntax-basics" data-title="02 — MSL Syntax Basics" data-num="02" data-hasdemo="0" data-group="Curriculum"><h1>02 — MSL Syntax Basics</h1>
+<h2>Start here — the plain idea</h2>
+<p>This lesson is just vocabulary. You're not building anything yet — you're learning the words and grammar so the later code reads like English instead of noise.</p>
+<p>The one big idea: shaders live and breathe <em>vectors</em>. A color is four numbers (red, green, blue, alpha) packed together; a position is two or three numbers packed together. So MSL has built-in types like <code>float4</code> that hold several numbers at once, and math just works on all of them at the same time — add two colors and every channel adds. Think of a vector as a tiny fixed-size list the GPU knows how to crunch in one shot.</p>
+<p>The other thing to absorb: the weird double-bracket tags like <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code> are just <em>labels</em> — exactly like <code>throws</code> labels "this might fail." They tell Metal "this value is the pixel position" or "this is texture slot 0," so the GPU knows how to wire data in. Don't memorize the list; just recognize that brackets = plumbing labels.</p>
 <p>MSL is C++14 with GPU-specific extensions. If you know Swift, you'll find it familiar but with some key differences.</p>
 <hr />
 <h2>Swift vs MSL Cheat Sheet</h2>
@@ -766,8 +796,23 @@ fragment float4 allRed(float4 position &lt;span class=&quot;xref-missing&quot; t
 - [x] Shader qualifiers: <code>fragment</code>, <code>vertex</code>, <code>kernel</code>
 - [x] Attribute qualifiers: <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code>, <code>&lt;span class="xref-missing" title="note not in this site"&gt;texture(0)&lt;/span&gt;</code>, <code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(0)&lt;/span&gt;</code>
 - [x] Prefer <code>half</code> over <code>float</code> for colors (2x faster on Apple GPUs)
-- [x] Avoid if/else branching; use math functions instead</p><div class="pager"><a href="#01-gpu-vs-cpu"><span>Prev</span>← 01 — GPU vs CPU: Why Shaders Exist</a><a href="#03-your-first-shader"><span>Next</span>03 — Your First Shader: From File to Screen →</a></div></section>
+- [x] Avoid if/else branching; use math functions instead</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Vector type</strong> (<code>float2/3/4</code>) = a small bundle of numbers; one holds a color, a position, or a direction.</li>
+<li><strong>Swizzling</strong> = grabbing or rearranging a vector's parts by name, like <code>color.rgb</code> or <code>color.bgr</code>.</li>
+<li><strong>Component-wise math</strong> = <code>+</code>, <code>*</code>, etc. apply to every slot at once — add two colors, every channel adds.</li>
+<li><strong><code>half</code></strong> = a 16-bit float; about twice as fast as <code>float</code> on Apple GPUs, perfect for colors.</li>
+<li><strong>Qualifier</strong> (<code>fragment</code>/<code>vertex</code>/<code>kernel</code>) = the word that marks a function as a shader entry point and says which kind.</li>
+<li><strong>Attribute</strong> (<code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code>, <code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(0)&lt;/span&gt;</code>) = a plumbing label that tells Metal what a parameter is and where its data comes from.</li>
+<li><strong><code>mix</code> / <code>smoothstep</code> / <code>step</code></strong> = the blend toolkit: straight fade, smooth S-curve fade, and a hard on/off switch.</li>
+<li><strong>Branchless thinking</strong> = prefer math over if/else, because the GPU runs both branches and throws one away.</li>
+</ul><div class="pager"><a href="#01-gpu-vs-cpu"><span>Prev</span>← 01 — GPU vs CPU: Why Shaders Exist</a><a href="#03-your-first-shader"><span>Next</span>03 — Your First Shader: From File to Screen →</a></div></section>
 <section class="page" id="03-your-first-shader" data-title="03 — Your First Shader: From File to Screen" data-num="03" data-hasdemo="1" data-group="Curriculum"><h1>03 — Your First Shader: From File to Screen</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>This is the "hello world" moment: you'll get an actual red screen, then bend it into gradients and shapes. The point isn't the red — it's seeing the whole chain from a <code>.metal</code> file to glowing pixels.</p>
+<p>Here's the mental model. The GPU can only draw triangles, so to fill the screen with your effect you give it one big triangle that covers everything. A <strong>vertex shader</strong> runs a few times to place that triangle's corners. Then the <strong>fragment shader</strong> runs once per pixel and answers the only question that matters: what color is this pixel? On the Swift side, you're just the stage manager — you hand the GPU your two shaders and say "draw it" every frame.</p>
+<p>The magic ingredient that makes shapes possible is <strong>uv</strong> — each pixel's address, scaled to 0..1. Once a pixel knows "I'm at (0.5, 0.5)," it can decide things like "am I inside the circle?" That's how a per-pixel color rule becomes gradients, splits, and circles.</p>
 <p>Time to write a shader, hook it up to Swift, and see pixels on screen.</p>
 <hr />
 <h2>Step 1: Create the Metal File</h2>
@@ -1019,8 +1064,22 @@ vertexID=2: uv=(0,2) -&gt; position=(-1,-3)   Far bottom (off-screen)
 - [x] How to create a render pipeline in Swift (device, library, pipeline descriptor)
 - [x] The draw loop: command buffer &gt; render encoder &gt; draw &gt; present &gt; commit
 - [x] UV coordinates: <code>(0,0)</code> top-left to <code>(1,1)</code> bottom-right
-- [x] How to use UVs to create gradients, shapes, and patterns</p><div class="pager"><a href="#02-msl-syntax-basics"><span>Prev</span>← 02 — MSL Syntax Basics</a><a href="#04-coordinates-and-color"><span>Next</span>04 — Coordinates and Color →</a></div></section>
+- [x] How to use UVs to create gradients, shapes, and patterns</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>.metal</code> file</strong> = where your shaders live; Xcode compiles it into your app at build time.</li>
+<li><strong>VertexOut struct</strong> = the little package the vertex shader fills and the fragment shader unpacks (position + uv).</li>
+<li><strong>Full-screen triangle trick</strong> = cover the screen with one oversized triangle (3 vertices) so the fragment shader runs on every pixel.</li>
+<li><strong>uv</strong> = each pixel's address, scaled to 0..1 so the code doesn't care about resolution.</li>
+<li><strong>Render pipeline state</strong> = your vertex + fragment shaders pre-compiled and bundled, ready to run each frame.</li>
+<li><strong>Draw loop</strong> = command buffer to encoder to draw to present to commit — the per-frame recipe that pushes work to the GPU.</li>
+<li><strong><code>step</code> vs <code>smoothstep</code></strong> = hard edge vs soft anti-aliased edge when drawing shapes from uv.</li>
+</ul><div class="pager"><a href="#02-msl-syntax-basics"><span>Prev</span>← 02 — MSL Syntax Basics</a><a href="#04-coordinates-and-color"><span>Next</span>04 — Coordinates and Color →</a></div></section>
 <section class="page" id="04-coordinates-and-color" data-title="04 — Coordinates and Color" data-num="04" data-hasdemo="1" data-group="Curriculum"><h1>04 — Coordinates and Color</h1><div class="demo-mount" data-demo="sh-uv"></div>
+<h2>Start here — the plain idea</h2>
+<p>Every pixel needs two things to do its job: a sense of <em>where it is</em> and a way to <em>say what color it is</em>. This lesson nails down both — the map and the paint.</p>
+<p>For "where," there are a few rulers you can lay over the screen. <strong>uv</strong> is the friendly one: 0..1 across and down, the same on any device, so your code never cares whether it's an iPhone SE or an iPad. Sometimes you want (0,0) in the center instead, and you stretch the x-axis by the aspect ratio so circles stay round instead of ovals. For "color," it's always four numbers — red, green, blue, alpha — that you can add, multiply, fade between, and tint.</p>
+<p>The quietly powerful idea here is the <strong>signed distance field (SDF)</strong>: instead of drawing a shape, you write a formula that tells each pixel "how far am I from the edge?" Negative means inside, zero means on the line, positive means outside. Once a pixel knows its distance, soft edges, outlines, and even combining shapes become one-liners. Think of it as every pixel asking a shape "how close am I?" and coloring itself accordingly.</p>
 <p>Understanding how position and color work in shader space is essential for everything that follows.</p>
 <hr />
 <h2>Coordinate Systems</h2>
@@ -1289,8 +1348,22 @@ float sdSmoothUnion(float d1, float d2, float k) {
 - [x] <code>mix()</code> for blending, <code>dot()</code> for luminance, premultiplied alpha
 - [x] Radial, angular, and multi-stop gradients
 - [x] Signed Distance Fields: distance-based shape rendering
-- [x] SDF operations: union, intersection, subtraction, smooth union</p><div class="pager"><a href="#03-your-first-shader"><span>Prev</span>← 03 — Your First Shader: From File to Screen</a><a href="#05-math-for-shaders"><span>Next</span>05 — Essential Math for Shaders →</a></div></section>
+- [x] SDF operations: union, intersection, subtraction, smooth union</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>uv space</strong> = 0..1 across and down, resolution-independent — the same on any screen size.</li>
+<li><strong>Pixel space</strong> = actual pixel counts from <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code>; resolution-dependent, convert via <code>position / resolution</code>.</li>
+<li><strong>Aspect-ratio fix</strong> = multiply x by <code>width/height</code> so circles render round instead of stretched into ovals.</li>
+<li><strong>RGBA</strong> = a color is four numbers (red, green, blue, alpha), each 0..1.</li>
+<li><strong>Premultiplied alpha</strong> = Metal stores RGB already multiplied by alpha, which makes blending a single cheap step.</li>
+<li><strong>SDF (signed distance field)</strong> = a formula giving each pixel its distance to a shape's edge: negative inside, 0 on the edge, positive outside.</li>
+<li><strong>SDF combine ops</strong> = <code>min</code> = union, <code>max</code> = intersection, <code>max(a, -b)</code> = subtraction, plus a smooth-union that melts shapes together.</li>
+</ul><div class="pager"><a href="#03-your-first-shader"><span>Prev</span>← 03 — Your First Shader: From File to Screen</a><a href="#05-math-for-shaders"><span>Next</span>05 — Essential Math for Shaders →</a></div></section>
 <section class="page" id="05-math-for-shaders" data-title="05 — Essential Math for Shaders" data-num="05" data-hasdemo="1" data-group="Curriculum"><h1>05 — Essential Math for Shaders</h1><div class="demo-mount" data-demo="sh-shaping"></div>
+<h2>Start here — the plain idea</h2>
+<p>This is the toolbox lesson. Almost every shader you'll ever read is built from a handful of small math functions, used over and over. Learn what each one <em>feels</em> like and the scary-looking code stops being scary.</p>
+<p>The mental shortcuts: <code>mix</code> is a dimmer slider that fades between two things. <code>step</code> is a light switch — off below a line, on above it. <code>smoothstep</code> is the same switch but with a soft dimmer ramp, which is how you get clean, non-jagged edges. <code>fract</code> chops off the whole-number part, which makes things <em>repeat</em> — that's how one tile becomes a grid. And <code>sin</code>/<code>cos</code> are your wave makers — feed them time and things wobble, orbit, and pulse.</p>
+<p>Two more worth their own sentence. <code>atan2</code> turns a position into an angle (handy for anything that sweeps around a center). And <code>dot</code> quietly measures "how much do these two directions agree?" — which is the heart of lighting. Don't memorize formulas; build the gut feel for what each knob does.</p>
 <p>You don't need a math degree. You need ~10 functions and the intuition for when to use them. This lesson gives you both.</p>
 <hr />
 <h2>The Big Five: Functions You'll Use Every Day</h2>
@@ -1556,8 +1629,23 @@ POWER:       pow(x, n)                       Curves: n&gt;1 darkens, n&lt;1 brig
 - [x] Distance metrics: Euclidean vs Manhattan vs Chebyshev
 - [x] Remapping values between ranges
 - [x] Easing functions for natural-feeling animation
-- [x] Dot product for lighting and projections</p><div class="pager"><a href="#04-coordinates-and-color"><span>Prev</span>← 04 — Coordinates and Color</a><a href="#06-fragment-shaders"><span>Next</span>06 — Fragment Shaders Deep Dive →</a></div></section>
+- [x] Dot product for lighting and projections</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>mix(a, b, t)</code></strong> = a dimmer slider that fades from a to b; t=0 is all a, t=1 is all b.</li>
+<li><strong><code>step(edge, x)</code></strong> = a light switch: 0 below the edge, 1 at or above it.</li>
+<li><strong><code>smoothstep(lo, hi, x)</code></strong> = step with a soft ramp; this is how you get clean anti-aliased edges.</li>
+<li><strong><code>fract(x)</code></strong> = drop the whole-number part to get 0..1; repeat it and you get tiles, stripes, and grids.</li>
+<li><strong><code>sin</code> / <code>cos</code></strong> = wave makers; feed them time to oscillate, and pair them to trace circles or rotate points.</li>
+<li><strong><code>atan2(y, x)</code></strong> = turn a position into an angle — the basis for sweeps and conic gradients.</li>
+<li><strong><code>dot(a, b)</code></strong> = how much two directions agree (1 same, 0 perpendicular, -1 opposite) — the heart of lighting.</li>
+<li><strong>Easing</strong> = curved interpolation (<code>t*t</code>, <code>pow</code>, smoothstep) that makes motion feel natural instead of robotic.</li>
+</ul><div class="pager"><a href="#04-coordinates-and-color"><span>Prev</span>← 04 — Coordinates and Color</a><a href="#06-fragment-shaders"><span>Next</span>06 — Fragment Shaders Deep Dive →</a></div></section>
 <section class="page" id="06-fragment-shaders" data-title="06 — Fragment Shaders Deep Dive" data-num="06" data-hasdemo="1" data-group="Curriculum"><h1>06 — Fragment Shaders Deep Dive</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>A fragment shader is just a tiny function that runs once per pixel and answers one question: what color is this pixel? The GPU runs millions of copies at once. You already met this idea — now we open the hood and look at exactly what goes <em>in</em> and what comes <em>out</em>.</p>
+<p>The whole lesson is really about plumbing: how does each pixel get the stuff it needs to decide its color? Three pipes feed it. <code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code> brings interpolated data from the vertex stage (most importantly the pixel's uv). <code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(n)&lt;/span&gt;</code> brings values from your Swift code — time, touch position, a settings struct — the live dials. And <code>&lt;span class="xref-missing" title="note not in this site"&gt;texture(n)&lt;/span&gt;</code> brings images, which you read with a <em>sampler</em> that decides how to fetch pixels (smooth or crisp, what to do at the edges).</p>
+<p>Keep one picture in mind: a pixel is a little worker handed a position, some settings, and maybe a photo, who must shout back one color. Everything else here is just the different ways to hand it those ingredients.</p>
 <p>Fragment shaders are where you'll spend 90% of your time for iOS visual effects. This lesson covers the full function signature, all the ways data gets in, and real patterns.</p>
 <hr />
 <h2>The Fragment Function Signature</h2>
@@ -1880,8 +1968,23 @@ constexpr sampler s(address::clamp_to_edge, filter::linear);
 - [x] Sampler configuration: coord, address, filter
 - [x] How to pass custom structs from Swift to Metal
 - [x] Use <code>half4</code> return type for better performance
-- [x] How to debug by visualizing values as colors</p><div class="pager"><a href="#05-math-for-shaders"><span>Prev</span>← 05 — Essential Math for Shaders</a><a href="#07-vertex-shaders"><span>Next</span>07 — Vertex Shaders →</a></div></section>
+- [x] How to debug by visualizing values as colors</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Fragment shader</strong> = a per-pixel function whose only job is to return one color.</li>
+<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code></strong> = interpolated data from the vertex stage (uv, normal, etc.), smoothly varied across each triangle.</li>
+<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(n)&lt;/span&gt;</code></strong> = values handed in from Swift — time, touch, a settings struct — the live dials of your effect.</li>
+<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;texture(n)&lt;/span&gt;</code></strong> = an image input, read via <code>tex.sample(sampler, uv)</code>.</li>
+<li><strong>Sampler</strong> = the rule for reading a texture: smooth vs crisp (filter) and what to do off the edges (address).</li>
+<li><strong>Struct alignment</strong> = your Metal struct must match the Swift struct's layout exactly, or values arrive scrambled.</li>
+<li><strong><code>half4</code> return</strong> = 16-bit color output, faster on Apple GPUs and fine for normal 8/10-bit screens.</li>
+<li><strong>Debug-as-color</strong> = paint a value onto the screen (e.g. <code>float4(uv, 0, 1)</code>) to see what's actually happening.</li>
+</ul><div class="pager"><a href="#05-math-for-shaders"><span>Prev</span>← 05 — Essential Math for Shaders</a><a href="#07-vertex-shaders"><span>Next</span>07 — Vertex Shaders →</a></div></section>
 <section class="page" id="07-vertex-shaders" data-title="07 — Vertex Shaders" data-num="07" data-hasdemo="0" data-group="Curriculum"><h1>07 — Vertex Shaders</h1>
+<h2>Start here — the plain idea</h2>
+<p>If a fragment shader answers "what color is this pixel?", a vertex shader answers "where on screen does this corner go?" Fragments paint; vertices place. Every 3D model is just a cloud of corner points (vertices) joined into triangles, and the vertex shader runs once per corner to figure out where each one lands.</p>
+<p>The core job is a chain of transforms. A model is born in its own little coordinate world; you slide and spin it into the scene (world space), then look at it through a camera (view space), then squash that into the flat frame of the screen (clip space). Those steps are just matrix multiplications — think of a matrix as a "move/rotate/scale machine" you run a point through. The GPU then fills the triangles between your placed corners and hands each pixel to the fragment shader.</p>
+<p>Two practical notes: for flat 2D effects you skip real geometry entirely and use the full-screen triangle trick. And because the vertex shader can <em>move</em> corners, it's where you make things wobble, explode, or bounce — animation by relocating points.</p>
 <p>Vertex shaders transform geometry — they determine WHERE pixels end up on screen. While fragment shaders decide color, vertex shaders decide position.</p>
 <hr />
 <h2>What Vertex Shaders Do</h2>
@@ -2155,8 +2258,23 @@ pipelineDescriptor.vertexDescriptor = vertexDescriptor
 - [x] Other outputs are interpolated by the rasterizer for the fragment shader
 - [x] Uniform matrices (model, view, projection) control the camera
 - [x] The full-screen triangle trick avoids vertex buffers for 2D effects
-- [x] Vertex shaders can animate geometry (wobble, explode, bounce)</p><div class="pager"><a href="#06-fragment-shaders"><span>Prev</span>← 06 — Fragment Shaders Deep Dive</a><a href="#08-compute-shaders"><span>Next</span>08 — Compute Shaders (Kernels) →</a></div></section>
+- [x] Vertex shaders can animate geometry (wobble, explode, bounce)</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Vertex shader</strong> = runs once per corner point and decides where that corner lands on screen.</li>
+<li><strong>Vertex vs fragment</strong> = vertex places geometry, fragment colors pixels; the rasterizer fills the gap between them.</li>
+<li><strong>Coordinate spaces</strong> = model to world to view to clip to screen — the staged journey from an object's own space to pixels.</li>
+<li><strong>Matrix</strong> = a move/rotate/scale machine; multiplying a point by one transforms it between spaces.</li>
+<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code> output</strong> = the required clip-space result; everything else you output gets interpolated for the fragment shader.</li>
+<li><strong>Vertex descriptor</strong> = the Swift-side map telling Metal how your vertex data (position, uv, normal) is laid out in memory.</li>
+<li><strong>Geometry animation</strong> = move the corners with <code>sin</code>, normals, or springs to wobble, explode, or bounce a mesh.</li>
+<li><strong>Full-screen triangle</strong> = the shortcut for 2D effects: no real geometry, just one big triangle covering the screen.</li>
+</ul><div class="pager"><a href="#06-fragment-shaders"><span>Prev</span>← 06 — Fragment Shaders Deep Dive</a><a href="#08-compute-shaders"><span>Next</span>08 — Compute Shaders (Kernels) →</a></div></section>
 <section class="page" id="08-compute-shaders" data-title="08 — Compute Shaders (Kernels)" data-num="08" data-hasdemo="0" data-group="Curriculum"><h1>08 — Compute Shaders (Kernels)</h1>
+<h2>Start here — the plain idea</h2>
+<p>A fragment shader is locked to the drawing pipeline — its job is to color pixels for triangles on screen. A compute shader throws that constraint away. Think of it as "renting the GPU's thousands of tiny cores to run <em>any</em> small function, on every item of a big pile of data, all at once."</p>
+<p>The mental model: you have a huge grid of work — say every pixel of an image, or every particle in a simulation. The GPU spawns one thread per cell of that grid, and each thread runs your <code>kernel</code> function. Each thread's only superpower is knowing its own coordinate (<code>thread_position_in_grid</code>) — "I am the thread for pixel (412, 88)." From that it reads input, does its math, and writes output. A million threads, each doing one tiny job, finishing in a blink.</p>
+<p>Because you control everything, compute shaders can read <em>and</em> write the same texture, share scratch memory between nearby threads for speed, and crunch plain arrays that have nothing to do with images. It's the GPU as a general parallel calculator.</p>
 <p>Compute shaders are the most flexible shader type. They're not tied to the rendering pipeline — they're general-purpose GPU programs. Apple uses them for image processing, blur effects, physics simulation, and machine learning.</p>
 <hr />
 <h2>Compute vs Render Shaders</h2>
@@ -2408,6 +2526,17 @@ kernel void updateParticles(
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>kernel</strong> = the entry-point function of a compute shader; it runs once per thread, off the drawing pipeline.</li>
+<li><strong>thread</strong> = one invocation of your kernel, responsible for one item of work (usually one pixel).</li>
+<li><strong>grid</strong> = the full set of work items; <strong>threadgroup</strong> = a small block of threads that can share fast scratch memory.</li>
+<li><strong>thread_position_in_grid</strong> = the global coordinate that tells each thread which pixel or item it owns.</li>
+<li><strong>threadgroup memory</strong> = a shared scratchpad for one group of threads — far faster than re-reading the texture.</li>
+<li><strong>threadgroup_barrier</strong> = a "everyone wait here" line, so no thread reads shared data before all threads have written it.</li>
+<li><strong>dispatch</strong> = the Swift-side act of launching the grid: set textures/buffers, compute how many groups cover the data, and fire.</li>
+<li><strong>access::read / write / read_write</strong> = how a kernel declares it will read, write, or do both to a texture.</li>
+</ul>
 <h2>Checkpoint</h2>
 <p>Before moving on, you should understand:
 - [x] Compute shaders (<code>kernel</code>) are general-purpose GPU programs
@@ -2418,6 +2547,10 @@ kernel void updateParticles(
 - [x] <code>access::read</code>, <code>access::write</code>, <code>access::read_write</code> for textures
 - [x] Compute shaders can process buffers (arrays), not just images</p><div class="pager"><a href="#07-vertex-shaders"><span>Prev</span>← 07 — Vertex Shaders</a><a href="#09-textures-and-sampling"><span>Next</span>09 — Textures and Sampling →</a></div></section>
 <section class="page" id="09-textures-and-sampling" data-title="09 — Textures and Sampling" data-num="09" data-hasdemo="0" data-group="Curriculum"><h1>09 — Textures and Sampling</h1>
+<h2>Start here — the plain idea</h2>
+<p>A texture is just an image the GPU can read — usually a photo or a pattern you want to show or process. <em>Sampling</em> is the act of asking that image "what color is at this spot?"</p>
+<p>The catch is that you don't ask in pixels, you ask in fractions. UV coordinates run 0 to 1 across the image regardless of its actual size — (0,0) is one corner, (1,1) the opposite — so your code doesn't care whether the picture is 256 or 4000 pixels wide. Think of it like asking "give me the color 30% across and 70% down" instead of naming an exact pixel.</p>
+<p>When you ask for a spot that falls <em>between</em> real pixels, the sampler decides how to answer: <code>nearest</code> snaps to the closest pixel (crisp, blocky — good for pixel art), <code>linear</code> blends the neighbors (smooth — good for photos). And when you ask for a spot <em>outside</em> the image, the address mode decides what to do: clamp the edge, tile it, or mirror it. A sampler is basically that little rulebook for "how do I answer in-between and out-of-bounds questions."</p>
 <p>Textures are how images get into your shaders. Sampling is how you read pixels from them — with filtering, wrapping, and interpolation.</p>
 <hr />
 <h2>Loading Textures from Swift</h2>
@@ -2638,6 +2771,17 @@ float2 aspectFit(float2 uv, float2 viewSize, float2 textureSize) {
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>texture</strong> = an image the GPU can read from (and sometimes write to).</li>
+<li><strong>UV coordinates</strong> = fractional positions from 0 to 1 across the image, so your code is resolution-independent.</li>
+<li><strong>sampling</strong> = reading a color at a UV; <strong><code>.sample()</code></strong> interpolates and obeys the sampler, <strong><code>.read()</code></strong> grabs an exact pixel with no filtering.</li>
+<li><strong>sampler</strong> = the rulebook for in-between and out-of-bounds reads (coordinate mode, address mode, filter).</li>
+<li><strong>filter mode</strong> = how to answer between pixels: <code>nearest</code> snaps (crisp), <code>linear</code> blends (smooth).</li>
+<li><strong>address mode</strong> = what to do outside [0,1]: clamp the edge, repeat, mirror, or return transparent.</li>
+<li><strong>pixel format</strong> = how each pixel's bits are stored (e.g. <code>rgba8Unorm</code> for normal images, <code>rgba16Float</code> for HDR/intermediate).</li>
+<li><strong>LUT</strong> = a lookup-table texture you index by a pixel's own color to remap it — how many photo filters work.</li>
+</ul>
 <h2>Checkpoint</h2>
 <p>Before moving on, you should understand:
 - [x] Loading textures from Swift via <code>MTKTextureLoader</code>
@@ -2648,6 +2792,10 @@ float2 aspectFit(float2 uv, float2 viewSize, float2 textureSize) {
 - [x] UV manipulation: flip, tile, zoom, pan, aspect-correct
 - [x] Multi-texture effects and LUT-based color grading</p><div class="pager"><a href="#08-compute-shaders"><span>Prev</span>← 08 — Compute Shaders (Kernels)</a><a href="#10-buffers-and-uniforms"><span>Next</span>10 — Buffers and Uniforms: Passing Data from Swift to Metal →</a></div></section>
 <section class="page" id="10-buffers-and-uniforms" data-title="10 — Buffers and Uniforms: Passing Data from Swift to Metal" data-num="10" data-hasdemo="0" data-group="Curriculum"><h1>10 — Buffers and Uniforms: Passing Data from Swift to Metal</h1>
+<h2>Start here — the plain idea</h2>
+<p>A shader runs on the GPU and can't reach into your app to grab the current time or where the user's finger is. So you have to <em>hand</em> it that data. This lesson is about the delivery channels.</p>
+<p>Think of it like passing notes into a sealed room. For a tiny note — a single number, a touch point, a small struct — you slide it under the door (<code>setBytes</code>). For a fat envelope — thousands of particles, a big array — you set up a dedicated mail slot once and keep refilling it (<code>MTLBuffer</code>). A <em>uniform</em> is just a value that's the same for every pixel this frame (time, intensity, resolution), as opposed to per-pixel data the shader computes itself.</p>
+<p>The one gotcha that bites everyone: Swift and Metal must agree <em>byte for byte</em> on how a struct is laid out in memory, and they pad fields to alignment boundaries. The classic trap is <code>float3</code>, which secretly takes 16 bytes, not 12. Get the layout wrong and your shader reads garbage — so the alignment rules here matter more than they look.</p>
 <p>Every interactive shader needs data from your app — time, touch position, slider values, arrays of data. This lesson covers all the ways to get data into your shaders.</p>
 <hr />
 <h2>Method 1: <code>setBytes</code> (Small Data, Simplest)</h2>
@@ -2849,6 +2997,16 @@ fragment float4 drawParticles(
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>uniform</strong> = a value you pass from Swift into the shader, the same for every pixel this frame (time, resolution, a slider value).</li>
+<li><strong>setBytes</strong> = the quick way to slip small data (&lt;4KB) into the shader with no buffer object needed.</li>
+<li><strong>MTLBuffer</strong> = a reusable chunk of GPU memory for large or frequently-updated data, like a refillable mail slot.</li>
+<li><strong>struct alignment</strong> = Swift and Metal must lay out a struct identically, byte for byte, including padding.</li>
+<li><strong>the float3 trap</strong> = <code>float3</code> occupies 16 bytes, not 12; assume 12 and every field after it is misaligned.</li>
+<li><strong>constant vs device</strong> = <code>constant</code> marks read-only data; <code>device</code> marks data the shader may also write.</li>
+<li><strong>triple buffering</strong> = rotating among three buffers so the CPU can write next frame's data while the GPU still reads this frame's.</li>
+</ul>
 <h2>Checkpoint</h2>
 <p>Before moving on, you should understand:
 - [x] <code>setBytes</code> for small data (&lt;4KB), <code>MTLBuffer</code> for large/reusable data
@@ -2857,6 +3015,10 @@ fragment float4 drawParticles(
 - [x] Triple buffering for smooth frame-by-frame updates
 - [x] Avoid <code>Bool</code> in shader structs; use <code>Float</code> or <code>Int32</code> instead</p><div class="pager"><a href="#09-textures-and-sampling"><span>Prev</span>← 09 — Textures and Sampling</a><a href="#11-structs-and-attributes"><span>Next</span>11 — Structs and Attributes →</a></div></section>
 <section class="page" id="11-structs-and-attributes" data-title="11 — Structs and Attributes" data-num="11" data-hasdemo="0" data-group="Curriculum"><h1>11 — Structs and Attributes</h1>
+<h2>Start here — the plain idea</h2>
+<p>When you draw real geometry (not just full-screen effects), each shape is a list of vertices — points that carry data like position, a texture coordinate, a normal, a color. This lesson is about getting that per-vertex data to flow cleanly from Swift, through the vertex shader, into the fragment shader.</p>
+<p>Picture an assembly line. Swift hands over a buffer of raw bytes. The vertex shader receives one vertex at a time as a tidy struct (<code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code>), transforms it, and outputs a <code>VertexOut</code>. Then the rasterizer does something almost magical: for every pixel inside a triangle, it <em>blends</em> the three corner vertices' values automatically. A pixel halfway between a red corner and a blue corner arrives at the fragment shader already purple. That free blending — interpolation — is why you only specify data at corners but get smooth gradients across the whole face.</p>
+<p>The fiddly part is the handshake: a <em>vertex descriptor</em> tells Metal exactly where each field sits in your Swift struct (which byte offset, which <code>&lt;span class="xref-missing" title="note not in this site"&gt;attribute(n)&lt;/span&gt;</code> slot). Same alignment rules as the last lesson — get an offset wrong and the GPU reads the wrong field.</p>
 <p>How to define custom data structures for the vertex pipeline and ensure correct data flow between Swift, vertex shaders, and fragment shaders.</p>
 <hr />
 <h2>The Data Flow</h2>
@@ -3009,6 +3171,17 @@ encoder.drawIndexedPrimitives(
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>vertex</strong> = one point of geometry carrying data (position, UV, normal, color).</li>
+<li><strong>VertexIn / <code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code></strong> = the struct of per-vertex data the vertex shader receives, one vertex per run.</li>
+<li><strong>VertexOut</strong> = the struct the vertex shader emits; its <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code> field is required, the rest get interpolated.</li>
+<li><strong>interpolation</strong> = the rasterizer auto-blending corner values across a triangle, so a mid-face pixel gets the weighted average.</li>
+<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;flat&lt;/span&gt;</code></strong> = opt out of interpolation; the pixel just takes one vertex's value (useful for per-face IDs).</li>
+<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;attribute(n)&lt;/span&gt;</code></strong> = the slot number that ties a struct field to a vertex-descriptor entry.</li>
+<li><strong>vertex descriptor</strong> = the map telling Metal each field's format, byte offset, and buffer, so it can unpack your Swift bytes.</li>
+<li><strong>instanced rendering</strong> = drawing the same geometry many times with per-instance data (e.g. a different matrix and color each time).</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] Vertex data flows: Swift buffer -&gt; <code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code> -&gt; VertexOut -&gt; interpolated -&gt; fragment</li>
@@ -3018,6 +3191,10 @@ encoder.drawIndexedPrimitives(
 <li>[x] Multiple buffers and instanced rendering for complex scenes</li>
 </ul><div class="pager"><a href="#10-buffers-and-uniforms"><span>Prev</span>← 10 — Buffers and Uniforms: Passing Data from Swift to Metal</a><a href="#12-color-effects"><span>Next</span>12 — Color Effects →</a></div></section>
 <section class="page" id="12-color-effects" data-title="12 — Color Effects" data-num="12" data-hasdemo="0" data-group="Curriculum"><h1>12 — Color Effects</h1>
+<h2>Start here — the plain idea</h2>
+<p>These are the friendliest shaders to write, because each pixel only looks at <em>itself</em>. No neighbors, no geometry — the shader gets one color in and returns one color out. That's the whole job. Brightness multiplies it, invert flips it, sepia tints it. This is exactly the machinery behind Instagram filters and the adjustments in Photos.</p>
+<p>A few patterns repeat. <em>Luminance</em> — the dot product of RGB with weights like (0.21, 0.72, 0.07) — collapses a color to a single perceived-brightness number; grayscale, threshold, and saturation all lean on it (the green weight is highest because our eyes are most sensitive to green). And <code>mix(a, b, amount)</code> is the universal dimmer: it slides between the original and the adjusted version, so almost every effect gets a strength knob for free.</p>
+<p>Because each effect is just color-in, color-out, you can <em>stack</em> them — contrast, then saturation, then a vignette — like running a photo through a chain of filters. Think of it as a pixel passing down a conveyor belt of small tweaks.</p>
 <p>The simplest and most useful shader effects — transform pixel colors without reading neighbors. These are what Instagram filters, photo editors, and Apple's Photos app use.</p>
 <hr />
 <h2>Grayscale</h2>
@@ -3128,6 +3305,17 @@ encoder.drawIndexedPrimitives(
 <li><strong>Channel swap</strong>: Let the user rearrange RGB channels (show all 6 permutations).</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>color effect</strong> = a shader that maps one pixel's color to a new color, never reading neighbors.</li>
+<li><strong>luminance</strong> = a single brightness number from <code>dot(rgb, weights)</code>; the basis for grayscale, threshold, and saturation.</li>
+<li><strong>mix(a, b, amount)</strong> = the universal blend/strength knob, sliding between original and adjusted.</li>
+<li><strong>brightness / contrast</strong> = multiply the color; contrast does it <em>around 0.5</em> so midtones stay put while extremes spread.</li>
+<li><strong>saturation</strong> = mix between the gray (luma) version and the full-color version.</li>
+<li><strong>hue rotation</strong> = spin colors around the wheel with a 3x3 color matrix.</li>
+<li><strong>preserve alpha</strong> = always pass <code>color.a</code> through unchanged, so you only touch RGB.</li>
+<li><strong>chaining</strong> = stacking multiple <code>colorEffect</code>s in SwiftUI, each one feeding the next.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] Grayscale via luminance dot product</li>
@@ -3137,6 +3325,10 @@ encoder.drawIndexedPrimitives(
 <li>[x] Effects can be chained in SwiftUI</li>
 </ul><div class="pager"><a href="#11-structs-and-attributes"><span>Prev</span>← 11 — Structs and Attributes</a><a href="#13-blur-effects"><span>Next</span>13 — Blur Effects →</a></div></section>
 <section class="page" id="13-blur-effects" data-title="13 — Blur Effects" data-num="13" data-hasdemo="1" data-group="Curriculum"><h1>13 — Blur Effects</h1><div class="demo-mount" data-demo="sh-blur"></div>
+<h2>Start here — the plain idea</h2>
+<p>A blur is just averaging each pixel with its neighbors; a bigger radius averages more neighbors, so detail smears away. That's the entire idea. Everything in this lesson is about doing that averaging <em>fast enough</em> to run live on every glass surface in iOS.</p>
+<p>Here's why speed is the whole story. If every output pixel honestly averaged a 20-pixel-radius square, that's ~1,700 reads per pixel, billions per frame — your phone would melt. So the lesson is a ladder of clever shortcuts that get the same soft look for a fraction of the work: split the 2D blur into a horizontal pass then a vertical pass (a Gaussian conveniently allows this), sample <em>between</em> pixels so one read counts as two, or do several tiny blurs at growing distances instead of one giant one.</p>
+<p>Think of it like blending a smoothie. The naive way is hand-mashing every berry against every other berry. The smart ways are coarser strokes that reach the same smooth result far cheaper. Apple even ships a one-liner (MPS) that does the whole thing for you.</p>
 <p>Blur is the most important visual effect in iOS — used in navigation bars, sheets, Control Center, notifications, and every glass material. This lesson builds from the simplest blur to Apple-quality implementations.</p>
 <hr />
 <h2>Why Blur is Hard</h2>
@@ -3419,6 +3611,17 @@ commandBuffer.commit()
 </li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>blur</strong> = averaging each pixel with its neighbors; bigger radius = more neighbors = more smearing.</li>
+<li><strong>box blur</strong> = the naive square average; simple but boxy and O(radius²), too slow for big radii.</li>
+<li><strong>Gaussian</strong> = a weighted average where nearby pixels count more, giving a soft, natural falloff.</li>
+<li><strong>separable blur</strong> = splitting a 2D blur into a horizontal pass then a vertical pass, turning O(r²) into O(2r).</li>
+<li><strong>linear-sampling trick</strong> = sampling between two pixels so one read returns both, halving texture reads.</li>
+<li><strong>Kawase / dual Kawase</strong> = stacking several tiny blurs (and down/up-scaling) to fake a huge blur for cheap.</li>
+<li><strong>multi-pass / ping-pong</strong> = rendering into one texture, then back, repeatedly, to chain blur passes.</li>
+<li><strong>MPS</strong> = Apple's built-in <code>MPSImageGaussianBlur</code>, production-quality blur in one line of Swift.</li>
+</ul>
 <h2>Checkpoint</h2>
 <p>Before moving on, you should understand:
 - [x] Why naive blur is too slow (O(r^2) texture reads)
@@ -3429,6 +3632,10 @@ commandBuffer.commit()
 - [x] MPS blur: Apple's built-in, use when custom behavior isn't needed
 - [x] Multi-pass rendering: ping-pong between textures</p><div class="pager"><a href="#12-color-effects"><span>Prev</span>← 12 — Color Effects</a><a href="#14-distortion-effects"><span>Next</span>14 — Distortion Effects →</a></div></section>
 <section class="page" id="14-distortion-effects" data-title="14 — Distortion Effects" data-num="14" data-hasdemo="1" data-group="Curriculum"><h1>14 — Distortion Effects</h1><div class="demo-mount" data-demo="sh-distortion"></div>
+<h2>Start here — the plain idea</h2>
+<p>Color effects change <em>what</em> color a pixel is. Distortion effects change <em>where</em> a pixel reads its color from. The pixel keeps its color — it just grabs it from a shifted spot. That one move gives you ripples, swirls, lens bulges, and shockwaves.</p>
+<p>Picture the screen as a printed image under a sheet of clear, bendy plastic. You don't repaint anything; you just warp the plastic, and the picture appears to stretch and wobble. In a shader the "warp" is a little math function that says, for each pixel, "read from here instead." A <code>sin</code> of distance makes a ripple; a rotation that fades with distance makes a swirl; pushing pixels outward from a center makes a magnifying bulge.</p>
+<p>Two habits show up everywhere: use <code>distance</code> and <code>normalize</code> to work <em>radially</em> (out from a center point), and use <code>smoothstep</code> to fade the effect gently at its edges so it doesn't end in a hard seam. And always handle "this pixel is outside the effect" by leaving its position alone.</p>
 <p>Distortion shaders move pixels around without changing their color. They remap where each pixel reads its source data from.</p>
 <hr />
 <h2>The Concept</h2>
@@ -3521,6 +3728,16 @@ Distorted:  Read pixel at position (x + offset_x, y + offset_y)
 <li><strong>Glitch</strong>: Random horizontal line offsets that change every few frames.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>distortion</strong> = moving where a pixel reads its color from, not changing the color itself.</li>
+<li><strong>offset</strong> = the shift you add to a pixel's read position; the shape of that shift is the effect.</li>
+<li><strong>radial direction</strong> = <code>normalize(position - center)</code> — the "straight out from the center" arrow most effects push along.</li>
+<li><strong>falloff</strong> = fading the effect with distance or time (via <code>exp</code> or <code>smoothstep</code>) so it eases off instead of cutting hard.</li>
+<li><strong>swirl</strong> = rotating pixels around a center by an angle that shrinks with distance.</li>
+<li><strong>barrel / magnify</strong> = scaling pixels' distance from a center to bulge or zoom, like a lens.</li>
+<li><strong>guard the radius</strong> = return the original position for pixels outside the effect, so nothing leaks.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] Distortion = remapping read position, not changing color</li>
@@ -3529,6 +3746,10 @@ Distorted:  Read pixel at position (x + offset_x, y + offset_y)
 <li>[x] Always handle the "outside effect radius" case (return original position)</li>
 </ul><div class="pager"><a href="#13-blur-effects"><span>Prev</span>← 13 — Blur Effects</a><a href="#15-noise-and-patterns"><span>Next</span>15 — Noise and Procedural Patterns →</a></div></section>
 <section class="page" id="15-noise-and-patterns" data-title="15 — Noise and Procedural Patterns" data-num="15" data-hasdemo="1" data-group="Curriculum"><h1>15 — Noise and Procedural Patterns</h1><div class="demo-mount" data-demo="sh-noise"></div>
+<h2>Start here — the plain idea</h2>
+<p>Nature is rarely perfectly smooth or perfectly random — clouds, fire, marble, and water all have a <em>structured</em> messiness. Noise functions are how you manufacture that on the GPU, with no textures, just math. They're the secret ingredient behind almost everything organic-looking.</p>
+<p>Start with pure randomness: a hash function that turns any position into a repeatable random number (same input, same output, but neighbors look totally unrelated). That raw static is too jagged to use, so you <em>smooth</em> it — pick random values on a grid and blend between them (value noise), or blend random directions for an even silkier result (Perlin/gradient noise). The killer move is FBM: layer several copies of noise, each one finer and fainter than the last, like adding big rolling hills, then bumps, then pebbles. That stack of scales is exactly what makes clouds look like clouds.</p>
+<p>Think of it as a recipe for controlled chaos. One more flavor, Voronoi, measures distance to scattered points to make cell-like patterns — stones, scales, cracked earth.</p>
 <p>Noise functions generate organic, natural-looking randomness. They're the foundation of clouds, fire, water, terrain, and countless visual effects.</p>
 <hr />
 <h2>Random (Hash) Function</h2>
@@ -3676,6 +3897,16 @@ float2 random2(float2 st) {
 <li><strong>Voronoi cells</strong>: Color each Voronoi cell differently using the cell's grid position as a random seed.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>hash / random</strong> = a function turning a position into a repeatable pseudo-random number; same input, same output, neighbors unrelated.</li>
+<li><strong>value noise</strong> = smoothing that randomness by blending random values placed on a grid.</li>
+<li><strong>gradient (Perlin) noise</strong> = a smoother variant that blends random <em>directions</em>, giving more organic flow.</li>
+<li><strong>octave</strong> = one layer of noise at a given scale; doubling frequency, halving amplitude each step.</li>
+<li><strong>FBM (fractal Brownian motion)</strong> = stacking octaves so you get coarse shapes plus fine detail — the cloud-maker.</li>
+<li><strong>Voronoi (cellular noise)</strong> = distance to the nearest scattered point, producing cell/stone/scale patterns.</li>
+<li><strong>practical uses</strong> = clouds, film grain, dissolve transitions, fire, water — all just noise shaped and colored.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] <code>random()</code> = deterministic hash, not smooth</li>
@@ -3686,6 +3917,10 @@ float2 random2(float2 st) {
 <li>[x] Practical: clouds, grain, dissolve, fire, water</li>
 </ul><div class="pager"><a href="#14-distortion-effects"><span>Prev</span>← 14 — Distortion Effects</a><a href="#16-blending-and-compositing"><span>Next</span>16 — Blending and Compositing →</a></div></section>
 <section class="page" id="16-blending-and-compositing" data-title="16 — Blending and Compositing" data-num="16" data-hasdemo="0" data-group="Curriculum"><h1>16 — Blending and Compositing</h1>
+<h2>Start here — the plain idea</h2>
+<p>Compositing is the math for <em>stacking</em> layers — deciding what happens where a foreground meets a background. Every time something semi-transparent sits over something else, a tiny formula runs to mix them. This lesson is that formula, in all its flavors.</p>
+<p>The base case is alpha compositing: a pixel that's 70% opaque shows 70% of its own color and lets 30% of the background through. That's "source over," the normal stacking you take for granted. The Porter-Duff family is just every variation on the theme — keep only where they overlap, punch one out of the other, and so on. A key detail is <em>premultiplied alpha</em>: the color is already scaled by its transparency, which makes the blend math clean and is what Metal expects (mismatch it and you get dark halos).</p>
+<p>Then there are the Photoshop-style blend modes — multiply darkens, screen lightens, overlay boosts contrast. These are just per-channel arithmetic on the two colors. Apple's glass highlights lean on <code>plusLighter</code> (additive, clamped), which is why overlapping light looks like it glows.</p>
 <p>How to combine layers — the math behind Photoshop blend modes, alpha compositing, and Apple's private <code>compositingFilter</code>.</p>
 <hr />
 <h2>Alpha Compositing (Porter-Duff)</h2>
@@ -3834,6 +4069,16 @@ float3 add(float3 base, float3 blend) { return min(base + blend, 1.0); }
 <li><strong>Shadow casting</strong>: Use <code>multiply</code> to add a soft shadow under UI elements.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>compositing</strong> = the math for combining a foreground layer with a background.</li>
+<li><strong>alpha / source-over</strong> = showing a pixel's color in proportion to its opacity, letting the rest of the background through.</li>
+<li><strong>premultiplied alpha</strong> = color already scaled by its transparency; keeps blend math clean and is what Metal expects.</li>
+<li><strong>Porter-Duff modes</strong> = the 12 ways two layers can overlap (over, in, out, atop, xor, clear...).</li>
+<li><strong>blend modes</strong> = per-channel arithmetic: multiply darkens, screen lightens, overlay boosts contrast, soft light is a gentle version.</li>
+<li><strong>plusLighter (<code>plusL</code>)</strong> = additive blend clamped to 1; Apple's go-to for glowing glass highlights.</li>
+<li><strong>SwiftUI <code>.blendMode()</code></strong> = the high-level handle that maps straight to these GPU blend operations.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] Porter-Duff compositing: 12 modes for combining layers with alpha</li>
@@ -3843,6 +4088,10 @@ float3 add(float3 base, float3 blend) { return min(base + blend, 1.0); }
 <li>[x] SwiftUI <code>.blendMode()</code> maps to GPU blend operations</li>
 </ul><div class="pager"><a href="#15-noise-and-patterns"><span>Prev</span>← 15 — Noise and Procedural Patterns</a><a href="#17-metal-in-uikit"><span>Next</span>17 — Metal in UIKit →</a></div></section>
 <section class="page" id="17-metal-in-uikit" data-title="17 — Metal in UIKit" data-num="17" data-hasdemo="0" data-group="Curriculum"><h1>17 — Metal in UIKit</h1>
+<h2>Start here — the plain idea</h2>
+<p>So far your shaders have lived in tidy little previews. Now you want them on a real screen, inside a real app. That's what the "rendering pipeline" is: the plumbing that takes your shader, runs it on the GPU, and shows the result frame after frame.</p>
+<p>Think of it like a kitchen. The GPU is the chef, the <code>device</code> is your line to that kitchen, the <code>commandQueue</code> is the order rail, and a <code>drawable</code> is the empty plate the chef fills and sends out. Every frame you write an order ("run this shader, draw a triangle, present the plate"), drop it on the rail, and a fresh plate appears on screen. <code>MTKView</code> is the easy mode — it sets the table and rings the bell 60 or 120 times a second for you. <code>CAMetalLayer</code> is the same idea with the lid off, for when you need to control the timing yourself.</p>
+<p>The other big idea here is that the GPU's output doesn't have to go straight to the screen — it can go into a texture instead. That's what makes multi-pass effects possible: render once into an off-screen picture, then feed that picture back in as input for a second pass. Blur works exactly this way (blur horizontally, then blur that result vertically).</p>
 <p>Setting up the full Metal rendering pipeline with MTKView, CAMetalLayer, and UIKit integration.</p>
 <hr />
 <h2>Option 1: MTKView (Recommended)</h2>
@@ -4036,8 +4285,22 @@ func captureView(_ view: UIView) -&gt; MTLTexture {
 <li>[x] Multi-pass rendering for effects like blur (ping-pong textures)</li>
 <li>[x] Off-screen rendering to textures</li>
 <li>[x] Capturing UIView content into Metal textures</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>MTKView</strong> = a ready-made canvas that handles the per-frame heartbeat and hands you a blank plate to draw on.</li>
+<li><strong>CAMetalLayer</strong> = the same canvas with manual controls, so you can drop Metal into any plain UIView and drive the timing yourself.</li>
+<li><strong>command queue / command buffer</strong> = the order rail and the order slip; you fill a slip with GPU instructions each frame and commit it.</li>
+<li><strong>drawable</strong> = the actual on-screen plate the GPU paints into, then <code>present</code>s so the user sees it.</li>
+<li><strong>render to texture</strong> = pointing the GPU's output at an off-screen image instead of the screen, so you can reuse the result later.</li>
+<li><strong>multi-pass (ping-pong)</strong> = running the effect in stages, feeding one pass's texture into the next — how a separable blur (horizontal then vertical) is built.</li>
+<li><strong>framebufferOnly</strong> = a promise that you won't read the pixels back, which lets Metal skip work and run faster.</li>
 </ul><div class="pager"><a href="#16-blending-and-compositing"><span>Prev</span>← 16 — Blending and Compositing</a><a href="#18-metal-in-swiftui"><span>Next</span>18 — Metal Shaders in SwiftUI (iOS 17+) →</a></div></section>
 <section class="page" id="18-metal-in-swiftui" data-title="18 — Metal Shaders in SwiftUI (iOS 17+)" data-num="18" data-hasdemo="0" data-group="Curriculum"><h1>18 — Metal Shaders in SwiftUI (iOS 17+)</h1>
+<h2>Start here — the plain idea</h2>
+<p>In UIKit you had to build the whole kitchen yourself. SwiftUI hands you a shortcut: take any view you already drew — text, an image, a whole scroll view — and run a tiny GPU program over its pixels with one modifier. The <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> keyword is just a label that says "this shader is allowed to be plugged into SwiftUI's own pipeline," the same way <code>throws</code> labels a function.</p>
+<p>There are three flavors, and the difference is simply <em>what your shader is allowed to touch</em>. A <strong>colorEffect</strong> gets one pixel's color and can change that color — recolor, tint, grayscale — but it can't peek at the neighbors. A <strong>distortionEffect</strong> can't change colors at all; instead it answers a different question: "for the pixel landing <em>here</em>, where should I go grab its color from?" Move that lookup around and you get ripples, pixelation, fisheye. A <strong>layerEffect</strong> is the powerful one — it hands you the whole rendered view as something you can sample anywhere, so you can read many neighboring pixels and average them. That's what blur, glow, and edge detection need.</p>
+<p><code>maxSampleOffset</code> is just you telling SwiftUI "my shader might reach this far for a pixel," so it knows how big a region to keep around. Too small and the edges get clipped; too big and you pay for area you never use.</p>
 <p>iOS 17 introduced <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> shaders — the ability to apply custom Metal shaders directly to SwiftUI views. This is the most practical way to use Metal for visual effects in modern iOS apps.</p>
 <hr />
 <h2>Three Effect Types</h2>
@@ -4367,8 +4630,22 @@ struct ShaderModifier: ViewModifier {
 - [x] Passing data: <code>.float()</code>, <code>.float2()</code>, <code>.color()</code>, <code>.image()</code>
 - [x] <code>maxSampleOffset</code> controls how far a shader can read from neighboring pixels
 - [x] <code>TimelineView(.animation)</code> for shader animation
-- [x] <code>SwiftUI::Layer</code> provides <code>.sample(position)</code> in layer effects</p><div class="pager"><a href="#17-metal-in-uikit"><span>Prev</span>← 17 — Metal in UIKit</a><a href="#19-metal-performance-shaders"><span>Next</span>19 — Metal Performance Shaders (MPS) →</a></div></section>
+- [x] <code>SwiftUI::Layer</code> provides <code>.sample(position)</code> in layer effects</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code></strong> = a label saying "this shader may be plugged into SwiftUI," just like <code>throws</code> labels a function.</li>
+<li><strong>colorEffect</strong> = recolors one pixel at a time; sees its own color, never the neighbors.</li>
+<li><strong>distortionEffect</strong> = leaves colors alone and instead moves <em>where</em> each pixel reads from — bend that lookup and you get ripples or fisheye.</li>
+<li><strong>layerEffect</strong> = the full-access one; hands you the whole view to sample anywhere, which is what blur and glow need.</li>
+<li><strong>maxSampleOffset</strong> = how far out your shader is allowed to reach for a pixel — set it to your real reach, no more.</li>
+<li><strong><code>SwiftUI::Layer.sample(position)</code></strong> = "give me the color at this spot" — the tool that lets a layer effect read its neighbors.</li>
+<li><strong>TimelineView(.animation)</strong> = a clock that re-renders every frame so you can feed elapsed time into a shader and make it move.</li>
+</ul><div class="pager"><a href="#17-metal-in-uikit"><span>Prev</span>← 17 — Metal in UIKit</a><a href="#19-metal-performance-shaders"><span>Next</span>19 — Metal Performance Shaders (MPS) →</a></div></section>
 <section class="page" id="19-metal-performance-shaders" data-title="19 — Metal Performance Shaders (MPS)" data-num="19" data-hasdemo="0" data-group="Curriculum"><h1>19 — Metal Performance Shaders (MPS)</h1>
+<h2>Start here — the plain idea</h2>
+<p>You've been hand-writing shaders. MPS is Apple saying: "for the common stuff, don't bother — we already wrote it, and we tuned it for every chip we ship." Think of it as a shelf of pre-built power tools. Need a Gaussian blur, an edge detector, a histogram, an image resize? Grab the tool, point it at a source texture and a destination texture, and let it run.</p>
+<p>What makes MPS fast isn't magic — it's that Apple's engineers rewrote each operation specifically for each GPU generation, picking the exact tricks that hardware likes. Your custom shader is general-purpose; theirs is hand-tuned. So the rule of thumb is simple: if a built-in does what you want, it'll beat your version.</p>
+<p>The pattern is always the same: you <code>encode</code> a filter onto a command buffer, which is just adding it to the GPU's to-do list. And because they all share that list, you can chain them — blur, then sharpen, then scale — each feeding the next, all submitted in one go.</p>
 <p>Apple's built-in, hardware-optimized GPU operations. Use MPS when a built-in operation exists — it's always faster than your custom shader.</p>
 <hr />
 <h2>Image Processing</h2>
@@ -4490,8 +4767,21 @@ blur.encode(commandBuffer: cmdBuf, inPlaceTexture: &amp;texture, fallbackCopyAll
 <li>[x] Chain operations on the same command buffer</li>
 <li>[x] In-place processing saves memory allocations</li>
 <li>[x] Always prefer MPS over custom shaders when the operation matches</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>MPS</strong> = Apple's shelf of pre-built, per-chip-tuned GPU operations — use them instead of writing your own when one fits.</li>
+<li><strong>encode</strong> = adding a filter to the command buffer's to-do list; the GPU runs it when you commit.</li>
+<li><strong>source / destination texture</strong> = the "before" picture going in and the "after" picture coming out.</li>
+<li><strong>chaining</strong> = stacking filters on one command buffer so each one's output feeds the next (blur, sharpen, scale).</li>
+<li><strong>in-place processing</strong> = letting a filter overwrite the same texture it read, saving a memory allocation.</li>
+<li><strong>why MPS wins</strong> = it's hand-optimized for each GPU generation, so it beats a general-purpose custom shader at the same job.</li>
 </ul><div class="pager"><a href="#18-metal-in-swiftui"><span>Prev</span>← 18 — Metal Shaders in SwiftUI (iOS 17+)</a><a href="#20-variable-blur"><span>Next</span>20 — Variable Blur →</a></div></section>
 <section class="page" id="20-variable-blur" data-title="20 — Variable Blur" data-num="20" data-hasdemo="0" data-group="Curriculum"><h1>20 — Variable Blur</h1>
+<h2>Start here — the plain idea</h2>
+<p>A normal blur treats every pixel the same — smear everything by the same amount. Variable blur is the small twist that makes it look professional: the blur amount <em>changes across the image</em>. Sharp where it matters, soft everywhere else. That's the scroll-edge fade at the top of a list, the dreamy out-of-focus background in portrait mode, the toy-town tilt-shift look.</p>
+<p>The trick is to give each pixel its own blur radius. Where does that number come from? Either a <strong>mask</strong> — a grayscale picture where white means "blur me a lot" and black means "leave me sharp" — or a <strong>formula</strong> based on position, like "the farther you are from the focus line, the blurrier you get." Same blur loop as before; you've just made the radius a variable instead of a constant.</p>
+<p>Behind the scenes the GPU still does the heavy thing — sample a circle of neighbors and average them — but now the size of that circle is decided per pixel. That's also why the performance tips matter: a big radius means a lot of neighbor reads, so you cap it, skip pixels the mask says are sharp, and for really heavy blur you cheat by blurring a shrunk-down copy and scaling back up.</p>
 <p>Different blur radius at different positions — the technique behind Apple's scroll edge blur, depth-of-field, and tilt-shift effects.</p>
 <hr />
 <h2>Concept</h2>
@@ -4596,8 +4886,22 @@ myView.layer.setValue([filter], forKey: &quot;filters&quot;)
 <li>[x] CAFilter <code>variableBlur</code> is the fastest (private API, render server)</li>
 <li>[x] Always cap max radius for performance</li>
 <li>[x] Use for scroll edges, depth of field, tilt-shift, focus effects</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>variable blur</strong> = a blur whose radius changes per pixel, instead of one amount for the whole image.</li>
+<li><strong>mask</strong> = a grayscale guide picture; white = blur hard here, black = stay sharp.</li>
+<li><strong>distance formula</strong> = deriving the radius from position, e.g. "blurrier the farther you are from the focus line" (tilt-shift).</li>
+<li><strong>smoothstep</strong> = a soft ramp between two values, so the blur fades in gradually instead of switching on abruptly.</li>
+<li><strong>weighted average</strong> = summing neighbor colors with falloff weights and dividing — closer pixels count more.</li>
+<li><strong>cap the radius</strong> = limiting the neighbor loop so a huge blur can't stall the GPU.</li>
+<li><strong>downscale-then-upscale</strong> = blurring a shrunk copy for big radii, a cheap way to fake a wide blur.</li>
 </ul><div class="pager"><a href="#19-metal-performance-shaders"><span>Prev</span>← 19 — Metal Performance Shaders (MPS)</a><a href="#21-glass-and-refraction"><span>Next</span>21 — Glass and Refraction →</a></div></section>
 <section class="page" id="21-glass-and-refraction" data-title="21 — Glass and Refraction" data-num="21" data-hasdemo="0" data-group="Curriculum"><h1>21 — Glass and Refraction</h1>
+<h2>Start here — the plain idea</h2>
+<p>Glass in software is a magic trick — there's no actual glass, just clever lying about pixels. "Frosted glass" is really a stack of small cheats layered together: blur the stuff behind it, pump up the color a bit so it doesn't look washed out, add a faint tint, drop in a soft highlight, and make it slightly see-through. Do all five and your brain says "that's glass."</p>
+<p>Refraction is just bending the lookup: instead of reading the pixel straight behind the glass, you read a slightly shifted one, so the background looks warped. Snell's law is only the recipe for <em>how much</em> to shift based on the angle and how dense the glass is. Chromatic aberration is the same shift done three times — red, green, and blue each grabbed from a slightly different spot — because real glass splits colors at its edges.</p>
+<p>"Liquid Glass" is just all of these turned on at once over a rounded shape, with a moving highlight and darker, more reflective edges (that edge effect is called Fresnel — surfaces get shinier the more you look along them). The GPU runs the whole stack per pixel, every frame, which is why it feels alive.</p>
 <p>The techniques behind Apple's frosted glass materials, Liquid Glass, and light refraction effects.</p>
 <hr />
 <h2>Frosted Glass Recipe</h2>
@@ -4751,8 +5055,22 @@ myView.layer.setValue([filter], forKey: &quot;filters&quot;)
 <li>[x] Fresnel effect: edges appear different from center</li>
 <li>[x] SDF gradient provides surface normals for any shape</li>
 <li>[x] Liquid Glass combines all techniques with animated lighting</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>frosted glass</strong> = a stack of cheats — blur + saturation boost + tint + highlight + transparency — that together read as "glass."</li>
+<li><strong>refraction</strong> = bending the lookup; you sample a shifted pixel so the background looks warped.</li>
+<li><strong>index of refraction (IOR)</strong> = how dense the glass pretends to be, which sets how strongly the lookup bends (glass ~1.5).</li>
+<li><strong>Snell's law</strong> = the formula for how much to shift, based on the surface angle and the IOR.</li>
+<li><strong>chromatic aberration</strong> = sampling red, green, and blue from slightly different spots, mimicking how glass splits colors at its edges.</li>
+<li><strong>Fresnel</strong> = surfaces look shinier and more reflective at glancing angles, which is why glass edges read brighter.</li>
+<li><strong>SDF (signed distance field)</strong> = a math shape that tells you how far each pixel is from the edge, used here to make rounded glass and derive its surface normals.</li>
 </ul><div class="pager"><a href="#20-variable-blur"><span>Prev</span>← 20 — Variable Blur</a><a href="#22-lighting-and-normals"><span>Next</span>22 — Lighting and Normal Maps →</a></div></section>
 <section class="page" id="22-lighting-and-normals" data-title="22 — Lighting and Normal Maps" data-num="22" data-hasdemo="0" data-group="Curriculum"><h1>22 — Lighting and Normal Maps</h1>
+<h2>Start here — the plain idea</h2>
+<p>A flat image is flat because nothing on it reacts to light. Lighting fixes that, and the whole thing hinges on one idea: the <strong>normal</strong> — the direction a surface faces. Lighting is just measuring how much that direction points at the light. Face the light dead-on, you're bright. Turn away, you go dark. That single comparison (a dot product) is the heart of it.</p>
+<p>The Phong model just adds three layers of this. <strong>Ambient</strong> is the faint light that's everywhere so shadows aren't pitch black. <strong>Diffuse</strong> is the "how much do I face the light" part — the matte shading. <strong>Specular</strong> is the shiny hotspot you get when the light bounces off the surface straight into your eye. Stack them and a flat circle suddenly looks like a lit ball.</p>
+<p>The clever part is the <strong>normal map</strong>. Instead of giving every pixel the same facing direction, you store a <em>different</em> direction per pixel inside an image — packed as RGB, where red/green/blue encode the X/Y/Z of the direction. Now a flat wall can have fake bumps and grooves, because each pixel catches the light as if it were tilted, even though the geometry never changed. You can even cook one up from a height map by looking at how steeply brightness changes from pixel to pixel.</p>
 <p>Adding depth and dimension to flat surfaces using lighting calculations and normal maps.</p>
 <hr />
 <h2>Phong Lighting Model</h2>
@@ -4828,8 +5146,22 @@ float3 phongLighting(float3 normal, float3 viewDir, float3 lightDir,
 <li>[x] Normal maps store per-pixel surface direction as RGB</li>
 <li>[x] <code>reflect()</code> and <code>dot()</code> are the key lighting functions</li>
 <li>[x] Normal maps can be generated from height maps via gradient</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>normal</strong> = the direction a surface faces; lighting is just how much that direction points at the light.</li>
+<li><strong>dot product</strong> = the "how much do these two directions agree" measurement that turns facing-the-light into a brightness number.</li>
+<li><strong>ambient</strong> = the faint everywhere-light so shadows aren't pure black.</li>
+<li><strong>diffuse</strong> = matte shading — brighter the more the surface faces the light.</li>
+<li><strong>specular</strong> = the shiny hotspot where the light bounces off into your eye.</li>
+<li><strong>normal map</strong> = an image storing a per-pixel facing direction (packed as RGB), so a flat surface can fake bumps.</li>
+<li><strong>height-to-normal</strong> = deriving those directions from a grayscale height map by measuring how steeply it rises pixel to pixel.</li>
 </ul><div class="pager"><a href="#21-glass-and-refraction"><span>Prev</span>← 21 — Glass and Refraction</a><a href="#23-animation-in-shaders"><span>Next</span>23 — Animation in Shaders →</a></div></section>
 <section class="page" id="23-animation-in-shaders" data-title="23 — Animation in Shaders" data-num="23" data-hasdemo="1" data-group="Curriculum"><h1>23 — Animation in Shaders</h1><div class="demo-mount" data-demo="sh-plasma"></div>
+<h2>Start here — the plain idea</h2>
+<p>A shader by itself is frozen — it computes the same picture forever. To make it move, you feed it one changing number: <strong>time</strong>. That's the whole secret. The GPU re-runs your shader every frame, and if you make the output depend on <code>time</code>, the picture changes frame to frame. Animation = "draw, but with a clock ticking in one variable."</p>
+<p>The fun is in shaping that ticking number. Raw time just climbs forever, so you fold it into useful patterns: <code>sin(time)</code> to gently oscillate back and forth, <code>fract(time)</code> to loop 0→1 over and over, <code>step</code> to blink on and off. Easing functions are just curves you bend that 0→1 progress through — ease-in starts slow, bounce overshoots and settles — so motion feels physical instead of robotic.</p>
+<p>Two more tricks round it out. <strong>Stagger</strong> means offsetting time by position, so each row or item starts a beat later — that ripple-down feel. And <strong>morphing</strong> blends two shapes by <code>mix</code>-ing their math together as progress goes 0→1, so a circle smoothly melts into a square. All of it is just arithmetic on a single moving number.</p>
 <p>Time-based animation, easing, and morphing — making shaders come alive.</p>
 <hr />
 <h2>Passing Time</h2>
@@ -4917,8 +5249,22 @@ float smoothLoop = smoothstep(0.0, 1.0, pingPong);       // Smooth ping-pong
 <li>[x] Stagger = delay based on position (row index, distance, etc.)</li>
 <li>[x] Morph between SDFs with <code>mix(shape1, shape2, progress)</code></li>
 <li>[x] <code>TimelineView(.animation)</code> drives shader animation in SwiftUI</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>time</strong> = the one changing number you feed the shader; make output depend on it and the frozen picture starts moving.</li>
+<li><strong>sin(time)</strong> = a smooth back-and-forth oscillation, the workhorse of gentle pulsing motion.</li>
+<li><strong>fract(time)</strong> = the looping part — climbs 0→1, then snaps back to repeat (a sawtooth).</li>
+<li><strong>easing</strong> = bending a 0→1 progress through a curve so motion feels physical (slow start, bounce, elastic) instead of linear.</li>
+<li><strong>stagger</strong> = offsetting time by position so each row or item kicks off a beat later, giving a ripple feel.</li>
+<li><strong>morphing</strong> = <code>mix</code>-ing two shapes' math by a progress value so one smoothly becomes the other.</li>
+<li><strong>ping-pong</strong> = <code>abs(fract(t)*2 - 1)</code>, a loop that goes 0→1→0 so the animation reverses instead of jumping.</li>
 </ul><div class="pager"><a href="#22-lighting-and-normals"><span>Prev</span>← 22 — Lighting and Normal Maps</a><a href="#24-shader-performance"><span>Next</span>24 — Shader Performance →</a></div></section>
 <section class="page" id="24-shader-performance" data-title="24 — Shader Performance" data-num="24" data-hasdemo="0" data-group="Curriculum"><h1>24 — Shader Performance</h1>
+<h2>Start here — the plain idea</h2>
+<p>Your shader doesn't run once — it runs for <em>every pixel</em>, millions of times per frame, 120 times a second. So a tiny inefficiency isn't tiny; it's multiplied into the millions. Performance work here is just shaving cost off the thing that gets repeated the most.</p>
+<p>A few facts about the GPU explain almost every rule. It loves doing simple math in parallel, and it has special fast hardware for <strong>half</strong>-precision numbers — so using <code>half</code> instead of <code>float</code> for colors is basically free speed. It <em>hates</em> branching: when threads hit an <code>if</code>, the GPU often runs <em>both</em> sides and throws one away, so you replace <code>if/else</code> with blending math like <code>mix</code> and <code>step</code>. And reading from a texture is comparatively slow — each lookup costs — so the name of the game is fewer reads (separable passes, sampling between pixels to get two for the price of one).</p>
+<p>The last danger is loops that don't know when to stop. A blur radius driven by user input could spin thousands of times and stall the whole GPU, so you cap it. Everything else — profiling in Xcode, downsampling before heavy effects — is just confirming where the cost actually is and cutting the biggest piece first.</p>
 <p>How to write shaders that run at 120fps on every device. Profile, optimize, and avoid common pitfalls.</p>
 <hr />
 <h2>The Golden Rules</h2>
@@ -5078,8 +5424,22 @@ threadgroup_barrier(mem_flags::mem_threadgroup);
 <li>[x] Minimize texture reads; use linear sampling tricks</li>
 <li>[x] Profile with GPU Frame Capture and Metal System Trace</li>
 <li>[x] Target &lt; 8.3ms frame time for 120fps</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>per-pixel cost</strong> = your shader runs millions of times a frame, so every small saving gets multiplied massively.</li>
+<li><strong>half vs float</strong> = Apple GPUs have dedicated half-precision hardware, so <code>half</code> colors run ~2x faster than <code>float</code> for free.</li>
+<li><strong>branching is expensive</strong> = the GPU often runs both sides of an <code>if</code>, so replace it with <code>mix</code>/<code>step</code> math.</li>
+<li><strong>early-out exception</strong> = a return that <em>all</em> threads take together (e.g. skip the blur outside a radius) is genuinely faster.</li>
+<li><strong>texture reads are slow</strong> = minimize lookups with separable passes and linear sampling (one bilinear read = two pixels averaged).</li>
+<li><strong>cap loops</strong> = bound iteration counts so a user-driven radius can't spin forever and stall the GPU.</li>
+<li><strong>frame budget</strong> = 120fps means under 8.3ms per frame; profiling tells you which step is eating it.</li>
 </ul><div class="pager"><a href="#23-animation-in-shaders"><span>Prev</span>← 23 — Animation in Shaders</a><a href="#25-real-world-apple-effects"><span>Next</span>25 — Real-World Apple Effects: Recreating iOS Animations →</a></div></section>
 <section class="page" id="25-real-world-apple-effects" data-title="25 — Real-World Apple Effects: Recreating iOS Animations" data-num="25" data-hasdemo="1" data-group="Curriculum"><h1>25 — Real-World Apple Effects: Recreating iOS Animations</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>This is the payoff lesson. Every "wow, how did Apple do that" effect — the blurry nav bar, the menu items that deblur and spring into place, the glassy Send button — turns out to be the same handful of tricks you already know, stacked and tuned just right. Nothing here is new physics; it's recipe-following.</p>
+<p>The recurring pattern is worth naming: blur the background, boost its saturation so it doesn't look gray, add a faint white highlight, give it continuous (smooth) corners, and animate everything with springs instead of linear timing. Sprinkle in a tiny per-item delay (stagger) and a little haptic tap, and it <em>feels</em> like iOS. You'll also see two roads to the same look — the private-API <code>CAFilter</code>/<code>CABackdropLayer</code> route that matches Apple exactly, and the public Metal-shader route you can ship.</p>
+<p>Behind the scenes, the GPU is doing the grunt work every frame: sampling neighbors for blur, bending lookups for refraction, splitting colors at edges. The "magic" is just knowing which dials Apple turns and by how much — saturation around 1.6–1.8x, springs with stiffness 200–400, stagger of 0.03–0.05s. Learn the dial settings and you can rebuild almost any of it.</p>
 <p>Applying everything you've learned to recreate the exact effects Apple uses in iOS.</p>
 <hr />
 <h2>Effect 1: Navigation Bar Blur (UIVisualEffectView Equivalent)</h2>
@@ -5425,8 +5785,23 @@ threadgroup_barrier(mem_flags::mem_threadgroup);
 - [x] Implement scroll edge blur effects
 - [x] Create glass material buttons with proper compositing
 - [x] Write liquid glass refraction shaders
-- [x] Apply the complete Apple animation recipe to your own UI</p><div class="pager"><a href="#24-shader-performance"><span>Prev</span>← 24 — Shader Performance</a><a href="#01-card-shader-reflections"><span>Next</span>Card Shader Reflections — PBR Metallic Card →</a></div></section>
+- [x] Apply the complete Apple animation recipe to your own UI</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>the Apple recipe</strong> = blur + saturation boost + faint highlight + continuous corners + spring timing, stacked together.</li>
+<li><strong>CABackdropLayer / CAFilter</strong> = the private-API route that runs in the render server and matches Apple's look exactly.</li>
+<li><strong>public Metal route</strong> = the same effects rebuilt as <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> shaders you can actually ship.</li>
+<li><strong>saturation boost (1.6-1.8x)</strong> = pumping color back into a blurred backdrop so it doesn't look washed-out gray.</li>
+<li><strong>plusL compositing</strong> = an additive blend that lays a soft light highlight onto glass.</li>
+<li><strong>spring physics</strong> = mass/stiffness/damping (≈1 / 200-400 / 18-30) that make motion settle naturally instead of linearly.</li>
+<li><strong>stagger (0.03-0.05s/item)</strong> = a small per-item delay that makes a group animate in sequence, like the iMessage menu.</li>
+<li><strong>continuous corners</strong> = the smooth, non-circular rounding (<code>cornerCurve = .continuous</code>) that gives Apple shapes their look.</li>
+</ul><div class="pager"><a href="#24-shader-performance"><span>Prev</span>← 24 — Shader Performance</a><a href="#01-card-shader-reflections"><span>Next</span>Card Shader Reflections — PBR Metallic Card →</a></div></section>
 <section class="page" id="01-card-shader-reflections" data-title="Card Shader Reflections — PBR Metallic Card" data-num="01" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>Card Shader Reflections — PBR Metallic Card</h1>
+<h2>Start here — the plain idea</h2>
+<p>Picture one of those shiny metal credit cards — silver, gold, platinum — and how the light slides across the surface as you tilt it. That's the effect here: a flat rectangle that <em>looks</em> like polished metal, with reflections that move as you scroll.</p>
+<p>Nothing is actually 3D. The "metal" is a lie painted by a fragment shader — a tiny function that runs once per pixel and decides what color that pixel should be. The trick has three parts: (1) a real physics formula for how metal reflects light at different angles (that's why gold looks warm head-on but shifts at a glance), (2) a fake "brushed grain" texture made from noise so it isn't mirror-smooth, and (3) a pretend environment of light blobs that the surface reflects. Tie those to the scroll angle and the card comes alive.</p>
+<p>Think of it as a stage magician's mirror: there's no real room behind it, just a clever painting that updates as you move.</p>
 <blockquote>
 <p>Physically-based metallic card rendering with Fresnel conductor reflections, environment mapping, normal-mapped micro-detail, and dynamic lighting — all driven by scroll gesture.</p>
 </blockquote>
@@ -5747,6 +6122,15 @@ struct MetalCardView: UIViewRepresentable {
     func makeUIView(context: Context) -&gt; MTKView { ... }
 }
 </code></pre>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Fresnel conductor</strong> = the real-metal formula for how much light reflects at a given angle, computed per color channel so gold can shift warm at grazing angles.</li>
+<li><strong>Normal mapping</strong> = faking tiny surface bumps by sampling noise and measuring its slope, so flat geometry catches light like brushed metal.</li>
+<li><strong>Environment map</strong> = a pretend surrounding world (here, a couple of glowing light blobs) that the surface "reflects" instead of a real room.</li>
+<li><strong>Finite-difference normal</strong> = compute the bump direction by comparing a point to its right and up neighbors — slope = direction the surface faces.</li>
+<li><strong>Dynamic light</strong> = the light rotates <em>opposite</em> to the card so it appears pinned in place while the card turns.</li>
+<li><strong>Uniforms</strong> = the few values Swift hands the shader each frame (rotation, resolution, which metal) — think of them as the dials on the effect.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li><a class="xref" href="#02-github-terrain">02-github-terrain</a> — Full vertex+fragment pipeline in WGSL→MSL</li>
@@ -5756,6 +6140,10 @@ struct MetalCardView: UIViewRepresentable {
 <hr />
 <p><em>Source: enzomanuelmangano/demos/card-shader-reflections</em></p><div class="pager"><a href="#25-real-world-apple-effects"><span>Prev</span>← 25 — Real-World Apple Effects: Recreating iOS Animations</a><a href="#02-github-terrain"><span>Next</span>GitHub Terrain — WebGPU 3D Contribution Graph →</a></div></section>
 <section class="page" id="02-github-terrain" data-title="GitHub Terrain — WebGPU 3D Contribution Graph" data-num="02" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>GitHub Terrain — WebGPU 3D Contribution Graph</h1>
+<h2>Start here — the plain idea</h2>
+<p>You know the green GitHub contribution grid? This effect takes that flat grid and pushes each square up into a little 3D block — busier days become taller towers — so the whole thing looks like a tiny landscape you can tilt and zoom. Then it can morph smoothly back down to the flat 2D grid.</p>
+<p>This is the first lesson with the <em>full</em> pipeline, so here's the key picture. A <strong>vertex shader</strong> runs once per corner point and decides <em>where</em> each block's corners land on screen (it builds the box, tilts it into the isometric view, and figures out lighting and shadows). A <strong>fragment shader</strong> then runs once per pixel and decides the final <em>color</em> — adding shading, shadows cast by taller neighbors, warm peaks, cool valleys, and a little film grain.</p>
+<p>The core trick is height-as-data: contribution counts become block heights, and almost every nice touch (shadows, ambient occlusion, peak glow) comes from each block asking "how tall are my neighbors?" by looking them up in a height grid.</p>
 <blockquote>
 <p>Full vertex + fragment shader pipeline in WGSL that renders GitHub contribution data as an interactive 3D terrain with isometric projection, shadow casting, ambient occlusion, rim lighting, fresnel, atmospheric haze, and film grain.</p>
 </blockquote>
@@ -6152,6 +6540,16 @@ pipelineDescriptor.fragmentFunction = library.makeFunction(name: &quot;terrainFr
 // Bind contribution data as buffer(1)..buffer(4)
 // Animate `progress` uniform 0→1 for iso↔flat morph
 </code></pre>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Vertex shader</strong> = runs per corner point; here it extrudes each block into a 3D box and projects it to screen.</li>
+<li><strong>Fragment shader</strong> = runs per pixel; here it does all the post-processing color work (tone, shadows, grain).</li>
+<li><strong>Height grid</strong> = a lookup table of every block's height, so any block can ask "how tall are my neighbors?"</li>
+<li><strong>Grid shadow (ray march)</strong> = step from a block toward the light; if a taller block is in the way, darken — that's a cast shadow.</li>
+<li><strong>Valley ambient occlusion</strong> = blocks ringed by taller neighbors get darkened, mimicking how light can't reach a pit.</li>
+<li><strong>Isometric ↔ flat morph</strong> = a single <code>progress</code> value lerps angles and cell sizes to slide between 3D and 2D.</li>
+<li><strong>Varyings</strong> = per-vertex values (color, shade, rim light…) the vertex shader computes and the fragment shader receives, smoothly interpolated across each face.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li><a class="xref" href="#01-card-shader-reflections">01-card-shader-reflections</a> — Fragment-only PBR shader</li>
@@ -6161,6 +6559,10 @@ pipelineDescriptor.fragmentFunction = library.makeFunction(name: &quot;terrainFr
 <hr />
 <p><em>Source: enzomanuelmangano/demos/github-terrain</em></p><div class="pager"><a href="#01-card-shader-reflections"><span>Prev</span>← Card Shader Reflections — PBR Metallic Card</a><a href="#03-sphere-waves"><span>Next</span>Sphere Waves — Fibonacci Sphere with Perspective Projection →</a></div></section>
 <section class="page" id="03-sphere-waves" data-title="Sphere Waves — Fibonacci Sphere with Perspective Projection" data-num="03" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>Sphere Waves — Fibonacci Sphere with Perspective Projection</h1>
+<h2>Start here — the plain idea</h2>
+<p>Picture 2000 glowing dots arranged on the surface of an invisible ball, breathing in and out in slow waves while the whole thing slowly shifts color. That's the effect: a shimmering sphere made of particles, with closer dots drawn bigger so it feels genuinely 3D.</p>
+<p>The core trick is the <strong>Fibonacci sphere</strong> — a clever bit of math (using the golden ratio) that sprinkles points so evenly over a ball that they never clump. From there everything is layered on with simple math: three sine waves at different speeds push the dots in and out to make organic, never-repeating motion; a perspective formula shrinks far dots and grows near ones; and the hue cycles over time.</p>
+<p>Notice this lesson computes positions per <em>particle</em>, not per pixel — sometimes the CPU (or a compute shader) figures out where 2000 things go, and the GPU just draws them. Think of it as choreographing 2000 dancers rather than painting a wall.</p>
 <blockquote>
 <p>2000 particles distributed on a Fibonacci sphere with triple-wave displacement, perspective projection, and pinch-to-zoom. CPU-computed via Skia Path on worklet thread.</p>
 </blockquote>
@@ -6404,6 +6806,16 @@ struct FibonacciSphereView: View {
 }
 </code></pre>
 <p><strong>Warning</strong>: 2000 iterations per fragment is expensive. Use compute shader approach for production.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Fibonacci sphere</strong> = golden-ratio spacing that scatters N points almost perfectly evenly over a ball.</li>
+<li><strong><code>magicalMul</code></strong> = the golden-ratio angle; nudge it and the whole 3D structure changes shape.</li>
+<li><strong>Triple-wave displacement</strong> = three sine waves at different speeds added together, so motion looks organic and never repeats.</li>
+<li><strong>Perspective projection</strong> = <code>scale = distance / (distance + z)</code>; near dots get bigger, far dots shrink.</li>
+<li><strong>Pulsing radius</strong> = each dot's size wobbles via its own sine of position and time, for a breathing feel.</li>
+<li><strong>Per-particle vs per-pixel</strong> = here you compute 2000 positions (on CPU or compute shader) and then draw them, instead of a rule per pixel.</li>
+<li><strong>Compute shader (kernel)</strong> = the GPU path that crunches all 2000 particles in parallel into a buffer the renderer reads.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li><a class="xref" href="#01-card-shader-reflections">01-card-shader-reflections</a> — GPU shader approach</li>
@@ -6413,6 +6825,10 @@ struct FibonacciSphereView: View {
 <hr />
 <p><em>Source: enzomanuelmangano/demos/sphere-waves</em></p><div class="pager"><a href="#02-github-terrain"><span>Prev</span>← GitHub Terrain — WebGPU 3D Contribution Graph</a><a href="#04-metaball"><span>Next</span>Metaball — Blur + Color Matrix Threshold Trick →</a></div></section>
 <section class="page" id="04-metaball" data-title="Metaball — Blur + Color Matrix Threshold Trick" data-num="04" data-hasdemo="1" data-group="Practice — Effect Recreations"><h1>Metaball — Blur + Color Matrix Threshold Trick</h1><div class="demo-mount" data-demo="sh-sdf"></div>
+<h2>Start here — the plain idea</h2>
+<p>Metaballs are those blobs that behave like droplets of mercury — drag two near each other and they bulge, stretch, and merge into one gooey shape, then snap apart. It looks like fluid physics, but it's a cheap illusion.</p>
+<p>The trick is almost silly: draw two plain circles, blur them into soft fuzzy clouds, then crank the contrast so hard that everything fuzzy becomes either fully solid or fully gone. Where two blurred edges overlap, their faintness <em>adds up</em> and crosses the "solid" line — so a smooth bridge appears between them. Pull them apart and the overlap fades below the line, and they separate. Blur + a hard threshold = organic merge, no physics required.</p>
+<p>The "proper" version skips the blur and uses a metaball <em>field</em> — each pixel sums up <code>radius² / distance²</code> from every blob and lights up where the total crosses a threshold. Same idea, exact control. Think of each blob as a heat source; you paint solid wherever it's hot enough.</p>
 <blockquote>
 <p>Two draggable blobs that merge organically using zero shader code — just Gaussian blur + alpha channel threshold via color matrix. The simplest way to get liquid/metaball effects.</p>
 </blockquote>
@@ -6650,6 +7066,15 @@ TimelineView(.animation) { _ in
 </tr>
 </tbody>
 </table>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Metaball</strong> = blobs that merge and split like liquid droplets, faked without any real physics.</li>
+<li><strong>Blur + threshold trick</strong> = blur two circles into soft clouds, then a hard cutoff turns overlap into a smooth bridge.</li>
+<li><strong>Color matrix (alpha row)</strong> = <code>alpha_out = alpha_in * 60 - 30</code>, a steep ramp that snaps fuzzy edges to solid-or-gone around ~0.5.</li>
+<li><strong><code>.contrast()</code> shortcut</strong> = in SwiftUI, high contrast on a blurred shape does the same thresholding in one line.</li>
+<li><strong>Metaball field</strong> = the "proper" version: each pixel sums <code>radius² / distance²</code> from every blob and lights up past a threshold.</li>
+<li><strong>Offscreen layer</strong> = render the blobs into a separate buffer first, apply blur + threshold, then composite back.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li><a class="xref" href="#05-fractal-glass">05-fractal-glass</a> — Another blur-based technique (masked refraction)</li>
@@ -6659,6 +7084,10 @@ TimelineView(.animation) { _ in
 <hr />
 <p><em>Source: enzomanuelmangano/demos/metaball</em></p><div class="pager"><a href="#03-sphere-waves"><span>Prev</span>← Sphere Waves — Fibonacci Sphere with Perspective Projection</a><a href="#05-fractal-glass"><span>Next</span>Fractal Glass — Masked Blur Refraction →</a></div></section>
 <section class="page" id="05-fractal-glass" data-title="Fractal Glass — Masked Blur Refraction" data-num="05" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>Fractal Glass — Masked Blur Refraction</h1>
+<h2>Start here — the plain idea</h2>
+<p>Imagine a bright circle sitting behind a panel of textured bathroom glass. Where the glass covers it, the circle goes soft and frosted; outside the glass it stays crisp. Drag the circle around and it sharpens and blurs as it passes the edge of the panel.</p>
+<p>The whole effect is one neat pattern: draw the same thing twice. One copy is sharp, clipped to show <em>only outside</em> the glass. The other copy is blurred, clipped to show <em>only inside</em> the glass. Lay them together and you get a window of frostiness over a sharp world.</p>
+<p>The "fractal" part is just the glass texture — a grid of little gradient tiles that vary the blur's opacity across the panel, so it looks like real uneven, hand-poured glass instead of a flat smudge. Think of it as a stencil that decides how much frost shows where.</p>
 <blockquote>
 <p>A draggable colored circle viewed through a frosted glass panel. The glass region shows a blurred version of the circle while outside the glass the circle is sharp. A 4x4 grid of gradient tiles creates the irregular "fractal" glass pattern.</p>
 </blockquote>
@@ -6876,6 +7305,15 @@ fragment float4 fractalGlassFragment(
 </code></pre>
 <h2>The Key Insight</h2>
 <p><strong>Draw the same content twice — once sharp (clipped outside), once blurred (clipped inside).</strong> This pattern works for any refraction/frosted glass effect. The mask controls the glass "texture."</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Draw-twice pattern</strong> = render the content sharp (clipped outside the glass) and blurred (clipped inside) — the core trick for any frosted/refraction effect.</li>
+<li><strong>Clip / invert clip</strong> = restrict drawing to a region, or to everything <em>except</em> that region.</li>
+<li><strong>Fractal glass mask</strong> = a 4×4 grid of gradient tiles that varies opacity across the panel so the glass looks uneven and real.</li>
+<li><strong>Alpha mask</strong> = a grayscale image that controls how much of the blurred layer shows through, pixel by pixel.</li>
+<li><strong><code>decal</code> blur mode</strong> = keeps the blur from bleeding past the clip edge.</li>
+<li><strong>Two-pass blur</strong> = render the circle to a texture, blur that texture, then sample it — how the GPU version gets its frost.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li><a class="xref" href="#04-metaball">04-metaball</a> — Another blur-based technique</li>
@@ -6885,6 +7323,10 @@ fragment float4 fractalGlassFragment(
 <hr />
 <p><em>Source: enzomanuelmangano/demos/fractal-glass</em></p><div class="pager"><a href="#04-metaball"><span>Prev</span>← Metaball — Blur + Color Matrix Threshold Trick</a><a href="#06-blur-circles"><span>Next</span>Blur Circles — Noise-Driven Organic Motion →</a></div></section>
 <section class="page" id="06-blur-circles" data-title="Blur Circles — Noise-Driven Organic Motion" data-num="06" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>Blur Circles — Noise-Driven Organic Motion</h1>
+<h2>Start here — the plain idea</h2>
+<p>Two colorful circles drift around the screen like they're floating in water, and where one passes over the other you see a soft, blurry lens-like patch. Calm, hypnotic, never quite repeating.</p>
+<p>Two tricks are stacked here. First, the <em>motion</em>: instead of random jitter (too twitchy) or sine waves (too repetitive), each circle's position is steered by <strong>simplex noise</strong> — smooth, wandering numbers that feel organic, like a leaf on a stream. Feed time into the noise and the circles meander naturally forever. Second, the <em>lens look</em>: draw circle one sharp everywhere, then draw a blurred copy of it again but clipped to only show inside circle two. So circle two becomes a moving window that frosts whatever it covers.</p>
+<p>Think of noise as a "natural-looking randomness" dial, and the clip as a roaming magnifying glass that softens instead of magnifies.</p>
 <blockquote>
 <p>Two circles moving on simplex noise paths — one sharp with a sweep gradient, one blurred — clipped against each other to create a lens/distortion illusion.</p>
 </blockquote>
@@ -7088,6 +7530,16 @@ let y = noise.value(atPosition: vector_float2(0, Float(time)))
 - Ambient background animations
 - Liquid/water surface simulation
 - Organic UI transitions</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Simplex noise</strong> = smooth, wandering randomness; better than jittery <code>random</code> or repetitive <code>sin</code> for organic motion.</li>
+<li><strong>Noise-driven position</strong> = feed time into noise to steer each circle, so it drifts naturally and never quite repeats.</li>
+<li><strong>Two noise generators</strong> = two independent seeds give two uncorrelated paths so the circles don't move in sync.</li>
+<li><strong>Frequency / amplitude</strong> = how slow the drift is and how far it ranges from center.</li>
+<li><strong>Clip masking</strong> = draw a blurred copy of circle one but only show it inside circle two — a moving frosted window.</li>
+<li><strong>Ping-pong clock</strong> = a timer that runs forward then reverses; because noise is continuous, motion reverses smoothly.</li>
+<li><strong>Sweep gradient</strong> = color that cycles by angle around the circle's center, giving the rainbow rim.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li><a class="xref" href="#05-fractal-glass">05-fractal-glass</a> — Similar clip + blur, but with grid mask</li>
@@ -7098,6 +7550,10 @@ let y = noise.value(atPosition: vector_float2(0, Float(time)))
 <hr />
 <p><em>Source: enzomanuelmangano/demos/blur-circles</em></p><div class="pager"><a href="#05-fractal-glass"><span>Prev</span>← Fractal Glass — Masked Blur Refraction</a><a href="#07-spiral"><span>Next</span>Spiral — Logarithmic Spiral with Spring Physics →</a></div></section>
 <section class="page" id="07-spiral" data-title="Spiral — Logarithmic Spiral with Spring Physics" data-num="07" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>Spiral — Logarithmic Spiral with Spring Physics</h1>
+<h2>Start here — the plain idea</h2>
+<p>Picture about 1800 dots swirling out from the center in a galaxy-like spiral, small and sharp near the middle, bigger and softer toward the edges. Tap and the whole spiral winds or unwinds with a springy settle.</p>
+<p>The heart of it is one famous formula: the <strong>logarithmic spiral</strong>, <code>r = a · e^(k·θ)</code> — the same shape as a nautilus shell or a swirling galaxy. Each dot gets a number; that number sets how far out it sits and what angle it lands at. The clever bit is that a single shared <code>angle</code> value feeds every dot's position, so nudging that one number re-choreographs all 1800 dots at once — that's why one tap morphs the entire pattern smoothly.</p>
+<p>Depth is faked with two cheap tricks: dots farther out are drawn larger, and a blur softens the edges, so your eye reads it as a 3D swirl receding into space. Think of it as one dial (<code>angle</code>) wired to a thousand dancers.</p>
 <blockquote>
 <p>~1800 circles arranged on a logarithmic spiral that responds to touch with spring physics. Sweep gradient + blur mask for depth.</p>
 </blockquote>
@@ -7293,6 +7749,16 @@ kernel void logarithmicSpiral(
 </tr>
 </tbody>
 </table>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Logarithmic spiral</strong> = <code>r = a · e^(k·θ)</code>, the nautilus/galaxy curve where each turn grows by a constant factor.</li>
+<li><strong><code>k</code> (tightness)</strong> = how fast the spiral expands; bigger <code>k</code> = looser, more open arms.</li>
+<li><strong>Shared <code>angle</code></strong> = one value feeds every dot's position, so changing it re-choreographs all 1800 at once.</li>
+<li><strong>Spring physics</strong> = the <code>angle</code> animates with a critically damped spring, so taps settle smoothly without overshoot.</li>
+<li><strong>Distance-based sizing</strong> = dots farther from center are drawn larger, faking depth.</li>
+<li><strong>Blur mask</strong> = softens dot edges for a depth-of-field feel — sharp center, soft rim.</li>
+<li><strong>Compute vs fragment</strong> = with ~1800 dots, compute the positions once (compute shader) rather than looping all dots per pixel.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li><a class="xref" href="#03-sphere-waves">03-sphere-waves</a> — Similar particle math (Fibonacci vs logarithmic)</li>
@@ -7302,6 +7768,10 @@ kernel void logarithmicSpiral(
 <hr />
 <p><em>Source: enzomanuelmangano/demos/spiral</em></p><div class="pager"><a href="#06-blur-circles"><span>Prev</span>← Blur Circles — Noise-Driven Organic Motion</a><a href="#08-bottom-ambient-light"><span>Next</span>Bottom Ambient Light — SwiftUI `layerEffect` Glow →</a></div></section>
 <section class="page" id="08-bottom-ambient-light" data-title="Bottom Ambient Light — SwiftUI `layerEffect` Glow" data-num="08" data-hasdemo="1" data-group="Practice — Effect Recreations"><h1>Bottom Ambient Light — SwiftUI <code>layerEffect</code> Glow</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>You know that soft glow that creeps up from the bottom of the screen when a notification slides in, or behind media controls? That's the effect here. There's no glow image and no particle engine — it's all faked with math on a plain white rectangle.</p>
+<p>Think of it like an artist who never paints a lamp, only paints where the lamp's light <em>lands</em>. The shader runs once per pixel and asks "how close am I to the bottom edge, and how much light should pile up here?" Near the bottom it answers "a lot," and the answer fades the higher you go. Stack a few of those fading glows together, jiggle them with some slow waves so they breathe, sprinkle in a few drifting specks, and your eye reads the whole thing as warm ambient light.</p>
+<p>The reason it looks alive instead of like a flat gradient is the "decay" — light falls off sharply and smoothly, exactly like real light in a dark room. Everything else is just making that falloff wobble in believable ways.</p>
 <blockquote>
 <p>A soft, animated ambient light rising from the bottom edge of the screen — built as a SwiftUI <code>layerEffect</code> powered by a single <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> Metal shader. No image assets: every wisp, mote, and bloom is generated procedurally from math. Great for notification reveals, media surfaces, or controller/game UI underglow.</p>
 </blockquote>
@@ -7444,6 +7914,16 @@ withAnimation(.spring(duration: 0.78, bounce: 0.16)) { isContentVisible = true }
 </table>
 <h2>Why it's clever</h2>
 <p>No textures, no image assets, no particle system objects — just one stitchable shader on a white rectangle, with all the organic shape coming from exponential falloffs, summed sines, and hashed loops. The SwiftUI side stays tiny (drive <code>time</code> + <code>progress</code>), which makes the effect trivially reusable and tintable. It's a perfect study piece for how far you can get with the <a class="xref" href="#05-math-for-shaders">shaping-function toolkit</a> alone.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>layerEffect</strong> = a SwiftUI modifier that hands your view's pixels to a Metal shader, which gets to repaint each one.</li>
+<li><strong>exponential falloff</strong> (<code>exp(-d·k)</code>) = the "light fades as you move away" curve — bright at the edge, fading fast and smooth, the way real glow does.</li>
+<li><strong>soft circle</strong> = a fuzzy-edged blob made with <code>smoothstep</code> on distance; sum a few placed just off-screen and you get ambient light with no single hot-spot.</li>
+<li><strong>uniform</strong> = a value (time, progress, tint) you pass from Swift into the shader; it's the same for every pixel this frame.</li>
+<li><strong>wrapped time</strong> = keeping the clock value small (<code>truncatingRemainder</code>) so <code>sin</code>/<code>fract</code> stay precise even after hours of running.</li>
+<li><strong>domain warp</strong> = feeding one wave into another wave's input, so the motion looks organic instead of a clean repeating ripple.</li>
+<li><strong>premultiplied alpha</strong> = color values already multiplied by their transparency; it's the format <code>layerEffect</code> expects, and getting it wrong gives dark fringes.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li>The SwiftUI shader entry point: <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a></li>
@@ -7452,6 +7932,10 @@ withAnimation(.spring(duration: 0.78, bounce: 0.16)) { isContentVisible = true }
 <li>Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
 </ul><div class="pager"><a href="#07-spiral"><span>Prev</span>← Spiral — Logarithmic Spiral with Spring Physics</a><a href="#09-liquid-glass"><span>Next</span>Liquid Glass — the Math Behind It →</a></div></section>
 <section class="page" id="09-liquid-glass" data-title="Liquid Glass — the Math Behind It" data-num="09" data-hasdemo="1" data-group="Practice — Effect Recreations"><h1>Liquid Glass — the Math Behind It</h1><div class="demo-mount" data-demo="sh-glass"></div>
+<h2>Start here — the plain idea</h2>
+<p>Liquid Glass is that iOS 26 look where a panel sits over your content like a real slab of glass — the stuff behind it bends at the edges, catches a faint rainbow fringe, blurs a little, and the rim glows. Apple's real shader is secret, but the recipe is no mystery.</p>
+<p>Here's the whole trick in one sentence: for every pixel, figure out one number — <em>how far am I from the edge of the glass shape</em> — and derive everything from it. That number comes from a Signed Distance Field (SDF), think of it as a built-in ruler that tells each pixel its distance to the nearest edge (negative if it's inside the glass).</p>
+<p>Once you have that ruler, real glass behaviors fall out cheaply. To fake light bending, you just read the background from a slightly shifted spot, and shift it more near the edges (where a lens bends most). Read red, green, and blue from <em>slightly different</em> shifts and you get the prism fringe. Brighten where the distance is near zero and you get the glowing rim. Blur the background and it's frosted. One good number, reused four ways.</p>
 <blockquote>
 <p>Apple's <strong>Liquid Glass</strong> (iOS 26+) looks like a real pane of glass floating over your content: the background <strong>bends</strong> at its edges, picks up a faint <strong>prismatic fringe</strong>, <strong>blurs</strong> softly, and catches a bright <strong>rim of light</strong>. Apple's exact shader is private, but the look is a well-understood stack of graphics-math tricks you can recreate. This breaks down the recipe.</p>
 </blockquote>
@@ -7501,6 +7985,15 @@ color += rim;
 <p>The demo above is this exact pipeline in 2D: a rounded-rect SDF over a grid background, with sliders for refraction strength, corner radius, and edge falloff, plus a chromatic-aberration toggle. Watch the grid lines bow at the rim and the colors fringe.</p>
 <h2>Why it's a great study piece</h2>
 <p>Liquid Glass is <em>one SDF reused four ways</em> — shape, refraction direction, dispersion amount, and rim light all fall out of the single distance value. That economy (compute one good number, derive everything from it) is the same lesson as the <a class="xref" href="#08-bottom-ambient-light">bottom ambient light</a> and the whole <a class="xref" href="interaction-math.html#01-modeling-visuals-as-functions">model-it-as-a-function</a> mindset.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>SDF (signed distance field)</strong> = a per-pixel ruler: distance to the shape's edge, negative inside, zero on the edge, positive outside.</li>
+<li><strong>SDF gradient</strong> = the direction pointing straight out of the surface (the normal), found by sampling the SDF a hair to each side — it's which way to push the refraction.</li>
+<li><strong>refraction (faked)</strong> = bending light by reading the background from a <em>shifted</em> spot instead, shifted most near the edges, so straight lines bow.</li>
+<li><strong>chromatic aberration / dispersion</strong> = sampling R, G, B at slightly different offsets so the rim gets a prism-like rainbow fringe.</li>
+<li><strong>Fresnel</strong> = glass reflecting more at grazing angles; on a flat panel it's approximated as a bright hairline where the distance is near zero.</li>
+<li><strong>blur</strong> = softening the background that shows through, the frosted-glass part — multi-tap averaging from the blur lesson.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li>SDFs &amp; shaping: <a class="xref" href="#04-metaball">04-metaball</a>, <a class="xref" href="#05-math-for-shaders">05-math-for-shaders</a></li>
@@ -7511,6 +8004,10 @@ color += rim;
 <li>Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
 </ul><div class="pager"><a href="#08-bottom-ambient-light"><span>Prev</span>← Bottom Ambient Light — SwiftUI `layerEffect` Glow</a><a href="#10-apple-intelligence-glow"><span>Next</span>Apple-Intelligence / Siri Glow — Flowing Edge Light →</a></div></section>
 <section class="page" id="10-apple-intelligence-glow" data-title="Apple-Intelligence / Siri Glow — Flowing Edge Light" data-num="10" data-hasdemo="1" data-group="Practice — Effect Recreations"><h1>Apple-Intelligence / Siri Glow — Flowing Edge Light</h1><div class="demo-mount" data-demo="sh-edgeglow"></div>
+<h2>Start here — the plain idea</h2>
+<p>This is the colorful light that runs around the <em>border</em> of the screen when Siri or Apple Intelligence is listening — the modern replacement for the old Siri orb. Like the other glow effects, it's drawn entirely with math, no images.</p>
+<p>The recipe is just three moves. First, a mask: each pixel measures how far it is from the nearest screen edge, and only pixels near the border get to glow (bright at the edge, fading to nothing toward the center). Second, color that <em>travels</em>: instead of a fixed hue, the color sweeps around the perimeter over time, with a couple of overlapping waves layered in so it shimmers and never looks mechanical. Third, bloom: paint that color onto black and let overlapping light add up, so it reads as soft luminous glow.</p>
+<p>Once you notice the pattern — <em>distance mask + flowing color + additive bloom</em> — you've basically got the whole family of Apple glow effects. Move the mask to the bottom edge and it's the ambient light from the previous lesson; wrap it around the border and it's this.</p>
 <blockquote>
 <p>When Siri / Apple Intelligence is listening, a soft multi-colour light flows around the <strong>edges of the screen</strong>. It's the spiritual successor to the old Siri orb. The math is surprisingly approachable — a screen-edge mask, a hue that <em>flows</em> around the perimeter over time, and additive bloom. (Apple's exact version is private; this is how you recreate the feel.)</p>
 </blockquote>
@@ -7545,6 +8042,15 @@ half3 color = hsv2rgb(half3(hue, 0.85, 1.0));
 <p>The demo above is this recipe: edge-distance mask × flowing hue × bloom, with thickness, flow-speed, and intensity sliders. Crank the speed and watch the colour chase around the border.</p>
 <h2>Why it's a great study piece</h2>
 <p>It's the <strong>same three-part pattern</strong> as the ambient light (mask → flowing colour → bloom), just shaped to the screen border instead of the bottom. Once you see that "Apple glow effects = a distance mask + flowing colour + additive bloom," you can build the family — listening states, focus rings, notification reveals — from one mental template.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>edge mask</strong> = each pixel's distance to the nearest screen edge, turned into "how much glow lives here" — bright at the border, gone by the center.</li>
+<li><strong>exponential falloff</strong> (<code>exp(-d/thickness)</code>) = the smooth fade from the edge inward; bigger <code>thickness</code> = a wider glow band.</li>
+<li><strong>flowing hue</strong> = mapping color to angle-around-the-border <em>plus time</em>, so the rainbow sweeps around the perimeter.</li>
+<li><strong>summed sines</strong> = a couple of overlapping waves at different frequencies added in, giving living shimmer that never visibly loops.</li>
+<li><strong>additive bloom</strong> = painting color onto black so overlapping light <em>adds</em> and brightens, the way real glow stacks.</li>
+<li><strong>progress uniform</strong> = a Swift-driven value to fade the whole effect in/out when Siri starts and stops listening.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li>Sibling decode: <a class="xref" href="#09-liquid-glass">09-liquid-glass</a> · <a class="xref" href="#08-bottom-ambient-light">08-bottom-ambient-light</a></li>

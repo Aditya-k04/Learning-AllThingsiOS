@@ -26,6 +26,10 @@
   </aside>
   <main class="content"><div class="col">
 <section class="page" id="00-roadmap" data-title="SwiftUI Data Flow — Deep Dive Study Plan" data-num="·" data-hasdemo="0" data-group=""><h1>SwiftUI Data Flow — Deep Dive Study Plan</h1>
+<h2>Start here — the plain idea</h2>
+<p>You already know how to <em>use</em> <code>@State</code>, <code>Binding</code>, and the environment. This series is about what's happening behind the glass. Think of it as the difference between driving a car and knowing what the engine does when you press the pedal — same car, but now you can fix it when it sputters.</p>
+<p>The one idea everything hangs on: SwiftUI is a <em>graph of who-depends-on-what</em>, not a screen you redraw. You change a value, and SwiftUI quietly figures out which views cared and refreshes only those. Most data-flow bugs are just a missing or unexpected connection in that graph — a wire you thought was plugged in that wasn't.</p>
+<p>This roadmap is the map. Each lesson zooms into one piece of the machine, and lesson 10 snaps them back together into one trace you can follow end to end.</p>
 <p><strong>How <code>@State</code>, <code>Binding</code>, the Observation framework, and the <code>Environment</code> actually work together — how injection happens, and when (and why) it gets rejected.</strong></p>
 <p>This is a <em>mechanics-first</em> curriculum, not an API tour. The existing <a href="../Learning-SwiftUI/00-roadmap.md">Learning-SwiftUI</a> lessons 05/15/16 teach you <em>how to use</em> these tools. This series teaches you <em>how they work underneath</em> so you can reason about any data-flow bug in your codebase — especially the silent failures and the crashes.</p>
 <blockquote>
@@ -236,8 +240,21 @@
 <li>[ ] You can right-click an <code>@Observable</code> class and choose <strong>Expand Macro</strong>.</li>
 <li>[ ] You know how to add <code>let _ = Self._printChanges()</code> to a <code>body</code>.</li>
 <li>[ ] You've read Learning-SwiftUI 05 and 15 (usage level) — this series assumes them.</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>mechanics-first</strong> = learn how the tools work underneath, not just which API to call.</li>
+<li><strong>the graph</strong> = SwiftUI tracks who-depends-on-whom; change a value, only the dependents refresh.</li>
+<li><strong>identity</strong> = SwiftUI's stable name for "this is the same UI element as last time" — it's what makes state persist.</li>
+<li><strong>injection</strong> = handing a value down the tree (the environment) so deep views can read it without prop-drilling.</li>
+<li><strong>rejection</strong> = injection silently failing or crashing because the reader sits outside the injector's branch (lesson 09 — the payoff).</li>
+<li><strong>the full chain</strong> = own → inject → read → bind → mutate → precise update; every bug lives at one of those links.</li>
 </ul><div class="pager"><span class="sp"></span><a href="#01-the-dependency-graph"><span>Next</span>01 — SwiftUI Is a Dependency Graph →</a></div></section>
 <section class="page" id="01-the-dependency-graph" data-title="01 — SwiftUI Is a Dependency Graph" data-num="01" data-hasdemo="1" data-group=""><h1>01 — SwiftUI Is a Dependency Graph</h1><div class="demo-mount" data-demo="df-graph"></div>
+<h2>Start here — the plain idea</h2>
+<p>Think of SwiftUI like a spreadsheet. You don't tell a cell "recompute now" — you change one number, and every cell with a formula that mentions it updates by itself. SwiftUI works the same way: you change a value, and only the views that actually <em>used</em> that value redraw.</p>
+<p>Here's the part that surprises people: the connection between a value and a view is created by <strong>reading</strong> it. If your view's <code>body</code> reads <code>model.name</code>, it's now subscribed to <code>name</code> — and to nothing else. Don't read it, and you're not subscribed, so changes can't reach you. Almost every "my view isn't updating" bug is really "the wire I assumed was there was never created, because I never read the value."</p>
+<p>So under the hood there's no redrawing of trees. There's a graph of values and the bodies that depend on them, and a tiny bookkeeper that, on every change, asks: who read this? Only those re-run.</p>
 <p>The single most important mental model: <strong>SwiftUI is not a view tree that you redraw. It's a graph of values and the views that depend on them.</strong> When a value changes, SwiftUI re-evaluates <em>only the views that read it</em>. Everything in this series is a consequence of that one idea.</p>
 <hr />
 <h2>The graph (AttributeGraph)</h2>
@@ -299,6 +316,15 @@
 <li>Put a <code>print("body")</code> in a parent and a child. Trigger a parent state change and observe how invalidation flows downward.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>dependency graph</strong> = who-depends-on-whom; change a node, only its descendants re-evaluate.</li>
+<li><strong>attribute</strong> = one cell in the graph — a piece of state, a derived value, or a view's <code>body</code>.</li>
+<li><strong>edge = a read</strong> = the dependency link is created the moment <code>body</code> reads the value; no read, no link.</li>
+<li><strong>invalidation</strong> = marking a body "dirty" so it re-runs on the next run-loop tick (mutations coalesce into one update).</li>
+<li><strong>body run ≠ redraw</strong> = re-evaluating <code>body</code> is cheap; if the result is identical, nothing is actually drawn.</li>
+<li><strong>views are disposable</strong> = the struct is just a recipe; the durable state lives in the graph, keyed to identity.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] I can explain SwiftUI as a graph of values + dependent <code>body</code>s, not a redrawn tree.</li>
@@ -308,6 +334,10 @@
 </ul>
 <p>→ Next: <a href="02-view-identity-and-lifetime.md">02 — View Identity and Lifetime</a></p><div class="pager"><a href="#00-roadmap"><span>Prev</span>← SwiftUI Data Flow — Deep Dive Study Plan</a><a href="#02-view-identity-and-lifetime"><span>Next</span>02 — View Identity and Lifetime →</a></div></section>
 <section class="page" id="02-view-identity-and-lifetime" data-title="02 — View Identity and Lifetime" data-num="02" data-hasdemo="0" data-group=""><h1>02 — View Identity and Lifetime</h1>
+<h2>Start here — the plain idea</h2>
+<p>The view struct gets thrown away and rebuilt constantly, so SwiftUI can't use "is this the same struct?" to decide whether your state carries over. Instead it gives each spot in the UI a name tag — its <strong>identity</strong>. Think of it as a hotel room number: the guests (your view structs) come and go, but the room number stays, and SwiftUI keeps your state (<code>@State</code>) in the room, not with the guest.</p>
+<p>Same identity across an update → same room → your state is still there. New or changed identity → new room → fresh, empty state, old state thrown out. That's the whole story behind both classic bugs: <em>state mysteriously resets</em> (the room number kept changing) and <em>state won't reset when you want it to</em> (same room, you just swapped the furniture).</p>
+<p><strong>Lifetime</strong> is just how long that room exists. While the identity is in the tree, its state lives; when the identity disappears, the state is destroyed. So <code>@State</code> is for stuff you're happy to lose when the view goes away.</p>
 <p>State persists because of <strong>identity</strong>. If you don't understand identity, you'll hit the two classic bugs: <em>state that resets unexpectedly</em>, and <em>state that refuses to reset when you want it to</em>.</p>
 <hr />
 <h2>Identity ≠ the view struct</h2>
@@ -365,6 +395,16 @@
 <li>In a <code>ForEach</code>, use the array index as <code>id</code>, then reorder the array. Observe state attaching to the wrong rows. Fix it with a stable <code>id</code>.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>identity</strong> = SwiftUI's stable "this is the same UI element as last update" — the key your state hangs on.</li>
+<li><strong>structural identity</strong> = identity inferred from a view's position/shape in the tree (the default).</li>
+<li><strong>explicit identity</strong> = identity you set yourself with <code>.id(value)</code> or a <code>ForEach</code> <code>id</code>.</li>
+<li><strong><code>.id(value)</code> reset</strong> = change the value and SwiftUI rebuilds the subtree fresh — deliberate state reset.</li>
+<li><strong><code>AnyView</code> erases structure</strong> = SwiftUI can't see the shape through it, so identity (and state) can scramble.</li>
+<li><strong>lifetime</strong> = how long an identity exists; identity disappears → its <code>@State</code> is destroyed.</li>
+<li><strong>Bug A vs Bug B</strong> = state resets = identity churned; state won't reset = same identity, new data.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] State is keyed to <strong>identity</strong>, not to the (disposable) view struct.</li>
@@ -375,6 +415,10 @@
 </ul>
 <p>→ Next: <a href="03-state-storage-internals.md">03 — @State Storage Internals</a></p><div class="pager"><a href="#01-the-dependency-graph"><span>Prev</span>← 01 — SwiftUI Is a Dependency Graph</a><a href="#03-state-storage-internals"><span>Next</span>03 — @State Storage Internals →</a></div></section>
 <section class="page" id="03-state-storage-internals" data-title="03 — @State Storage Internals" data-num="03" data-hasdemo="0" data-group=""><h1>03 — @State Storage Internals</h1>
+<h2>Start here — the plain idea</h2>
+<p><code>@State</code> = SwiftUI keeps the real value in a box it owns; your view just holds a ticket to it. The box lives in the graph, keyed to the view's identity (lesson 02), so when the disposable view struct gets rebuilt, the new struct's ticket reconnects to the <em>same</em> box. That's why your counter doesn't reset to zero on every re-render.</p>
+<p>The initializer you write (<code>= 0</code>) is just the <em>first-time</em> default. SwiftUI uses it once, when the box is first created, and ignores it forever after — so don't expect <code>@State</code>'s default to "reset" things later, and don't pour expensive work into it.</p>
+<p>One more thing happens behind the scenes when you write through <code>@State</code>: it both updates the box <em>and</em> tells the graph "anyone who read this is now dirty." That second step is the free UI update you never had to ask for.</p>
 <p><code>@State</code> looks like a variable on a struct, but a struct is a disposable value (lesson 01). So where does the value actually live, and why does it survive?</p>
 <hr />
 <h2>@State is a <em>handle</em>, not the storage</h2>
@@ -437,6 +481,16 @@
 <li>[ ] A value passed into <code>@State</code> seeds it once and won't track the parent afterward.</li>
 <li>[ ] I know why mutating a plain-class property in <code>@State</code> doesn't update the UI, and that <code>@Observable</code> fixes it.</li>
 </ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>@State = a ticket, not the storage</strong> = the real value sits in a SwiftUI-owned box; the struct just references it.</li>
+<li><strong>keyed to identity</strong> = the box is found by the view's identity, which is why it survives body re-runs.</li>
+<li><strong>init-once</strong> = the initializer is the first-appearance default; later updates reconnect the existing box.</li>
+<li><strong>seed, don't track</strong> = a value passed into <code>@State</code> sets it once; it won't follow the parent afterward (use <code>Binding</code> for that).</li>
+<li><strong>mutation → invalidation</strong> = writing through <code>@State</code> updates the box <em>and</em> marks dependent bodies dirty.</li>
+<li><strong>value vs reference</strong> = <code>@State</code> owns a value type fully; for a class you need <code>@Observable</code> (lesson 05) so mutations are seen.</li>
+<li><strong>@State over @StateObject</strong> = for <code>@Observable</code>, <code>@State</code> is the modern owner; <code>@StateObject</code> is the <code>ObservableObject</code> legacy.</li>
+</ul>
 <p>→ Next: <a href="04-binding-mechanics.md">04 — Binding Mechanics</a></p>
 <hr />
 <h2>🆕 WWDC26 update — <code>@State</code> macro &amp; storage init</h2>
@@ -444,6 +498,10 @@
 <p>This directly affects <code>@Observable</code> models held in <code>@State</code>: their <code>init</code> no longer fires repeatedly when a parent re-evaluates, only when the storage is first created. The state box still lives outside the (ephemeral) view struct and persists across re-renders — what changed is that <em>populating it</em> is now deferred and one-shot. Compile with <strong>Xcode 27</strong> to get the behavior (back-deployed to iOS 17 / macOS 14).</p>
 <p>See <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a> and <a class="xref" href="#06-observable-ownership">Observable Ownership</a>.</p><div class="pager"><a href="#02-view-identity-and-lifetime"><span>Prev</span>← 02 — View Identity and Lifetime</a><a href="#04-binding-mechanics"><span>Next</span>04 — Binding Mechanics →</a></div></section>
 <section class="page" id="04-binding-mechanics" data-title="04 — Binding Mechanics" data-num="04" data-hasdemo="0" data-group=""><h1>04 — Binding Mechanics</h1>
+<h2>Start here — the plain idea</h2>
+<p>A <code>Binding</code> is like a remote control for a value that lives in someone else's house. The child view doesn't own the value and stores nothing — it just holds two buttons: "read it" and "write it." Press write, and the change travels straight back to the real owner's storage, and the graph updates everyone who cared.</p>
+<p>That's all <code>$</code> does, too. The <code>$</code> in front of <code>@State</code> hands over that remote control instead of a copy of the value. So <code>$name</code> isn't a string — it's a get/set pair pointing at the parent's <code>@State</code> box. Think of it as: plain name = the value; <code>$name</code> = the write-path to the value.</p>
+<p>Under the hood there's no magic two-way sync. A <code>Binding</code> is a wire, not a tank — it carries reads and writes back to whoever owns the storage. Once you see it as "just a get and a set," every confusing case (custom bindings, optional bindings, stale bindings) becomes obvious: it works as long as the <code>set</code> still points at a live source of truth.</p>
 <p>A <code>Binding</code> is the answer to: "how do I let a child <em>write</em> to a source of truth it doesn't own?" Understanding that it's just a <strong>get/set pair</strong> dissolves most confusion about <code>$</code>.</p>
 <hr />
 <h2>What a Binding actually is</h2>
@@ -526,6 +584,16 @@ if let nick = Binding($user.nickname) { TextField(&quot;Nick&quot;, text: nick) 
 <li>Make a parent that <em>passes</em> a binding to a child but never reads it. Confirm the parent doesn't re-render when the value changes, but the child does.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Binding = a get/set pair</strong> = a two-way wire to a value living somewhere else; it stores nothing itself.</li>
+<li><strong><code>$</code> = the projected value</strong> = for <code>@State</code>/<code>@Binding</code>, <code>$</code> hands over the <code>Binding</code> (the write-path), not a copy.</li>
+<li><strong>write-through</strong> = assigning through a binding calls <code>set</code>, which writes the real source and triggers invalidation.</li>
+<li><strong>deriving bindings</strong> = <code>$user.address.city</code>, custom get/set, optional unwrapping — all keep the two-way link as long as <code>set</code> writes a real source.</li>
+<li><strong>holding ≠ subscribing</strong> = the dependency edge comes from <em>reading</em> (calling <code>get</code>) in <code>body</code>, not from merely passing a binding down.</li>
+<li><strong>stale binding</strong> = a custom <code>get</code> that captured a copy returns old data; always read the live source.</li>
+<li><strong>no write-path = no binding</strong> = you can't bind a <code>let</code> or a read-only computed property; there's nowhere to write.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] A <code>Binding</code> is a get/set pair referencing storage elsewhere — it owns nothing.</li>
@@ -536,6 +604,10 @@ if let nick = Binding($user.nickname) { TextField(&quot;Nick&quot;, text: nick) 
 </ul>
 <p>→ Next: <a href="05-observation-framework-internals.md">05 — Observation Framework Internals</a></p><div class="pager"><a href="#03-state-storage-internals"><span>Prev</span>← 03 — @State Storage Internals</a><a href="#05-observation-framework-internals"><span>Next</span>05 — Observation Framework Internals →</a></div></section>
 <section class="page" id="05-observation-framework-internals" data-title="05 — Observation Framework Internals" data-num="05" data-hasdemo="0" data-group=""><h1>05 — Observation Framework Internals</h1>
+<h2>Start here — the plain idea</h2>
+<p>A plain class is invisible to SwiftUI's update system: it only sees the pointer, not the changes inside. <code>@Observable</code> fixes that by wiring a tiny tattle-tale into every property. Each getter quietly says "someone just <em>read</em> me," and each setter says "I just <em>changed</em>." A bookkeeper (the registrar) connects those two: when a property changes, it nudges exactly the views that read <em>that</em> property.</p>
+<p>The old way, <code>ObservableObject</code> + <code>@Published</code>, was a fire alarm — one change rang the bell for the whole building, so every observing view re-ran even if it never touched the changed property. <code>@Observable</code> is more like a doorbell wired to each room: only the rooms that subscribed to <em>that</em> door get buzzed.</p>
+<p>And the subscription is automatic: SwiftUI runs your <code>body</code> inside a "watch what gets read" wrapper. Whatever properties your <code>body</code> touches become its dependencies — no read, no dependency. It's the lesson-01 "edge = read" rule, now mechanized for class properties.</p>
 <p><code>@Observable</code> (iOS 17+, the <code>Observation</code> module) is the piece that makes <strong>class property mutations</strong> drive SwiftUI updates — and does it with surgical precision: only views that <em>read</em> a changed property re-render. This lesson opens the hood.</p>
 <hr />
 <h2>The problem it solves</h2>
@@ -644,6 +716,17 @@ class EditorModel {
 <li>Mark a property <code>@ObservationIgnored</code>, read it in a <code>body</code>, mutate it, and confirm the view does <strong>not</strong> update.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>@Observable</strong> = a macro that rewrites your class so property reads and writes are trackable.</li>
+<li><strong>access(...)</strong> = the call injected into every getter — "someone is reading this exact property right now."</li>
+<li><strong>withMutation(...)</strong> = the call injected into every setter — "this exact property is changing now."</li>
+<li><strong>ObservationRegistrar</strong> = the bookkeeper that matches reads to writes per key path and notifies observers.</li>
+<li><strong>withObservationTracking</strong> = SwiftUI runs <code>body</code> inside it; reads get recorded, the next change fires a one-shot <code>onChange</code>.</li>
+<li><strong>per-property precision</strong> = a view reading only <code>a</code> is untouched when <code>b</code> changes — unlike <code>@Published</code>'s broadcast.</li>
+<li><strong>reads outside <code>body</code> don't count</strong> = touching a property in an action or <code>.task</code> creates no dependency.</li>
+<li><strong>@ObservationIgnored</strong> = opt a property out of tracking (caches, non-UI state).</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] I can describe the macro expansion: <code>@ObservationTracked</code> accessors + <code>ObservationRegistrar</code> + <code>access</code>/<code>withMutation</code>.</li>
@@ -654,6 +737,10 @@ class EditorModel {
 </ul>
 <p>→ Next: <a href="06-observable-ownership.md">06 — Observable Ownership</a></p><div class="pager"><a href="#04-binding-mechanics"><span>Prev</span>← 04 — Binding Mechanics</a><a href="#06-observable-ownership"><span>Next</span>06 — Observable Ownership: @State, plain refs, @Bindable →</a></div></section>
 <section class="page" id="06-observable-ownership" data-title="06 — Observable Ownership: @State, plain refs, @Bindable" data-num="06" data-hasdemo="0" data-group=""><h1>06 — Observable Ownership: @State, plain refs, @Bindable</h1>
+<h2>Start here — the plain idea</h2>
+<p>Lesson 05 was about <em>updates</em>; this one is about <em>who's responsible for the object</em>. Think of a shared object like a library book. Someone has to <strong>own</strong> it and decide how long it lives — that's <code>@State</code>. Other views just <strong>borrow</strong> it: if a view only needs to read it, a plain <code>var</code> is enough (reading still subscribes). If a view needs to <em>edit</em> it through <code>$</code> bindings, it borrows with <code>@Bindable</code>.</p>
+<p>The key intuition: only one place should own the object, and it should own it with <code>@State</code> so the object isn't accidentally rebuilt on every render. Everyone downstream gets handed the <em>same</em> reference — they don't make their own copy. Most "my edits keep disappearing" bugs are really "I created a new object inside <code>body</code>, so every re-render handed out a brand-new book."</p>
+<p><code>@Bindable</code> does exactly one job: it hands you <code>$</code> write-paths into an object you don't own. It doesn't own anything or change the object's lifetime — think of it as a borrower's pen, not a deed.</p>
 <p>Observation (lesson 05) handles <em>updates</em>. This lesson handles <em>ownership</em>: who creates the object, who keeps it alive, who borrows it, and how you get two-way bindings into it.</p>
 <hr />
 <h2>The three roles</h2>
@@ -746,6 +833,16 @@ Is it provided app-wide / across boundaries? → inject + read with @Environment
 <li>Read an <code>@Observable</code> from the environment and use an inline <code>@Bindable var model = model</code> to bind a <code>TextField</code>.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>owner = @State</strong> = the one view that creates the object and controls its lifetime (init-once, keyed to identity).</li>
+<li><strong>read-only borrower = plain <code>var</code></strong> = uses an object owned elsewhere; reading its props still subscribes.</li>
+<li><strong>binding borrower = @Bindable</strong> = borrows an object just to get <code>$</code> write-paths into its properties; owns nothing.</li>
+<li><strong>@State, not @StateObject</strong> = the modern owner for <code>@Observable</code>; <code>@StateObject</code> is the <code>ObservableObject</code> legacy.</li>
+<li><strong>same reference, not copies</strong> = pass the one object down; don't give each screen its own <code>@State</code> copy.</li>
+<li><strong>"new object every render" bug</strong> = creating the model inside a <code>body</code> rebuilds it every update — own it with <code>@State</code> instead.</li>
+<li><strong>.id() resets the model</strong> = changing the owner's identity destroys and recreates its <code>@State</code> object.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] I can place <code>@State</code> (owner), plain <code>var</code> (read-only borrower), <code>@Bindable</code> (binding borrower) correctly.</li>
@@ -755,6 +852,10 @@ Is it provided app-wide / across boundaries? → inject + read with @Environment
 </ul>
 <p>→ Next: <a href="07-environment-as-a-graph.md">07 — The Environment as a Graph</a></p><div class="pager"><a href="#05-observation-framework-internals"><span>Prev</span>← 05 — Observation Framework Internals</a><a href="#07-environment-as-a-graph"><span>Next</span>07 — The Environment as a Graph →</a></div></section>
 <section class="page" id="07-environment-as-a-graph" data-title="07 — The Environment as a Graph" data-num="07" data-hasdemo="0" data-group=""><h1>07 — The Environment as a Graph</h1>
+<h2>Start here — the plain idea</h2>
+<p>The environment is like the air in a building: whatever you release on a floor drifts down to every room below it, and anyone there can just breathe it in — no need to hand it down hallway by hallway. You inject a value high in the tree, and any descendant reads it directly, skipping all the views in between. That's what saves you from passing the same object through ten initializers ("prop-drilling").</p>
+<p>Picture it as a typed dictionary that flows downward and gets copied-and-tweaked at each <code>.environment(...)</code>. A descendant reading a value walks <em>up</em> to the nearest ancestor that set it — so an inner injection shadows an outer one for its own subtree. Think of it as "nearest floor wins."</p>
+<p>One crucial fork in the road: environment <strong>values</strong> (a key with a default) can never crash — if nobody injected one, you just get the default. Environment <strong>objects</strong> (by type, no default) <em>will</em> crash if missing, because there's no fallback. That single difference is the seed of lesson 09's whole failure story.</p>
 <p>The environment is SwiftUI's <strong>dependency-injection</strong> mechanism: a typed bag of values that flows <em>down</em> the view tree, where any descendant can read the nearest ancestor's value without it being passed through every initializer in between.</p>
 <hr />
 <h2>The mental model: a propagated, typed dictionary</h2>
@@ -841,6 +942,16 @@ SpecialSection()
 <li>Inject <code>\.theme, .red</code> on a subtree and confirm siblings outside it still read the outer value.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>environment = dependency injection</strong> = inject a value high, read it anywhere below, no prop-drilling.</li>
+<li><strong>EnvironmentValues</strong> = an immutable, typed dictionary copied-and-modified as it flows down the tree.</li>
+<li><strong>value (key + default)</strong> = crash-safe; a missing injection just returns the <code>defaultValue</code>.</li>
+<li><strong>object (Type.self, no default)</strong> = crashes if no ancestor injected it — the seed of lesson 09.</li>
+<li><strong>nearest ancestor wins</strong> = reads resolve upward to the closest injector; inner injections shadow outer ones.</li>
+<li><strong>reading creates a dependency</strong> = <code>@Environment(...)</code> in <code>body</code> subscribes you, so changes re-evaluate the reader.</li>
+<li><strong>propagates with structure</strong> = it follows the tree's shape — which is exactly why presentation boundaries break it (lesson 09).</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] I picture <code>EnvironmentValues</code> as an immutable, typed dictionary copied-and-modified down the tree.</li>
@@ -850,6 +961,10 @@ SpecialSection()
 </ul>
 <p>→ Next: <a href="08-how-injection-happens.md">08 — How Injection Happens</a></p><div class="pager"><a href="#06-observable-ownership"><span>Prev</span>← 06 — Observable Ownership: @State, plain refs, @Bindable</a><a href="#08-how-injection-happens"><span>Next</span>08 — How Injection Happens (Step by Step) →</a></div></section>
 <section class="page" id="08-how-injection-happens" data-title="08 — How Injection Happens (Step by Step)" data-num="08" data-hasdemo="0" data-group=""><h1>08 — How Injection Happens (Step by Step)</h1>
+<h2>Start here — the plain idea</h2>
+<p>Injection is just three beats: <strong>write</strong> a value into the environment, let SwiftUI <strong>propagate</strong> it down the tree, and <strong>read</strong> it somewhere below. Think of it like mailing a package: you drop it at one floor (write), the building carries it downstairs (propagate), and someone downstairs opens it (read).</p>
+<p>The catch that trips everyone up: the package only goes <em>down</em>, never <em>up</em> or <em>sideways</em>. When you attach <code>.environment(...)</code> to a child, you're stocking the <em>child's</em> subtree — not your own view. So you can't read, in your own <code>body</code>, a value you just injected onto a child. If you need it for yourself too, it has to come from <em>your</em> parent.</p>
+<p>Two more rules round it out: the value isn't ready in <code>init</code> (SwiftUI fills <code>@Environment</code> in <em>after</em> it places your view, so always read in <code>body</code>), and if several ancestors inject the same thing, the nearest one to the reader wins. Keep "down only, in <code>body</code> only, nearest wins" in your head and almost every injection bug becomes obvious.</p>
 <p>Injection is three steps — <strong>write, propagate, read</strong> — and almost every "it's nil / it's the default / it didn't update" bug is a violation of one of injection's <em>scope rules</em>. This lesson makes the rules explicit.</p>
 <hr />
 <h2>The write → propagate → read chain</h2>
@@ -931,6 +1046,16 @@ struct DeepChild: View {
 <li>Reproduce Rule 3: inject a <code>Session</code> on a sibling of the reader and watch it fail; move the injection to a common ancestor and watch it work.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>write → propagate → read</strong> = inject with <code>.environment(...)</code>, SwiftUI carries it down, <code>@Environment</code> pulls it in <code>body</code>.</li>
+<li><strong>Rule 1 — descendants only</strong> = injection stocks the subtree of the view it's attached to, never self or up.</li>
+<li><strong>Rule 2 — <code>body</code>, not <code>init</code></strong> = <code>@Environment</code> is populated after the view is placed; reading in <code>init</code> gives the default/garbage.</li>
+<li><strong>Rule 3 — inject above, same branch</strong> = the injector must be a real ancestor of the reader on the same propagation path.</li>
+<li><strong>Rule 4 — nearest wins (shadowing)</strong> = with multiple injectors, the closest one to the reader takes effect.</li>
+<li><strong>boundaries don't auto-propagate</strong> = modals/some toolbars/hosts root a separate tree; injection doesn't cross (lesson 09).</li>
+<li><strong>the 5-question diagnostic</strong> = body? ancestor? injected on child but read on self? boundary between? shadowed?</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] I can recite write → propagate → read.</li>
@@ -942,6 +1067,10 @@ struct DeepChild: View {
 </ul>
 <p>→ Next: <a href="09-when-injection-is-rejected.md">09 — When Injection Is Rejected</a></p><div class="pager"><a href="#07-environment-as-a-graph"><span>Prev</span>← 07 — The Environment as a Graph</a><a href="#09-when-injection-is-rejected"><span>Next</span>09 — When Injection Is Rejected →</a></div></section>
 <section class="page" id="09-when-injection-is-rejected" data-title="09 — When Injection Is Rejected" data-num="09" data-hasdemo="0" data-group=""><h1>09 — When Injection Is Rejected</h1>
+<h2>Start here — the plain idea</h2>
+<p>Everything you injected flows down the <em>tree</em>. So the moment a view sits outside the injector's branch, the value can't reach it — and it either crashes (for objects, no fallback) or quietly returns the default (for values). One root cause, two faces.</p>
+<p>The sneaky part is <em>boundaries</em>. A <code>.sheet</code> (or cover, popover, alert, sometimes a toolbar) feels like it's "inside" the view that presents it, but SwiftUI actually roots it in a <strong>separate, parallel tree</strong> — like a guest house next to your house, not a room inside it. Your environment never drifts into it. Same story across a <code>NavigationStack</code> destination or a <code>UIHostingController</code> (a UIKit gap): each is a fresh environment root. The fix is always the same idea — re-inject what the presented content needs, right at the boundary.</p>
+<p>So when you see "No ObservableObject of type X found," don't read it as "I forgot to inject" — read it as "I injected, but not on <em>this branch</em>." Then go hunting for the boundary in between.</p>
 <p>This is the lesson that pays for the series. "Injection rejected" shows up two ways: a <strong>hard crash</strong> ("No ObservableObject of type X found…") or a <strong>silent default</strong> (the value is just wrong). Both come from the same root cause — <strong>the reader is not in the injector's propagation subtree</strong> — usually at a <em>boundary</em> SwiftUI roots as a separate tree.</p>
 <hr />
 <h2>The crash you'll actually see</h2>
@@ -1059,6 +1188,16 @@ let host = UIHostingController(rootView: root)
 <li>Write the <code>injectAppEnvironment</code> modifier and apply it to one sheet and one navigation destination.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>rejection's root cause</strong> = the reader sits outside the injector's propagation subtree; that's the whole story.</li>
+<li><strong>crash vs silent default</strong> = objects (no default) trap; values (have a default) quietly return the default.</li>
+<li><strong>presentation boundary</strong> = sheets/covers/popovers are <em>parallel</em> trees, not children — environment doesn't enter them.</li>
+<li><strong>re-inject at the boundary</strong> = every boundary is a fresh environment root; restock what the presented content reads.</li>
+<li><strong>other boundaries</strong> = <code>NavigationStack</code> destinations and <code>UIHostingController</code> (the UIKit gap) need the same re-injection.</li>
+<li><strong>timing crash</strong> = a <code>body</code> that runs before injection (background launch) can crash; inject high/early or use optional/default.</li>
+<li><strong>defensive pattern</strong> = one <code>injectAppEnvironment(...)</code> modifier applied at every boundary keeps you always correct.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] I can read the "No ObservableObject of type X found" crash as "object not injected on this branch."</li>
@@ -1070,6 +1209,10 @@ let host = UIHostingController(rootView: root)
 </ul>
 <p>→ Next: <a href="10-the-full-chain.md">10 — The Full Chain</a></p><div class="pager"><a href="#08-how-injection-happens"><span>Prev</span>← 08 — How Injection Happens (Step by Step)</a><a href="#10-the-full-chain"><span>Next</span>10 — The Full Chain →</a></div></section>
 <section class="page" id="10-the-full-chain" data-title="10 — The Full Chain" data-num="10" data-hasdemo="0" data-group=""><h1>10 — The Full Chain</h1>
+<h2>Start here — the plain idea</h2>
+<p>Up to now you've studied each part on its own bench. This lesson bolts them into one machine and watches a single keystroke travel the whole way through. Think of it as a relay race with a baton: <strong>own</strong> the object, <strong>inject</strong> it into the environment, <strong>read</strong> it deep in the tree, <strong>bind</strong> it for editing, <strong>mutate</strong> it, and watch the <strong>precise update</strong> land on exactly one view.</p>
+<p>The satisfying payoff is the precision. When the user types a name, the binding writes the property, the setter announces the change, the registrar checks who read <em>that</em> property — and only that view re-runs. The unread-count label, which never touched the name, sits perfectly still. No broadcast, no whole-screen refresh.</p>
+<p>The flip side: a relay only finishes if every handoff works. So this lesson also pins down <em>where each baton gets dropped</em> — created the object in a <code>body</code>? injected below the reader? forgot to re-inject into a sheet? never actually read the value? — and points you to the lesson that fixes it.</p>
 <p>Now assemble everything into one trace: an <code>@Observable</code> model <strong>owned</strong> at the root, <strong>injected</strong> into the environment, <strong>read</strong> deep in the tree, <strong>bound</strong> for editing, <strong>mutated</strong>, and the resulting <strong>precise invalidation</strong>. For each link, note exactly where it can break (with the lesson that explains it).</p>
 <hr />
 <h2>The complete example</h2>
@@ -1199,6 +1342,16 @@ struct NameEditor: View {
 <li>Break the invalidate edge: stop reading <code>unreadCount</code> in <code>body</code> (store it in a <code>let</code> in <code>init</code>) and watch the count stop updating.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>the chain</strong> = own → inject → read → bind → mutate → precise update; six links, each from an earlier lesson.</li>
+<li><strong>own (link 1)</strong> = <code>@State</code> holds the <code>@Observable</code>, keyed to identity, so it lives as long as you need.</li>
+<li><strong>inject + read (links 2–3)</strong> = <code>.environment(obj)</code> writes it to the subtree; <code>@Environment(Type.self)</code> pulls the nearest one.</li>
+<li><strong>bind (link 4)</strong> = <code>@Bindable</code> turns the read-only object into <code>$</code> write-paths for editing.</li>
+<li><strong>mutate → precise update (link 5)</strong> = the setter's <code>withMutation</code> re-runs only the bodies that read that exact property.</li>
+<li><strong>boundary (link 6)</strong> = re-inject into sheets/destinations/hosts or the chain crashes/defaults there.</li>
+<li><strong>the invalidate edge</strong> = if you never <em>read</em> the value in <code>body</code>, there's no edge and no update — the silent break.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] I can trace a mutation from <code>Binding.set</code> → <code>withMutation</code> → registrar → dirty body → diff.</li>
@@ -1208,6 +1361,10 @@ struct NameEditor: View {
 </ul>
 <p>→ Next: <a href="11-invalidation-and-performance.md">11 — Invalidation and Performance</a></p><div class="pager"><a href="#09-when-injection-is-rejected"><span>Prev</span>← 09 — When Injection Is Rejected</a><a href="#11-invalidation-and-performance"><span>Next</span>11 — Invalidation and Performance →</a></div></section>
 <section class="page" id="11-invalidation-and-performance" data-title="11 — Invalidation and Performance" data-num="11" data-hasdemo="1" data-group=""><h1>11 — Invalidation and Performance</h1><div class="demo-mount" data-demo="df-graph"></div>
+<h2>Start here — the plain idea</h2>
+<p>Performance in SwiftUI isn't about making <code>body</code> faster — it's about making it run <em>less often</em> and over <em>smaller</em> pieces. Remember the edge-is-a-read rule: every value you read in a <code>body</code> is a tripwire that re-runs that whole <code>body</code>. A giant view that reads ten properties trips on any of the ten. The fix is almost always to break it into smaller views, each reading just its own slice — so a keystroke nudges one little subview, not the whole screen.</p>
+<p>The other half is protecting <strong>identity</strong>. When identity changes, SwiftUI tears the view down and rebuilds it from scratch (expensive, and it loses state). Things like <code>AnyView</code> and array-index <code>ForEach</code> ids quietly scramble identity, so avoiding them keeps the diffing fast and the teardown rare.</p>
+<p>Think of it as plumbing: you want each change to flow to the smallest set of taps, and you don't want pipes ripped out and re-laid every update. Read narrowly, keep identity stable, keep <code>body</code> cheap — and measure, because guessing here is usually wrong.</p>
 <p>Now that you know <em>how</em> updates propagate, you can control <em>how often</em>. Performance work in SwiftUI is almost entirely about <strong>not creating dependencies you don't need</strong> and <strong>not destroying identity you wanted to keep</strong>.</p>
 <hr />
 <h2>The cost model</h2>
@@ -1316,6 +1473,16 @@ EditorBody(model: model)     // reads body only
 <li>Move a <code>DateFormatter</code> out of a cell <code>body</code> and measure the scroll improvement.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>the cost model</strong> = <code>body</code> runs allocate and diff value-type trees; goal is fewest bodies, each doing the least.</li>
+<li><strong>read narrowly</strong> = every read is a tripwire; split big bodies so each subview re-runs only on its own slice.</li>
+<li><strong>@ObservationIgnored</strong> = exclude model fields that never drive UI so reading them doesn't subscribe.</li>
+<li><strong>preserve identity</strong> = avoid <code>AnyView</code> in hot paths, use stable <code>ForEach</code> ids, don't churn <code>.id()</code> — identity loss means teardown.</li>
+<li><strong>keep <code>body</code> cheap</strong> = no heavy compute, no formatter allocation, no side effects inside <code>body</code>.</li>
+<li><strong>Equatable views</strong> = <code>.equatable()</code> lets SwiftUI skip re-evaluating unchanged inputs — powerful but a wrong <code>==</code> causes stale UI.</li>
+<li><strong>measure, don't guess</strong> = <code>Self._printChanges()</code> plus Instruments on a real device tells you what actually re-renders.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] I reduce updates by reading narrowly and splitting big bodies.</li>
@@ -1326,6 +1493,10 @@ EditorBody(model: model)     // reads body only
 </ul>
 <p>→ Next: <a href="12-debugging-data-flow.md">12 — Debugging Data Flow</a></p><div class="pager"><a href="#10-the-full-chain"><span>Prev</span>← 10 — The Full Chain</a><a href="#12-debugging-data-flow"><span>Next</span>12 — Debugging Data Flow →</a></div></section>
 <section class="page" id="12-debugging-data-flow" data-title="12 — Debugging Data Flow" data-num="12" data-hasdemo="0" data-group=""><h1>12 — Debugging Data Flow</h1>
+<h2>Start here — the plain idea</h2>
+<p>Debugging data flow comes down to three honest questions: <em>why did this re-render?</em>, <em>why is this NOT updating?</em>, and <em>why is the environment missing?</em> The good news is the whole series gave you the model to answer them — this lesson just hands you the instruments.</p>
+<p>The one tool to internalize is <code>Self._printChanges()</code>. Drop it at the top of a <code>body</code> and SwiftUI tells you, in plain words, <em>why</em> it re-ran — a changed property, a new identity, a dependency. Even more useful is its <strong>silence</strong>: if it never prints when your data changes, there's no edge, which means you never read the value in <code>body</code>. Think of it as a stethoscope — the heartbeat tells you one thing, the absence of a heartbeat tells you another.</p>
+<p>From there it's pattern-matching. "Crash about a missing object" → look for a boundary between injector and reader. "Value won't update" → check whether you're actually reading it in <code>body</code>. "State keeps resetting" → identity churn. Each symptom maps to a lesson you've already done; this is the decision tree that routes you there fast.</p>
 <p>A field guide for the three questions you'll actually ask in the codebase: <strong>"Why did this re-render?", "Why is this NOT updating?", and "Why is the environment missing?"</strong> Plus exercises to map this onto your own app.</p>
 <hr />
 <h2>Tool 1 — <code>Self._printChanges()</code></h2>
@@ -1454,6 +1625,16 @@ EditorBody(model: model)     // reads body only
 </tbody>
 </table>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Self._printChanges()</strong> = drop it atop a <code>body</code>; it logs <em>why</em> the body re-ran, and its silence means "no edge."</li>
+<li><strong>@identity in the log</strong> = the view got a new identity, so its state just reset (lesson 02).</li>
+<li><strong>"not updating" tree</strong> = does <code>body</code> even re-run? No → missing edge; Yes but stale → wrong <code>==</code>/stale binding/off-main mutation.</li>
+<li><strong>"environment missing" tree</strong> = crash = object not on this branch (find the boundary); silent default = a value, check scope/init/shadowing.</li>
+<li><strong>reproduce on purpose</strong> = a scratch project that triggers each failure once so you recognize symptoms instantly.</li>
+<li><strong>Instruments → SwiftUI</strong> = body counts and durations for "what's re-rendering too much"; profile on a real device.</li>
+<li><strong>map your codebase</strong> = grep the injection surface, every boundary, the over-readers, and legacy mixing seams.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[ ] I use <code>Self._printChanges()</code> to explain any re-render (and its absence).</li>

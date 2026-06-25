@@ -2016,6 +2016,10 @@ formatNames(&quot;alice&quot;, &quot;bob&quot;, transform: { $0.capitalized })
 - [x] Nested functions can capture outer variables
 - [x] Functions are named closures — the next lesson covers anonymous ones</p><div class="pager"><a href="#05-control-flow"><span>Prev</span>← 05 — Control Flow</a><a href="#07-closures"><span>Next</span>Closures →</a></div></section>
 <section class="page" id="07-closures" data-title="Closures" data-num="07" data-hasdemo="0" data-group=""><h1>Closures</h1>
+<h2>Start here — the plain idea</h2>
+<p>A closure is just a chunk of code you can hand around like a value. Think of it as a function you can put in a variable, pass as an argument, or return from another function. You already use them constantly — every <code>{ }</code> you pass to <code>.sorted</code> or <code>.map</code> is a closure.</p>
+<p>The "closure" part of the name is the interesting bit: when you write that chunk of code, it quietly grabs onto the variables around it and keeps them alive. It's like a backpack — the code zips up the surrounding variables it needs and carries them wherever it goes, even after the function that created it has returned. That's why a counter closure can keep counting: the <code>count</code> variable is in its backpack.</p>
+<p>Most of this lesson is about syntax shortcuts (Swift loves to let you drop words until <code>{ $0 &lt; $1 }</code> is all that's left) and about controlling that backpack — because if a closure grabs <code>self</code>, and <code>self</code> is also holding the closure, neither can ever be freed. That's the retain cycle that <code>[weak self]</code> exists to break.</p>
 <p>Closures are self-contained blocks of functionality that can be passed around and used in your code. They capture and store references to variables and constants from the surrounding context. Functions are actually a special case of closures -- every function you have written so far is a closure with a name.</p>
 <hr />
 <h2>Full Closure Syntax</h2>
@@ -2209,6 +2213,17 @@ let sum = numbers.reduce(0, +)                 // 21
 <li>[x] I can use <code>@autoclosure</code> and explain its purpose</li>
 <li>[x] I know what <code>@Sendable</code> closures are</li>
 <li>[x] I can use closures with map, filter, and reduce</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>closure</strong> = "a block of code you can pass around like a value" (a function without a required name).</li>
+<li><strong>capturing</strong> = "the closure keeps a live link to outside variables" — its backpack, not a snapshot.</li>
+<li><strong>trailing closure / <code>$0</code></strong> = "syntax sugar" — the same closure, just with words dropped until only the essentials remain.</li>
+<li><strong><code>[weak self]</code></strong> = "don't hold <code>self</code> strongly" — breaks the retain cycle so things can be freed.</li>
+<li><strong><code>@escaping</code></strong> = "this closure outlives the function" — it gets stored or called later, not right now.</li>
+<li><strong><code>@autoclosure</code></strong> = "wrap this expression in a closure for me" — defers evaluation until it's actually needed.</li>
+<li><strong><code>@Sendable</code></strong> = "safe to ship across threads" — can't carry mutable shared state in its backpack.</li>
 </ul><div class="pager"><a href="#06-functions"><span>Prev</span>← 06 — Functions</a><a href="#08-optionals"><span>Next</span>Optionals →</a></div></section>
 <section class="page" id="08-optionals" data-title="Optionals" data-num="08" data-hasdemo="1" data-group=""><h1>Optionals</h1><div class="demo-mount" data-demo="sw-optionals"></div>
 <p>Swift uses optionals to handle the absence of a value. Unlike languages that use <code>null</code> or <code>nil</code> implicitly, Swift makes the possibility of "no value" explicit in the type system. This eliminates an entire class of bugs at compile time rather than at runtime.</p>
@@ -3950,6 +3965,10 @@ for i in Countdown(n: 3) { print(i) }   // 3, 2, 1
 <li>Prev: <a class="xref" href="#13-protocols">13-protocols</a> · Next: <a class="xref" href="#14-generics">14-generics</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
 </ul><div class="pager"><a href="#13-protocols"><span>Prev</span>← Protocols</a><a href="#14-generics"><span>Next</span>Generics →</a></div></section>
 <section class="page" id="14-generics" data-title="Generics" data-num="14" data-hasdemo="0" data-group=""><h1>Generics</h1>
+<h2>Start here — the plain idea</h2>
+<p>Generics let you write code once and have it work with any type, without giving up type safety. The problem they solve: without them, you'd write <code>swapInts</code>, <code>swapStrings</code>, <code>swapDoubles</code>… the same logic copy-pasted for every type. Generics let you write <code>swap&lt;T&gt;</code> once and let the compiler stamp out the right version on demand.</p>
+<p>The mental model for <code>&lt;T&gt;</code>: it's a fill-in-the-blank. <code>T</code> is a placeholder that says "some type — I don't care which, but it'll be the same one throughout." When you call the function, the compiler looks at your arguments and fills in the blank. Sometimes you need the blank to have abilities ("this type must be comparable so I can use <code>&lt;</code>") — that's what a constraint like <code>T: Comparable</code> is: a requirement on what can fill the blank.</p>
+<p>The other big idea here is <code>some</code> vs <code>any</code>. Both let you talk about "a type that conforms to a protocol" without naming it. <code>some</code> is "one specific hidden type — the compiler knows exactly which, I just won't say it out loud" (fast, can optimize). <code>any</code> is "a box that could hold different conforming types at runtime" (flexible, but costs a box and a runtime lookup). Default to <code>some</code>; reach for <code>any</code> only when you genuinely need a mixed bag.</p>
 <p>Generics let you write flexible, reusable functions and types that work with any type, while still being fully type-safe at compile time. They are one of Swift's most powerful features and the foundation of its standard library.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">13-protocols</a> for protocol-based constraints used throughout this file.</p>
@@ -4233,6 +4252,17 @@ print(a == b)  // true
 <li>[x] Distinguish <code>some</code> (opaque, static dispatch) from <code>any</code> (existential, dynamic dispatch)</li>
 <li>[x] Know that the compiler specializes generics for performance</li>
 <li>[x] Apply conditional conformance to generic types</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>generics</strong> = "write the logic once, works for any type" — no copy-paste per type, still fully type-safe.</li>
+<li><strong>type parameter <code>&lt;T&gt;</code></strong> = "a fill-in-the-blank for a type" — the compiler fills it from your arguments.</li>
+<li><strong>constraint <code>T: Comparable</code></strong> = "the blank must have these abilities" — e.g. so you can use <code>&lt;</code> or <code>==</code>.</li>
+<li><strong><code>where</code> clause</strong> = "extra fine-print rules" — like requiring two types' elements to match.</li>
+<li><strong><code>associatedtype</code></strong> = "a type parameter, but for protocols" — the conforming type pins it down.</li>
+<li><strong><code>some</code></strong> = "one hidden concrete type the compiler still knows" — static dispatch, zero overhead.</li>
+<li><strong><code>any</code></strong> = "a runtime box that can hold different conforming types" — flexible, costs a box plus a lookup.</li>
 </ul><div class="pager"><a href="#13a-common-protocols"><span>Prev</span>← Common Protocols</a><a href="#15-extensions"><span>Next</span>Extensions →</a></div></section>
 <section class="page" id="15-extensions" data-title="Extensions" data-num="15" data-hasdemo="0" data-group=""><h1>Extensions</h1>
 <p>Extensions add new functionality to existing types -- even types you don't own, like <code>String</code>, <code>Array</code>, or <code>Int</code>. They are Swift's primary mechanism for organizing code, adding protocol conformance after the fact, and extending generic types with conditional capabilities.</p>
@@ -4546,6 +4576,10 @@ p.info()        // &quot;Protocol info&quot; -- static dispatch! (not a requirem
 <li>[x] Understand limitations: no stored properties, no overrides, static dispatch pitfall</li>
 </ul><div class="pager"><a href="#14-generics"><span>Prev</span>← Generics</a><a href="#16-error-handling"><span>Next</span>Error Handling →</a></div></section>
 <section class="page" id="16-error-handling" data-title="Error Handling" data-num="16" data-hasdemo="0" data-group=""><h1>Error Handling</h1>
+<h2>Start here — the plain idea</h2>
+<p>In Swift, an error isn't some magical event that blows up your program — it's just a value. You define what can go wrong (usually an enum: <code>case timeout</code>, <code>case serverError</code>), and when it happens, you <code>throw</code> that value. The compiler then forces whoever calls you to deal with it. No silent failures, no surprise crashes deep in the call stack.</p>
+<p>The labels work just like a warning sticker on a function. <code>throws</code> = "heads up, this might fail." When you call something that throws, you write <code>try</code> in front — that's you acknowledging "yes, I know this could go wrong." And <code>do { } catch { }</code> is the safety net: run the risky code in the <code>do</code>, and if anything throws, jump to a <code>catch</code> to handle it. Think of <code>try</code> as the word that lets a thrown error travel up to the nearest <code>catch</code>.</p>
+<p>There are softer variants for when you don't need the full ceremony: <code>try?</code> means "if it fails, just give me <code>nil</code> and forget the details," and <code>try!</code> means "I promise this won't fail — crash if I'm wrong." The rest of the lesson is about richer tools: <code>Result</code> (an error or success stored as a value to deal with later), nicer user-facing messages, and Swift 6's typed throws that let you say exactly which error a function can throw.</p>
 <p>Swift treats errors as values that can be thrown, caught, and transformed. Unlike exceptions in many languages, Swift errors don't unwind the call stack unpredictably -- the compiler forces you to handle every possible failure path explicitly.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/09-enums.md">09-enums</a> -- errors are almost always defined as enums with associated values.</p>
@@ -4812,6 +4846,18 @@ See <a href="../Learning-SwiftUI/21-async-patterns.md">21-async-patterns</a> for
 <li>[x] Implement <code>LocalizedError</code> for user-facing error messages</li>
 <li>[x] Know about typed throws in Swift 6 for exhaustive handling</li>
 <li>[x] Handle errors in async functions with <code>async throws</code></li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>Error</code> protocol</strong> = "this type can be thrown" — an empty marker, usually stamped on an enum.</li>
+<li><strong><code>throws</code></strong> = "this function might fail" (a label, exactly like <code>async</code> says "might pause").</li>
+<li><strong><code>try</code></strong> = "I acknowledge this can fail" — lets a thrown error travel up to the nearest <code>catch</code>.</li>
+<li><strong><code>do / catch</code></strong> = "run the risky code; if it throws, jump here and handle it."</li>
+<li><strong><code>try?</code></strong> = "on failure, just hand me <code>nil</code>" — no error details, no crash.</li>
+<li><strong><code>try!</code></strong> = "I promise this won't fail — crash me if I'm wrong."</li>
+<li><strong><code>Result&lt;Success, Failure&gt;</code></strong> = "the outcome stored as a value" — success or error, handled whenever you like.</li>
+<li><strong>typed throws</strong> = "name the exact error a function can throw" — so catches can be exhaustive, no catch-all.</li>
 </ul><div class="pager"><a href="#15-extensions"><span>Prev</span>← Extensions</a><a href="#17-access-control"><span>Next</span>Access Control →</a></div></section>
 <section class="page" id="17-access-control" data-title="Access Control" data-num="17" data-hasdemo="0" data-group=""><h1>Access Control</h1>
 <p>Access control restricts which parts of your code can access other parts. It lets you hide implementation details and expose a clean public interface. Swift has five access levels, giving you fine-grained control over visibility at the module and file level.</p>
@@ -6349,6 +6395,10 @@ let lazyResult = nums.lazy.filter { $0 &gt; 0 }.map { $0 * 2 }.reduce(0, +)
 <li>[x] Choose functional vs imperative style based on context</li>
 </ul><div class="pager"><a href="#22-pattern-matching"><span>Prev</span>← Pattern Matching</a><a href="#24-property-wrappers"><span>Next</span>Property Wrappers →</a></div></section>
 <section class="page" id="24-property-wrappers" data-title="Property Wrappers" data-num="24" data-hasdemo="0" data-group=""><h1>Property Wrappers</h1>
+<h2>Start here — the plain idea</h2>
+<p>A property wrapper is a way to attach reusable behavior to a stored property. You've probably written the same getter/setter logic in three different places — trim this string, clamp this number to a range, save this value to UserDefaults. A property wrapper lets you bottle that logic once and apply it with a single <code>@</code> attribute, like <code>@Trimmed var name</code>. Behind the scenes, Swift quietly stores a wrapper instance and routes every read and write of <code>name</code> through its <code>wrappedValue</code>.</p>
+<p>Think of it as a sleeve that slips around your property. From the outside <code>user.name</code> looks like a normal <code>String</code>, but every time you set it, the sleeve runs its logic first. This is exactly the machinery behind SwiftUI's <code>@State</code> and <code>@Binding</code> — they're just property wrappers doing bookkeeping each time the value changes.</p>
+<p>Two extras round it out. The <code>$</code> prefix (<code>$username</code>) exposes a wrapper's <code>projectedValue</code> — a second, related value the wrapper hands you alongside the main one (like "is this valid?"). And key paths (<code>\Person.name</code>) are a separate but kindred idea: a type-safe, storable reference to a property — "the name field" as a value you can pass around, hand to <code>.map</code>, or use to forward access.</p>
 <p>Property wrappers define reusable logic for property access. They are the mechanism behind SwiftUI's <code>@State</code>, <code>@Binding</code>, and <code>@Environment</code>. This chapter also covers key paths and dynamic member lookup.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/11-properties.md">properties</a> for computed properties and observers that wrappers build on.
@@ -6495,8 +6545,23 @@ f(&quot;hello&quot;, &quot;world&quot;) // &quot;print(hello, world)&quot;
 <li>[x] Use <code>@dynamicMemberLookup</code> for forwarding property access</li>
 <li>[x] Understand <code>@dynamicCallable</code> for callable instances</li>
 <li>[x] Recognize how SwiftUI's property wrappers build on these foundations</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>@propertyWrapper</code></strong> = "bottle reusable get/set logic and apply it with one <code>@</code>" — a sleeve around a property.</li>
+<li><strong><code>wrappedValue</code></strong> = "the real value" — every read/write of the property routes through it.</li>
+<li><strong><code>projectedValue</code> / <code>$</code></strong> = "a second related value the wrapper hands you" — reached via <code>$name</code>.</li>
+<li><strong>wrapper parameters</strong> = "configure the sleeve at the declaration" — like <code>@Clamped(0...100)</code>.</li>
+<li><strong>key path <code>\Type.property</code></strong> = "a type-safe, storable reference to a property" — a value you can pass around.</li>
+<li><strong><code>@dynamicMemberLookup</code></strong> = "turn <code>obj.foo</code> into a subscript call" — handy for forwarding access.</li>
+<li><strong><code>@dynamicCallable</code></strong> = "let an instance be called like a function" — mostly for language interop.</li>
 </ul><div class="pager"><a href="#23-functional-programming"><span>Prev</span>← Functional Programming</a><a href="#25-swift-internals"><span>Next</span>Swift Internals →</a></div></section>
 <section class="page" id="25-swift-internals" data-title="Swift Internals" data-num="25" data-hasdemo="0" data-group=""><h1>Swift Internals</h1>
+<h2>Start here — the plain idea</h2>
+<p>This lesson is the "open the hood and look at the engine" chapter. Everything you've written so far runs on machinery the compiler and runtime quietly manage — this is where you finally see the gears.</p>
+<p>A few big questions drive it. When you call a method, how does Swift know which code to actually run? That's dispatch: sometimes the compiler knows the exact function ahead of time and can hard-wire the call (static dispatch — fast, inlinable); other times it has to look the answer up in a table at runtime (a vtable for class overrides, a witness table for protocol calls). Faster when known, more flexible when looked up — that's the whole trade-off. The cost of <code>any</code> vs <code>some</code> from the generics chapter? This is where it comes from: <code>any</code> wraps your value in a 40-byte box and dispatches through a table; <code>some</code> stays concrete and gets inlined.</p>
+<p>The rest is the supporting cast. Type metadata is the runtime's "spec sheet" for every type (its size, alignment, how to copy it). ABI stability is the promise that compiled Swift binaries can talk to each other across compiler versions — which is why your app borrows the OS's Swift runtime instead of shipping its own. And result builders (<code>@resultBuilder</code>) are the trick that turns a plain block of statements into a single value — the compiler rewrites <code>1; 2; if … { 3 }</code> into builder calls behind your back. That rewrite is exactly how SwiftUI's <code>body</code> works.</p>
 <p>Under the hood: ABI stability, type metadata, dispatch mechanisms, existential containers, result builders, and runtime reflection. Understanding these makes you a better Swift programmer and demystifies SwiftUI's DSL.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">protocols</a> for the protocol system that witness tables support.
@@ -6657,6 +6722,18 @@ for child in m.children { print(&quot;\(child.label!): \(child.value)&quot;) }
 <li>[x] Build custom result builders with <code>@resultBuilder</code></li>
 <li>[x] Implement all key builder methods: <code>buildBlock</code>, <code>buildOptional</code>, <code>buildEither</code>, <code>buildArray</code></li>
 <li>[x] Use <code>Mirror</code> for runtime reflection</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>ABI stability</strong> = "compiled Swift binaries can talk across compiler versions" — so apps borrow the OS's runtime.</li>
+<li><strong>type metadata</strong> = "the runtime spec sheet for a type" — its size, alignment, and how to copy it.</li>
+<li><strong>static dispatch</strong> = "the compiler knows the exact function" — can hard-wire and inline the call (fast).</li>
+<li><strong>dynamic dispatch</strong> = "look the function up at runtime" — via a vtable (class overrides) or witness table (protocol calls).</li>
+<li><strong>existential container</strong> = "the 40-byte box <code>any</code> wraps a value in" — the price of runtime flexibility.</li>
+<li><strong><code>@inlinable</code> / <code>@frozen</code></strong> = "promises that unlock optimization" — at the cost of locking in your ABI.</li>
+<li><strong><code>@resultBuilder</code></strong> = "turn a block of statements into one value" — the compiler rewrites it; this powers SwiftUI's <code>body</code>.</li>
+<li><strong><code>Mirror</code></strong> = "peek at a value's structure at runtime" — read-only reflection, used sparingly in Swift.</li>
 </ul><div class="pager"><a href="#24-property-wrappers"><span>Prev</span>← Property Wrappers</a><span class="sp"></span></div></section>
   </div></main>
 </div>

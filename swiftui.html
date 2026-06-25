@@ -26,6 +26,9 @@
   </aside>
   <main class="content"><div class="col">
 <section class="page" id="00-roadmap" data-title="SwiftUI — Learning Roadmap" data-num="·" data-hasdemo="0" data-group=""><h1>SwiftUI — Learning Roadmap</h1>
+<h2>Start here — the plain idea</h2>
+<p>Think of this page as the table of contents for a long road trip. You're not learning anything new here — you're just looking at the map: where you'll start, what you'll pass through, and roughly how long each leg takes. The "Prerequisites" list is basically the packing checklist (bring your Swift knowledge), and the part-by-part tables are the route.</p>
+<p>SwiftUI itself is Apple's way of building app screens by <em>describing</em> what you want instead of <em>assembling</em> it piece by piece. The big idea — the one every lesson keeps circling back to — is that your UI is a function of your data: change the data, and the screen redraws itself. You don't have to remember to update labels by hand. Everything downstream follows from that one shift, which is why the roadmap front-loads philosophy and state.</p>
 <p>A self-paced curriculum from your first <code>Text("Hello")</code> to building production SwiftUI apps. 6 parts, 25 lessons.</p>
 <hr />
 <h2>Prerequisites</h2>
@@ -260,8 +263,22 @@
 - [x] You can create a new SwiftUI project (File &gt; New &gt; Project &gt; App, Interface: SwiftUI)
 - [x] You can see the live preview in the Canvas pane (Editor &gt; Canvas)
 - [x] You have completed Learning-Swift lessons 01-14 or have equivalent knowledge
-- [x] You understand that SwiftUI is a declarative framework — you describe what, not how</p><div class="pager"><span class="sp"></span><a href="#01-swiftui-philosophy"><span>Next</span>01 — SwiftUI Philosophy: Declarative UI and the View Protocol →</a></div></section>
+- [x] You understand that SwiftUI is a declarative framework — you describe what, not how</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Declarative UI</strong> = "describe what the screen should look like; let the framework build it."</li>
+<li><strong>UI = a function of state</strong> = "change your data, and the screen redraws itself — no manual updates."</li>
+<li><strong>Prerequisites</strong> = "the Swift ideas (structs, protocols, closures, generics) this whole series leans on."</li>
+<li><strong>Read in order</strong> = "each lesson stacks on the last; skipping ahead leaves gaps."</li>
+<li><strong>Learning paths</strong> = "shortcuts tailored to what you already know (UIKit, React, brand new)."</li>
+<li><strong>Previews (<code>#Preview</code>)</strong> = "a live mirror of your view in Xcode so you see results instantly."</li>
+</ul><div class="pager"><span class="sp"></span><a href="#01-swiftui-philosophy"><span>Next</span>01 — SwiftUI Philosophy: Declarative UI and the View Protocol →</a></div></section>
 <section class="page" id="01-swiftui-philosophy" data-title="01 — SwiftUI Philosophy: Declarative UI and the View Protocol" data-num="01" data-hasdemo="0" data-group=""><h1>01 — SwiftUI Philosophy: Declarative UI and the View Protocol</h1>
+<h2>Start here — the plain idea</h2>
+<p>Imagine ordering a coffee. The old way (imperative / UIKit) is like walking behind the counter yourself: grind the beans, pull the shot, steam the milk, pour. You give step-by-step instructions and you do the work. The new way (declarative / SwiftUI) is like telling the barista "a flat white" — you describe the <em>result</em> you want, and someone else figures out the steps.</p>
+<p>That's the whole shift. In SwiftUI you write a description of what the screen should look like for the current data, and the framework handles the how. When the data changes, you don't reach in and tweak a label — you just hand over a fresh description, and SwiftUI compares it to the old one and changes only what's different.</p>
+<p>The one thing that trips people up: your <code>View</code> is throwaway. Think of it as a recipe card, not the cake. SwiftUI re-reads the recipe (<code>body</code>) every time the data changes and bakes a fresh result. That's why views are cheap structs, and why you should never do slow work inside <code>body</code> — the recipe gets read a <em>lot</em>.</p>
 <p>SwiftUI is a declarative UI framework. Instead of writing step-by-step instructions to build your interface, you describe what the interface should look like for a given state. SwiftUI handles the how.</p>
 <hr />
 <h2>Declarative vs Imperative</h2>
@@ -501,8 +518,23 @@ VStack(content: {
 - [x] The rendering cycle: state changes, body recomputed, diff applied, screen updated
 - [x] <code>body</code> is called on EVERY state change — never do expensive work there
 - [x] <code>@main</code> and <code>App</code> protocol define the app's entry point
-- [x] SwiftUI uses trailing closures and <code>@ViewBuilder</code> for composing child views</p><div class="pager"><a href="#00-roadmap"><span>Prev</span>← SwiftUI — Learning Roadmap</a><a href="#02-views-and-modifiers"><span>Next</span>02 — Views and Modifiers: Building Blocks of SwiftUI →</a></div></section>
+- [x] SwiftUI uses trailing closures and <code>@ViewBuilder</code> for composing child views</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Declarative</strong> = "say <em>what</em> the UI should be; let SwiftUI work out <em>how</em>."</li>
+<li><strong>The <code>View</code> protocol</strong> = "a promise that says 'I can describe myself via a <code>body</code> property.'"</li>
+<li><strong><code>some View</code></strong> = "a label meaning 'a specific real type lives here, but I won't spell out its long name.'"</li>
+<li><strong>Views are structs</strong> = "lightweight value-type descriptions, recreated — not edited — on each change."</li>
+<li><strong>The rendering cycle</strong> = "state changes → <code>body</code> runs again → SwiftUI diffs → screen updates only what moved."</li>
+<li><strong><code>body</code> is cheap and frequent</strong> = "it runs on every state change, so never put slow work in it."</li>
+<li><strong><code>@main</code> + <code>App</code></strong> = "the front door of your app — where everything starts up."</li>
+</ul><div class="pager"><a href="#00-roadmap"><span>Prev</span>← SwiftUI — Learning Roadmap</a><a href="#02-views-and-modifiers"><span>Next</span>02 — Views and Modifiers: Building Blocks of SwiftUI →</a></div></section>
 <section class="page" id="02-views-and-modifiers" data-title="02 — Views and Modifiers: Building Blocks of SwiftUI" data-num="02" data-hasdemo="0" data-group=""><h1>02 — Views and Modifiers: Building Blocks of SwiftUI</h1>
+<h2>Start here — the plain idea</h2>
+<p>A modifier is just a method you tack onto a view with a dot — <code>.padding()</code>, <code>.background(.blue)</code> — and here's the key surprise: it doesn't change the view, it <em>wraps</em> it in a new one. Think of it like dressing someone: a <code>.padding()</code> is a coat, <code>.background()</code> is a layer behind them. Each thing you add goes <em>around</em> what came before.</p>
+<p>That wrapping is exactly why order matters. The lesson uses a gift-wrapping analogy, and it's perfect: pad-then-background paints a bigger box; background-then-pad paints the small box and leaves clear space around it. Same words, different order, different picture — because each modifier only ever sees the result of the one before it.</p>
+<p>Once you notice you're applying the same little stack of modifiers over and over, you can bottle it up into a reusable <code>ViewModifier</code> (and give it a friendly name like <code>.cardStyle()</code>). It's basically a label that means "apply this exact outfit." And a handful of modifiers — like <code>.font()</code> — quietly flow down to all children, the way a dress code applies to a whole room unless someone overrides it.</p>
 <p>Every SwiftUI interface is built from views and modifiers. A view describes what appears on screen. A modifier transforms a view into a new view with different appearance or behavior.</p>
 <hr />
 <h2>What Is a Modifier?</h2>
@@ -758,8 +790,23 @@ Text(&quot;Custom&quot;)
 - [x] Use ternary operators in modifier values for conditional styling (not <code>if/else</code>)
 - [x] Custom <code>ViewModifier</code> protocol lets you create reusable modifier stacks
 - [x] Environment modifiers like <code>.font()</code> cascade to children; layout modifiers don't
-- [x] <code>Self._printChanges()</code> helps debug unnecessary view recomputations</p><div class="pager"><a href="#01-swiftui-philosophy"><span>Prev</span>← 01 — SwiftUI Philosophy: Declarative UI and the View Protocol</a><a href="#03-text-and-images"><span>Next</span>03 — Text and Images: Displaying Content in SwiftUI →</a></div></section>
+- [x] <code>Self._printChanges()</code> helps debug unnecessary view recomputations</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Modifier</strong> = "a method that wraps a view in a new one — it never edits the original."</li>
+<li><strong>Order matters</strong> = "each modifier wraps the previous result, like layers of gift wrap."</li>
+<li><strong><code>.padding()</code> / <code>.background()</code> / <code>.frame()</code></strong> = "the everyday layout and styling layers you reach for first."</li>
+<li><strong>Ternary over <code>if/else</code></strong> = "same view, different value — keeps identity stable so animations stay smooth."</li>
+<li><strong><code>ViewModifier</code></strong> = "a reusable bundle of modifiers you can name once and apply everywhere."</li>
+<li><strong>Environment modifiers</strong> = "settings like <code>.font()</code> that flow down to children unless a child overrides them."</li>
+<li><strong><code>Self._printChanges()</code></strong> = "a peek behind the curtain showing <em>why</em> a view recomputed."</li>
+</ul><div class="pager"><a href="#01-swiftui-philosophy"><span>Prev</span>← 01 — SwiftUI Philosophy: Declarative UI and the View Protocol</a><a href="#03-text-and-images"><span>Next</span>03 — Text and Images: Displaying Content in SwiftUI →</a></div></section>
 <section class="page" id="03-text-and-images" data-title="03 — Text and Images: Displaying Content in SwiftUI" data-num="03" data-hasdemo="0" data-group=""><h1>03 — Text and Images: Displaying Content in SwiftUI</h1>
+<h2>Start here — the plain idea</h2>
+<p><code>Text</code> and <code>Image</code> are the two things almost every screen is made of: words and pictures. The nice part is they come pre-styled — <code>Text("Hi")</code> already picks a sensible font and color, so you only add modifiers when you want to deviate from Apple's defaults.</p>
+<p>Two ideas do most of the heavy lifting here. First, <em>semantic</em> font sizes like <code>.title</code> and <code>.body</code>: instead of hard-coding "17 points," you say what role the text plays, and it automatically grows or shrinks with the user's accessibility settings. Think of it as labeling text by <em>job</em>, not by <em>size</em>. Second, the <code>.resizable()</code> rule for images — an image without it renders at its raw pixel size and can blow past the screen. <code>.resizable()</code> is basically permission for the image to be stretched to fit the box you give it.</p>
+<p>SF Symbols are Apple's free icon library, and the trick is they behave like text — size them with <code>.font()</code>, color them like text, and they line up neatly next to words. <code>AsyncImage</code> is the "picture from the internet" case: it shows a placeholder, then swaps in the real image once it downloads.</p>
 <p>Text and images are the most fundamental building blocks of any interface. SwiftUI makes both simple to create and rich to customize.</p>
 <hr />
 <h2>Text Basics</h2>
@@ -985,6 +1032,18 @@ Image(systemName: &quot;chevron.right&quot;)
 - [x] <code>AsyncImage</code> loads remote images with support for loading, success, and failure states
 - [x] Use <code>Image(decorative:)</code> and <code>.accessibilityLabel()</code> for proper accessibility</p>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>Text</code></strong> = "a self-styling label for words — sensible defaults until you change them."</li>
+<li><strong>Semantic fonts (<code>.title</code>, <code>.body</code>)</strong> = "name the text's <em>role</em>, not its size, so it scales for accessibility."</li>
+<li><strong>Text concatenation (<code>+</code>)</strong> = "glue differently-styled pieces into one line."</li>
+<li><strong><code>Label</code></strong> = "icon + text that shows whichever the context wants."</li>
+<li><strong>SF Symbols</strong> = "Apple's vector icons that act like text — sized by <code>.font()</code>, colored like text."</li>
+<li><strong><code>.resizable()</code></strong> = "permission for an image to stretch to your frame instead of its raw pixel size."</li>
+<li><strong><code>scaledToFit</code> vs <code>scaledToFill</code></strong> = "fit = show it all; fill = cover the box and crop the rest."</li>
+<li><strong><code>AsyncImage</code></strong> = "a picture from the internet — placeholder now, real image once it loads."</li>
+</ul>
+<hr />
 <h2>🆕 WWDC26 update</h2>
 <p><strong><code>AsyncImage</code> now caches.</strong> You can supply a custom <code>URLSession</code> (with a sized <code>URLCache</code>) to control the cache:</p>
 <pre><code class="language-swift">AsyncImage(request: URLRequest(url: imageURL))
@@ -992,6 +1051,10 @@ Image(systemName: &quot;chevron.right&quot;)
 </code></pre>
 <p>Pairs with <a class="xref" href="networking.html#05-caching-auth-and-testing">caching</a>. Full list: <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#02-views-and-modifiers"><span>Prev</span>← 02 — Views and Modifiers: Building Blocks of SwiftUI</a><a href="#04-layout-fundamentals"><span>Next</span>04 — Layout Fundamentals: Stacks, Spacers, and Frames →</a></div></section>
 <section class="page" id="04-layout-fundamentals" data-title="04 — Layout Fundamentals: Stacks, Spacers, and Frames" data-num="04" data-hasdemo="1" data-group=""><h1>04 — Layout Fundamentals: Stacks, Spacers, and Frames</h1><div class="demo-mount" data-demo="su-layout"></div>
+<h2>Start here — the plain idea</h2>
+<p>Forget dragging boxes and pinning constraints. In SwiftUI you arrange things by <em>stacking</em> them: top-to-bottom with <code>VStack</code>, side-by-side with <code>HStack</code>, and front-to-back (layered) with <code>ZStack</code>. Nest a few of those and you can build almost any layout — a row that's an <code>HStack</code> containing a <code>VStack</code>, and so on. It's Lego, not Auto Layout.</p>
+<p><code>Spacer()</code> is the trick that makes layouts feel natural. Think of it as an inflatable cushion that expands to fill whatever room is left, shoving its neighbors apart. Put one between two items in an <code>HStack</code> and they fly to opposite edges. <code>.frame()</code> and <code>.padding()</code> are your sizing tools: a frame proposes a size, padding adds breathing room around the content.</p>
+<p>The one mental model worth really absorbing is how SwiftUI decides sizes — it's a polite negotiation. The parent <em>proposes</em> available space, the child <em>picks</em> its own size, then the parent <em>positions</em> it. A parent can offer, but it can't force. That's why <code>Text</code> only takes the room it needs while <code>Color</code> greedily fills everything: each child answers the "how big do you want to be?" question differently.</p>
 <p>SwiftUI uses a stack-based layout system. Instead of Auto Layout constraints, you compose views using horizontal, vertical, and layered stacks. Understanding how SwiftUI negotiates size between parent and child is the key to mastering layout.</p>
 <hr />
 <h2>VStack: Vertical Layout</h2>
@@ -1283,8 +1346,24 @@ HStack(spacing: 12) {
 - [x] SwiftUI layout is a negotiation: parent proposes, child decides, parent positions
 - [x] Children choose their own size — parents cannot force a size on children
 - [x] <code>.layoutPriority()</code> determines which views get space first when constrained
-- [x] Complex layouts are built by nesting simple stacks</p><div class="pager"><a href="#03-text-and-images"><span>Prev</span>← 03 — Text and Images: Displaying Content in SwiftUI</a><a href="#05-state-and-binding"><span>Next</span>05 — State and Binding: Making Views Dynamic →</a></div></section>
+- [x] Complex layouts are built by nesting simple stacks</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>VStack</code> / <code>HStack</code> / <code>ZStack</code></strong> = "stack views vertically, horizontally, or layered front-to-back."</li>
+<li><strong><code>Spacer()</code></strong> = "an inflatable cushion that fills leftover space and pushes neighbors apart."</li>
+<li><strong><code>.frame()</code></strong> = "propose a size; <code>maxWidth: .infinity</code> means 'take all the width you can.'"</li>
+<li><strong><code>.padding()</code></strong> = "breathing room added around a view's content."</li>
+<li><strong>Layout negotiation</strong> = "parent proposes space → child picks its size → parent positions it."</li>
+<li><strong>Children choose their size</strong> = "a parent can offer space but can't force a size onto a child."</li>
+<li><strong><code>.layoutPriority()</code></strong> = "who gets first dibs on space when things are tight."</li>
+<li><strong>Nesting</strong> = "complex screens are just simple stacks tucked inside other stacks."</li>
+</ul><div class="pager"><a href="#03-text-and-images"><span>Prev</span>← 03 — Text and Images: Displaying Content in SwiftUI</a><a href="#05-state-and-binding"><span>Next</span>05 — State and Binding: Making Views Dynamic →</a></div></section>
 <section class="page" id="05-state-and-binding" data-title="05 — State and Binding: Making Views Dynamic" data-num="05" data-hasdemo="0" data-group=""><h1>05 — State and Binding: Making Views Dynamic</h1>
+<h2>Start here — the plain idea</h2>
+<p>"State" is just the data your screen cares about — a counter, a toggle, the text someone typed. The magic of SwiftUI is that you don't redraw the screen yourself when this data changes. You mark the data with <code>@State</code>, change it, and SwiftUI re-runs your view to match. State is the dial; the UI is the needle that follows automatically.</p>
+<p>The golden rule is <em>one owner per piece of data</em> — a single source of truth. If two views each keep their own copy of "is this on?", they'll drift apart. So <code>@State</code> means "I own this," and <code>@Binding</code> means "I'm borrowing someone else's, and I can change theirs." Think of <code>@Binding</code> as a shared remote control: the child holds the remote, but it's operating the parent's TV.</p>
+<p>The <code>$</code> you see everywhere (<code>$count</code>, <code>$name</code>) is how you hand out that remote. Plain <code>count</code> is the value; <code>$count</code> is a two-way connection to it. So when a <code>TextField</code> asks for <code>text: $name</code>, you're saying "here's a live wire to my name — read it <em>and</em> write it." Behind the scenes <code>@State</code> doesn't even live inside your struct (structs are recreated constantly); SwiftUI keeps the real value in its own storage and reconnects your view to it each time.</p>
 <p>State is the engine of SwiftUI. When state changes, the UI updates automatically. Understanding where state lives and how it flows between views is the most important concept in SwiftUI.</p>
 <hr />
 <h2>The Core Concept: Single Source of Truth</h2>
@@ -1549,6 +1628,17 @@ See <a href="16-data-flow.md">16-data-flow</a> for state management patterns.</p
 - [x] Don't put <code>@State</code> too high (unnecessary recomputation) or initialize it from parameters
 - [x] For shared/app-wide state, you need <code>@Observable</code> and <code>@Environment</code> (later lessons)</p>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>State</strong> = "the data your screen depends on — change it and the UI follows."</li>
+<li><strong>Single source of truth</strong> = "every piece of data has exactly one owner; everyone else borrows."</li>
+<li><strong><code>@State</code></strong> = "a label meaning 'I own this data' — keep it <code>private</code>."</li>
+<li><strong><code>@Binding</code></strong> = "a shared remote: borrow someone else's state and you can change theirs too."</li>
+<li><strong><code>$property</code></strong> = "the two-way wire to a value — hand this to controls that need to write back."</li>
+<li><strong><code>.constant(value)</code></strong> = "a fake read-only binding, handy for previews."</li>
+<li><strong>External storage</strong> = "<code>@State</code> lives in SwiftUI's keeping, not in your struct — that's why it survives recreation."</li>
+</ul>
+<hr />
 <h2>🆕 WWDC26 update — <code>@State</code> is now a macro</h2>
 <p>In Xcode 27, <code>@State</code> changes from a property wrapper (conforming to <code>DynamicProperty</code>) into a <strong>Swift macro</strong>. The headline benefit is <strong>lazy initialization of the default value</strong>:</p>
 <pre><code class="language-swift">struct CounterView: View {
@@ -1563,6 +1653,10 @@ See <a href="16-data-flow.md">16-data-flow</a> for state management patterns.</p
 </ul>
 <p>Details: <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#04-layout-fundamentals"><span>Prev</span>← 04 — Layout Fundamentals: Stacks, Spacers, and Frames</a><a href="#06-controls"><span>Next</span>06 — Controls: Buttons, Toggles, Pickers, and Text Input →</a></div></section>
 <section class="page" id="06-controls" data-title="06 — Controls: Buttons, Toggles, Pickers, and Text Input" data-num="06" data-hasdemo="0" data-group=""><h1>06 — Controls: Buttons, Toggles, Pickers, and Text Input</h1>
+<h2>Start here — the plain idea</h2>
+<p>Controls are the parts of the screen users actually touch: buttons, switches, sliders, text fields, date pickers. The good news is they all follow one pattern, so once you've met one you've basically met them all: a control <em>shows</em> a value and <em>writes changes back</em> through a binding. Remember the <code>$</code> from the state lesson? That's the wire — <code>Toggle("Wi-Fi", isOn: $wifiEnabled)</code> means "show this bool, and flip it when I tap."</p>
+<p>So the mental model is a loop. The control reads your state to draw itself (a Toggle looks "on" because <code>wifiEnabled</code> is <code>true</code>), and when the user interacts, it writes the new value straight back into that same state. You never manually sync the two — the binding keeps them married.</p>
+<p>A <code>Button</code> is the odd one out: instead of a value, it takes an <em>action</em> — a little closure that runs when tapped. Everything else (Slider, Stepper, Picker, TextField, DatePicker, ColorPicker) is a variation on "bind me to a value." Think of this lesson as a catalog: same idea, many shapes.</p>
 <p>SwiftUI provides a rich set of built-in controls. Every control follows the same pattern: it displays data from your state and writes changes back through bindings.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/07-closures.md">07-closures</a> — almost every control uses trailing closure syntax for its action or label.</p>
@@ -1969,8 +2063,24 @@ Link(destination: URL(string: &quot;https://apple.com&quot;)!) {
 - [x] <code>TextEditor</code> provides multiline text input
 - [x] <code>DatePicker</code> selects dates/times with optional range constraints
 - [x] <code>ColorPicker</code>, <code>ProgressView</code>, and <code>Link</code> cover color selection, progress, and URLs
-- [x] All controls use <code>@Binding</code> (via <code>$</code>) to stay connected to the source of truth</p><div class="pager"><a href="#05-state-and-binding"><span>Prev</span>← 05 — State and Binding: Making Views Dynamic</a><a href="#07-lists-and-foreach"><span>Next</span>Lists and ForEach →</a></div></section>
+- [x] All controls use <code>@Binding</code> (via <code>$</code>) to stay connected to the source of truth</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>The control pattern</strong> = "every control shows a value and writes changes back through a binding."</li>
+<li><strong><code>Button</code></strong> = "the odd one out — it runs an <em>action</em> closure instead of holding a value."</li>
+<li><strong><code>Toggle</code></strong> = "an on/off switch wired to a <code>Bool</code> with <code>isOn: $flag</code>."</li>
+<li><strong><code>Slider</code> / <code>Stepper</code></strong> = "pick a number — drag a track, or tap + / − within a range."</li>
+<li><strong><code>Picker</code></strong> = "choose one option; restyle it as menu, segmented, wheel, or inline."</li>
+<li><strong><code>TextField</code> / <code>SecureField</code> / <code>TextEditor</code></strong> = "type text in, bound with <code>text: $string</code>."</li>
+<li><strong><code>DatePicker</code> / <code>ColorPicker</code></strong> = "the same bind-to-a-value idea for dates and colors."</li>
+<li><strong>The loop</strong> = "control reads state to draw itself, then writes the user's change back — no manual syncing."</li>
+</ul><div class="pager"><a href="#05-state-and-binding"><span>Prev</span>← 05 — State and Binding: Making Views Dynamic</a><a href="#07-lists-and-foreach"><span>Next</span>Lists and ForEach →</a></div></section>
 <section class="page" id="07-lists-and-foreach" data-title="Lists and ForEach" data-num="07" data-hasdemo="0" data-group=""><h1>Lists and ForEach</h1>
+<h2>Start here — the plain idea</h2>
+<p>A <code>List</code> is the scrolling, row-by-row layout you see in Settings, Mail, and just about every iOS app. <code>ForEach</code> is its partner: instead of typing out one row per item, you hand <code>ForEach</code> an array and a recipe for a single row, and it stamps out one row per element. Think of <code>ForEach</code> as a cookie cutter — one shape, applied to every item in your data.</p>
+<p>For that stamping to work, SwiftUI needs to tell rows apart — which one got deleted, which moved. That's what <code>Identifiable</code> (and the <code>id:</code> parameter) is for: it's a name tag on each item so SwiftUI can track them as the data shuffles. Without a stable id, animations and updates get confused.</p>
+<p>The other thing worth knowing up front is that <code>List</code> is <em>lazy</em>: it only builds the rows you can actually see, recycling them as you scroll. That's why a <code>List</code> of 10,000 items stays smooth while a <code>ScrollView</code> full of a giant <code>VStack</code> would try to build all 10,000 at once. On top of that base, the lesson layers the conveniences — sections, swipe-to-delete, drag-to-reorder, pull-to-refresh, selection — but they're all decorations on the same List + ForEach core.</p>
 <p><code>List</code> is SwiftUI's primary container for displaying scrollable, vertically arranged rows of data. It is backed by UITableView on iOS and provides built-in support for selection, swipe actions, editing, and lazy loading. <code>ForEach</code> is the companion construct that generates views from collections.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/04-collection-types.md">04-collection-types</a> for the array and dictionary foundations that feed into lists.</p>
@@ -2217,7 +2327,16 @@ ScrollView {
 <li>[x] I understand that <code>List</code> is lazy and when to prefer it over <code>ScrollView</code> + <code>VStack</code></li>
 </ul>
 <hr />
-<h2>🆕 WWDC26 update</h2>
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>List</code></strong> = "the scrolling, row-by-row container behind most iOS screens."</li>
+<li><strong><code>ForEach</code></strong> = "a cookie cutter — one row recipe stamped across every item in your array."</li>
+<li><strong><code>Identifiable</code> / <code>id:</code></strong> = "a name tag on each item so SwiftUI can track adds, deletes, and moves."</li>
+<li><strong><code>Section</code></strong> = "group rows under a header/footer, like the chunks in Settings."</li>
+<li><strong>Swipe actions &amp; <code>.onDelete</code>/<code>.onMove</code></strong> = "the slide-to-act and edit-mode reorder gestures, attached to <code>ForEach</code>."</li>
+<li><strong><code>.refreshable</code></strong> = "pull down to run an async refresh; the spinner is automatic."</li>
+<li><strong><code>List</code> is lazy</strong> = "it builds only the visible rows, so huge data sets stay smooth."</li>
+</ul>
 <p>Two long-standing <code>List</code>-only features became universal in SwiftUI (iOS 27):</p>
 <ul>
 <li><strong>Swipe actions anywhere</strong> — apply <code>.swipeActionsContainer()</code> to a <code>ScrollView</code>/<code>LazyVStack</code>/custom layout and use <code>.swipeActions { … }</code> on its rows. You no longer need a <code>List</code> just for swipe-to-delete.</li>
@@ -2230,6 +2349,10 @@ ScrollView {
 </code></pre>
 <p>Full rundown: <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#06-controls"><span>Prev</span>← 06 — Controls: Buttons, Toggles, Pickers, and Text Input</a><a href="#08-navigation"><span>Next</span>Navigation →</a></div></section>
 <section class="page" id="08-navigation" data-title="Navigation" data-num="08" data-hasdemo="0" data-group=""><h1>Navigation</h1>
+<h2>Start here — the plain idea</h2>
+<p>Navigation is how a user drills from one screen into another and back — tap a list row, slide into its detail, tap the back arrow to return. SwiftUI models this as a literal stack of cards: <code>NavigationStack</code> is the deck, and pushing a screen drops a new card on top, popping takes it off. The back button is just "remove the top card."</p>
+<p>The modern, recommended way separates <em>what you tapped</em> from <em>what shows up</em>. A <code>NavigationLink(value:)</code> says "the user picked this item," and a <code>navigationDestination(for:)</code> elsewhere says "when someone picks an item of this type, show that screen." It's like a coat check: the link hands over a ticket (the value), and the destination is the rule for what to bring back. This split is what makes <em>programmatic</em> navigation possible.</p>
+<p>That's where <code>NavigationPath</code> comes in — it's the stack of cards as a value you can edit in code. Append to push, remove the last to go back, empty it to jump home. Because the whole path is just data, you can save and restore it, which is how deep links and "reopen where I left off" work.</p>
 <p>Navigation is how users move between screens in your app. SwiftUI's navigation system (iOS 16+) is built around <code>NavigationStack</code> and value-based <code>NavigationLink</code>, replacing the older <code>NavigationView</code>. The new system supports programmatic navigation, deep linking, and state restoration.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/09-enums.md">09-enums</a> for enum-based route definitions, which are the cleanest way to model navigation destinations.</p>
@@ -2514,12 +2637,25 @@ NavigationStack {
 <li>[x] I can encode/decode <code>NavigationPath</code> for deep linking</li>
 </ul>
 <hr />
-<h2>🆕 WWDC26 update</h2>
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>NavigationStack</code></strong> = "a deck of screen-cards; pushing adds one on top, the back button pops it."</li>
+<li><strong><code>NavigationLink</code></strong> = "a tappable thing that pushes a new screen."</li>
+<li><strong>Value-based navigation</strong> = "the link hands over a value (a coat-check ticket); a destination rule decides what to show."</li>
+<li><strong><code>navigationDestination(for:)</code></strong> = "'when someone picks this type of value, show this screen.'"</li>
+<li><strong><code>NavigationPath</code></strong> = "the stack as editable data — append to push, remove to go back, empty to go home."</li>
+<li><strong>Enum routes</strong> = "a tidy, type-safe list of every place the app can navigate to."</li>
+<li><strong><code>NavigationSplitView</code></strong> = "the multi-column iPad/Mac layout that collapses to a stack on iPhone."</li>
+</ul>
 <p>Navigation/presentation gained a <strong><code>.crossFade</code></strong> transition alongside <code>.zoom</code> and <code>.automatic</code>:</p>
 <pre><code class="language-swift">.sheet(isPresented: $show) { DetailView().navigationTransition(.crossFade) }
 </code></pre>
 <p>You still can't fully hand-drive navigation transitions, but there are more built-in options now. See <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#07-lists-and-foreach"><span>Prev</span>← Lists and ForEach</a><a href="#09-sheets-and-alerts"><span>Next</span>Sheets and Alerts →</a></div></section>
 <section class="page" id="09-sheets-and-alerts" data-title="Sheets and Alerts" data-num="09" data-hasdemo="0" data-group=""><h1>Sheets and Alerts</h1>
+<h2>Start here — the plain idea</h2>
+<p>Where navigation slides you <em>sideways</em> into a new screen, modals pop <em>up on top</em> of what you're doing and ask for attention before letting you back. A sheet is the card that slides up from the bottom; an alert is the little "Are you sure?" box; a confirmation dialog is the menu of choices that springs from the bottom. Same family, different sizes.</p>
+<p>The clever part is that you don't "open" a modal directly — you flip a piece of state and SwiftUI presents it for you. <code>.sheet(isPresented: $showSheet)</code> means "whenever <code>showSheet</code> becomes <code>true</code>, show this sheet; when it's <code>false</code>, hide it." It's the same state-drives-the-UI idea from earlier: the modal is just a reflection of a boolean (or an optional item). To close it, you flip the state back, or call the <code>dismiss</code> action handed to you through the environment.</p>
+<p>There are two flavors worth noting. <em>Boolean</em> presentation (<code>isPresented:</code>) is for "show <em>a</em> sheet." <em>Item</em> presentation (<code>item:</code>) is for "show the sheet <em>for this specific thing</em>" — set an optional to a value and the sheet appears carrying it; clearing it back to <code>nil</code> closes it. That item flavor is the clean way to, say, tap a row and open its editor.</p>
 <p>Sheets, alerts, and popovers are SwiftUI's modal presentation tools. Unlike navigation, which pushes screens onto a stack, modals appear on top of the current content and demand attention before the user returns.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/07-closures.md">07-closures</a> for trailing closure syntax -- every modal API uses closures to define content.</p>
@@ -2809,8 +2945,24 @@ struct MultiSheetView: View {
 <li>[x] I know how to use <code>.popover</code> and <code>.inspector</code></li>
 <li>[x] I can pass data to sheets via item-based presentation or <code>@Binding</code></li>
 <li>[x] I know the enum pattern for handling multiple sheets on one view</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Modal</strong> = "content that pops up <em>on top</em> and wants attention before you return."</li>
+<li><strong>State-driven presentation</strong> = "you flip a boolean/optional; SwiftUI shows or hides the modal to match."</li>
+<li><strong><code>.sheet(isPresented:)</code></strong> = "show <em>a</em> sheet while this bool is <code>true</code>."</li>
+<li><strong><code>.sheet(item:)</code></strong> = "show the sheet <em>for this specific item</em>; clearing it to <code>nil</code> closes it."</li>
+<li><strong><code>.fullScreenCover</code></strong> = "a sheet that covers everything, with no accidental swipe-to-dismiss."</li>
+<li><strong><code>@Environment(\.dismiss)</code></strong> = "the 'close me' button any modal can call."</li>
+<li><strong>Presentation detents</strong> = "the rest heights of a sheet — half (<code>.medium</code>) or full (<code>.large</code>)."</li>
+<li><strong>Alert vs confirmation dialog</strong> = "alert for yes/no; dialog for a list of 3+ choices."</li>
 </ul><div class="pager"><a href="#08-navigation"><span>Prev</span>← Navigation</a><a href="#10-drawing-and-shapes"><span>Next</span>Drawing and Shapes →</a></div></section>
 <section class="page" id="10-drawing-and-shapes" data-title="Drawing and Shapes" data-num="10" data-hasdemo="0" data-group=""><h1>Drawing and Shapes</h1>
+<h2>Start here — the plain idea</h2>
+<p>Shapes are SwiftUI's drawing tools, and the happy surprise is that a shape <em>is</em> a view — a <code>Circle()</code> or <code>Rectangle()</code> drops into your layout exactly like a <code>Text</code>, and takes the same kinds of modifiers. You mostly do two things to a shape: <code>.fill()</code> it with a color (paint the inside) or <code>.stroke()</code> it (draw the outline). Think fill = the crayon, stroke = the pen tracing the edge.</p>
+<p>When the built-in shapes (rectangle, circle, capsule, ellipse) aren't enough, you draw your own with <code>Path</code> — and a path is just an invisible pen. You <code>move(to:)</code> to lift and reposition the pen, <code>addLine(to:)</code> to draw a straight segment, add arcs and curves, then <code>closeSubpath()</code> to connect back to the start. A custom triangle or star is nothing more than a few pen moves described in code.</p>
+<p>The key habit for custom shapes is to draw relative to the <code>rect</code> you're given — the rectangle of available space — using <code>rect.midX</code>, <code>rect.maxY</code>, and so on, rather than fixed numbers. That way your shape scales to whatever size it's placed in, like a stretchy stencil. Once you have shapes, you also get clipping (<code>.clipShape(Circle())</code> to mask a photo into a circle) and gradient fills for free.</p>
 <p>SwiftUI provides a rich set of built-in shapes and a <code>Path</code> API for drawing custom geometry. Shapes conform to the <code>Shape</code> protocol, which means they are views -- you can use them anywhere you would use <code>Text</code> or <code>Image</code>, and apply modifiers like <code>.fill()</code>, <code>.stroke()</code>, and <code>.frame()</code>.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">13-protocols</a> -- the <code>Shape</code> protocol is a great example of protocol-oriented design. You implement one method and get a full-featured view.</p>
@@ -3063,8 +3215,24 @@ Circle()
 <li>[x] I know how to conform to <code>InsettableShape</code> for <code>.strokeBorder()</code> support</li>
 <li>[x] I can clip views to shapes with <code>.clipShape()</code></li>
 <li>[x] I can fill shapes with gradients</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>A shape is a view</strong> = "<code>Circle()</code>, <code>Rectangle()</code>, etc. drop into layouts like <code>Text</code> and take modifiers."</li>
+<li><strong><code>.fill()</code> vs <code>.stroke()</code></strong> = "fill = paint the inside; stroke = trace the outline."</li>
+<li><strong><code>.strokeBorder()</code></strong> = "an outline that stays <em>inside</em> the bounds instead of spilling over the edge."</li>
+<li><strong>The <code>Shape</code> protocol</strong> = "implement one method, <code>path(in:)</code>, and you've got a brand-new shape."</li>
+<li><strong><code>Path</code></strong> = "an invisible pen: <code>move</code>, <code>addLine</code>, arcs, curves, then <code>closeSubpath</code>."</li>
+<li><strong>Draw relative to <code>rect</code></strong> = "use <code>rect.midX</code>/<code>maxY</code> so the shape stretches to any size."</li>
+<li><strong><code>.trim(from:to:)</code></strong> = "draw only part of a path — the trick behind progress rings."</li>
+<li><strong><code>.clipShape()</code></strong> = "use a shape as a cookie cutter to mask another view."</li>
 </ul><div class="pager"><a href="#09-sheets-and-alerts"><span>Prev</span>← Sheets and Alerts</a><a href="#11-colors-and-materials"><span>Next</span>Colors and Materials →</a></div></section>
 <section class="page" id="11-colors-and-materials" data-title="Colors and Materials" data-num="11" data-hasdemo="0" data-group=""><h1>Colors and Materials</h1>
+<h2>Start here — the plain idea</h2>
+<p>In SwiftUI a color isn't just a paint swatch — it's a full-fledged view and a "style" you can apply anywhere. The most important habit here is reaching for <em>semantic</em> colors like <code>.primary</code>, <code>.secondary</code>, and the named set (<code>.red</code>, <code>.blue</code>). These aren't fixed hex codes; the system nudges their exact values so text stays readable in both light and dark mode. Pick a color by its <em>job</em>, not its RGB, and dark mode mostly takes care of itself.</p>
+<p>Gradients are colors that blend across space — straight line (<code>LinearGradient</code>), outward from a center (<code>RadialGradient</code>), or sweeping around like a clock (<code>AngularGradient</code>). They all plug into the same spots a plain color does, because they share one umbrella idea, <code>ShapeStyle</code>: anything that conforms can be used in <code>.foregroundStyle()</code>, <code>.fill()</code>, or <code>.background()</code>. So once you know where a color goes, you know where a gradient or material goes too.</p>
+<p>Materials are the "frosted glass" effect — translucent layers that blur whatever's behind them, like the Control Center backdrop. They range from <code>.ultraThinMaterial</code> (barely there) to <code>.ultraThickMaterial</code> (almost solid). Think of a material as a privacy-glass panel: it lets the background bleed through softly so your text on top still pops.</p>
 <p>Color in SwiftUI is more than just decoration -- it is a view, a shape style, and a bridge to the system's dynamic appearance. This lesson covers system colors, custom colors, gradients, materials, and how everything adapts to dark mode.</p>
 <hr />
 <h2>System Colors</h2>
@@ -3298,8 +3466,24 @@ Color.blue.ignoresSafeArea()  // extends into safe area
 <li>[x] I understand vibrancy with hierarchical styles on materials</li>
 <li>[x] I know how to use <code>.tint()</code> for interactive control colors</li>
 <li>[x] I know that <code>Color</code> is a <code>View</code> and can fill space</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Semantic colors</strong> = "pick a color by its job (<code>.primary</code>, <code>.red</code>); the system tunes the actual value for light/dark."</li>
+<li><strong><code>ShapeStyle</code></strong> = "the umbrella idea that lets colors, gradients, and materials slot into the same spots."</li>
+<li><strong><code>.foregroundStyle()</code></strong> = "the modern way to color text/symbols — takes colors <em>and</em> gradients <em>and</em> materials."</li>
+<li><strong>Gradients</strong> = "colors that blend across space: linear (line), radial (outward), angular (sweep)."</li>
+<li><strong><code>.gradient</code> shorthand</strong> = "an instant subtle gradient on any color for a hint of depth."</li>
+<li><strong>Materials</strong> = "frosted-glass layers that blur the background, from <code>.ultraThin</code> to <code>.ultraThick</code>."</li>
+<li><strong><code>.tint()</code></strong> = "the accent color for interactive controls in a view hierarchy."</li>
+<li><strong><code>Color</code> is a <code>View</code></strong> = "drop a color in directly and it fills the available space."</li>
 </ul><div class="pager"><a href="#10-drawing-and-shapes"><span>Prev</span>← Drawing and Shapes</a><a href="#12-animation-basics"><span>Next</span>Animation Basics →</a></div></section>
 <section class="page" id="12-animation-basics" data-title="Animation Basics" data-num="12" data-hasdemo="1" data-group=""><h1>Animation Basics</h1><div class="demo-mount" data-demo="easing"></div>
+<h2>Start here — the plain idea</h2>
+<p>Here's the thing that makes SwiftUI animation feel like magic: you never describe the in-between frames. You just change a value — from small to big, from here to there — and tell SwiftUI "make that change <em>smooth</em>." It figures out every intermediate step for you by interpolating from the old value to the new one. Animation is a label on a change that means "don't snap, glide."</p>
+<p>There are two ways to ask for that glide. <em>Implicit</em> animation (<code>.animation(..., value:)</code>) is attached to a view and says "whenever this value changes, animate it" — like a standing instruction. <em>Explicit</em> animation (<code>withAnimation { ... }</code>) wraps the moment you change the state and says "animate everything affected by <em>this</em> change, right now." Reach for implicit when one view should always animate; reach for explicit when a single tap should ripple through several views at once.</p>
+<p>The personality of an animation comes from its <em>curve</em>. <code>linear</code> is robotic-constant; the <code>easeInOut</code> family starts and ends gently; and <em>springs</em> (the recommended default) overshoot a little and settle, which is why they feel alive and physical. Two related ideas round it out: <em>transitions</em> describe how a view enters or leaves the screen (fade, slide, scale), and <code>matchedGeometryEffect</code> makes one view appear to morph into another — the "hero" effect where a thumbnail grows into a full card.</p>
 <p>Animation in SwiftUI works by interpolating between old and new values when state changes. You do not write frame-by-frame logic. Instead, you change state, and SwiftUI smoothly transitions every affected property from its old value to its new value.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/10-structs-vs-classes.md">10-structs-vs-classes</a> -- views are structs. When state changes, SwiftUI creates a new struct, diffs it against the old one, and animates the differences.</p>
@@ -3549,8 +3733,24 @@ withAnimation(.spring().speed(2.0)) {
 <li>[x] I can use transitions for views entering and leaving the hierarchy</li>
 <li>[x] I understand <code>matchedGeometryEffect</code> for hero animations</li>
 <li>[x] I know the common mistakes: wrong value parameter, misplaced modifier, over-applying animation</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Animation</strong> = "a label on a change meaning 'glide between old and new, don't snap.'"</li>
+<li><strong>Interpolation</strong> = "SwiftUI invents the in-between frames so you don't have to."</li>
+<li><strong>Implicit (<code>.animation(value:)</code>)</strong> = "a standing order: animate this view whenever the value changes."</li>
+<li><strong>Explicit (<code>withAnimation</code>)</strong> = "animate everything affected by <em>this</em> change, right now."</li>
+<li><strong>Timing curves</strong> = "the speed personality: <code>linear</code> (robotic), <code>easeInOut</code> (gentle ends), spring (lively)."</li>
+<li><strong>Springs</strong> = "overshoot-and-settle motion that feels physical — the recommended default."</li>
+<li><strong>Transitions</strong> = "how a view enters or leaves the screen (fade, slide, scale)."</li>
+<li><strong><code>matchedGeometryEffect</code></strong> = "make one view morph into another — the thumbnail-into-card hero move."</li>
 </ul><div class="pager"><a href="#11-colors-and-materials"><span>Prev</span>← Colors and Materials</a><a href="#13-animation-advanced"><span>Next</span>Animation Advanced →</a></div></section>
 <section class="page" id="13-animation-advanced" data-title="Animation Advanced" data-num="13" data-hasdemo="1" data-group=""><h1>Animation Advanced</h1><div class="demo-mount" data-demo="spring"></div>
+<h2>Start here — the plain idea</h2>
+<p>Basic animation handled "go smoothly from A to B." This lesson is about animations with <em>multiple beats</em> — a bounce that compresses, stretches, overshoots, then settles. Two tools cover that. A <code>PhaseAnimator</code> is like a flipbook of named poses: you list the phases, describe each pose, and SwiftUI auto-animates from one to the next. A <code>KeyframeAnimator</code> is the film-editor's timeline: you lay down keyframes for each property (offset, scale, rotation) with exact timings, giving you frame-level control.</p>
+<p>SF Symbol effects are the easy win here — single modifiers that make Apple's icons come alive: <code>.bounce</code> when something happens, <code>.pulse</code> for a heartbeat, <code>.replace</code> to morph one symbol into another (the heart filling in when you favorite something). Pair them with <code>.sensoryFeedback</code> and the phone gives a little haptic tap, so the animation is felt as well as seen.</p>
+<p>The most behind-the-scenes idea is the <em>transaction</em>. Every animated change quietly carries a transaction — a note that travels down the view tree saying "use this animation." You can intercept that note to override it, or set it to <code>nil</code> to say "actually, don't animate this one." Think of a transaction as the animation's shipping label; transaction control is you editing the label in transit.</p>
 <p>This lesson builds on animation basics with the powerful animation APIs introduced in iOS 17: phase animators for multi-step sequences, keyframe animators for timeline-based motion, symbol effects for SF Symbol animations, and transaction control for fine-grained animation management.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/12-animation-basics.md">12-animation-basics</a> for implicit/explicit animations, springs, transitions, and matchedGeometryEffect.</p>
@@ -3888,8 +4088,24 @@ ZStack {
 <li>[x] I can control animations with transactions: override, suppress, and scope</li>
 <li>[x] I can build complex animations like card flips and morphing buttons</li>
 <li>[x] I know performance strategies: <code>.drawingGroup()</code>, minimal hierarchy, profiling</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>PhaseAnimator</code></strong> = "a flipbook of named poses; SwiftUI animates from one to the next."</li>
+<li><strong><code>KeyframeAnimator</code></strong> = "a film-editor's timeline — keyframes per property with exact timings."</li>
+<li><strong>Keyframe types</strong> = "Linear (steady), Spring (bouncy), Cubic (smooth), Move (instant jump)."</li>
+<li><strong><code>CustomAnimation</code></strong> = "roll your own timing curve when the built-ins won't do."</li>
+<li><strong>SF Symbol effects</strong> = "one-modifier icon animations: <code>.bounce</code>, <code>.pulse</code>, <code>.replace</code>."</li>
+<li><strong><code>.contentTransition(.numericText())</code></strong> = "animate digits rolling when a number changes."</li>
+<li><strong><code>.sensoryFeedback</code></strong> = "a haptic tap so the animation is felt, not just seen."</li>
+<li><strong>Transaction</strong> = "the animation's shipping label that rides down the view tree — edit or strip it to override or silence motion."</li>
 </ul><div class="pager"><a href="#12-animation-basics"><span>Prev</span>← Animation Basics</a><a href="#14-gestures"><span>Next</span>Gestures →</a></div></section>
 <section class="page" id="14-gestures" data-title="Gestures" data-num="14" data-hasdemo="1" data-group=""><h1>Gestures</h1><div class="demo-mount" data-demo="su-drag"></div>
+<h2>Start here — the plain idea</h2>
+<p>A gesture is just SwiftUI listening to your finger and telling you what it's doing. Think of it as a tiny reporter standing on the screen: "they tapped here," "they're dragging — currently 40 points to the right," "they pinched to 1.5x." You attach the reporter to a view and react to its updates.</p>
+<p>The clever part is that gestures are plain values (structs) you can snap together like LEGO. Want "long-press, then drag"? You combine two gestures with an operator. Want both pinch and rotate at once? Another operator. Behind the scenes SwiftUI is constantly deciding which gesture "wins" when several could match, and feeding you a <code>value</code> object that describes the live state every frame.</p>
+<p>One thing worth holding onto early: <code>@GestureState</code> is like a sticky note that automatically falls off when you lift your finger — it resets itself the moment the gesture ends. Regular <code>@State</code> is a note that stays stuck until you remove it yourself. That single difference explains most "why did my drag snap back?" confusion.</p>
 <p>SwiftUI provides a rich gesture system that lets users interact with your app through taps, drags, pinches, and rotations. Gestures in SwiftUI are structs that conform to the <code>Gesture</code> protocol, making them composable and type-safe.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/10-structs-vs-classes.md">10-structs-vs-classes</a> -- gestures are value types (structs) conforming to the Gesture protocol.</p>
@@ -4113,6 +4329,17 @@ ZStack {
 <li>Build a deck of cards where each card can be swiped left (reject) or right (accept) with color-coded feedback during the drag.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Gesture</strong> = a struct that watches the finger and reports what's happening — composable, type-safe.</li>
+<li><strong>DragGesture's <code>value</code></strong> = a live snapshot: where it started, where it is now, and where inertia would carry it (<code>translation</code>, <code>predictedEndTranslation</code>).</li>
+<li><strong><code>@GestureState</code></strong> = a sticky note that auto-resets when the gesture ends — great for "only while pressing" effects.</li>
+<li><strong><code>@State</code></strong> = a note that stays until you change it — use it when the result should persist after you lift your finger.</li>
+<li><strong><code>.updating($state)</code></strong> = "while the gesture runs, keep copying its value into this @GestureState" (value, inout state, transaction).</li>
+<li><strong>Composition operators</strong> = <code>.simultaneously</code> (both at once), <code>.sequenced</code> (one then the other), <code>.exclusively</code> (first match wins).</li>
+<li><strong>Gesture priority</strong> = who gets the touch when parent and child both want it: <code>.gesture</code> (child wins), <code>.highPriorityGesture</code> (parent wins), <code>.simultaneousGesture</code> (both fire).</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] Use <code>.onTapGesture</code> and <code>.onLongPressGesture</code> for basic interactions</li>
@@ -4125,6 +4352,10 @@ ZStack {
 <li>[x] Build real-world gesture interactions like swipe-to-dismiss</li>
 </ul><div class="pager"><a href="#13-animation-advanced"><span>Prev</span>← Animation Advanced</a><a href="#15-observable-and-environment"><span>Next</span>Observable and Environment →</a></div></section>
 <section class="page" id="15-observable-and-environment" data-title="Observable and Environment" data-num="15" data-hasdemo="0" data-group=""><h1>Observable and Environment</h1>
+<h2>Start here — the plain idea</h2>
+<p>The core problem here is: how does a view know to redraw itself when your data changes? You don't want to manually refresh anything. So you mark a data class as "watchable," and SwiftUI quietly keeps an eye on it — when a property changes, any view reading that property redraws. <code>@Observable</code> is basically a label that means "spy on this class for me."</p>
+<p>The neat trick in the modern (iOS 17+) system is that it watches at the property level. Think of it like a building where each room has its own motion sensor: a view only redraws if a property it actually reads changed. The old <code>ObservableObject</code> system was one big alarm for the whole building — touch any <code>@Published</code> property and every observing view woke up, even ones that didn't care. That's why the new way is both simpler and faster.</p>
+<p>The <code>Environment</code> is a second idea: a shared backpack that gets passed down the view tree. Parents drop things in (a theme color, a settings object), and any child reaching deep below can pull them out without every layer in between passing them along by hand. SwiftUI also fills that backpack with system stuff for free — dark mode, locale, a <code>dismiss</code> action.</p>
 <p>SwiftUI's data observation system has evolved significantly. The modern approach, introduced in iOS 17, uses the <code>@Observable</code> macro to replace the older <code>ObservableObject</code> protocol. Understanding both systems is essential since most codebases still contain legacy patterns.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/24-property-wrappers.md">24-property-wrappers</a> -- <code>@Observable</code> is a macro that generates property wrapper-like observation code at compile time.</p>
@@ -4411,6 +4642,17 @@ struct SomeChild: View {
 <li>Refactor a legacy <code>ObservableObject</code> with <code>@Published</code>, <code>@StateObject</code>, and <code>@EnvironmentObject</code> to use the modern <code>@Observable</code>, <code>@State</code>, and <code>@Environment</code> equivalents.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>@Observable</code></strong> = "watch this class for me" — a label that makes property changes trigger view updates, with no <code>@Published</code> needed.</li>
+<li><strong>Property-level tracking</strong> = each property has its own motion sensor; a view only redraws if a property it actually read changed.</li>
+<li><strong><code>@State</code> (with @Observable)</strong> = "this view owns this object" — it creates and keeps it alive across redraws.</li>
+<li><strong><code>@Bindable</code></strong> = "I need two-way bindings into this object" — unlocks <code>$profile.name</code> for TextField, Toggle, etc.</li>
+<li><strong><code>@Environment(\.key)</code></strong> = reach into the shared backpack for a system value (colorScheme, locale, dismiss).</li>
+<li><strong><code>@Environment(Type.self)</code></strong> = pull your own injected object out of the backpack by its type.</li>
+<li><strong>Legacy trio</strong> = <code>ObservableObject</code> + <code>@Published</code> + <code>@StateObject</code>/<code>@ObservedObject</code>/<code>@EnvironmentObject</code> — the old, building-wide-alarm version you'll still meet in older code.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] Understand the evolution from <code>ObservableObject</code> to <code>@Observable</code></li>
@@ -4423,6 +4665,10 @@ struct SomeChild: View {
 <li>[x] Choose the right property wrapper for each scenario</li>
 </ul><div class="pager"><a href="#14-gestures"><span>Prev</span>← Gestures</a><a href="#16-data-flow"><span>Next</span>Data Flow →</a></div></section>
 <section class="page" id="16-data-flow" data-title="Data Flow" data-num="16" data-hasdemo="0" data-group=""><h1>Data Flow</h1>
+<h2>Start here — the plain idea</h2>
+<p>Data flow is really one rule wearing many costumes: <strong>state drives the screen, and changing state redraws the screen.</strong> You never reach in and "update the label" by hand. You change a value, and SwiftUI rebuilds whatever depended on it. This whole lesson is about deciding <em>where that value should live</em> and <em>how other views get at it.</em></p>
+<p>The big principle is "single source of truth." Picture every piece of data as having exactly one home address. Other views either get a read-only photocopy (an init parameter) or a live phone line to the original (a <code>@Binding</code>) — never their own private duplicate, because two copies drift apart and the UI goes out of sync. Data flows <em>down</em> the view tree (parent hands it to child), and actions flow <em>up</em> (child calls a closure, parent decides what to do). Think of it as water flowing downhill and messages shouted back uphill.</p>
+<p>When state gets too big or has real logic attached, you move it out of the view into an <code>@Observable</code> class — a "view model" — which is basically a labeled box that says "all the brains for this screen live here." And for values that must outlive the app session, <code>@AppStorage</code> is just a friendly wrapper that quietly reads and writes <code>UserDefaults</code> for you.</p>
 <p>SwiftUI's declarative paradigm relies on a strict data flow model: state drives the UI, and user actions modify state, which triggers re-rendering. Understanding where to place state, how to share it, and how to structure communication between views is the key to writing maintainable SwiftUI apps.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/05-state-and-binding.md">05-state-and-binding</a> -- fundamentals of @State and @Binding.</p>
@@ -4723,6 +4969,18 @@ struct ScoreView: View {
 <li>Identify and fix the anti-patterns in this code: a child view creates its own <code>@State</code> copy of data passed via init, a view model wraps a single boolean, and two siblings duplicate the same filter state.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Single source of truth</strong> = every value has exactly one owner; everyone else gets a copy or a binding, never a duplicate.</li>
+<li><strong>Data flows down</strong> = init parameters (read-only photocopy), <code>@Binding</code> (live phone line), or <code>@Environment</code> (drop in the shared backpack for deep children).</li>
+<li><strong>Actions flow up</strong> = children shout back via closures or write through bindings — they never reach into the parent directly.</li>
+<li><strong><code>@State</code></strong> = simple, local, view-owned value that should vanish when the view does (toggles, sheet flags, text input).</li>
+<li><strong>View model (<code>@Observable</code> + <code>@MainActor</code>)</strong> = a box that holds a screen's brains and logic, with UI updates pinned to the main thread.</li>
+<li><strong><code>@AppStorage</code></strong> = a property wrapper over <code>UserDefaults</code> — values that survive app launches.</li>
+<li><strong><code>@SceneStorage</code></strong> = per-window state that's restored on relaunch (tab selection, scroll position).</li>
+<li><strong>Anti-patterns</strong> = duplicated state, state living in the wrong view, and wrapping a single boolean in a needless view model.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] Apply the single source of truth principle to every piece of state</li>
@@ -4736,6 +4994,10 @@ struct ScoreView: View {
 <li>[x] Understand property-level observation efficiency in <code>@Observable</code></li>
 </ul><div class="pager"><a href="#15-observable-and-environment"><span>Prev</span>← Observable and Environment</a><a href="#17-grids-and-adaptive-layout"><span>Next</span>Grids and Adaptive Layout →</a></div></section>
 <section class="page" id="17-grids-and-adaptive-layout" data-title="Grids and Adaptive Layout" data-num="17" data-hasdemo="0" data-group=""><h1>Grids and Adaptive Layout</h1>
+<h2>Start here — the plain idea</h2>
+<p>A grid is just a way of saying "lay these things out in rows and columns and figure out the spacing for me." Instead of positioning every item by hand, you describe the <em>recipe for a column</em> once, and SwiftUI stamps your items into that shape automatically.</p>
+<p>The two families solve different problems. The <strong>lazy</strong> grids (<code>LazyVGrid</code>, <code>LazyHGrid</code>) are for big scrollable collections — and "lazy" literally means they only build the cells currently on screen, so a 10,000-photo grid stays smooth. The plain <strong><code>Grid</code></strong> is the opposite: small, not scrollable, but it lines columns up perfectly across rows — think a spreadsheet or a form where labels and values must align.</p>
+<p>The real magic word is <code>.adaptive</code>. Tell it "each item is at least 100 points wide" and it does the math for you — fit 3 across on a phone, 6 across on an iPad, no <code>if</code> statements needed. It's basically responsive web design built in. And when even that isn't enough, tools like <code>ViewThatFits</code> (try options until one fits) and <code>AnyLayout</code> (swap the whole layout at runtime) let your screen reshape itself for whatever device it lands on.</p>
 <p>SwiftUI offers multiple grid systems: <code>LazyVGrid</code> and <code>LazyHGrid</code> for scrollable grids, <code>Grid</code> for precise alignment-based layouts, and layout protocols like <code>ViewThatFits</code> and <code>AnyLayout</code> for adaptive design across device sizes.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/04-layout-fundamentals.md">04-layout-fundamentals</a> -- stacks, frames, alignment, and spacing fundamentals.</p>
@@ -5023,6 +5285,18 @@ struct RadialDemo: View {
 <li>Build a custom <code>Layout</code> that arranges views in a honeycomb pattern.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>LazyVGrid</code> / <code>LazyHGrid</code></strong> = scrollable grids that only build visible cells — efficient for big collections.</li>
+<li><strong><code>GridItem</code></strong> = the recipe for one column (or row): <code>.fixed</code> (exact width), <code>.flexible</code> (stretch within min/max), <code>.adaptive</code> (cram in as many as fit).</li>
+<li><strong><code>.adaptive(minimum:)</code></strong> = "responsive design" in one line — SwiftUI picks the column count from the screen width.</li>
+<li><strong><code>pinnedViews: [.sectionHeaders]</code></strong> = keep section headers stuck to the top while you scroll.</li>
+<li><strong><code>Grid</code> / <code>GridRow</code></strong> = non-lazy, non-scrolling layout where columns align across rows — for forms, tables, dashboards.</li>
+<li><strong><code>ViewThatFits</code></strong> = try each child in order, show the first that fits — graceful fallbacks for tight space.</li>
+<li><strong><code>AnyLayout</code></strong> = swap the entire layout (e.g. HStack ↔ VStack) at runtime while keeping views' identity for smooth animation.</li>
+<li><strong><code>Layout</code> protocol</strong> = full manual control via <code>sizeThatFits</code> (how big?) and <code>placeSubviews</code> (put each child where?).</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] Use <code>LazyVGrid</code> and <code>LazyHGrid</code> for scrollable grid layouts</li>
@@ -5036,6 +5310,10 @@ struct RadialDemo: View {
 <li>[x] Adapt layouts for iPhone vs iPad using <code>horizontalSizeClass</code></li>
 </ul><div class="pager"><a href="#16-data-flow"><span>Prev</span>← Data Flow</a><a href="#18-scrollview"><span>Next</span>ScrollView →</a></div></section>
 <section class="page" id="18-scrollview" data-title="ScrollView" data-num="18" data-hasdemo="1" data-group=""><h1>ScrollView</h1><div class="demo-mount" data-demo="su-scroll"></div>
+<h2>Start here — the plain idea</h2>
+<p>A <code>ScrollView</code> is just a window onto content that's taller (or wider) than the screen. You put more stuff inside than fits, and it lets the user slide it around. That's the whole job. Think of it as a long scroll of paper behind a small viewing slot.</p>
+<p>The catch that trips everyone up: a plain <code>ScrollView</code> is <em>eager</em> — it builds every single child the instant the view appears, even the 9,000 rows nobody will ever scroll to. That's fine for a handful of items, disastrous for a big list. The fix is to wrap your content in a <strong>lazy</strong> stack (<code>LazyVStack</code>/<code>LazyHStack</code>), which is like a stagehand who only sets up the scenery right before the audience can see it. Build only what's on screen, recycle as you go.</p>
+<p>Beyond that, most of this lesson is about <em>steering</em> the scroll: jumping to a specific item (<code>ScrollViewReader</code>), knowing where you currently are (<code>scrollPosition</code>), and making it snap nicely like a photo carousel (<code>scrollTargetBehavior</code>). Think of these as the difference between a free-spinning wheel and one with gentle detents that click into place.</p>
 <p><code>ScrollView</code> is SwiftUI's container for scrollable content. Unlike <code>List</code>, it gives you full control over layout and appearance, but you must handle laziness and performance yourself by pairing it with <code>LazyVStack</code> or <code>LazyHStack</code>.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/07-lists-and-foreach.md">07-lists-and-foreach</a> -- <code>List</code> is a specialized scrolling container with built-in cell styling, selection, and swipe actions.</p>
@@ -5295,6 +5573,18 @@ ScrollView {
 <li>Build a photo browser that scrolls horizontally with paging behavior using <code>.scrollTargetBehavior(.paging)</code> and <code>containerRelativeFrame</code>.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>ScrollView</code></strong> = a viewing slot onto content bigger than the screen; eager by default (builds everything up front).</li>
+<li><strong><code>LazyVStack</code> / <code>LazyHStack</code></strong> = the stagehand — only builds cells as they scroll into view; essential for large data.</li>
+<li><strong><code>ScrollViewReader</code> + <code>.scrollTo(id:anchor:)</code></strong> = a remote control that jumps to any view by its <code>.id()</code>.</li>
+<li><strong><code>scrollPosition(id:)</code></strong> = a two-way readout of "which item is showing" — read it or write it to move.</li>
+<li><strong><code>scrollTargetBehavior</code></strong> = detents for the wheel: <code>.paging</code> (full-page jumps) or <code>.viewAligned</code> (snap to each item).</li>
+<li><strong><code>.scrollTargetLayout()</code></strong> = marks which children are snap targets — without it, <code>.viewAligned</code> has nothing to grab.</li>
+<li><strong><code>.safeAreaInset(edge:)</code></strong> = pin a fixed bar (like a reply box) that pushes scroll content out of its way.</li>
+<li><strong><code>.contentMargins()</code></strong> = pad the content without nudging the scrollbars or safe area.</li>
+</ul>
+<hr />
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] Use <code>ScrollView</code> for vertical, horizontal, or bidirectional scrolling</li>
@@ -5309,6 +5599,10 @@ ScrollView {
 <li>[x] Follow performance best practices: lazy containers, stable IDs, extracted subviews</li>
 </ul><div class="pager"><a href="#17-grids-and-adaptive-layout"><span>Prev</span>← Grids and Adaptive Layout</a><a href="#19-tabview-and-toolbars"><span>Next</span>TabView and Toolbars →</a></div></section>
 <section class="page" id="19-tabview-and-toolbars" data-title="TabView and Toolbars" data-num="19" data-hasdemo="0" data-group=""><h1>TabView and Toolbars</h1>
+<h2>Start here — the plain idea</h2>
+<p>Think of an app's UI as a building. <code>TabView</code> is the row of buttons at the bottom that takes you to entirely different floors — Home, Search, Profile. Toolbars are the little shelf of controls at the top (or bottom) of whatever floor you're currently on — share, edit, settings. One switches <em>where you are</em>; the other gives you <em>things to do here</em>.</p>
+<p><code>TabView</code> is dead simple to start: hand it a few screens, give each a <code>.tabItem</code> label (icon + title), done. The moment you want to switch tabs <em>from code</em> — say a notification deep-links to the Search tab — you add a <code>selection</code> binding and <code>.tag</code> each tab so SwiftUI knows which is which. Using an enum for those tags is the clean way to keep it type-safe.</p>
+<p>Toolbars work by <em>placement</em> — you don't say "put this at x=300," you say "put this in the top-trailing slot" or "the keyboard slot," and SwiftUI handles the exact position per device and platform. Think of it as telling a host "seat them near the window" rather than pointing at a chair. One rule worth burning in: toolbars live inside a <code>NavigationStack</code> — no navigation container, no bar to hang them on.</p>
 <p>Tab bars and toolbars are the primary navigation chrome in most apps. SwiftUI's <code>TabView</code> manages top-level screen switching, while the <code>.toolbar</code> modifier places buttons, menus, and controls in navigation bars, bottom bars, and the keyboard area.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/08-navigation.md">08-navigation</a> -- <code>NavigationStack</code> and <code>NavigationSplitView</code> for hierarchical navigation.</p>
@@ -5659,6 +5953,18 @@ struct OnboardingPage: View {
 <li>[x] Adapt between TabView and sidebar for iPhone vs iPad</li>
 </ul>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>TabView</code></strong> = the building's floor selector — switches between top-level screens.</li>
+<li><strong><code>.tabItem</code></strong> = a tab's label (Label/Text/Image only — buttons and custom views are ignored).</li>
+<li><strong><code>selection</code> binding + <code>.tag</code></strong> = lets code switch tabs and respond to deep links; use an enum for type-safe identity.</li>
+<li><strong><code>.tabViewStyle(.page)</code></strong> = turns tabs into swipeable full-screen pages (onboarding, carousels).</li>
+<li><strong><code>.toolbar</code></strong> = the shelf of controls for the current screen — must live inside a <code>NavigationStack</code>.</li>
+<li><strong>Placement</strong> = you name the slot (<code>.topBarTrailing</code>, <code>.bottomBar</code>, <code>.keyboard</code>, <code>.principal</code>), SwiftUI positions it per platform.</li>
+<li><strong><code>ToolbarItemGroup</code></strong> = bundle several items into one placement without repeating it.</li>
+<li><strong><code>.toolbar(.hidden, for:)</code></strong> = hide the tab bar or nav bar on a specific screen (e.g. an immersive detail view).</li>
+</ul>
+<hr />
 <h2>🆕 WWDC26 update</h2>
 <ul>
 <li><strong>Prominent tab role</strong> — <code>Tab("Create", systemImage: "pencil", role: .prominent)</code> gives a trailing-separated, emphasized tab (like the system search tab).</li>
@@ -5666,6 +5972,10 @@ struct OnboardingPage: View {
 </ul>
 <p>See <a class="xref" href="wwdc.html#2026-whats-new-in-swiftui">What&#x27;s New in SwiftUI (WWDC26)</a>.</p><div class="pager"><a href="#18-scrollview"><span>Prev</span>← ScrollView</a><a href="#20-search-and-filtering"><span>Next</span>Search and Filtering →</a></div></section>
 <section class="page" id="20-search-and-filtering" data-title="Search and Filtering" data-num="20" data-hasdemo="0" data-group=""><h1>Search and Filtering</h1>
+<h2>Start here — the plain idea</h2>
+<p>Searching a list is really just two jobs glued together: a text box for the user to type in, and a rule that decides which items match what they typed. SwiftUI hands you the text box for free with <code>.searchable</code> — it draws the proper, native-looking search bar in the navigation area, the same one you see in Settings or Contacts. You don't style it; you just say "this screen is searchable."</p>
+<p>The matching half is plain Swift. You keep the search text in a <code>@State</code> variable, and you write a computed property that returns only the items whose names contain that text. The magic is that this property re-runs automatically every time the text changes — SwiftUI watches your <code>@State</code>, and whenever it shifts, it re-asks "what should the list show now?" and redraws. Think of it as a spreadsheet cell: change one input, every formula that depends on it recalculates.</p>
+<p>Everything else in this lesson (suggestions, scopes, tokens, debouncing) is just sugar on top of that loop. A scope is a second filter knob; a token is a tappable tag instead of typed text; debouncing is "wait a beat before doing the expensive work, so we don't search on every single keystroke."</p>
 <p>Search is one of the most common interactions in any app. SwiftUI provides the <code>.searchable</code> modifier that adds a platform-native search bar to navigation containers. Combined with Swift's collection filtering, you can build powerful, responsive search experiences with very little code.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/23-functional-programming.md">23-functional-programming</a> for <code>filter</code>, <code>map</code>, and other higher-order functions used to filter data.
@@ -5968,6 +6278,17 @@ struct FullContactSearchView: View {
 <li>Implement a sectioned list of countries grouped by continent. When the user searches, filter both the countries and the sections. Empty sections should disappear.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>.searchable(text:)</code></strong> = "put a real native search bar on this screen, wired to my text variable" — must live inside a <code>NavigationStack</code>.</li>
+<li><strong>filtered computed property</strong> = "the live answer to 'what should the list show right now?'" — it re-runs by itself whenever <code>searchText</code> changes.</li>
+<li><strong><code>placement</code></strong> = "where the search bar sits" (in the nav bar, sidebar, toolbar — or let the system pick).</li>
+<li><strong><code>.searchSuggestions</code> + <code>.searchCompletion</code></strong> = "show clickable hints; tapping one fills the box for them."</li>
+<li><strong><code>.searchScopes</code></strong> = "a second filter knob" — a segmented control like All / Favorites that narrows the domain.</li>
+<li><strong>search tokens</strong> = "tappable tags instead of typed words" — discrete filters that pile up as capsules.</li>
+<li><strong>debounce with <code>.task(id:)</code></strong> = "wait until they stop typing before doing the slow work" — each keystroke cancels the previous pending search.</li>
+<li><strong><code>compactMap</code> when filtering sections</strong> = "filter the items, then quietly drop any section that ends up empty."</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can add a search bar with <code>.searchable(text:)</code> inside a NavigationStack</li>
@@ -5980,6 +6301,10 @@ struct FullContactSearchView: View {
 <li>[x] I can combine scopes, suggestions, and text filtering in a real app</li>
 </ul><div class="pager"><a href="#19-tabview-and-toolbars"><span>Prev</span>← TabView and Toolbars</a><a href="#21-async-patterns"><span>Next</span>Async Patterns in SwiftUI →</a></div></section>
 <section class="page" id="21-async-patterns" data-title="Async Patterns in SwiftUI" data-num="21" data-hasdemo="0" data-group=""><h1>Async Patterns in SwiftUI</h1>
+<h2>Start here — the plain idea</h2>
+<p>Some work is slow: fetching from the network, loading an image, reading a big file. If you did that work the normal, blocking way, the whole UI would freeze until it finished — taps ignored, scrolling stuck. Async work is the fix: <code>async</code> is just a label on a function that means "this might pause for a while," exactly like <code>throws</code> is a label that means "this might fail." When you <code>await</code> something, you're saying "pause here politely and let the UI keep running; wake me when the answer arrives."</p>
+<p>The clever part in SwiftUI is tying that async work to the view's life. <code>.task</code> says "start this async job when the view appears, and — this is the gift — automatically cancel it if the view goes away." So if the user navigates back mid-download, the request quietly stops; you never wrote cleanup code. Think of <code>.task</code> as a job that's leashed to the view: view disappears, leash yanks, job stops.</p>
+<p>The rest of the lesson is patterns built on that idea: model the three honest states (loading, loaded, error) so the user never stares at a blank screen; <code>.refreshable</code> for pull-to-refresh; <code>AsyncImage</code> for "load this picture and show a spinner meanwhile"; and <code>@MainActor</code> as the rule "touch UI state only on the main thread." Cancellation is the recurring theme — good async code checks "have I been told to stop?" before doing more expensive work.</p>
 <p>SwiftUI provides first-class support for asynchronous work through modifiers like <code>.task</code>, <code>.refreshable</code>, and <code>AsyncImage</code>. These integrate seamlessly with Swift's structured concurrency, handling cancellation and lifecycle automatically so you can focus on the data flow rather than manual task management.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/20-concurrency-basics.md">20-concurrency-basics</a> for <code>async</code>/<code>await</code>, <code>Task</code>, and structured concurrency fundamentals.
@@ -6307,6 +6632,17 @@ struct RepoListView: View {
 <li>Build a search view with <code>.task(id: searchText)</code> that debounces 500ms, shows a loading spinner during the search, and displays "No results" when the response is empty.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>async</code></strong> = "this is slow / might pause" (a label, exactly like <code>throws</code> = "might fail").</li>
+<li><strong><code>await</code></strong> = "pause here politely, let the UI keep running, wake me when the result is ready."</li>
+<li><strong><code>.task</code></strong> = "run this async job when the view appears, and auto-cancel it when the view disappears" — a job leashed to the view's life.</li>
+<li><strong><code>.task(id:)</code></strong> = "re-run from scratch whenever this value changes" — the previous run is cancelled first (perfect for search-as-you-type).</li>
+<li><strong>loading/loaded/error enum</strong> = "be honest about all three states" so the user never sees a mysterious blank screen.</li>
+<li><strong><code>.refreshable</code></strong> = "pull-to-refresh; SwiftUI shows and hides the spinner for you" — don't toggle a boolean yourself.</li>
+<li><strong><code>@MainActor</code></strong> = "only touch UI state on the main thread" — the rule that keeps updates safe.</li>
+<li><strong><code>Task.isCancelled</code> / <code>Task.checkCancellation()</code></strong> = "before more expensive work, ask 'have I been told to stop?'"</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I understand that <code>.task</code> runs async work tied to the view lifecycle and cancels on disappear</li>
@@ -6320,6 +6656,10 @@ struct RepoListView: View {
 <li>[x] I understand automatic cancellation and when to check <code>Task.isCancelled</code> manually</li>
 </ul><div class="pager"><a href="#20-search-and-filtering"><span>Prev</span>← Search and Filtering</a><a href="#22-geometry-and-preferences"><span>Next</span>Geometry and Preferences →</a></div></section>
 <section class="page" id="22-geometry-and-preferences" data-title="Geometry and Preferences" data-num="22" data-hasdemo="0" data-group=""><h1>Geometry and Preferences</h1>
+<h2>Start here — the plain idea</h2>
+<p>Normally in SwiftUI you don't think about exact pixels — you describe what you want ("center this," "fill the width") and the layout system figures out the sizes. It works like a conversation flowing two ways: the parent proposes a size downward, and each child reports back the size it actually wants. Most of the time that's all you need. But occasionally you need the real numbers at runtime — how tall did this text end up? how far has this row scrolled? — and that's what this lesson is about.</p>
+<p><code>GeometryReader</code> is your measuring tape. It hands you a <code>GeometryProxy</code> that knows the size and position of its space. The catch — and it trips everyone up — is that a measuring tape that greedily grabs the whole room: <code>GeometryReader</code> takes <em>all</em> the space offered to it, unlike normal views that take only what they need. That's why the trick is to tuck it into an <code>.overlay</code> or <code>.background</code> with a clear color, so it measures quietly without shoving your layout around.</p>
+<p>Preference keys solve the opposite-direction problem. Data normally flows down (parent to child), but sometimes a child needs to whisper something back up — "hey, I turned out to be 40 points tall." A <code>PreferenceKey</code> is the labeled channel for that upward message, and <code>reduce</code> is the rule for combining messages when several children speak at once (take the max, sum them, last one wins). The modern <code>.visualEffect</code> is the happy ending: geometry-aware effects (scaling, fading as you scroll) without the greedy-space headache.</p>
 <p>SwiftUI's layout system is declarative — views propose sizes down and report sizes up. But sometimes you need to read a view's actual size or position at runtime. <code>GeometryReader</code> gives you access to this information. Preference keys let child views send data up to ancestors. Together, they enable scroll effects, adaptive layouts, sticky headers, and other advanced patterns.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">13-protocols</a> for protocol conformance, which is how you define <code>PreferenceKey</code>.
@@ -6572,6 +6912,17 @@ struct MeasuredView: View {
 <li>Create a custom tab bar indicator that slides smoothly to the selected tab's position using anchor preferences and <code>matchedGeometryEffect</code> or manual offset.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>GeometryReader</code></strong> = "a measuring tape that reports size and position" — but it greedily fills all the space offered, so use it carefully.</li>
+<li><strong><code>GeometryProxy</code></strong> = "the readout on the tape" — <code>proxy.size</code>, plus <code>proxy.frame(in:)</code> for where something sits.</li>
+<li><strong>coordinate spaces (<code>.global</code> / <code>.local</code> / <code>.named</code>)</strong> = "measured relative to what?" — the whole screen, the reader itself, or a frame you named (like a scroll view).</li>
+<li><strong>overlay/background + <code>Color.clear</code></strong> = "measure quietly without disturbing the layout" — the safe way to use <code>GeometryReader</code>.</li>
+<li><strong><code>PreferenceKey</code></strong> = "a labeled channel for a child to send data <em>up</em> to an ancestor" — the reverse of normal top-down flow.</li>
+<li><strong><code>reduce</code></strong> = "the rule for combining messages when several children report at once" (max, sum, or last-writer-wins).</li>
+<li><strong>anchor preferences</strong> = "send up a position/bounds that only makes sense once resolved against a coordinate space" — great for highlights and underlines.</li>
+<li><strong><code>.visualEffect</code> (iOS 17+)</strong> = "geometry-aware visual changes with zero layout disruption" — the modern replacement for many <code>GeometryReader</code>-in-scroll tricks.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I understand that <code>GeometryReader</code> provides size and position but takes all proposed space</li>
@@ -6584,6 +6935,10 @@ struct MeasuredView: View {
 <li>[x] I can build common patterns like parallax headers and view size measurement</li>
 </ul><div class="pager"><a href="#21-async-patterns"><span>Prev</span>← Async Patterns in SwiftUI</a><a href="#22a-matched-geometry-and-anchors"><span>Next</span>Matched Geometry &amp; Anchors →</a></div></section>
 <section class="page" id="22a-matched-geometry-and-anchors" data-title="Matched Geometry &amp; Anchors" data-num="22" data-hasdemo="0" data-group=""><h1>Matched Geometry &amp; Anchors</h1>
+<h2>Start here — the plain idea</h2>
+<p>Normally each SwiftUI view lives in its own little box and doesn't know where the others are on screen. That's usually fine — but sometimes you want views to <em>talk geometry</em> to each other: a small thumbnail that grows into a full-screen card, a highlight pill that slides between tabs, a line drawn between two buttons. That's what these two tools are for.</p>
+<p><code>matchedGeometryEffect</code> is like telling SwiftUI "this little card and this big card are secretly the same object." You stamp both with the same name tag (an <code>id</code> inside a shared <code>@Namespace</code>), and when one vanishes while the other appears, SwiftUI quietly animates the position and size from one to the other. You never compute a single coordinate — it does the in-between frames for you.</p>
+<p>Anchors solve the opposite-but-related problem: "I need to <em>know</em> where another view is, as a number, so I can draw or place something there." A child view can't normally report its frame to a far-away parent. An <code>Anchor</code> is basically a sealed envelope — the child writes down its frame, passes the envelope up the tree, and a common ancestor opens it later and reads the exact rectangle in its own coordinate space. One is for <em>morphing</em> views, the other is for <em>measuring</em> them.</p>
 <p>Two related tools for interactions that span <em>more than one view</em>: <strong><code>matchedGeometryEffect</code></strong> morphs a view from one place to another across a state change, and <strong>anchors</strong> (<code>anchorPreference</code>) let you read one view's frame and use it somewhere else in the hierarchy. Both solve the same underlying problem — "relate the geometry of views that don't directly contain each other" — and both power the slick hero transitions and floating highlights you see in polished apps.</p>
 <h2>Part 1 — <code>matchedGeometryEffect</code>: morph between two views</h2>
 <p>The idea: give <strong>two different views the same <code>id</code> in the same <code>@Namespace</code></strong>, and when one disappears as the other appears, SwiftUI <strong>interpolates the frame</strong> (position + size) between them. The result looks like a single element flying/growing from A to B — a hero animation — without you computing any coordinates.</p>
@@ -6709,6 +7064,16 @@ struct AnchorHighlight: View {
 <li>Build the sliding-highlight segmented control.</li>
 <li>Rebuild that highlight a second way using anchors (<code>anchorPreference</code> + <code>overlayPreferenceValue</code>) and compare which feels cleaner for the job.</li>
 </ol>
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>matchedGeometryEffect</code></strong> = "these two views are secretly the same thing — animate between them."</li>
+<li><strong><code>@Namespace</code> + <code>id</code></strong> = the matching name tag; both views need the exact same pair or nothing happens.</li>
+<li><strong><code>properties:</code></strong> = which parts to morph — <code>.position</code> (move), <code>.size</code> (resize), or <code>.frame</code> (both, the default).</li>
+<li><strong><code>Anchor&lt;CGRect&gt;</code></strong> = a sealed envelope holding a view's frame, to be opened later in another view's coordinate space.</li>
+<li><strong><code>anchorPreference</code></strong> = the child sealing the envelope and sending it up the tree.</li>
+<li><strong><code>overlayPreferenceValue</code> / <code>proxy[anchor]</code></strong> = the ancestor opening the envelope and turning it into a real <code>CGRect</code> it can draw with.</li>
+<li><strong>Rule of thumb</strong> = use <code>matchedGeometryEffect</code> when one element <em>becomes</em> another; use anchors when you need geometry <em>as a value</em> to drive separate UI.</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li>Animation foundations: <a class="xref" href="#12-animation-basics">12-animation-basics</a>, <a class="xref" href="#13-animation-advanced">13-animation-advanced</a></li>
@@ -6717,6 +7082,10 @@ struct AnchorHighlight: View {
 <li>Prev: <a class="xref" href="#22-geometry-and-preferences">22-geometry-and-preferences</a> · Next: <a class="xref" href="#23-view-composition">23-view-composition</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#22-geometry-and-preferences"><span>Prev</span>← Geometry and Preferences</a><a href="#23-view-composition"><span>Next</span>View Composition →</a></div></section>
 <section class="page" id="23-view-composition" data-title="View Composition" data-num="23" data-hasdemo="0" data-group=""><h1>View Composition</h1>
+<h2>Start here — the plain idea</h2>
+<p>Think of building a UI like building with LEGO. You <em>could</em> try to mold one giant plastic shape for your whole house, but it'd be impossible to change and impossible to reuse. Instead you snap together lots of small, simple bricks. View composition is exactly that: instead of one enormous <code>body</code>, you write small focused views and plug them into each other.</p>
+<p>The problem it solves is keeping things readable and reusable as your app grows. A 300-line <code>body</code> is a nightmare; ten little 20-line views, each doing one job, is a joy. And because each view is just a struct, passing one into another is as cheap as passing any value.</p>
+<p>Behind the scenes, the magic glue is <code>@ViewBuilder</code> — a quiet compiler feature that lets you list several views in a row (or use <code>if</code>/<code>switch</code>) and have them treated as one combined view. It's basically the thing that turns "here are three pieces" into "here's one block of UI." Once you're comfortable with subviews, <code>@ViewBuilder</code>, and generics, you can build your own reusable containers that work just like Apple's <code>VStack</code> or <code>List</code>.</p>
 <p>SwiftUI's power comes from composing small, focused views into complex interfaces. Every view you write is a struct with a <code>body</code> — and that body can contain other custom views. Mastering composition means your code stays readable, reusable, and performant even as your app grows.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/14-generics.md">14-generics</a> for generic type parameters used in reusable view containers.
@@ -7085,6 +7454,17 @@ struct OrderSummaryView: View {
 <li>Build a multi-slot <code>SettingsRow</code> component with icon, title, subtitle, and trailing accessory slots. Use it to recreate 5 rows from the iOS Settings app.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>Extracting a subview</strong> = pulling a chunk of <code>body</code> into its own struct so it's reusable and readable — like naming a LEGO sub-assembly.</li>
+<li><strong>Init parameter / <code>@Binding</code> / <code>@Environment</code></strong> = the three ways to feed data in: read-only value, two-way connection, or "ambient" data many views share.</li>
+<li><strong><code>@ViewBuilder</code></strong> = the glue that lets you list several views (and use <code>if</code>/<code>switch</code>/<code>for</code>) and have them count as one combined view.</li>
+<li><strong>Generic container</strong> (<code>Card&lt;Content: View&gt;</code>) = a reusable box that accepts <em>any</em> views in its slot — exactly how <code>VStack</code> and <code>List</code> are built.</li>
+<li><strong><code>AnyView</code></strong> = a "forget what type this is" wrapper; convenient but it blinds SwiftUI's optimizer, so prefer <code>@ViewBuilder</code>.</li>
+<li><strong><code>_ConditionalContent</code></strong> = what <code>if</code>/<code>else</code> in a <code>body</code> becomes; each branch is a distinct identity, so its state resets when you switch.</li>
+<li><strong><code>Group</code> / <code>EmptyView</code></strong> = apply shared modifiers to several views without extra layout / render nothing as a placeholder.</li>
+<li><strong>Custom modifier</strong> (<code>ViewModifier</code> or a <code>View</code> extension) = bottle up a repeated styling chain into one reusable <code>.cardStyle()</code>-type call.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can extract subviews and pass data via init, @Binding, or @Environment</li>
@@ -7097,6 +7477,10 @@ struct OrderSummaryView: View {
 <li>[x] I can build multi-slot container views for real-world component libraries</li>
 </ul><div class="pager"><a href="#22a-matched-geometry-and-anchors"><span>Prev</span>← Matched Geometry &amp; Anchors</a><a href="#24-uikit-integration"><span>Next</span>UIKit Integration →</a></div></section>
 <section class="page" id="24-uikit-integration" data-title="UIKit Integration" data-num="24" data-hasdemo="0" data-group=""><h1>UIKit Integration</h1>
+<h2>Start here — the plain idea</h2>
+<p>SwiftUI is the new way to build Apple UIs, but UIKit is the older, bigger toolbox that's been around for over a decade. Sometimes the thing you need — a map, a web view, the photo picker — only exists (or works better) in UIKit. So Apple gives you adapters that let the two worlds plug into each other, like a travel adapter that lets a foreign plug fit your wall socket.</p>
+<p>Wrapping a UIKit <em>view</em> into SwiftUI is <code>UIViewRepresentable</code>; wrapping a whole <em>view controller</em> is <code>UIViewControllerRepresentable</code>. Both ask you for the same two things: "build it once" (<code>makeUIView</code>) and "keep it in sync when my state changes" (<code>updateUIView</code>). Think of it as a contract: SwiftUI says "I'll tell you when my data changes, you make the UIKit object match."</p>
+<p>The tricky part is that UIKit talks back through <em>delegates</em> (callbacks like "the user just typed something"). SwiftUI has no idea what a delegate is, so you need a translator in the middle — that's the <strong>Coordinator</strong>, a small class that catches UIKit's callbacks and writes the result into your SwiftUI state. Data flows down through <code>updateUIView</code> and back up through the Coordinator. And going the other direction — putting SwiftUI <em>inside</em> an old UIKit app — you use <code>UIHostingController</code>, which is just a UIKit view controller with a SwiftUI view living inside it.</p>
 <p>SwiftUI doesn't cover every UIKit feature. When you need a UIKit view (like <code>MKMapView</code>, <code>WKWebView</code>, or a custom <code>UITextView</code>) inside SwiftUI, you wrap it with <code>UIViewRepresentable</code>. When you need a UIKit view controller (like <code>UIImagePickerController</code>), you use <code>UIViewControllerRepresentable</code>. And when you need SwiftUI inside a UIKit app, you use <code>UIHostingController</code>.</p>
 <blockquote>
 <p>See <a href="../Learning-Swift/13-protocols.md">13-protocols</a> for protocol conformance — both representable protocols require specific method implementations.
@@ -7377,6 +7761,17 @@ hostingController.didMove(toParent: self)
 <li>Build a <code>UIViewRepresentable</code> for <code>UISearchBar</code> (pre-iOS 15 style) with full coordinator delegate implementation, and compare the code to SwiftUI's <code>.searchable</code>.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>UIViewRepresentable</code></strong> = the adapter that drops a UIKit <em>view</em> (like <code>MKMapView</code>) into SwiftUI.</li>
+<li><strong><code>UIViewControllerRepresentable</code></strong> = the same adapter, but for a whole UIKit <em>view controller</em> (like the image picker).</li>
+<li><strong><code>makeUIView</code> / <code>makeUIViewController</code></strong> = "build it once" — your one-time setup.</li>
+<li><strong><code>updateUIView</code> / <code>updateUIViewController</code></strong> = "keep it in sync" — runs whenever SwiftUI state changes, so you copy the new state onto the UIKit object.</li>
+<li><strong>Coordinator</strong> = the translator class that catches UIKit's delegate callbacks and writes them back into SwiftUI state (the way data flows <em>up</em>).</li>
+<li><strong>The update guard</strong> (<code>if uiView.text != text</code>) = the seatbelt that stops an infinite loop of update → delegate → update.</li>
+<li><strong><code>UIHostingController</code></strong> = the reverse adapter: a UIKit view controller that hosts a SwiftUI view, for adding SwiftUI to an old UIKit app.</li>
+<li><strong><code>UIHostingConfiguration</code></strong> = the clean iOS 16+ way to put SwiftUI straight inside a table/collection view cell, no hosting controller needed.</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can wrap a UIKit view with <code>UIViewRepresentable</code> using <code>makeUIView</code> and <code>updateUIView</code></li>
@@ -7388,6 +7783,10 @@ hostingController.didMove(toParent: self)
 <li>[x] I understand common pitfalls: update cycles, coordinator lifecycle, and sizing</li>
 </ul><div class="pager"><a href="#23-view-composition"><span>Prev</span>← View Composition</a><a href="#25-real-world-architecture"><span>Next</span>Real-World Architecture →</a></div></section>
 <section class="page" id="25-real-world-architecture" data-title="Real-World Architecture" data-num="25" data-hasdemo="0" data-group=""><h1>Real-World Architecture</h1>
+<h2>Start here — the plain idea</h2>
+<p>Knowing how to make a button or a list is like knowing how to lay a single brick. This chapter is about the blueprint — how all those bricks fit into a house that doesn't fall over when it gets big. The core problem it solves: as an app grows, code that "just works" in a small demo turns into a tangled mess where everything touches everything.</p>
+<p>The big idea behind almost every pattern here is the same: <strong>separate the things that change for different reasons.</strong> Your UI (how it looks), your logic (what happens when you tap), and your data (where it comes from) want to live in different boxes. MVVM is just names for those boxes. Dependency injection is just "hand a box its tools instead of letting it grab them off the shelf itself" — which makes it easy to swap a real network call for a fake one in tests. A router is "put all the navigation decisions in one place" so views don't have to know the whole map.</p>
+<p>Think of it as going from a one-room studio to a well-organized house: every item has a drawer it belongs in, so when you need to find or fix something, you know exactly where to look. The rest of the chapter is just showing you which drawer is which.</p>
 <p>Building a real app requires more than knowing individual SwiftUI views. You need patterns for organizing code, managing data flow, handling accessibility, optimizing performance, and structuring the app lifecycle. This chapter brings together everything from the curriculum into practical architecture guidance.</p>
 <blockquote>
 <p>See <a href="../Learning-SwiftUI/05-state-and-binding.md">05-state-and-binding</a> for the foundation of SwiftUI's data flow.
@@ -7764,6 +8163,17 @@ ZStack {
 <li>Profile a list with 1000 items: compare <code>VStack</code> vs <code>LazyVStack</code>, <code>AnyView</code> vs <code>@ViewBuilder</code>, and with/without <code>.drawingGroup()</code> on a complex row.</li>
 </ol>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>MVVM</strong> = "three drawers: Model holds data, View draws pixels, ViewModel holds the logic and state in between."</li>
+<li><strong>@Observable + @MainActor</strong> = "auto-refresh the UI when state changes, and keep all those changes on the main thread so nothing flickers or crashes."</li>
+<li><strong>Dependency injection</strong> = "hand a view model its tools (via init or environment) instead of it grabbing them itself — so you can swap in fakes for testing."</li>
+<li><strong>Repository pattern</strong> = "a protocol that hides where data comes from — network, database, or mock — so the rest of the app doesn't care."</li>
+<li><strong>Router pattern</strong> = "one place that owns navigation: an enum of routes plus a NavigationPath, so any view can say 'go here' without knowing the whole map."</li>
+<li><strong>Scene phase</strong> = "a label telling you whether the app is active, inactive, or backgrounded — your cue to save state before iOS puts you to sleep."</li>
+<li><strong>Accessibility (labels/hints/Dynamic Type)</strong> = "telling VoiceOver what things are and letting text resize — build it in early, it's painful to bolt on later."</li>
+<li><strong>Lazy stacks / drawing groups</strong> = "don't build views until they're needed, and let Metal rasterize heavy graphics — the main levers for keeping things fast."</li>
+</ul>
 <h2>Checkpoint</h2>
 <ul>
 <li>[x] I can structure a SwiftUI app with MVVM using @Observable view models</li>
@@ -7777,6 +8187,10 @@ ZStack {
 <li>[x] I understand the ideal app structure: features, models, services, components</li>
 </ul><div class="pager"><a href="#24-uikit-integration"><span>Prev</span>← UIKit Integration</a><a href="#enzomangano-demos-reference"><span>Next</span>enzomanuelmangano/demos — Animation Reference for Swift/SwiftUI/UIKit →</a></div></section>
 <section class="page" id="enzomangano-demos-reference" data-title="enzomanuelmangano/demos — Animation Reference for Swift/SwiftUI/UIKit" data-num="·" data-hasdemo="0" data-group=""><h1>enzomanuelmangano/demos — Animation Reference for Swift/SwiftUI/UIKit</h1>
+<h2>Start here — the plain idea</h2>
+<p>This is a translation dictionary, not a tutorial. Someone built 120+ gorgeous animations in React Native, and it turns out the <em>ideas</em> behind them — the timing, the springiness, the way one scroll gesture drives ten visual properties — are the same no matter what tool you use. So this doc says "here's the cool effect, here's the trick that makes it work, and here's roughly how you'd write that trick in SwiftUI or UIKit."</p>
+<p>The one mental model that unlocks most of these: <strong>a single number drives everything.</strong> You have one value — a scroll offset, a drag distance, a 0-to-1 "how expanded am I" progress — and you map that number onto scale, rotation, blur, opacity, position, all at once. That mapping is called <code>interpolate</code> in React Native and shows up as <code>mapRange</code> or <code>.scrollTransition</code> / <code>visualEffect</code> in SwiftUI. Once you see that, the iMessage card stack and the expandable music player are the same idea wearing different clothes.</p>
+<p>The other half is <strong>springs.</strong> Instead of animating "go from A to B over 0.4 seconds," you say "behave like a physical spring with this much bounce," and the motion feels alive. The translation tables at the bottom let you copy a feel (snappy, bouncy, critically-damped/no-bounce) straight across frameworks. Think of it as a phrasebook: you don't need to speak React Native, you just need to look up the phrase.</p>
 <blockquote>
 <p>120+ React Native animation demos. The animation math, spring configs, and interaction patterns translate directly to SwiftUI/UIKit. This doc catalogs the most useful ones with Swift translation notes.</p>
 </blockquote>
@@ -8235,6 +8649,16 @@ UIImpactFeedbackGenerator(style: intensityForDistance(damped))
 <p><strong>UIKit equivalent</strong>: <code>UIView.animate(withDuration:delay:usingSpringWithDamping:initialSpringVelocity:)</code>
 or <code>UISpringTimingParameters(mass:stiffness:damping:initialVelocity:)</code></p>
 <hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>interpolate / mapRange</strong> = "take one number (scroll, drag, progress) and convert it into many visual values at once — scale, rotation, opacity, blur."</li>
+<li><strong>shared value → @State / @GestureState</strong> = "the single source of truth a gesture writes to and the animation reads from."</li>
+<li><strong>withSpring → .spring(duration:bounce:)</strong> = "animate like a physical spring instead of a fixed timer, so motion feels natural; bounce 0 means no overshoot."</li>
+<li><strong>scrollTransition / visualEffect (iOS 17+)</strong> = "the modern SwiftUI way to animate views based on their position in a scroll view — no manual GeometryReader math."</li>
+<li><strong>matchedGeometryEffect</strong> = "tell SwiftUI two views are 'the same thing' so it smoothly morphs one into the other (mini player → full player)."</li>
+<li><strong>rotation3DEffect</strong> = "spin a view in 3D around an axis — the engine behind card flips and coverflow perspective."</li>
+<li><strong>critically damped spring</strong> = "a spring tuned to settle fast with zero bounce — the 'snap home smoothly' feel."</li>
+</ul>
 <h2>Related</h2>
 <ul>
 <li><span class="xref-missing" title="note not in this site">Learning-CoreAnimation</span> — CASpringAnimation for UIKit translation</li>
