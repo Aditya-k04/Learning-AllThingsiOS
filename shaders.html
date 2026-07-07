@@ -811,206 +811,135 @@ fragment float4 allRed(float4 position &lt;span class=&quot;xref-missing&quot; t
 <section class="page" id="03-your-first-shader" data-title="03 — Your First Shader: From File to Screen" data-num="03" data-hasdemo="1" data-group="Curriculum"><h1>03 — Your First Shader: From File to Screen</h1><div class="demo-mount" data-demo="sh-glsl"></div>
 <h2>Start here — the plain idea</h2>
 <p>This is the "hello world" moment: you'll get an actual red screen, then bend it into gradients and shapes. The point isn't the red — it's seeing the whole chain from a <code>.metal</code> file to glowing pixels.</p>
-<p>Here's the mental model. The GPU can only draw triangles, so to fill the screen with your effect you give it one big triangle that covers everything. A <strong>vertex shader</strong> runs a few times to place that triangle's corners. Then the <strong>fragment shader</strong> runs once per pixel and answers the only question that matters: what color is this pixel? On the Swift side, you're just the stage manager — you hand the GPU your two shaders and say "draw it" every frame.</p>
-<p>The magic ingredient that makes shapes possible is <strong>uv</strong> — each pixel's address, scaled to 0..1. Once a pixel knows "I'm at (0.5, 0.5)," it can decide things like "am I inside the circle?" That's how a per-pixel color rule becomes gradients, splits, and circles.</p>
-<p>Time to write a shader, hook it up to Swift, and see pixels on screen.</p>
+<p>Here's the modern mental model. In SwiftUI you almost never build the GPU pipeline by hand. You write <strong>one tiny function</strong> in a <code>.metal</code> file, tag it with the <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> keyword, and that single word makes the function <em>appear</em> on the Swift side inside <code>ShaderLibrary</code> — no device, no command queue, no render loop. Then you paint it onto any view with one modifier: <code>.colorEffect(ShaderLibrary.yourFunction())</code>. Think of <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> as a label that means "this shader is allowed to plug into SwiftUI," exactly like <code>throws</code> labels "this might fail."</p>
+<p>A <strong>colorEffect</strong> shader runs once per pixel and answers the only question that matters: <em>what color is this pixel?</em> The magic ingredient that makes shapes possible is <strong>uv</strong> — each pixel's address turned into a 0..1 fraction. Once a pixel knows "I'm at (0.5, 0.5)," it can decide "am I inside the circle?" That's how a per-pixel color rule becomes gradients, splits, and circles.</p>
+<p>Time to write a shader, hook it up with one line, and see pixels on screen.</p>
 <hr />
 <h2>Step 1: Create the Metal File</h2>
 <p>In Xcode: File &gt; New &gt; File &gt; Metal File. Name it <code>Shaders.metal</code>.</p>
 <pre><code class="language-cpp">#include &lt;metal_stdlib&gt;
+#include &lt;SwiftUI/SwiftUI.h&gt;     // gives you SwiftUI::Layer + the stitchable entry points
 using namespace metal;
 
-// A struct to pass data from vertex shader to fragment shader
-struct VertexOut {
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;;  // Required: clip-space position
-    float2 uv;                     // Texture coordinate (0 to 1)
-};
-
-// Vertex shader: creates a full-screen quad
-vertex VertexOut fullscreenVertex(uint vertexID &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;vertex_id&lt;/span&gt;) {
-    // Full-screen triangle trick: 3 vertices that cover the entire screen
-    // No vertex buffer needed!
-    VertexOut out;
-
-    // Generate UV coordinates
-    out.uv = float2((vertexID &lt;&lt; 1) &amp; 2, vertexID &amp; 2);
-
-    // Convert UV (0 to 1) to clip space (-1 to 1), flip Y
-    out.position = float4(out.uv * float2(2, -2) + float2(-1, 1), 0, 1);
-
-    return out;
-}
-
-// Fragment shader: runs per pixel, returns a color
-fragment float4 solidColor(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
-    // in.uv goes from (0,0) at top-left to (1,1) at bottom-right
-    // Return red
-    return float4(1.0, 0.0, 0.0, 1.0);
+// &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; is the whole trick: it tells Xcode to expose this function
+// to SwiftUI. At build time Xcode scans every .metal file, finds each
+// &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; function, and generates a matching entry in `ShaderLibrary`.
+//
+// A colorEffect shader's signature is fixed:
+//   half4 name(float2 position, half4 color)
+//   - position = this pixel's location in POINTS (0,0 at top-left)
+//   - color    = the pixel's current color (from the view you attach to)
+//   - return   = the new color for this pixel
+//
+&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 solidColor(float2 position, half4 color) {
+    return half4(1.0, 0.0, 0.0, 1.0);   // red, ignoring the incoming color
 }
 </code></pre>
+<p>That's the entire GPU side. No vertex shader, no full-screen triangle — SwiftUI already drew the view; your function just recolors its pixels.</p>
 <hr />
-<h2>Step 2: The Swift Renderer</h2>
-<pre><code class="language-swift">import MetalKit
-
-class ShaderRenderer: NSObject, MTKViewDelegate {
-    let device: MTLDevice
-    let commandQueue: MTLCommandQueue
-    let pipelineState: MTLRenderPipelineState
-
-    init(metalView: MTKView) {
-        // 1. Get the GPU
-        device = MTLCreateSystemDefaultDevice()!
-        metalView.device = device
-
-        // 2. Create command queue (sends work to GPU)
-        commandQueue = device.makeCommandQueue()!
-
-        // 3. Load shader functions
-        let library = device.makeDefaultLibrary()!
-        let vertexFunc = library.makeFunction(name: &quot;fullscreenVertex&quot;)!
-        let fragmentFunc = library.makeFunction(name: &quot;solidColor&quot;)!
-
-        // 4. Create render pipeline
-        let descriptor = MTLRenderPipelineDescriptor()
-        descriptor.vertexFunction = vertexFunc
-        descriptor.fragmentFunction = fragmentFunc
-        descriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
-
-        pipelineState = try! device.makeRenderPipelineState(descriptor: descriptor)
-
-        super.init()
-        metalView.delegate = self
-    }
-
-    // Called every frame
-    func draw(in view: MTKView) {
-        guard let drawable = view.currentDrawable,
-              let renderPassDescriptor = view.currentRenderPassDescriptor else { return }
-
-        let commandBuffer = commandQueue.makeCommandBuffer()!
-        let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-
-        encoder.setRenderPipelineState(pipelineState)
-        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
-
-        encoder.endEncoding()
-        commandBuffer.present(drawable)
-        commandBuffer.commit()
-    }
-
-    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
-}
-</code></pre>
-<hr />
-<h2>Step 3: Hook It Up</h2>
-<h3>UIKit</h3>
-<pre><code class="language-swift">import UIKit
-import MetalKit
-
-class ViewController: UIViewController {
-    var renderer: ShaderRenderer!
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        let metalView = MTKView(frame: view.bounds)
-        metalView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        view.addSubview(metalView)
-
-        renderer = ShaderRenderer(metalView: metalView)
-    }
-}
-</code></pre>
-<h3>SwiftUI</h3>
+<h2>Step 2: Hook It Up (one line)</h2>
 <pre><code class="language-swift">import SwiftUI
-import MetalKit
 
-struct MetalView: UIViewRepresentable {
-    func makeUIView(context: Context) -&gt; MTKView {
-        let view = MTKView()
-        context.coordinator.renderer = ShaderRenderer(metalView: view)
-        return view
-    }
-
-    func updateUIView(_ uiView: MTKView, context: Context) {}
-
-    func makeCoordinator() -&gt; Coordinator { Coordinator() }
-
-    class Coordinator {
-        var renderer: ShaderRenderer?
-    }
-}
-
-// Usage:
 struct ContentView: View {
     var body: some View {
-        MetalView()
+        Rectangle()                                   // any view works: Color, Image, Text…
+            .colorEffect(ShaderLibrary.solidColor())  // run your shader over its pixels
             .ignoresSafeArea()
     }
 }
 </code></pre>
+<p><code>ShaderLibrary.solidColor</code> is the function you marked <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> — it showed up here automatically because of that keyword. <code>.colorEffect</code> runs it once per pixel of the <code>Rectangle</code>.</p>
 <hr />
-<h2>Step 4: Run It</h2>
-<p>Build and run. You should see a <strong>solid red screen</strong>. That's your fragment shader running on every pixel, returning red.</p>
+<h2>Step 3: Run It</h2>
+<p>Build and run. You should see a <strong>solid red screen</strong>. That's your fragment function running on every pixel of the rectangle, returning red. No renderer, no draw loop — SwiftUI owns all of that now.</p>
 <hr />
-<h2>Step 5: Make It Interesting</h2>
-<p>Now modify the fragment shader to use the UV coordinates:</p>
+<h2>Step 4: Make It Interesting</h2>
+<p>The incoming <code>position</code> is in <em>points</em>, so to get resolution-independent <code>uv</code> (0..1) you divide by the view's size. Pass the size in as an extra argument — any parameters <em>after</em> the required <code>position, color</code> become your custom inputs:</p>
 <h3>Gradient</h3>
-<pre><code class="language-cpp">fragment float4 gradient(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
-    // in.uv.x goes 0 (left) to 1 (right)
-    // in.uv.y goes 0 (top) to 1 (bottom)
-
-    // Horizontal gradient: black on left, red on right
-    return float4(in.uv.x, 0.0, 0.0, 1.0);
+<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 gradient(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;                 // 0 (left/top) .. 1 (right/bottom)
+    return half4(half(uv.x), 0.0h, 0.0h, 1.0h);  // black on left → red on right
+}
+</code></pre>
+<pre><code class="language-swift">GeometryReader { geo in
+    Rectangle()
+        .colorEffect(ShaderLibrary.gradient(.float2(geo.size)))  // hand the size to the shader
 }
 </code></pre>
 <h3>Two-Color Gradient</h3>
-<pre><code class="language-cpp">fragment float4 twoColorGradient(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
-    float3 topColor = float3(0.1, 0.1, 0.4);     // Dark blue
-    float3 bottomColor = float3(1.0, 0.5, 0.2);   // Orange
-
-    // Mix based on vertical position
-    float3 color = mix(topColor, bottomColor, in.uv.y);
-
-    return float4(color, 1.0);
+<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 twoColorGradient(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;
+    half3 top = half3(0.1h, 0.1h, 0.4h);   // dark blue
+    half3 bot = half3(1.0h, 0.5h, 0.2h);   // orange
+    return half4(mix(top, bot, half(uv.y)), 1.0h);
 }
 </code></pre>
 <h3>Horizontal Split</h3>
-<pre><code class="language-cpp">fragment float4 horizontalSplit(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
-    // step returns 0 when uv.x &lt; 0.5, 1 when uv.x &gt;= 0.5
-    float side = step(0.5, in.uv.x);
-
-    float3 left = float3(1.0, 0.0, 0.0);   // Red
-    float3 right = float3(0.0, 0.0, 1.0);  // Blue
-
-    float3 color = mix(left, right, side);
-    return float4(color, 1.0);
+<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 horizontalSplit(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;
+    half side = half(step(0.5, uv.x));     // 0 on the left half, 1 on the right
+    half3 c = mix(half3(1.0h,0.0h,0.0h), half3(0.0h,0.0h,1.0h), side);
+    return half4(c, 1.0h);
 }
 </code></pre>
 <h3>Circle</h3>
-<pre><code class="language-cpp">fragment float4 circle(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
-    // Center of screen
-    float2 center = float2(0.5, 0.5);
-
-    // Distance from center
-    float dist = distance(in.uv, center);
-
-    // Sharp circle at radius 0.3
-    // float mask = step(dist, 0.3);
-
-    // Soft circle (smooth edge)
-    float mask = 1.0 - smoothstep(0.28, 0.32, dist);
-
-    float3 circleColor = float3(0.0, 0.8, 1.0);  // Cyan
-    float3 bgColor = float3(0.05, 0.05, 0.1);     // Dark
-
-    float3 color = mix(bgColor, circleColor, mask);
-    return float4(color, 1.0);
+<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 circle(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;
+    float d = distance(uv, float2(0.5));           // distance from center
+    float mask = 1.0 - smoothstep(0.28, 0.32, d);  // soft edge at radius ~0.3
+    half3 c = mix(half3(0.05h,0.05h,0.1h),         // dark background
+                  half3(0.0h,0.8h,1.0h),           // cyan
+                  half(mask));
+    return half4(c, 1.0h);
 }
 </code></pre>
+<p>Same Swift call each time — swap the function name and pass <code>.float2(geo.size)</code>:</p>
+<pre><code class="language-swift">GeometryReader { geo in
+    Rectangle().colorEffect(ShaderLibrary.circle(.float2(geo.size)))
+}
+</code></pre>
+<blockquote>
+<p><strong>Tidier size without GeometryReader:</strong> <code>.visualEffect { content, proxy in content.colorEffect(ShaderLibrary.circle(.float2(proxy.size))) }</code> gives you the size inline. See <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>.</p>
+</blockquote>
 <hr />
-<h2>Understanding the Full-Screen Triangle Trick</h2>
-<p>The vertex shader uses a clever trick to cover the screen with just 3 vertices (a single triangle) instead of 6 (two triangles forming a quad):</p>
+<h2>Passing more data</h2>
+<p>Every argument after <code>position, color</code> is yours. Feed them from Swift with typed helpers — <code>.float(_)</code>, <code>.float2(_)</code>, <code>.color(_)</code>, <code>.image(_)</code>. For animation, wrap the view in <code>TimelineView(.animation)</code> and pass elapsed seconds:</p>
+<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 pulse(float2 position, half4 color, float2 size, float time) {
+    float2 uv = position / size;
+    float d = distance(uv, float2(0.5));
+    float ring = 0.5 + 0.5 * sin(d * 40.0 - time * 4.0);  // moving rings
+    return half4(half3(ring), 1.0h);
+}
+</code></pre>
+<pre><code class="language-swift">TimelineView(.animation) { tl in
+    let t = tl.date.timeIntervalSinceReferenceDate
+    GeometryReader { geo in
+        Rectangle().colorEffect(ShaderLibrary.pulse(.float2(geo.size), .float(t)))
+    }
+}
+</code></pre>
+<p>The three effect flavors (<code>colorEffect</code>, <code>distortionEffect</code>, <code>layerEffect</code>) and every argument type are covered in depth in <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>.</p>
+<hr />
+<h2>What's happening underneath (the full Metal pipeline)</h2>
+<p>You didn't have to build any of this — but it's worth seeing <em>once</em> so the stitchable shortcut makes sense. To draw pixels from scratch (with no SwiftUI view to attach to), the GPU can only draw triangles, so you cover the screen with one oversized triangle and run a <strong>vertex shader</strong> to place its corners, then a <strong>fragment shader</strong> per pixel:</p>
+<pre><code class="language-cpp">struct VertexOut {
+    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;;  // clip-space position
+    float2 uv;                     // 0..1 texture coordinate
+};
+
+vertex VertexOut fullscreenVertex(uint vertexID &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;vertex_id&lt;/span&gt;) {
+    VertexOut out;
+    out.uv = float2((vertexID &lt;&lt; 1) &amp; 2, vertexID &amp; 2);
+    out.position = float4(out.uv * float2(2, -2) + float2(-1, 1), 0, 1);
+    return out;
+}
+
+fragment float4 solidColorFrag(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
+    return float4(1.0, 0.0, 0.0, 1.0);
+}
+</code></pre>
+<p>Driving that requires the manual pipeline — a <code>MTLDevice</code>, a command queue, a compiled <code>MTLRenderPipelineState</code>, and a per-frame draw loop (command buffer → encoder → draw → present → commit). <strong>You only need this for full Metal apps: custom render passes, games, compute, or hosting Metal inside UIKit.</strong> The whole setup lives in <a class="xref" href="#17-metal-in-uikit">17-metal-in-uikit</a>; compute-style pipelines are in <a class="xref" href="#08-compute-shaders">08-compute-shaders</a>.</p>
+<h3>The full-screen triangle trick (for the pipeline version)</h3>
 <pre><code>vertexID=0: uv=(0,0) -&gt; position=(-1, 1)   Top-left
 vertexID=1: uv=(2,0) -&gt; position=( 3, 1)   Far right (off-screen)
 vertexID=2: uv=(0,2) -&gt; position=(-1,-3)   Far bottom (off-screen)
@@ -1022,58 +951,46 @@ vertexID=2: uv=(0,2) -&gt; position=(-1,-3)   Far bottom (off-screen)
      2           |
      (off screen bottom)
 </code></pre>
-<p>The GPU clips to the screen bounds, so the oversized triangle just fills the viewport. This is more efficient than a quad because it avoids the diagonal edge where two triangles would meet.</p>
+<p>The GPU clips the oversized triangle to the viewport, so 3 vertices fill the screen — cheaper than two triangles because there's no shared diagonal edge. For SwiftUI effects you never write this; SwiftUI supplies the geometry and calls your <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> function directly.</p>
 <hr />
 <h2>Exercises</h2>
 <ol>
 <li>
-<p><strong>Color play</strong>: Change the fragment shader to show a purple screen (<code>float4(0.5, 0.0, 0.8, 1.0)</code>)</p>
+<p><strong>Color play</strong>: Change <code>solidColor</code> to return purple (<code>half4(0.5, 0.0, 0.8, 1.0)</code>).</p>
 </li>
 <li>
-<p><strong>Diagonal gradient</strong>: Create a gradient that goes from top-left (black) to bottom-right (white). Hint: use <code>(in.uv.x + in.uv.y) / 2.0</code></p>
+<p><strong>Diagonal gradient</strong>: Make a gradient from top-left (black) to bottom-right (white). Hint: <code>(uv.x + uv.y) / 2.0</code>.</p>
 </li>
 <li>
-<p><strong>Concentric rings</strong>: Modify the circle shader to show alternating black and white rings. Hint: use <code>fract(dist * 10.0)</code> and <code>step(0.5, ...)</code></p>
+<p><strong>Concentric rings</strong>: Modify <code>circle</code> to show alternating black/white rings. Hint: <code>fract(d * 10.0)</code> then <code>step(0.5, …)</code>.</p>
 </li>
 <li>
-<p><strong>Checkerboard</strong>: Create a checkerboard pattern. Hint: <code>step(0.5, fract(in.uv.x * 8.0))</code> gives stripes; XOR the horizontal and vertical patterns.</p>
+<p><strong>Checkerboard</strong>: <code>step(0.5, fract(uv.x * 8.0))</code> gives stripes; XOR the horizontal and vertical patterns.</p>
+</li>
+<li>
+<p><strong>Animate it</strong>: Feed <code>pulse</code> a <code>time</code> uniform via <code>TimelineView(.animation)</code> and watch the rings move.</p>
 </li>
 </ol>
 <hr />
-<h2>The Rendering Pipeline You Just Built</h2>
-<pre><code>Swift: ShaderRenderer
-  |
-  |-- Creates MTLRenderPipelineState (vertex + fragment shaders compiled)
-  |-- Every frame:
-       |-- Gets drawable (screen surface to draw on)
-       |-- Creates command buffer
-       |-- Creates render encoder
-       |-- Sets pipeline state
-       |-- Draws 3 vertices (full-screen triangle)
-       |-- Vertex shader runs 3 times (once per vertex)
-       |-- Rasterizer fills the triangle with pixels
-       |-- Fragment shader runs ~2.7 million times (once per pixel)
-       |-- Result presented to screen
-</code></pre>
-<hr />
 <h2>Checkpoint</h2>
 <p>Before moving on, you should understand:
-- [x] How to create a <code>.metal</code> file in Xcode
-- [x] The <code>VertexOut</code> struct passes data from vertex shader to fragment shader
-- [x] The full-screen triangle trick (3 vertices, no vertex buffer)
-- [x] How to create a render pipeline in Swift (device, library, pipeline descriptor)
-- [x] The draw loop: command buffer &gt; render encoder &gt; draw &gt; present &gt; commit
-- [x] UV coordinates: <code>(0,0)</code> top-left to <code>(1,1)</code> bottom-right
-- [x] How to use UVs to create gradients, shapes, and patterns</p>
+- [x] <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> is what makes an MSL function appear in Swift's <code>ShaderLibrary</code>
+- [x] <code>.colorEffect(ShaderLibrary.name(args…))</code> runs your shader over a view's pixels — no renderer needed
+- [x] A colorEffect signature is <code>half4 name(float2 position, half4 color, …custom args)</code>
+- [x] <code>position</code> is in points; divide by <code>size</code> (passed as <code>.float2</code>) to get 0..1 <code>uv</code>
+- [x] Extra arguments come from <code>.float()</code>, <code>.float2()</code>, <code>.color()</code>, <code>.image()</code>
+- [x] <code>TimelineView(.animation)</code> supplies elapsed time for animated shaders
+- [x] The manual <code>MTLDevice</code>/pipeline/draw-loop is only for full Metal apps (UIKit, games, compute)</p>
 <h2>The foundation</h2>
 <ul>
-<li><strong><code>.metal</code> file</strong> = where your shaders live; Xcode compiles it into your app at build time.</li>
-<li><strong>VertexOut struct</strong> = the little package the vertex shader fills and the fragment shader unpacks (position + uv).</li>
-<li><strong>Full-screen triangle trick</strong> = cover the screen with one oversized triangle (3 vertices) so the fragment shader runs on every pixel.</li>
-<li><strong>uv</strong> = each pixel's address, scaled to 0..1 so the code doesn't care about resolution.</li>
-<li><strong>Render pipeline state</strong> = your vertex + fragment shaders pre-compiled and bundled, ready to run each frame.</li>
-<li><strong>Draw loop</strong> = command buffer to encoder to draw to present to commit — the per-frame recipe that pushes work to the GPU.</li>
-<li><strong><code>step</code> vs <code>smoothstep</code></strong> = hard edge vs soft anti-aliased edge when drawing shapes from uv.</li>
+<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code></strong> = a label that makes an MSL function visible to SwiftUI's <code>ShaderLibrary</code> — the one keyword that "wires up" a shader.</li>
+<li><strong>ShaderLibrary</strong> = the auto-generated bridge; every <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> function shows up here by name at build time.</li>
+<li><strong><code>.colorEffect</code></strong> = run a per-pixel shader over any view's pixels with one modifier — the modern "file to screen" path.</li>
+<li><strong>colorEffect signature</strong> = <code>half4 name(float2 position, half4 color, …)</code>; params after <code>color</code> are your custom inputs.</li>
+<li><strong>uv</strong> = <code>position / size</code>, each pixel's address as a 0..1 fraction, so the code doesn't care about resolution.</li>
+<li><strong>argument helpers</strong> = <code>.float</code>, <code>.float2</code>, <code>.color</code>, <code>.image</code> pack Swift values for the shader; <code>TimelineView(.animation)</code> feeds time.</li>
+<li><strong>full Metal pipeline</strong> = <code>MTLDevice</code> + command queue + <code>MTLRenderPipelineState</code> + draw loop — needed only for UIKit/games/compute, not SwiftUI effects (see <a class="xref" href="#17-metal-in-uikit">17-metal-in-uikit</a>).</li>
+<li><strong>full-screen triangle</strong> = the pipeline-only trick to cover the screen with 3 vertices; SwiftUI supplies this for you.</li>
 </ul><div class="pager"><a href="#02-msl-syntax-basics"><span>Prev</span>← 02 — MSL Syntax Basics</a><a href="#04-coordinates-and-color"><span>Next</span>04 — Coordinates and Color →</a></div></section>
 <section class="page" id="04-coordinates-and-color" data-title="04 — Coordinates and Color" data-num="04" data-hasdemo="1" data-group="Curriculum"><h1>04 — Coordinates and Color</h1><div class="demo-mount" data-demo="sh-uv"></div>
 <h2>Start here — the plain idea</h2>
@@ -2797,6 +2714,9 @@ float2 aspectFit(float2 uv, float2 viewSize, float2 textureSize) {
 <p>Think of it like passing notes into a sealed room. For a tiny note — a single number, a touch point, a small struct — you slide it under the door (<code>setBytes</code>). For a fat envelope — thousands of particles, a big array — you set up a dedicated mail slot once and keep refilling it (<code>MTLBuffer</code>). A <em>uniform</em> is just a value that's the same for every pixel this frame (time, intensity, resolution), as opposed to per-pixel data the shader computes itself.</p>
 <p>The one gotcha that bites everyone: Swift and Metal must agree <em>byte for byte</em> on how a struct is laid out in memory, and they pad fields to alignment boundaries. The classic trap is <code>float3</code>, which secretly takes 16 bytes, not 12. Get the layout wrong and your shader reads garbage — so the alignment rules here matter more than they look.</p>
 <p>Every interactive shader needs data from your app — time, touch position, slider values, arrays of data. This lesson covers all the ways to get data into your shaders.</p>
+<blockquote>
+<p><strong>In SwiftUI you skip all of this.</strong> For a <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> shader you never touch a buffer, <code>setBytes</code>, or alignment. You just list extra parameters after <code>(position, color)</code> and pass matching Swift values in order: <code>ShaderLibrary.myShader(.float(time), .float2(size), .color(tint))</code>. SwiftUI packs and aligns them for you. The manual machinery below is for <strong>full Metal pipelines</strong> — <code>MTKView</code> rendering (<a class="xref" href="#17-metal-in-uikit">17-metal-in-uikit</a>), compute shaders (<a class="xref" href="#08-compute-shaders">08-compute-shaders</a>), and large per-frame arrays (thousands of particles) — where you <em>do</em> manage memory yourself. Read it to understand what SwiftUI is doing under the hood, and reach for it only when a stitchable effect can't carry the data (e.g. a 10,000-element buffer). SwiftUI's argument helpers are catalogued in <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>.</p>
+</blockquote>
 <hr />
 <h2>Method 1: <code>setBytes</code> (Small Data, Simplest)</h2>
 <p>For data under 4KB. No buffer object needed.</p>
@@ -4093,6 +4013,9 @@ float3 add(float3 base, float3 blend) { return min(base + blend, 1.0); }
 <p>Think of it like a kitchen. The GPU is the chef, the <code>device</code> is your line to that kitchen, the <code>commandQueue</code> is the order rail, and a <code>drawable</code> is the empty plate the chef fills and sends out. Every frame you write an order ("run this shader, draw a triangle, present the plate"), drop it on the rail, and a fresh plate appears on screen. <code>MTKView</code> is the easy mode — it sets the table and rings the bell 60 or 120 times a second for you. <code>CAMetalLayer</code> is the same idea with the lid off, for when you need to control the timing yourself.</p>
 <p>The other big idea here is that the GPU's output doesn't have to go straight to the screen — it can go into a texture instead. That's what makes multi-pass effects possible: render once into an off-screen picture, then feed that picture back in as input for a second pass. Blur works exactly this way (blur horizontally, then blur that result vertically).</p>
 <p>Setting up the full Metal rendering pipeline with MTKView, CAMetalLayer, and UIKit integration.</p>
+<blockquote>
+<p><strong>When do you actually need this?</strong> Only for <em>full</em> Metal: games, custom multi-pass render graphs, hosting Metal in a UIKit app, or work <code>colorEffect</code>/<code>layerEffect</code> can't express. If you just want a shader effect over a SwiftUI view, you do <strong>not</strong> build any of this — you mark the function <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> and apply it with one modifier (<a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>). This lesson is the "manual transmission" version; read it to understand the machinery SwiftUI runs for you.</p>
+</blockquote>
 <hr />
 <h2>Option 1: MTKView (Recommended)</h2>
 <p><code>MTKView</code> handles the display link, drawable management, and most boilerplate:</p>
@@ -6045,15 +5968,17 @@ float3 calcNormal(float2 uv, float strength, float cardType, float2 res) {
                             1.0));
 }
 
-// --- Fragment Shader ---
-// Use as: .colorEffect(ShaderLibrary.cardShader(...))
-// Or in MTKView fragment function:
+// --- Fragment Shader (stitchable — drives .colorEffect) ---
+// &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; exposes this to SwiftUI's ShaderLibrary. The required
+// (position, color) come first; every argument after them is a uniform
+// you pass from Swift, in order. We ignore the incoming color and compute
+// our own, so it's named inColor.
 
-fragment float4 cardFragment(
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;,
-    constant Uniforms &amp;u &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;
+&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 cardShader(
+    float2 position, half4 inColor,
+    float rotate, float2 resolution, float cardType
 ) {
-    float2 uv = position.xy / u.resolution;
+    float2 uv = position / resolution;
     float3 viewDir = normalize(float3(uv * 2.0 - 1.0, 1.0));
 
     // Material selection (simplified — expand per cardType)
@@ -6063,11 +5988,11 @@ fragment float4 cardFragment(
     float roughness = 0.32;
 
     // Dynamic light (rotates opposite to card)
-    float c = cos(-u.rotate), s = sin(-u.rotate);
+    float c = cos(-rotate), s = sin(-rotate);
     float3 lightDir = normalize(float3(-3.0 * c - 2.5 * s, -0.8, -3.0 * s + 2.5 * c));
 
     // Normal from procedural grain
-    float3 normal = calcNormal(uv, 0.2, u.cardType, u.resolution);
+    float3 normal = calcNormal(uv, 0.2, cardType, resolution);
 
     // Fresnel
     float NdotV = max(dot(normal, viewDir), 0.0);
@@ -6093,35 +6018,42 @@ fragment float4 cardFragment(
     color = color * (0.5 + 0.7 * pow(NdotL, 1.4)) + baseColor * spec * 1.2;
 
     // Metallic grain
-    float grain = metallicDetail(uv, u.cardType, u.resolution);
+    float grain = metallicDetail(uv, cardType, resolution);
     color *= (1.0 + grain * 0.35);
 
     // Vignette
-    float2 vc = float2(0.5 + sin(u.rotate) * 0.15, 0.5 + cos(u.rotate * 0.7) * 0.1);
+    float2 vc = float2(0.5 + sin(rotate) * 0.15, 0.5 + cos(rotate * 0.7) * 0.1);
     float vignette = 1.0 - length((uv - vc) * 1.5);
     color *= mix(0.85, 1.0, vignette);
 
-    return float4(color, 1.0);
+    return half4(half3(color), 1.0h);
 }
 </code></pre>
 <h3>SwiftUI Integration (iOS 17+)</h3>
-<pre><code class="language-swift">// Option A: .colorEffect shader modifier
-ContentView()
-    .colorEffect(
-        ShaderLibrary.cardShader(
-            .float(rotation),          // rotate
-            .float2(width, height),    // resolution
-            .float(cardType)           // cardType
-        )
-    )
+<p>One <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> function, one modifier — no <code>MTKView</code>, no renderer. The uniforms line up with the argument order in the shader:</p>
+<pre><code class="language-swift">struct MetalCard: View {
+    var rotation: Float
+    var cardType: Float
 
-// Option B: MTKView for full control (recommended for this complexity)
-struct MetalCardView: UIViewRepresentable {
-    let rotation: Float
-    let cardType: Int
-    func makeUIView(context: Context) -&gt; MTKView { ... }
+    var body: some View {
+        GeometryReader { geo in
+            RoundedRectangle(cornerRadius: 24)
+                .colorEffect(
+                    ShaderLibrary.cardShader(
+                        .float(rotation),        // rotate
+                        .float2(geo.size),       // resolution
+                        .float(cardType)         // cardType
+                    )
+                )
+        }
+    }
 }
+
+// Animate the tilt by driving `rotation` from a TimelineView or a drag gesture.
 </code></pre>
+<blockquote>
+<p>You only reach for a hand-built <code>MTKView</code>/<code>UIViewRepresentable</code> render pass if you need something <code>colorEffect</code> can't express — multiple passes, vertex work, or feeding real geometry. For a per-pixel surface effect like this, stitchable is the whole job. See <a class="xref" href="#17-metal-in-uikit">17-metal-in-uikit</a> for the full-pipeline path.</p>
+</blockquote>
 <h2>The foundation</h2>
 <ul>
 <li><strong>Fresnel conductor</strong> = the real-metal formula for how much light reflects at a given angle, computed per color channel so gold can shift warm at grazing angles.</li>
@@ -7060,9 +6992,9 @@ TimelineView(.animation) { _ in
 <td>Less control, visual artifacts at edges</td>
 </tr>
 <tr>
-<td><strong>Metal SDF</strong></td>
+<td><strong>Metal SDF via <code>.colorEffect</code></strong></td>
 <td>Exact control, GPU-accelerated, scalable to N blobs</td>
-<td>More code, needs MTKView</td>
+<td>A <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> shader + one modifier — no <code>MTKView</code> needed (<a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>)</td>
 </tr>
 </tbody>
 </table>
