@@ -807,7 +807,171 @@ fragment float4 allRed(float4 position [[position]]) {
 <li><strong>Attribute</strong> (<code>[[position]]</code>, <code>[[buffer(0)]]</code>) = a plumbing label that tells Metal what a parameter is and where its data comes from.</li>
 <li><strong><code>mix</code> / <code>smoothstep</code> / <code>step</code></strong> = the blend toolkit: straight fade, smooth S-curve fade, and a hard on/off switch.</li>
 <li><strong>Branchless thinking</strong> = prefer math over if/else, because the GPU runs both branches and throws one away.</li>
-</ul><div class="pager"><a href="#01-gpu-vs-cpu"><span>Prev</span>← 01 — GPU vs CPU: Why Shaders Exist</a><a href="#03-your-first-shader"><span>Next</span>03 — Your First Shader: From File to Screen →</a></div></section>
+</ul><div class="pager"><a href="#01-gpu-vs-cpu"><span>Prev</span>← 01 — GPU vs CPU: Why Shaders Exist</a><a href="#02a-uv-and-the-shader-toolkit"><span>Next</span>02a — UV &amp; the Shader Toolkit (the words you&#x27;ll see everywhere) →</a></div></section>
+<section class="page" id="02a-uv-and-the-shader-toolkit" data-title="02a — UV &amp; the Shader Toolkit (the words you&#x27;ll see everywhere)" data-num="02" data-hasdemo="0" data-group="Curriculum"><h1>02a — UV &amp; the Shader Toolkit (the words you'll see everywhere)</h1>
+<h2>Start here — the plain idea</h2>
+<p>Before you write your first shader, it helps to know the handful of words that show up in <em>every</em> shader you'll ever read: <code>uv</code>, <code>float2</code>/<code>half4</code>, <code>.rgb</code>, and a small pile of built-in functions like <code>mix</code>, <code>step</code>, <code>distance</code>, <code>smoothstep</code>. Learn these once and shader code stops looking like hieroglyphics — you'll read <code>float2 uv = position / size</code> and just <em>know</em> what it means.</p>
+<p>Here's the good news: you already learned most of the math in the <strong>Math for Interactions</strong> course. <code>mix</code> is just <code>lerp</code>. <code>smoothstep</code>, <code>clamp</code>, <code>distance</code>, <code>sin</code>/<code>cos</code> — same ideas, same behavior. This lesson is mostly teaching you the <strong>MSL spelling</strong> of tools you already own, plus the one genuinely new idea: <strong>uv</strong>.</p>
+<p>Think of a shader as a function the GPU runs once per pixel, in parallel, millions of times. Each run knows <em>where it is</em> and has to answer <em>what color am I?</em> Everything below is the vocabulary for expressing that answer.</p>
+<hr />
+<h2>The one new idea: <code>uv</code></h2>
+<p>A shader runs per pixel, so the first thing a pixel needs is <strong>its own address</strong>. <code>uv</code> is that address, but rescaled to a tidy <strong>0…1 range</strong> instead of raw pixel counts.</p>
+<pre><code class="language-cpp">float2 uv = position / size;   // position is in points; size is the view's size
+// uv.x: 0.0 at the left  → 1.0 at the right
+// uv.y: 0.0 at the top   → 1.0 at the bottom
+</code></pre>
+<p>Why bother normalizing? Because <strong>0…1 doesn't care about screen size</strong>. A rule like "left half red, right half blue" is <code>uv.x &lt; 0.5</code> — and that works identically on a tiny watch or a huge iPad. If you used raw pixels you'd have to know the exact width every time. <code>uv</code> makes your shader resolution-independent. (The name is a leftover from texture mapping — historically the two texture axes were called <em>u</em> and <em>v</em> instead of <em>x</em> and <em>y</em>. That's the whole story; there's no deeper meaning.)</p>
+<p>Two wrinkles you'll meet soon (full detail in <a class="xref" href="#04-coordinates-and-color">04-coordinates-and-color</a>):</p>
+<ul>
+<li><strong>Centered coordinates.</strong> For anything radial (circles, glows), it's handy to put <code>(0,0)</code> in the <em>middle</em>: <code>float2 c = uv - 0.5;</code> now ranges −0.5…0.5 from the center.</li>
+<li><strong>Aspect ratio.</strong> If the view isn't square, one unit of <code>uv.x</code> covers more pixels than one unit of <code>uv.y</code>, so a "circle" comes out as an oval. You fix it by scaling x by <code>width/height</code>. Don't worry about it yet — just know that's why circles sometimes look squished.</li>
+</ul>
+<hr />
+<h2>The vector types (<code>float2</code>, <code>half4</code>, and friends)</h2>
+<p>MSL leans on small fixed-size vectors constantly, because positions and colors <em>are</em> vectors.</p>
+<pre><code class="language-cpp">float2 p = float2(1.0, 0.5);        // 2 numbers — a point or size (x, y)
+float3 n = float3(0.0, 1.0, 0.0);   // 3 numbers — often a direction or an RGB color
+float4 c = float4(1.0, 0.0, 0.0, 1.0); // 4 numbers — an RGBA color (r, g, b, a)
+
+float2 middle = float2(0.5);        // &quot;splat&quot;: same value in every slot → (0.5, 0.5)
+</code></pre>
+<p><strong><code>float</code> vs <code>half</code>.</strong> <code>half</code> is a smaller 16-bit number; <code>float</code> is the full 32-bit one. On Apple GPUs <code>half</code> is roughly <strong>twice as fast</strong>, so the convention is: use <code>half4</code> for <strong>colors</strong> (they don't need much precision) and <code>float</code>/<code>float2</code> for <strong>positions and math</strong> (which do). That's why SwiftUI color shaders return <code>half4</code> but take a <code>float2 position</code>. The little <code>h</code> suffix — <code>1.0h</code> — just means "this literal is a half."</p>
+<h3>Swizzling — grab or reorder components with a dot</h3>
+<p>This is the one bit of syntax that looks magical at first. You can pluck out or rearrange a vector's parts by naming them:</p>
+<pre><code class="language-cpp">float4 color = float4(0.2, 0.4, 0.8, 1.0);
+
+color.r        // 0.2   (same as color.x — rgba and xyzw are interchangeable)
+color.rgb      // float3(0.2, 0.4, 0.8) — just the color, drop the alpha
+color.a        // 1.0   (the alpha / w)
+color.bgr      // float3(0.8, 0.4, 0.2) — reversed! swizzling can reorder
+position.xy    // pull two components out of a bigger vector
+float3(uv, 0)  // build a float3 from a float2 plus one more number
+</code></pre>
+<p><code>.xyzw</code> and <code>.rgba</code> are the same four slots with two names — use <code>.xy</code> when it's a position, <code>.rgb</code> when it's a color. That's it.</p>
+<hr />
+<h2>The built-in functions you'll see constantly</h2>
+<p>You already know what most of these <em>do</em> from Math for Interactions — here's the MSL name and the one-line reminder. Deep versions live in <a class="xref" href="#05-math-for-shaders">05-math-for-shaders</a>.</p>
+<table>
+<thead>
+<tr>
+<th>MSL</th>
+<th>Plain meaning</th>
+<th>You knew it as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mix(a, b, t)</code></td>
+<td>blend from <code>a</code> to <code>b</code> by <code>t</code> (0…1)</td>
+<td><strong><code>lerp</code></strong></td>
+</tr>
+<tr>
+<td><code>clamp(x, lo, hi)</code></td>
+<td>pin <code>x</code> inside a range</td>
+<td><code>clamp</code></td>
+</tr>
+<tr>
+<td><code>saturate(x)</code></td>
+<td>shortcut for <code>clamp(x, 0, 1)</code></td>
+<td>clamp to 0…1</td>
+</tr>
+<tr>
+<td><code>step(edge, x)</code></td>
+<td>hard cutoff: 0 below <code>edge</code>, 1 above</td>
+<td>a hard <code>if</code></td>
+</tr>
+<tr>
+<td><code>smoothstep(e0, e1, x)</code></td>
+<td>soft 0→1 ramp with eased ends</td>
+<td><strong><code>smoothstep</code></strong></td>
+</tr>
+<tr>
+<td><code>fract(x)</code></td>
+<td>the part after the decimal point → repeats 0…1</td>
+<td>"wrap around"</td>
+</tr>
+<tr>
+<td><code>floor(x)</code> / <code>ceil(x)</code></td>
+<td>round down / up to a whole number</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>abs(x)</code></td>
+<td>distance from zero (drop the sign)</td>
+<td><code>abs</code></td>
+</tr>
+<tr>
+<td><code>min(a,b)</code> / <code>max(a,b)</code></td>
+<td>the smaller / larger of two</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>length(v)</code></td>
+<td>how long a vector is</td>
+<td>vector magnitude</td>
+</tr>
+<tr>
+<td><code>distance(a, b)</code></td>
+<td>how far apart two points are</td>
+<td><code>distance</code></td>
+</tr>
+<tr>
+<td><code>normalize(v)</code></td>
+<td>same direction, length 1</td>
+<td>unit vector</td>
+</tr>
+<tr>
+<td><code>dot(a, b)</code></td>
+<td>how aligned two directions are (−1…1)</td>
+<td><strong>dot product</strong></td>
+</tr>
+<tr>
+<td><code>sin(x)</code> / <code>cos(x)</code></td>
+<td>smooth −1…1 waves</td>
+<td><code>sin</code> / <code>cos</code></td>
+</tr>
+<tr>
+<td><code>pow(x, y)</code></td>
+<td><code>x</code> to the power <code>y</code> (curves, falloff)</td>
+<td><code>pow</code></td>
+</tr>
+</tbody>
+</table>
+<p>Two you'll reach for most: <strong><code>mix</code></strong> (blend two colors) and <strong><code>smoothstep</code></strong> (make an edge soft instead of jagged). If you only memorize two, memorize those.</p>
+<hr />
+<h2>Read a real shader with your new vocabulary</h2>
+<p>Here's the <code>circle</code> shader from the next lesson. With the toolkit above, every line is now readable:</p>
+<pre><code class="language-cpp">[[ stitchable ]] half4 circle(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;                    // pixel address → 0…1
+    float d = distance(uv, float2(0.5));            // how far this pixel is from center
+    float mask = 1.0 - smoothstep(0.28, 0.32, d);   // 1 inside radius, 0 outside, soft edge
+    half3 c = mix(half3(0.05h, 0.05h, 0.1h),        // dark background…
+                  half3(0.0h, 0.8h, 1.0h),          // …cyan fill
+                  half(mask));                       // blend by the mask
+    return half4(c, 1.0h);                          // pack rgb + full alpha
+}
+</code></pre>
+<p>Line by line: get this pixel's <code>uv</code>, measure its <code>distance</code> from the center, turn that distance into a soft 0-or-1 <code>mask</code> with <code>smoothstep</code>, <code>mix</code> the background and fill colors by that mask, and return the result as a <code>half4</code>. That's a complete shape-drawing shader, and it's <em>only</em> the words from this lesson. Once these read as plain English, the whole course opens up.</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>uv</strong> = a pixel's own address rescaled to 0…1 (<code>position / size</code>), so your shader ignores screen resolution.</li>
+<li><strong><code>float2/3/4</code></strong> = fixed-size number bundles for points, directions, and colors; <code>float2(0.5)</code> splats one value into all slots.</li>
+<li><strong><code>half</code> vs <code>float</code></strong> = <code>half</code> is the faster 16-bit type for colors (<code>half4</code>); <code>float</code> is the precise 32-bit type for positions and math.</li>
+<li><strong>swizzling</strong> = grab or reorder parts with a dot — <code>.rgb</code>, <code>.a</code>, <code>.xy</code>, <code>.bgr</code>; <code>.xyzw</code> and <code>.rgba</code> are the same slots.</li>
+<li><strong><code>mix</code></strong> = MSL's name for <code>lerp</code> — blend two values/colors by a 0…1 amount (your #1 tool).</li>
+<li><strong><code>smoothstep</code></strong> = the soft-edge ramp; use it instead of <code>step</code> whenever you want no jaggies.</li>
+<li><strong><code>distance</code> / <code>length</code> / <code>normalize</code> / <code>dot</code></strong> = the vector toolkit for "how far," "how long," "which direction," "how aligned."</li>
+<li><strong>you already know the math</strong> — this lesson is mostly the MSL <em>spelling</em> of tools from <a class="xref" href="interaction-math.html#01b-the-seven-building-blocks">the seven building blocks</a>.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Next, put it to work: <a class="xref" href="#03-your-first-shader">03-your-first-shader</a></li>
+<li>Coordinates &amp; color in depth: <a class="xref" href="#04-coordinates-and-color">04-coordinates-and-color</a></li>
+<li>Every function, fully explained: <a class="xref" href="#05-math-for-shaders">05-math-for-shaders</a></li>
+<li>The syntax reference: <a class="xref" href="#02-msl-syntax-basics">02-msl-syntax-basics</a></li>
+<li>Prev: <a class="xref" href="#02-msl-syntax-basics">02-msl-syntax-basics</a> · Next: <a class="xref" href="#03-your-first-shader">03-your-first-shader</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
+</ul><div class="pager"><a href="#02-msl-syntax-basics"><span>Prev</span>← 02 — MSL Syntax Basics</a><a href="#03-your-first-shader"><span>Next</span>03 — Your First Shader: From File to Screen →</a></div></section>
 <section class="page" id="03-your-first-shader" data-title="03 — Your First Shader: From File to Screen" data-num="03" data-hasdemo="1" data-group="Curriculum"><h1>03 — Your First Shader: From File to Screen</h1><div class="demo-mount" data-demo="sh-glsl"></div>
 <h2>Start here — the plain idea</h2>
 <p>This is the "hello world" moment: you'll get an actual red screen, then bend it into gradients and shapes. The point isn't the red — it's seeing the whole chain from a <code>.metal</code> file to glowing pixels.</p>
@@ -991,7 +1155,7 @@ vertexID=2: uv=(0,2) -&gt; position=(-1,-3)   Far bottom (off-screen)
 <li><strong>argument helpers</strong> = <code>.float</code>, <code>.float2</code>, <code>.color</code>, <code>.image</code> pack Swift values for the shader; <code>TimelineView(.animation)</code> feeds time.</li>
 <li><strong>full Metal pipeline</strong> = <code>MTLDevice</code> + command queue + <code>MTLRenderPipelineState</code> + draw loop — needed only for UIKit/games/compute, not SwiftUI effects (see <a class="xref" href="#17-metal-in-uikit">17-metal-in-uikit</a>).</li>
 <li><strong>full-screen triangle</strong> = the pipeline-only trick to cover the screen with 3 vertices; SwiftUI supplies this for you.</li>
-</ul><div class="pager"><a href="#02-msl-syntax-basics"><span>Prev</span>← 02 — MSL Syntax Basics</a><a href="#04-coordinates-and-color"><span>Next</span>04 — Coordinates and Color →</a></div></section>
+</ul><div class="pager"><a href="#02a-uv-and-the-shader-toolkit"><span>Prev</span>← 02a — UV &amp; the Shader Toolkit (the words you&#x27;ll see everywhere)</a><a href="#04-coordinates-and-color"><span>Next</span>04 — Coordinates and Color →</a></div></section>
 <section class="page" id="04-coordinates-and-color" data-title="04 — Coordinates and Color" data-num="04" data-hasdemo="1" data-group="Curriculum"><h1>04 — Coordinates and Color</h1><div class="demo-mount" data-demo="sh-uv"></div>
 <h2>Start here — the plain idea</h2>
 <p>Every pixel needs two things to do its job: a sense of <em>where it is</em> and a way to <em>say what color it is</em>. This lesson nails down both — the map and the paint.</p>
