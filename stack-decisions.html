@@ -253,9 +253,9 @@
 <p>Next: <a class="xref" href="#02-three-questions-framework">02-three-questions-framework</a> — the three questions that map any interaction onto these rungs.</p><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Choosing the Right Rendering Stack — Learning Roadmap</a><a href="#02-three-questions-framework"><span>Next</span>02 — The Three Questions Framework →</a></div></section>
 <section class="page" id="02-three-questions-framework" data-title="02 — The Three Questions Framework" data-num="02" data-hasdemo="1" data-group=""><h1>02 — The Three Questions Framework</h1><div class="demo-mount" data-demo="sd-flow"></div>
 <p>Given any interaction, three questions deterministically narrow your stack. Each maps to one axis of the <a class="xref" href="#01-the-rendering-stack-map">ladder</a>. Ask them <em>in order</em>, before any code.</p>
-<pre><code>Q1. WHAT am I changing?          → picks the WHAT axis   (&lt;a class=&quot;xref&quot; href=&quot;#03-what-are-you-changing&quot;&gt;03-what-are-you-changing&lt;/a&gt;)
-Q2. WHAT drives it over time?    → picks the TIMING axis (&lt;a class=&quot;xref&quot; href=&quot;#04-who-drives-time&quot;&gt;04-who-drives-time&lt;/a&gt;)
-Q3. HOW does the user touch it?  → picks the TOUCH axis  (&lt;a class=&quot;xref&quot; href=&quot;#05-how-the-user-touches-it&quot;&gt;05-how-the-user-touches-it&lt;/a&gt;)
+<pre><code>Q1. WHAT am I changing?          → picks the WHAT axis   ([[03-what-are-you-changing]])
+Q2. WHAT drives it over time?    → picks the TIMING axis ([[04-who-drives-time]])
+Q3. HOW does the user touch it?  → picks the TOUCH axis  ([[05-how-the-user-touches-it]])
 </code></pre>
 <p>The answers combine into a stack. Most of the time Q1 alone tells you whether you can stay high or must drop to a shader; Q2 and Q3 then refine <em>which</em> high-rung tool.</p>
 <hr />
@@ -1153,7 +1153,7 @@ Raw Metal (MTKView / CAMetalLayer)
 │   └─ Tracks finger then releases? ─────► TRACK+RELEASE (direct set +  │
 │                                           velocity-seeded spring)      │
 │                                                                       │
-└─ APPLY ESCALATION LADDER (&lt;a class=&quot;xref&quot; href=&quot;#07-escalation-ladder&quot;&gt;07-escalation-ladder&lt;/a&gt;):                  │
+└─ APPLY ESCALATION LADDER ([[07-escalation-ladder]]):                  │
    start at highest rung the three answers allow; descend only on a     │
    named wall; ascend back up for concerns that didn't need to descend. │
 </code></pre>

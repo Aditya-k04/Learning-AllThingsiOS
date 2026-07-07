@@ -184,7 +184,7 @@
 <tr>
 <td>18</td>
 <td><code>18-metal-in-swiftui.md</code></td>
-<td><code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> shaders, .colorEffect, .layerEffect, .distortionEffect</td>
+<td><code>[[ stitchable ]]</code> shaders, .colorEffect, .layerEffect, .distortionEffect</td>
 </tr>
 <tr>
 <td>19</td>
@@ -334,7 +334,7 @@ Use: Image processing, physics simulation, machine learning
 <p>Apple's shader language is called <strong>Metal Shading Language (MSL)</strong>. It's based on C++14 with GPU-specific additions.</p>
 <pre><code>C++14 syntax
 + GPU-specific types (float4, half4, texture2d)
-+ GPU-specific qualifiers (&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;, &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;)
++ GPU-specific qualifiers ([[position]], [[texture(0)]])
 + GPU-specific functions (sample, write, threadgroup barriers)
 - No dynamic memory allocation
 - No recursion
@@ -437,7 +437,7 @@ Use: Image processing, physics simulation, machine learning
 <h2>Start here — the plain idea</h2>
 <p>This lesson is just vocabulary. You're not building anything yet — you're learning the words and grammar so the later code reads like English instead of noise.</p>
 <p>The one big idea: shaders live and breathe <em>vectors</em>. A color is four numbers (red, green, blue, alpha) packed together; a position is two or three numbers packed together. So MSL has built-in types like <code>float4</code> that hold several numbers at once, and math just works on all of them at the same time — add two colors and every channel adds. Think of a vector as a tiny fixed-size list the GPU knows how to crunch in one shot.</p>
-<p>The other thing to absorb: the weird double-bracket tags like <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code> are just <em>labels</em> — exactly like <code>throws</code> labels "this might fail." They tell Metal "this value is the pixel position" or "this is texture slot 0," so the GPU knows how to wire data in. Don't memorize the list; just recognize that brackets = plumbing labels.</p>
+<p>The other thing to absorb: the weird double-bracket tags like <code>[[position]]</code> are just <em>labels</em> — exactly like <code>throws</code> labels "this might fail." They tell Metal "this value is the pixel position" or "this is texture slot 0," so the GPU knows how to wire data in. Don't memorize the list; just recognize that brackets = plumbing labels.</p>
 <p>MSL is C++14 with GPU-specific extensions. If you know Swift, you'll find it familiar but with some key differences.</p>
 <hr />
 <h2>Swift vs MSL Cheat Sheet</h2>
@@ -680,20 +680,20 @@ float3 adjustBrightness(float3 color, float amount) {
 <hr />
 <h2>Attribute Qualifiers — How Data Gets In</h2>
 <pre><code class="language-cpp">fragment float4 myShader(
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;,     // Pixel position from rasterizer
-    texture2d&lt;float&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;, // First texture
-    texture2d&lt;float&gt; tex2 &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(1)&lt;/span&gt;, // Second texture
-    sampler s &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;sampler(0)&lt;/span&gt;,          // Texture sampler
-    constant float &amp;time &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;, // Uniform data from Swift
-    constant MyParams &amp;params &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt; // Struct from Swift
+    float4 position [[position]],     // Pixel position from rasterizer
+    texture2d&lt;float&gt; tex [[texture(0)]], // First texture
+    texture2d&lt;float&gt; tex2 [[texture(1)]], // Second texture
+    sampler s [[sampler(0)]],          // Texture sampler
+    constant float &amp;time [[buffer(0)]], // Uniform data from Swift
+    constant MyParams &amp;params [[buffer(1)]] // Struct from Swift
 ) {
     // ...
 }
 
 kernel void myKernel(
-    uint2 gid &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_grid&lt;/span&gt;,  // Which thread am I?
-    uint2 tid &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_threadgroup&lt;/span&gt;, // Position within group
-    uint2 tgid &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;threadgroup_position_in_grid&lt;/span&gt;   // Which group am I in?
+    uint2 gid [[thread_position_in_grid]],  // Which thread am I?
+    uint2 tid [[thread_position_in_threadgroup]], // Position within group
+    uint2 tgid [[threadgroup_position_in_grid]]   // Which group am I in?
 ) {
     // ...
 }
@@ -708,31 +708,31 @@ kernel void myKernel(
 </thead>
 <tbody>
 <tr>
-<td><code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code></td>
+<td><code>[[position]]</code></td>
 <td>Fragment's pixel position (from vertex shader)</td>
 </tr>
 <tr>
-<td><code>&lt;span class="xref-missing" title="note not in this site"&gt;texture(n)&lt;/span&gt;</code></td>
+<td><code>[[texture(n)]]</code></td>
 <td>nth texture binding</td>
 </tr>
 <tr>
-<td><code>&lt;span class="xref-missing" title="note not in this site"&gt;sampler(n)&lt;/span&gt;</code></td>
+<td><code>[[sampler(n)]]</code></td>
 <td>nth sampler binding</td>
 </tr>
 <tr>
-<td><code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(n)&lt;/span&gt;</code></td>
+<td><code>[[buffer(n)]]</code></td>
 <td>nth buffer binding</td>
 </tr>
 <tr>
-<td><code>&lt;span class="xref-missing" title="note not in this site"&gt;thread_position_in_grid&lt;/span&gt;</code></td>
+<td><code>[[thread_position_in_grid]]</code></td>
 <td>Compute shader: global thread ID</td>
 </tr>
 <tr>
-<td><code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code></td>
+<td><code>[[stage_in]]</code></td>
 <td>Interpolated vertex output</td>
 </tr>
 <tr>
-<td><code>&lt;span class="xref-missing" title="note not in this site"&gt;color(n)&lt;/span&gt;</code></td>
+<td><code>[[color(n)]]</code></td>
 <td>Render target color attachment</td>
 </tr>
 </tbody>
@@ -765,7 +765,7 @@ for (int i = 0; i &lt; 10; i++) {
 using namespace metal;
 
 // This shader turns every pixel red
-fragment float4 allRed(float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;) {
+fragment float4 allRed(float4 position [[position]]) {
     return float4(1.0, 0.0, 0.0, 1.0); // RGBA: red, no green, no blue, fully opaque
 }
 </code></pre>
@@ -794,7 +794,7 @@ fragment float4 allRed(float4 position &lt;span class=&quot;xref-missing&quot; t
 - [x] Swizzling: rearranging vector components (<code>.bgr</code>, <code>.rrr</code>)
 - [x] Key functions: <code>mix</code>, <code>smoothstep</code>, <code>step</code>, <code>clamp</code>, <code>saturate</code>, <code>length</code>, <code>distance</code>, <code>normalize</code>
 - [x] Shader qualifiers: <code>fragment</code>, <code>vertex</code>, <code>kernel</code>
-- [x] Attribute qualifiers: <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code>, <code>&lt;span class="xref-missing" title="note not in this site"&gt;texture(0)&lt;/span&gt;</code>, <code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(0)&lt;/span&gt;</code>
+- [x] Attribute qualifiers: <code>[[position]]</code>, <code>[[texture(0)]]</code>, <code>[[buffer(0)]]</code>
 - [x] Prefer <code>half</code> over <code>float</code> for colors (2x faster on Apple GPUs)
 - [x] Avoid if/else branching; use math functions instead</p>
 <h2>The foundation</h2>
@@ -804,14 +804,14 @@ fragment float4 allRed(float4 position &lt;span class=&quot;xref-missing&quot; t
 <li><strong>Component-wise math</strong> = <code>+</code>, <code>*</code>, etc. apply to every slot at once — add two colors, every channel adds.</li>
 <li><strong><code>half</code></strong> = a 16-bit float; about twice as fast as <code>float</code> on Apple GPUs, perfect for colors.</li>
 <li><strong>Qualifier</strong> (<code>fragment</code>/<code>vertex</code>/<code>kernel</code>) = the word that marks a function as a shader entry point and says which kind.</li>
-<li><strong>Attribute</strong> (<code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code>, <code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(0)&lt;/span&gt;</code>) = a plumbing label that tells Metal what a parameter is and where its data comes from.</li>
+<li><strong>Attribute</strong> (<code>[[position]]</code>, <code>[[buffer(0)]]</code>) = a plumbing label that tells Metal what a parameter is and where its data comes from.</li>
 <li><strong><code>mix</code> / <code>smoothstep</code> / <code>step</code></strong> = the blend toolkit: straight fade, smooth S-curve fade, and a hard on/off switch.</li>
 <li><strong>Branchless thinking</strong> = prefer math over if/else, because the GPU runs both branches and throws one away.</li>
 </ul><div class="pager"><a href="#01-gpu-vs-cpu"><span>Prev</span>← 01 — GPU vs CPU: Why Shaders Exist</a><a href="#03-your-first-shader"><span>Next</span>03 — Your First Shader: From File to Screen →</a></div></section>
 <section class="page" id="03-your-first-shader" data-title="03 — Your First Shader: From File to Screen" data-num="03" data-hasdemo="1" data-group="Curriculum"><h1>03 — Your First Shader: From File to Screen</h1><div class="demo-mount" data-demo="sh-glsl"></div>
 <h2>Start here — the plain idea</h2>
 <p>This is the "hello world" moment: you'll get an actual red screen, then bend it into gradients and shapes. The point isn't the red — it's seeing the whole chain from a <code>.metal</code> file to glowing pixels.</p>
-<p>Here's the modern mental model. In SwiftUI you almost never build the GPU pipeline by hand. You write <strong>one tiny function</strong> in a <code>.metal</code> file, tag it with the <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> keyword, and that single word makes the function <em>appear</em> on the Swift side inside <code>ShaderLibrary</code> — no device, no command queue, no render loop. Then you paint it onto any view with one modifier: <code>.colorEffect(ShaderLibrary.yourFunction())</code>. Think of <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> as a label that means "this shader is allowed to plug into SwiftUI," exactly like <code>throws</code> labels "this might fail."</p>
+<p>Here's the modern mental model. In SwiftUI you almost never build the GPU pipeline by hand. You write <strong>one tiny function</strong> in a <code>.metal</code> file, tag it with the <code>[[ stitchable ]]</code> keyword, and that single word makes the function <em>appear</em> on the Swift side inside <code>ShaderLibrary</code> — no device, no command queue, no render loop. Then you paint it onto any view with one modifier: <code>.colorEffect(ShaderLibrary.yourFunction())</code>. Think of <code>[[ stitchable ]]</code> as a label that means "this shader is allowed to plug into SwiftUI," exactly like <code>throws</code> labels "this might fail."</p>
 <p>A <strong>colorEffect</strong> shader runs once per pixel and answers the only question that matters: <em>what color is this pixel?</em> The magic ingredient that makes shapes possible is <strong>uv</strong> — each pixel's address turned into a 0..1 fraction. Once a pixel knows "I'm at (0.5, 0.5)," it can decide "am I inside the circle?" That's how a per-pixel color rule becomes gradients, splits, and circles.</p>
 <p>Time to write a shader, hook it up with one line, and see pixels on screen.</p>
 <hr />
@@ -821,9 +821,9 @@ fragment float4 allRed(float4 position &lt;span class=&quot;xref-missing&quot; t
 #include &lt;SwiftUI/SwiftUI.h&gt;     // gives you SwiftUI::Layer + the stitchable entry points
 using namespace metal;
 
-// &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; is the whole trick: it tells Xcode to expose this function
+// [[ stitchable ]] is the whole trick: it tells Xcode to expose this function
 // to SwiftUI. At build time Xcode scans every .metal file, finds each
-// &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; function, and generates a matching entry in `ShaderLibrary`.
+// [[ stitchable ]] function, and generates a matching entry in `ShaderLibrary`.
 //
 // A colorEffect shader's signature is fixed:
 //   half4 name(float2 position, half4 color)
@@ -831,7 +831,7 @@ using namespace metal;
 //   - color    = the pixel's current color (from the view you attach to)
 //   - return   = the new color for this pixel
 //
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 solidColor(float2 position, half4 color) {
+[[ stitchable ]] half4 solidColor(float2 position, half4 color) {
     return half4(1.0, 0.0, 0.0, 1.0);   // red, ignoring the incoming color
 }
 </code></pre>
@@ -848,7 +848,7 @@ struct ContentView: View {
     }
 }
 </code></pre>
-<p><code>ShaderLibrary.solidColor</code> is the function you marked <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> — it showed up here automatically because of that keyword. <code>.colorEffect</code> runs it once per pixel of the <code>Rectangle</code>.</p>
+<p><code>ShaderLibrary.solidColor</code> is the function you marked <code>[[ stitchable ]]</code> — it showed up here automatically because of that keyword. <code>.colorEffect</code> runs it once per pixel of the <code>Rectangle</code>.</p>
 <hr />
 <h2>Step 3: Run It</h2>
 <p>Build and run. You should see a <strong>solid red screen</strong>. That's your fragment function running on every pixel of the rectangle, returning red. No renderer, no draw loop — SwiftUI owns all of that now.</p>
@@ -856,7 +856,7 @@ struct ContentView: View {
 <h2>Step 4: Make It Interesting</h2>
 <p>The incoming <code>position</code> is in <em>points</em>, so to get resolution-independent <code>uv</code> (0..1) you divide by the view's size. Pass the size in as an extra argument — any parameters <em>after</em> the required <code>position, color</code> become your custom inputs:</p>
 <h3>Gradient</h3>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 gradient(float2 position, half4 color, float2 size) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 gradient(float2 position, half4 color, float2 size) {
     float2 uv = position / size;                 // 0 (left/top) .. 1 (right/bottom)
     return half4(half(uv.x), 0.0h, 0.0h, 1.0h);  // black on left → red on right
 }
@@ -867,7 +867,7 @@ struct ContentView: View {
 }
 </code></pre>
 <h3>Two-Color Gradient</h3>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 twoColorGradient(float2 position, half4 color, float2 size) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 twoColorGradient(float2 position, half4 color, float2 size) {
     float2 uv = position / size;
     half3 top = half3(0.1h, 0.1h, 0.4h);   // dark blue
     half3 bot = half3(1.0h, 0.5h, 0.2h);   // orange
@@ -875,7 +875,7 @@ struct ContentView: View {
 }
 </code></pre>
 <h3>Horizontal Split</h3>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 horizontalSplit(float2 position, half4 color, float2 size) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 horizontalSplit(float2 position, half4 color, float2 size) {
     float2 uv = position / size;
     half side = half(step(0.5, uv.x));     // 0 on the left half, 1 on the right
     half3 c = mix(half3(1.0h,0.0h,0.0h), half3(0.0h,0.0h,1.0h), side);
@@ -883,7 +883,7 @@ struct ContentView: View {
 }
 </code></pre>
 <h3>Circle</h3>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 circle(float2 position, half4 color, float2 size) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 circle(float2 position, half4 color, float2 size) {
     float2 uv = position / size;
     float d = distance(uv, float2(0.5));           // distance from center
     float mask = 1.0 - smoothstep(0.28, 0.32, d);  // soft edge at radius ~0.3
@@ -904,7 +904,7 @@ struct ContentView: View {
 <hr />
 <h2>Passing more data</h2>
 <p>Every argument after <code>position, color</code> is yours. Feed them from Swift with typed helpers — <code>.float(_)</code>, <code>.float2(_)</code>, <code>.color(_)</code>, <code>.image(_)</code>. For animation, wrap the view in <code>TimelineView(.animation)</code> and pass elapsed seconds:</p>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 pulse(float2 position, half4 color, float2 size, float time) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 pulse(float2 position, half4 color, float2 size, float time) {
     float2 uv = position / size;
     float d = distance(uv, float2(0.5));
     float ring = 0.5 + 0.5 * sin(d * 40.0 - time * 4.0);  // moving rings
@@ -923,18 +923,18 @@ struct ContentView: View {
 <h2>What's happening underneath (the full Metal pipeline)</h2>
 <p>You didn't have to build any of this — but it's worth seeing <em>once</em> so the stitchable shortcut makes sense. To draw pixels from scratch (with no SwiftUI view to attach to), the GPU can only draw triangles, so you cover the screen with one oversized triangle and run a <strong>vertex shader</strong> to place its corners, then a <strong>fragment shader</strong> per pixel:</p>
 <pre><code class="language-cpp">struct VertexOut {
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;;  // clip-space position
+    float4 position [[position]];  // clip-space position
     float2 uv;                     // 0..1 texture coordinate
 };
 
-vertex VertexOut fullscreenVertex(uint vertexID &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;vertex_id&lt;/span&gt;) {
+vertex VertexOut fullscreenVertex(uint vertexID [[vertex_id]]) {
     VertexOut out;
     out.uv = float2((vertexID &lt;&lt; 1) &amp; 2, vertexID &amp; 2);
     out.position = float4(out.uv * float2(2, -2) + float2(-1, 1), 0, 1);
     return out;
 }
 
-fragment float4 solidColorFrag(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
+fragment float4 solidColorFrag(VertexOut in [[stage_in]]) {
     return float4(1.0, 0.0, 0.0, 1.0);
 }
 </code></pre>
@@ -951,7 +951,7 @@ vertexID=2: uv=(0,2) -&gt; position=(-1,-3)   Far bottom (off-screen)
      2           |
      (off screen bottom)
 </code></pre>
-<p>The GPU clips the oversized triangle to the viewport, so 3 vertices fill the screen — cheaper than two triangles because there's no shared diagonal edge. For SwiftUI effects you never write this; SwiftUI supplies the geometry and calls your <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> function directly.</p>
+<p>The GPU clips the oversized triangle to the viewport, so 3 vertices fill the screen — cheaper than two triangles because there's no shared diagonal edge. For SwiftUI effects you never write this; SwiftUI supplies the geometry and calls your <code>[[ stitchable ]]</code> function directly.</p>
 <hr />
 <h2>Exercises</h2>
 <ol>
@@ -974,7 +974,7 @@ vertexID=2: uv=(0,2) -&gt; position=(-1,-3)   Far bottom (off-screen)
 <hr />
 <h2>Checkpoint</h2>
 <p>Before moving on, you should understand:
-- [x] <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> is what makes an MSL function appear in Swift's <code>ShaderLibrary</code>
+- [x] <code>[[ stitchable ]]</code> is what makes an MSL function appear in Swift's <code>ShaderLibrary</code>
 - [x] <code>.colorEffect(ShaderLibrary.name(args…))</code> runs your shader over a view's pixels — no renderer needed
 - [x] A colorEffect signature is <code>half4 name(float2 position, half4 color, …custom args)</code>
 - [x] <code>position</code> is in points; divide by <code>size</code> (passed as <code>.float2</code>) to get 0..1 <code>uv</code>
@@ -983,8 +983,8 @@ vertexID=2: uv=(0,2) -&gt; position=(-1,-3)   Far bottom (off-screen)
 - [x] The manual <code>MTLDevice</code>/pipeline/draw-loop is only for full Metal apps (UIKit, games, compute)</p>
 <h2>The foundation</h2>
 <ul>
-<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code></strong> = a label that makes an MSL function visible to SwiftUI's <code>ShaderLibrary</code> — the one keyword that "wires up" a shader.</li>
-<li><strong>ShaderLibrary</strong> = the auto-generated bridge; every <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> function shows up here by name at build time.</li>
+<li><strong><code>[[ stitchable ]]</code></strong> = a label that makes an MSL function visible to SwiftUI's <code>ShaderLibrary</code> — the one keyword that "wires up" a shader.</li>
+<li><strong>ShaderLibrary</strong> = the auto-generated bridge; every <code>[[ stitchable ]]</code> function shows up here by name at build time.</li>
 <li><strong><code>.colorEffect</code></strong> = run a per-pixel shader over any view's pixels with one modifier — the modern "file to screen" path.</li>
 <li><strong>colorEffect signature</strong> = <code>half4 name(float2 position, half4 color, …)</code>; params after <code>color</code> are your custom inputs.</li>
 <li><strong>uv</strong> = <code>position / size</code>, each pixel's address as a 0..1 fraction, so the code doesn't care about resolution.</li>
@@ -1025,7 +1025,7 @@ vertexID=2: uv=(0,2) -&gt; position=(-1,-3)   Far bottom (off-screen)
 (0,2556)──────────(1179,2556)
 </code></pre>
 <ul>
-<li><code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code> gives you pixel coordinates</li>
+<li><code>[[position]]</code> gives you pixel coordinates</li>
 <li>Resolution-dependent</li>
 <li>Convert between them:</li>
 </ul>
@@ -1037,8 +1037,8 @@ float2 pixel = uv * viewportSize;
 </code></pre>
 <h3>Centered Coordinate System</h3>
 <p>Often you want (0,0) at the center with proper aspect ratio:</p>
-<pre><code class="language-cpp">fragment float4 centeredCoords(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-                                constant float2 &amp;resolution &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;) {
+<pre><code class="language-cpp">fragment float4 centeredCoords(VertexOut in [[stage_in]],
+                                constant float2 &amp;resolution [[buffer(0)]]) {
     // Convert UV to centered coordinates
     float2 uv = in.uv;
     uv = uv * 2.0 - 1.0;          // Remap from [0,1] to [-1,1]
@@ -1129,7 +1129,7 @@ float4 premultiplied = float4(color.rgb * color.a, color.a);
 <hr />
 <h2>Practical Gradient Recipes</h2>
 <h3>Radial Gradient</h3>
-<pre><code class="language-cpp">fragment float4 radialGradient(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
+<pre><code class="language-cpp">fragment float4 radialGradient(VertexOut in [[stage_in]]) {
     float2 center = float2(0.5, 0.5);
     float dist = distance(in.uv, center);
 
@@ -1143,7 +1143,7 @@ float4 premultiplied = float4(color.rgb * color.a, color.a);
 }
 </code></pre>
 <h3>Angular Gradient (Conic)</h3>
-<pre><code class="language-cpp">fragment float4 angularGradient(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
+<pre><code class="language-cpp">fragment float4 angularGradient(VertexOut in [[stage_in]]) {
     float2 centered = in.uv - 0.5;
 
     // atan2 returns angle in radians (-pi to pi)
@@ -1163,7 +1163,7 @@ float4 premultiplied = float4(color.rgb * color.a, color.a);
 }
 </code></pre>
 <h3>Multi-Stop Gradient</h3>
-<pre><code class="language-cpp">fragment float4 multiStopGradient(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
+<pre><code class="language-cpp">fragment float4 multiStopGradient(VertexOut in [[stage_in]]) {
     float t = in.uv.y;  // Vertical position
 
     float3 color;
@@ -1189,7 +1189,7 @@ float4 premultiplied = float4(color.rgb * color.a, color.a);
     // Positive = outside the circle
 }
 
-fragment float4 sdfCircle(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
+fragment float4 sdfCircle(VertexOut in [[stage_in]]) {
     float2 uv = in.uv * 2.0 - 1.0;  // Center the coordinates
 
     float d = sdCircle(uv, float2(0), 0.5);
@@ -1209,7 +1209,7 @@ fragment float4 sdfCircle(VertexOut in &lt;span class=&quot;xref-missing&quot; t
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
 }
 
-fragment float4 sdfRoundedRect(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
+fragment float4 sdfRoundedRect(VertexOut in [[stage_in]]) {
     float2 uv = in.uv * 2.0 - 1.0;
 
     float d = sdRoundedRect(uv, float2(0.6, 0.3), 0.1);
@@ -1269,7 +1269,7 @@ float sdSmoothUnion(float d1, float d2, float k) {
 <h2>The foundation</h2>
 <ul>
 <li><strong>uv space</strong> = 0..1 across and down, resolution-independent — the same on any screen size.</li>
-<li><strong>Pixel space</strong> = actual pixel counts from <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code>; resolution-dependent, convert via <code>position / resolution</code>.</li>
+<li><strong>Pixel space</strong> = actual pixel counts from <code>[[position]]</code>; resolution-dependent, convert via <code>position / resolution</code>.</li>
 <li><strong>Aspect-ratio fix</strong> = multiply x by <code>width/height</code> so circles render round instead of stretched into ovals.</li>
 <li><strong>RGBA</strong> = a color is four numbers (red, green, blue, alpha), each 0..1.</li>
 <li><strong>Premultiplied alpha</strong> = Metal stores RGB already multiplied by alpha, which makes blending a single cheap step.</li>
@@ -1561,7 +1561,7 @@ POWER:       pow(x, n)                       Curves: n&gt;1 darkens, n&lt;1 brig
 <section class="page" id="06-fragment-shaders" data-title="06 — Fragment Shaders Deep Dive" data-num="06" data-hasdemo="1" data-group="Curriculum"><h1>06 — Fragment Shaders Deep Dive</h1><div class="demo-mount" data-demo="sh-glsl"></div>
 <h2>Start here — the plain idea</h2>
 <p>A fragment shader is just a tiny function that runs once per pixel and answers one question: what color is this pixel? The GPU runs millions of copies at once. You already met this idea — now we open the hood and look at exactly what goes <em>in</em> and what comes <em>out</em>.</p>
-<p>The whole lesson is really about plumbing: how does each pixel get the stuff it needs to decide its color? Three pipes feed it. <code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code> brings interpolated data from the vertex stage (most importantly the pixel's uv). <code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(n)&lt;/span&gt;</code> brings values from your Swift code — time, touch position, a settings struct — the live dials. And <code>&lt;span class="xref-missing" title="note not in this site"&gt;texture(n)&lt;/span&gt;</code> brings images, which you read with a <em>sampler</em> that decides how to fetch pixels (smooth or crisp, what to do at the edges).</p>
+<p>The whole lesson is really about plumbing: how does each pixel get the stuff it needs to decide its color? Three pipes feed it. <code>[[stage_in]]</code> brings interpolated data from the vertex stage (most importantly the pixel's uv). <code>[[buffer(n)]]</code> brings values from your Swift code — time, touch position, a settings struct — the live dials. And <code>[[texture(n)]]</code> brings images, which you read with a <em>sampler</em> that decides how to fetch pixels (smooth or crisp, what to do at the edges).</p>
 <p>Keep one picture in mind: a pixel is a little worker handed a position, some settings, and maybe a photo, who must shout back one color. Everything else here is just the different ways to hand it those ingredients.</p>
 <p>Fragment shaders are where you'll spend 90% of your time for iOS visual effects. This lesson covers the full function signature, all the ways data gets in, and real patterns.</p>
 <hr />
@@ -1570,11 +1570,11 @@ POWER:       pow(x, n)                       Curves: n&gt;1 darkens, n&lt;1 brig
 using namespace metal;
 
 fragment float4 myShader(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,                      // Interpolated vertex output
-    constant float &amp;time &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,             // A single float from Swift
-    constant float2 &amp;resolution &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;,      // Screen resolution
-    texture2d&lt;float&gt; inputTexture &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,   // An image/texture
-    sampler texSampler &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;sampler(0)&lt;/span&gt;               // How to read the texture
+    VertexOut in [[stage_in]],                      // Interpolated vertex output
+    constant float &amp;time [[buffer(0)]],             // A single float from Swift
+    constant float2 &amp;resolution [[buffer(1)]],      // Screen resolution
+    texture2d&lt;float&gt; inputTexture [[texture(0)]],   // An image/texture
+    sampler texSampler [[sampler(0)]]               // How to read the texture
 ) {
     // Your per-pixel logic here
     return float4(r, g, b, a);  // MUST return a color
@@ -1582,20 +1582,20 @@ fragment float4 myShader(
 </code></pre>
 <p>Every parameter is optional except the return type. Let's break each one down.</p>
 <hr />
-<h2><code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code> — Interpolated Vertex Data</h2>
+<h2><code>[[stage_in]]</code> — Interpolated Vertex Data</h2>
 <p>The rasterizer takes the vertex shader's output and <strong>interpolates</strong> it across the triangle for each pixel. This is how UV coordinates smoothly vary across the screen.</p>
 <pre><code class="language-cpp">struct VertexOut {
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;;  // REQUIRED: pixel position
+    float4 position [[position]];  // REQUIRED: pixel position
     float2 uv;                     // UV coordinates (0 to 1)
     float3 normal;                 // Surface normal (for 3D)
     float4 color;                  // Per-vertex color
 };
 
-// The rasterizer interpolates ALL fields (except &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;)
+// The rasterizer interpolates ALL fields (except [[position]])
 // between the 3 vertices of each triangle.
 </code></pre>
-<p><code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code> in the fragment shader gives you the <strong>pixel coordinate</strong> (not the clip-space position from the vertex shader). Use <code>.xy</code> for the 2D position:</p>
-<pre><code class="language-cpp">fragment float4 pixelCoords(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
+<p><code>[[position]]</code> in the fragment shader gives you the <strong>pixel coordinate</strong> (not the clip-space position from the vertex shader). Use <code>.xy</code> for the 2D position:</p>
+<pre><code class="language-cpp">fragment float4 pixelCoords(VertexOut in [[stage_in]]) {
     float2 pixelPos = in.position.xy;  // e.g., (589.5, 1278.5)
     // .z = depth (0 to 1)
     // .w = 1/w (for perspective correction)
@@ -1603,7 +1603,7 @@ fragment float4 myShader(
 }
 </code></pre>
 <hr />
-<h2><code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(n)&lt;/span&gt;</code> — Data from Swift</h2>
+<h2><code>[[buffer(n)]]</code> — Data from Swift</h2>
 <p>This is how you pass parameters from your Swift code to the shader.</p>
 <h3>Swift Side</h3>
 <pre><code class="language-swift">// Single value
@@ -1634,8 +1634,8 @@ struct ShaderParams {
 };
 
 fragment float4 interactive(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    constant ShaderParams &amp;params &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;
+    VertexOut in [[stage_in]],
+    constant ShaderParams &amp;params [[buffer(0)]]
 ) {
     float2 touch = params.touchPoint / params.resolution;  // Normalize
     float dist = distance(in.uv, touch);
@@ -1646,7 +1646,7 @@ fragment float4 interactive(
 </code></pre>
 <p><strong>Alignment rules</strong>: Metal structs must match Swift struct layout. Use <code>Float</code>, <code>SIMD2&lt;Float&gt;</code>, <code>SIMD3&lt;Float&gt;</code>, <code>SIMD4&lt;Float&gt;</code> on the Swift side. Avoid <code>Bool</code> (alignment issues) — use <code>Int32</code> or <code>Float</code> instead.</p>
 <hr />
-<h2><code>&lt;span class="xref-missing" title="note not in this site"&gt;texture(n)&lt;/span&gt;</code> — Image Input</h2>
+<h2><code>[[texture(n)]]</code> — Image Input</h2>
 <h3>Swift Side</h3>
 <pre><code class="language-swift">// From UIImage
 let textureLoader = MTKTextureLoader(device: device)
@@ -1658,9 +1658,9 @@ encoder.setFragmentTexture(texture, index: 0)
 </code></pre>
 <h3>Metal Side</h3>
 <pre><code class="language-cpp">fragment float4 texturedShader(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;float&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    sampler s &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;sampler(0)&lt;/span&gt;
+    VertexOut in [[stage_in]],
+    texture2d&lt;float&gt; tex [[texture(0)]],
+    sampler s [[sampler(0)]]
 ) {
     // Sample the texture at UV coordinates
     float4 color = tex.sample(s, in.uv);
@@ -1668,8 +1668,8 @@ encoder.setFragmentTexture(texture, index: 0)
 }
 </code></pre>
 <h3>Creating a Sampler in the Shader (No Swift Config)</h3>
-<pre><code class="language-cpp">fragment float4 inlinesampler(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-                               texture2d&lt;float&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;) {
+<pre><code class="language-cpp">fragment float4 inlinesampler(VertexOut in [[stage_in]],
+                               texture2d&lt;float&gt; tex [[texture(0)]]) {
     // Define sampler directly in shader
     constexpr sampler s(
         coord::normalized,           // UVs are 0-1 (not pixel coords)
@@ -1736,8 +1736,8 @@ fragment half4 halfPrecision(...) {
 <h3>Pattern 1: Post-Processing Pipeline</h3>
 <p>Process an existing rendered image:</p>
 <pre><code class="language-cpp">fragment half4 postProcess(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; sceneTexture &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; sceneTexture [[texture(0)]])
 {
     constexpr sampler s(filter::linear);
     half4 color = sceneTexture.sample(s, in.uv);
@@ -1756,8 +1756,8 @@ fragment half4 halfPrecision(...) {
 </code></pre>
 <h3>Pattern 2: Procedural Effect (No Input Texture)</h3>
 <pre><code class="language-cpp">fragment half4 plasma(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    constant float &amp;time &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    constant float &amp;time [[buffer(0)]])
 {
     float2 uv = in.uv * 10.0;
 
@@ -1779,11 +1779,11 @@ fragment half4 halfPrecision(...) {
 </code></pre>
 <h3>Pattern 3: Multi-Texture Compositing</h3>
 <pre><code class="language-cpp">fragment half4 composite(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; background &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    texture2d&lt;half&gt; foreground &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(1)&lt;/span&gt;,
-    texture2d&lt;half&gt; mask &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(2)&lt;/span&gt;,
-    constant float &amp;blendAmount &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; background [[texture(0)]],
+    texture2d&lt;half&gt; foreground [[texture(1)]],
+    texture2d&lt;half&gt; mask [[texture(2)]],
+    constant float &amp;blendAmount [[buffer(0)]])
 {
     constexpr sampler s(filter::linear);
 
@@ -1806,9 +1806,9 @@ fragment half4 halfPrecision(...) {
 };
 
 fragment half4 touchRipple(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    constant TouchParams &amp;touch &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; tex [[texture(0)]],
+    constant TouchParams &amp;touch [[buffer(0)]])
 {
     constexpr sampler s(filter::linear);
 
@@ -1879,9 +1879,9 @@ constexpr sampler s(address::clamp_to_edge, filter::linear);
 <h2>Checkpoint</h2>
 <p>Before moving on, you should understand:
 - [x] The fragment function signature with all parameter types
-- [x] <code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code> receives interpolated vertex data
-- [x] <code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(n)&lt;/span&gt;</code> receives data from Swift (floats, vectors, structs)
-- [x] <code>&lt;span class="xref-missing" title="note not in this site"&gt;texture(n)&lt;/span&gt;</code> receives images; sampled with <code>tex.sample(sampler, uv)</code>
+- [x] <code>[[stage_in]]</code> receives interpolated vertex data
+- [x] <code>[[buffer(n)]]</code> receives data from Swift (floats, vectors, structs)
+- [x] <code>[[texture(n)]]</code> receives images; sampled with <code>tex.sample(sampler, uv)</code>
 - [x] Sampler configuration: coord, address, filter
 - [x] How to pass custom structs from Swift to Metal
 - [x] Use <code>half4</code> return type for better performance
@@ -1889,9 +1889,9 @@ constexpr sampler s(address::clamp_to_edge, filter::linear);
 <h2>The foundation</h2>
 <ul>
 <li><strong>Fragment shader</strong> = a per-pixel function whose only job is to return one color.</li>
-<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code></strong> = interpolated data from the vertex stage (uv, normal, etc.), smoothly varied across each triangle.</li>
-<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;buffer(n)&lt;/span&gt;</code></strong> = values handed in from Swift — time, touch, a settings struct — the live dials of your effect.</li>
-<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;texture(n)&lt;/span&gt;</code></strong> = an image input, read via <code>tex.sample(sampler, uv)</code>.</li>
+<li><strong><code>[[stage_in]]</code></strong> = interpolated data from the vertex stage (uv, normal, etc.), smoothly varied across each triangle.</li>
+<li><strong><code>[[buffer(n)]]</code></strong> = values handed in from Swift — time, touch, a settings struct — the live dials of your effect.</li>
+<li><strong><code>[[texture(n)]]</code></strong> = an image input, read via <code>tex.sample(sampler, uv)</code>.</li>
 <li><strong>Sampler</strong> = the rule for reading a texture: smooth vs crisp (filter) and what to do off the edges (address).</li>
 <li><strong>Struct alignment</strong> = your Metal struct must match the Swift struct's layout exactly, or values arrive scrambled.</li>
 <li><strong><code>half4</code> return</strong> = 16-bit color output, faster on Apple GPUs and fine for normal 8/10-bit screens.</li>
@@ -1934,13 +1934,13 @@ Vertex shader transforms each * from 3D world space to 2D screen space
 using namespace metal;
 
 struct VertexIn {
-    float3 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;attribute(0)&lt;/span&gt;;   // 3D position
-    float2 texCoord &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;attribute(1)&lt;/span&gt;;   // Texture coordinate
-    float3 normal   &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;attribute(2)&lt;/span&gt;;   // Surface normal
+    float3 position [[attribute(0)]];   // 3D position
+    float2 texCoord [[attribute(1)]];   // Texture coordinate
+    float3 normal   [[attribute(2)]];   // Surface normal
 };
 
 struct VertexOut {
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;;       // REQUIRED: clip-space position
+    float4 position [[position]];       // REQUIRED: clip-space position
     float2 texCoord;                    // Passed to fragment shader
     float3 normal;                      // Passed to fragment shader
     float3 worldPosition;              // For lighting calculations
@@ -1953,8 +1953,8 @@ struct Uniforms {
 };
 
 vertex VertexOut basicVertex(
-    VertexIn in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    constant Uniforms &amp;uniforms &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;)
+    VertexIn in [[stage_in]],
+    constant Uniforms &amp;uniforms [[buffer(1)]])
 {
     VertexOut out;
 
@@ -2010,9 +2010,9 @@ SCREEN SPACE (Pixel Coordinates)
 <h2>Vertex Shader Animations</h2>
 <h3>Wobble / Wave Deformation</h3>
 <pre><code class="language-cpp">vertex VertexOut wobbleVertex(
-    VertexIn in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    constant Uniforms &amp;uniforms &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;,
-    constant float &amp;time &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(2)&lt;/span&gt;)
+    VertexIn in [[stage_in]],
+    constant Uniforms &amp;uniforms [[buffer(1)]],
+    constant float &amp;time [[buffer(2)]])
 {
     VertexOut out;
 
@@ -2032,9 +2032,9 @@ SCREEN SPACE (Pixel Coordinates)
 </code></pre>
 <h3>Explode Effect</h3>
 <pre><code class="language-cpp">vertex VertexOut explodeVertex(
-    VertexIn in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    constant Uniforms &amp;uniforms &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;,
-    constant float &amp;progress &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(2)&lt;/span&gt;)  // 0 = normal, 1 = fully exploded
+    VertexIn in [[stage_in]],
+    constant Uniforms &amp;uniforms [[buffer(1)]],
+    constant float &amp;progress [[buffer(2)]])  // 0 = normal, 1 = fully exploded
 {
     VertexOut out;
 
@@ -2056,9 +2056,9 @@ SCREEN SPACE (Pixel Coordinates)
 </code></pre>
 <h3>Scale Bounce</h3>
 <pre><code class="language-cpp">vertex VertexOut bounceVertex(
-    VertexIn in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    constant Uniforms &amp;uniforms &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;,
-    constant float &amp;time &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(2)&lt;/span&gt;)
+    VertexIn in [[stage_in]],
+    constant Uniforms &amp;uniforms [[buffer(1)]],
+    constant float &amp;time [[buffer(2)]])
 {
     VertexOut out;
 
@@ -2080,7 +2080,7 @@ SCREEN SPACE (Pixel Coordinates)
 <h2>Full-Screen Quad (For Post-Processing)</h2>
 <p>For 2D effects, you don't need a vertex buffer. Use the full-screen triangle:</p>
 <pre><code class="language-cpp">// No vertex buffer needed — generates a full-screen triangle from vertex ID
-vertex VertexOut fullscreenVertex(uint vertexID &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;vertex_id&lt;/span&gt;) {
+vertex VertexOut fullscreenVertex(uint vertexID [[vertex_id]]) {
     VertexOut out;
     out.texCoord = float2((vertexID &lt;&lt; 1) &amp; 2, vertexID &amp; 2);
     out.position = float4(out.texCoord * float2(2, -2) + float2(-1, 1), 0, 1);
@@ -2171,7 +2171,7 @@ pipelineDescriptor.vertexDescriptor = vertexDescriptor
 <p>Before moving on, you should understand:
 - [x] Vertex shaders transform geometry positions
 - [x] The coordinate space chain: model -&gt; world -&gt; view -&gt; clip -&gt; screen
-- [x] <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code> is the required output (clip-space position)
+- [x] <code>[[position]]</code> is the required output (clip-space position)
 - [x] Other outputs are interpolated by the rasterizer for the fragment shader
 - [x] Uniform matrices (model, view, projection) control the camera
 - [x] The full-screen triangle trick avoids vertex buffers for 2D effects
@@ -2182,7 +2182,7 @@ pipelineDescriptor.vertexDescriptor = vertexDescriptor
 <li><strong>Vertex vs fragment</strong> = vertex places geometry, fragment colors pixels; the rasterizer fills the gap between them.</li>
 <li><strong>Coordinate spaces</strong> = model to world to view to clip to screen — the staged journey from an object's own space to pixels.</li>
 <li><strong>Matrix</strong> = a move/rotate/scale machine; multiplying a point by one transforms it between spaces.</li>
-<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code> output</strong> = the required clip-space result; everything else you output gets interpolated for the fragment shader.</li>
+<li><strong><code>[[position]]</code> output</strong> = the required clip-space result; everything else you output gets interpolated for the fragment shader.</li>
 <li><strong>Vertex descriptor</strong> = the Swift-side map telling Metal how your vertex data (position, uv, normal) is laid out in memory.</li>
 <li><strong>Geometry animation</strong> = move the corners with <code>sin</code>, normals, or springs to wobble, explode, or bounce a mesh.</li>
 <li><strong>Full-screen triangle</strong> = the shortcut for 2D effects: no real geometry, just one big triangle covering the screen.</li>
@@ -2215,9 +2215,9 @@ using namespace metal;
 
 // kernel = compute shader entry point
 kernel void brighten(
-    texture2d&lt;float, access::read&gt;  inTexture  &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,   // Read-only input
-    texture2d&lt;float, access::write&gt; outTexture &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(1)&lt;/span&gt;,   // Write-only output
-    uint2 gid &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_grid&lt;/span&gt;)                        // Which pixel am I?
+    texture2d&lt;float, access::read&gt;  inTexture  [[texture(0)]],   // Read-only input
+    texture2d&lt;float, access::write&gt; outTexture [[texture(1)]],   // Write-only output
+    uint2 gid [[thread_position_in_grid]])                        // Which pixel am I?
 {
     // Bounds check — don't write outside the texture
     if (gid.x &gt;= outTexture.get_width() || gid.y &gt;= outTexture.get_height()) {
@@ -2260,11 +2260,11 @@ Each Threadgroup:
 </code></pre>
 <h3>Thread ID Attributes</h3>
 <pre><code class="language-cpp">kernel void myKernel(
-    uint2 gid   &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_grid&lt;/span&gt;,          // Global thread ID (which pixel)
-    uint2 tid   &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_threadgroup&lt;/span&gt;,    // Local ID within group
-    uint2 tgid  &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;threadgroup_position_in_grid&lt;/span&gt;,      // Which threadgroup
-    uint2 tgSize &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;threads_per_threadgroup&lt;/span&gt;,          // Threadgroup dimensions
-    uint  lid   &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_index_in_threadgroup&lt;/span&gt;        // Linear index within group
+    uint2 gid   [[thread_position_in_grid]],          // Global thread ID (which pixel)
+    uint2 tid   [[thread_position_in_threadgroup]],    // Local ID within group
+    uint2 tgid  [[threadgroup_position_in_grid]],      // Which threadgroup
+    uint2 tgSize [[threads_per_threadgroup]],          // Threadgroup dimensions
+    uint  lid   [[thread_index_in_threadgroup]]        // Linear index within group
 ) {
     // gid is what you use most — it tells you which pixel to process
 }
@@ -2332,10 +2332,10 @@ encoder.dispatchThreads(
 <h2>Threadgroup Memory (Shared Memory)</h2>
 <p>Threads within a threadgroup can share data via <code>threadgroup</code> memory. This is much faster than reading from textures or device memory.</p>
 <pre><code class="language-cpp">kernel void boxBlur(
-    texture2d&lt;float, access::read&gt;  inTex  &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    texture2d&lt;float, access::write&gt; outTex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(1)&lt;/span&gt;,
-    uint2 gid &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_grid&lt;/span&gt;,
-    uint2 tid &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_threadgroup&lt;/span&gt;)
+    texture2d&lt;float, access::read&gt;  inTex  [[texture(0)]],
+    texture2d&lt;float, access::write&gt; outTex [[texture(1)]],
+    uint2 gid [[thread_position_in_grid]],
+    uint2 tid [[thread_position_in_threadgroup]])
 {
     // Shared tile: 18x18 for a 16x16 group with 1-pixel border
     threadgroup float4 tile[18][18];
@@ -2381,8 +2381,8 @@ float4 neighborData = tile[tid.y + 1][tid.x];
 <h2>Read-Write Textures</h2>
 <p>Sometimes you need to read AND write the same texture:</p>
 <pre><code class="language-cpp">kernel void inPlaceInvert(
-    texture2d&lt;float, access::read_write&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    uint2 gid &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_grid&lt;/span&gt;)
+    texture2d&lt;float, access::read_write&gt; tex [[texture(0)]],
+    uint2 gid [[thread_position_in_grid]])
 {
     float4 color = tex.read(gid);
     color.rgb = 1.0 - color.rgb;
@@ -2409,9 +2409,9 @@ let texture = device.makeTexture(descriptor: descriptor)!
 };
 
 kernel void updateParticles(
-    device Particle *particles &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    constant float &amp;deltaTime &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;,
-    uint id &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_grid&lt;/span&gt;)
+    device Particle *particles [[buffer(0)]],
+    constant float &amp;deltaTime [[buffer(1)]],
+    uint id [[thread_position_in_grid]])
 {
     Particle p = particles[id];
 
@@ -2457,7 +2457,7 @@ kernel void updateParticles(
 <h2>Checkpoint</h2>
 <p>Before moving on, you should understand:
 - [x] Compute shaders (<code>kernel</code>) are general-purpose GPU programs
-- [x] <code>&lt;span class="xref-missing" title="note not in this site"&gt;thread_position_in_grid&lt;/span&gt;</code> tells each thread which data to process
+- [x] <code>[[thread_position_in_grid]]</code> tells each thread which data to process
 - [x] Thread groups organize threads; threads within a group can share memory
 - [x] <code>threadgroup_barrier</code> synchronizes threads within a group
 - [x] Dispatch from Swift: set textures/buffers, calculate thread groups, dispatch
@@ -2608,10 +2608,10 @@ uint height = texture.get_height();
 <hr />
 <h2>Multi-Texture Effects</h2>
 <pre><code class="language-cpp">fragment half4 blendTextures(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; texA &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    texture2d&lt;half&gt; texB &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(1)&lt;/span&gt;,
-    constant float &amp;blendFactor &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; texA [[texture(0)]],
+    texture2d&lt;half&gt; texB [[texture(1)]],
+    constant float &amp;blendFactor [[buffer(0)]])
 {
     constexpr sampler s(filter::linear);
 
@@ -2624,9 +2624,9 @@ uint height = texture.get_height();
 <h3>Using a Texture as a Lookup Table (LUT)</h3>
 <p>Color grading in Photos, Instagram filters — many use LUT textures:</p>
 <pre><code class="language-cpp">fragment half4 lutFilter(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; photo &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    texture3d&lt;half&gt; lut &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(1)&lt;/span&gt;)  // 3D LUT texture
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; photo [[texture(0)]],
+    texture3d&lt;half&gt; lut [[texture(1)]])  // 3D LUT texture
 {
     constexpr sampler s(filter::linear);
     constexpr sampler lutSampler(coord::normalized, filter::linear);
@@ -2715,7 +2715,7 @@ float2 aspectFit(float2 uv, float2 viewSize, float2 textureSize) {
 <p>The one gotcha that bites everyone: Swift and Metal must agree <em>byte for byte</em> on how a struct is laid out in memory, and they pad fields to alignment boundaries. The classic trap is <code>float3</code>, which secretly takes 16 bytes, not 12. Get the layout wrong and your shader reads garbage — so the alignment rules here matter more than they look.</p>
 <p>Every interactive shader needs data from your app — time, touch position, slider values, arrays of data. This lesson covers all the ways to get data into your shaders.</p>
 <blockquote>
-<p><strong>In SwiftUI you skip all of this.</strong> For a <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> shader you never touch a buffer, <code>setBytes</code>, or alignment. You just list extra parameters after <code>(position, color)</code> and pass matching Swift values in order: <code>ShaderLibrary.myShader(.float(time), .float2(size), .color(tint))</code>. SwiftUI packs and aligns them for you. The manual machinery below is for <strong>full Metal pipelines</strong> — <code>MTKView</code> rendering (<a class="xref" href="#17-metal-in-uikit">17-metal-in-uikit</a>), compute shaders (<a class="xref" href="#08-compute-shaders">08-compute-shaders</a>), and large per-frame arrays (thousands of particles) — where you <em>do</em> manage memory yourself. Read it to understand what SwiftUI is doing under the hood, and reach for it only when a stitchable effect can't carry the data (e.g. a 10,000-element buffer). SwiftUI's argument helpers are catalogued in <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>.</p>
+<p><strong>In SwiftUI you skip all of this.</strong> For a <code>[[ stitchable ]]</code> shader you never touch a buffer, <code>setBytes</code>, or alignment. You just list extra parameters after <code>(position, color)</code> and pass matching Swift values in order: <code>ShaderLibrary.myShader(.float(time), .float2(size), .color(tint))</code>. SwiftUI packs and aligns them for you. The manual machinery below is for <strong>full Metal pipelines</strong> — <code>MTKView</code> rendering (<a class="xref" href="#17-metal-in-uikit">17-metal-in-uikit</a>), compute shaders (<a class="xref" href="#08-compute-shaders">08-compute-shaders</a>), and large per-frame arrays (thousands of particles) — where you <em>do</em> manage memory yourself. Read it to understand what SwiftUI is doing under the hood, and reach for it only when a stitchable effect can't carry the data (e.g. a 10,000-element buffer). SwiftUI's argument helpers are catalogued in <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>.</p>
 </blockquote>
 <hr />
 <h2>Method 1: <code>setBytes</code> (Small Data, Simplest)</h2>
@@ -2750,10 +2750,10 @@ encoder.setFragmentBytes(&amp;params, length: MemoryLayout&lt;Params&gt;.size, i
 };
 
 fragment float4 myShader(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    constant float &amp;time &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,           // Single value
-    constant float2 &amp;resolution &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;,    // Vector
-    constant Params &amp;params &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;         // Or struct
+    VertexOut in [[stage_in]],
+    constant float &amp;time [[buffer(0)]],           // Single value
+    constant float2 &amp;resolution [[buffer(1)]],    // Vector
+    constant Params &amp;params [[buffer(0)]]         // Or struct
 ) { ... }
 </code></pre>
 <h3>Struct Alignment Rules</h3>
@@ -2828,9 +2828,9 @@ encoder.setFragmentBuffer(particleBuffer, offset: 0, index: 0)
 };
 
 fragment float4 drawParticles(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    constant Particle *particles &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    constant int &amp;particleCount &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    constant Particle *particles [[buffer(0)]],
+    constant int &amp;particleCount [[buffer(1)]])
 {
     float4 color = float4(0);
 
@@ -2937,24 +2937,24 @@ fragment float4 drawParticles(
 <section class="page" id="11-structs-and-attributes" data-title="11 — Structs and Attributes" data-num="11" data-hasdemo="0" data-group="Curriculum"><h1>11 — Structs and Attributes</h1>
 <h2>Start here — the plain idea</h2>
 <p>When you draw real geometry (not just full-screen effects), each shape is a list of vertices — points that carry data like position, a texture coordinate, a normal, a color. This lesson is about getting that per-vertex data to flow cleanly from Swift, through the vertex shader, into the fragment shader.</p>
-<p>Picture an assembly line. Swift hands over a buffer of raw bytes. The vertex shader receives one vertex at a time as a tidy struct (<code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code>), transforms it, and outputs a <code>VertexOut</code>. Then the rasterizer does something almost magical: for every pixel inside a triangle, it <em>blends</em> the three corner vertices' values automatically. A pixel halfway between a red corner and a blue corner arrives at the fragment shader already purple. That free blending — interpolation — is why you only specify data at corners but get smooth gradients across the whole face.</p>
-<p>The fiddly part is the handshake: a <em>vertex descriptor</em> tells Metal exactly where each field sits in your Swift struct (which byte offset, which <code>&lt;span class="xref-missing" title="note not in this site"&gt;attribute(n)&lt;/span&gt;</code> slot). Same alignment rules as the last lesson — get an offset wrong and the GPU reads the wrong field.</p>
+<p>Picture an assembly line. Swift hands over a buffer of raw bytes. The vertex shader receives one vertex at a time as a tidy struct (<code>[[stage_in]]</code>), transforms it, and outputs a <code>VertexOut</code>. Then the rasterizer does something almost magical: for every pixel inside a triangle, it <em>blends</em> the three corner vertices' values automatically. A pixel halfway between a red corner and a blue corner arrives at the fragment shader already purple. That free blending — interpolation — is why you only specify data at corners but get smooth gradients across the whole face.</p>
+<p>The fiddly part is the handshake: a <em>vertex descriptor</em> tells Metal exactly where each field sits in your Swift struct (which byte offset, which <code>[[attribute(n)]]</code> slot). Same alignment rules as the last lesson — get an offset wrong and the GPU reads the wrong field.</p>
 <p>How to define custom data structures for the vertex pipeline and ensure correct data flow between Swift, vertex shaders, and fragment shaders.</p>
 <hr />
 <h2>The Data Flow</h2>
 <pre><code>Swift (CPU)                    Vertex Shader (GPU)         Fragment Shader (GPU)
 ===========                    ==================         ===================
-Vertex Buffer  ──────────&gt;     VertexIn &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;
+Vertex Buffer  ──────────&gt;     VertexIn [[stage_in]]
 (raw bytes)                         |
                                     | (your transform code)
                                     v
-                               VertexOut  ──────────&gt;      VertexOut &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;
+                               VertexOut  ──────────&gt;      VertexOut [[stage_in]]
                                (position, uv, etc.)        (interpolated by rasterizer)
                                                                  |
-Uniform Buffer ──────────&gt;     &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(n)&lt;/span&gt;          ──&gt;  &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(n)&lt;/span&gt;
+Uniform Buffer ──────────&gt;     [[buffer(n)]]          ──&gt;  [[buffer(n)]]
 (params, matrices)                                              |
                                                                 v
-Textures       ──────────&gt;     &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(n)&lt;/span&gt;         ──&gt;  &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(n)&lt;/span&gt;
+Textures       ──────────&gt;     [[texture(n)]]         ──&gt;  [[texture(n)]]
                                                                 |
                                                            return float4 (color)
 </code></pre>
@@ -2971,10 +2971,10 @@ Textures       ──────────&gt;     &lt;span class=&quot;xref-
 </code></pre>
 <h3>Metal Side</h3>
 <pre><code class="language-cpp">struct VertexIn {
-    float3 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;attribute(0)&lt;/span&gt;;
-    float2 texCoord &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;attribute(1)&lt;/span&gt;;
-    float3 normal   &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;attribute(2)&lt;/span&gt;;
-    float4 color    &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;attribute(3)&lt;/span&gt;;
+    float3 position [[attribute(0)]];
+    float2 texCoord [[attribute(1)]];
+    float3 normal   [[attribute(2)]];
+    float4 color    [[attribute(3)]];
 };
 </code></pre>
 <h3>Vertex Descriptor (Connects Them)</h3>
@@ -3010,20 +3010,20 @@ pipelineDescriptor.vertexDescriptor = descriptor
 <h2>Vertex-to-Fragment Structs</h2>
 <p>The <code>VertexOut</code> struct is the bridge between vertex and fragment shaders:</p>
 <pre><code class="language-cpp">struct VertexOut {
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;;   // REQUIRED: screen position
+    float4 position [[position]];   // REQUIRED: screen position
     float2 texCoord;                // Texture UV (interpolated)
     float3 worldNormal;             // World-space normal (interpolated)
     float3 worldPosition;           // World-space position (interpolated)
     float4 color;                   // Vertex color (interpolated)
-    float  pointSize &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;point_size&lt;/span&gt;; // For point rendering
+    float  pointSize [[point_size]]; // For point rendering
 };
 </code></pre>
-<p><strong>The rasterizer automatically interpolates</strong> all fields (except <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code>) across the triangle face. A pixel at the center of a triangle gets the average of the three vertices' values.</p>
+<p><strong>The rasterizer automatically interpolates</strong> all fields (except <code>[[position]]</code>) across the triangle face. A pixel at the center of a triangle gets the average of the three vertices' values.</p>
 <h3>Flat Interpolation (No Interpolation)</h3>
 <pre><code class="language-cpp">struct VertexOut {
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;;
-    float4 color &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;flat&lt;/span&gt;;  // NOT interpolated — uses the &quot;provoking vertex&quot; value
-    int materialID &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;flat&lt;/span&gt;; // Useful for per-face IDs
+    float4 position [[position]];
+    float4 color [[flat]];  // NOT interpolated — uses the &quot;provoking vertex&quot; value
+    int materialID [[flat]]; // Useful for per-face IDs
 };
 </code></pre>
 <hr />
@@ -3055,9 +3055,9 @@ descriptor.layouts[2].stepRate = 1
 };
 
 vertex VertexOut instancedVertex(
-    VertexIn in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    constant InstanceData *instances &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(2)&lt;/span&gt;,
-    uint instanceID &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;instance_id&lt;/span&gt;)
+    VertexIn in [[stage_in]],
+    constant InstanceData *instances [[buffer(2)]],
+    uint instanceID [[instance_id]])
 {
     VertexOut out;
     InstanceData instance = instances[instanceID];
@@ -3094,20 +3094,20 @@ encoder.drawIndexedPrimitives(
 <h2>The foundation</h2>
 <ul>
 <li><strong>vertex</strong> = one point of geometry carrying data (position, UV, normal, color).</li>
-<li><strong>VertexIn / <code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code></strong> = the struct of per-vertex data the vertex shader receives, one vertex per run.</li>
-<li><strong>VertexOut</strong> = the struct the vertex shader emits; its <code>&lt;span class="xref-missing" title="note not in this site"&gt;position&lt;/span&gt;</code> field is required, the rest get interpolated.</li>
+<li><strong>VertexIn / <code>[[stage_in]]</code></strong> = the struct of per-vertex data the vertex shader receives, one vertex per run.</li>
+<li><strong>VertexOut</strong> = the struct the vertex shader emits; its <code>[[position]]</code> field is required, the rest get interpolated.</li>
 <li><strong>interpolation</strong> = the rasterizer auto-blending corner values across a triangle, so a mid-face pixel gets the weighted average.</li>
-<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;flat&lt;/span&gt;</code></strong> = opt out of interpolation; the pixel just takes one vertex's value (useful for per-face IDs).</li>
-<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;attribute(n)&lt;/span&gt;</code></strong> = the slot number that ties a struct field to a vertex-descriptor entry.</li>
+<li><strong><code>[[flat]]</code></strong> = opt out of interpolation; the pixel just takes one vertex's value (useful for per-face IDs).</li>
+<li><strong><code>[[attribute(n)]]</code></strong> = the slot number that ties a struct field to a vertex-descriptor entry.</li>
 <li><strong>vertex descriptor</strong> = the map telling Metal each field's format, byte offset, and buffer, so it can unpack your Swift bytes.</li>
 <li><strong>instanced rendering</strong> = drawing the same geometry many times with per-instance data (e.g. a different matrix and color each time).</li>
 </ul>
 <h2>Checkpoint</h2>
 <ul>
-<li>[x] Vertex data flows: Swift buffer -&gt; <code>&lt;span class="xref-missing" title="note not in this site"&gt;stage_in&lt;/span&gt;</code> -&gt; VertexOut -&gt; interpolated -&gt; fragment</li>
-<li>[x] <code>MTLVertexDescriptor</code> maps Swift struct layout to Metal <code>&lt;span class="xref-missing" title="note not in this site"&gt;attribute(n)&lt;/span&gt;</code></li>
+<li>[x] Vertex data flows: Swift buffer -&gt; <code>[[stage_in]]</code> -&gt; VertexOut -&gt; interpolated -&gt; fragment</li>
+<li>[x] <code>MTLVertexDescriptor</code> maps Swift struct layout to Metal <code>[[attribute(n)]]</code></li>
 <li>[x] Alignment matters: <code>float3</code> = 16 bytes, match strides exactly</li>
-<li>[x] <code>&lt;span class="xref-missing" title="note not in this site"&gt;flat&lt;/span&gt;</code> disables interpolation for per-face data</li>
+<li>[x] <code>[[flat]]</code> disables interpolation for per-face data</li>
 <li>[x] Multiple buffers and instanced rendering for complex scenes</li>
 </ul><div class="pager"><a href="#10-buffers-and-uniforms"><span>Prev</span>← 10 — Buffers and Uniforms: Passing Data from Swift to Metal</a><a href="#12-color-effects"><span>Next</span>12 — Color Effects →</a></div></section>
 <section class="page" id="12-color-effects" data-title="12 — Color Effects" data-num="12" data-hasdemo="0" data-group="Curriculum"><h1>12 — Color Effects</h1>
@@ -3118,34 +3118,34 @@ encoder.drawIndexedPrimitives(
 <p>The simplest and most useful shader effects — transform pixel colors without reading neighbors. These are what Instagram filters, photo editors, and Apple's Photos app use.</p>
 <hr />
 <h2>Grayscale</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 grayscale(float2 pos, half4 color) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 grayscale(float2 pos, half4 color) {
     // Perceptual luminance weights (ITU-R BT.709)
     half luma = dot(color.rgb, half3(0.2126, 0.7152, 0.0722));
     return half4(luma, luma, luma, color.a);
 }
 </code></pre>
 <h2>Brightness</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 brightness(float2 pos, half4 color, float amount) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 brightness(float2 pos, half4 color, float amount) {
     // amount: 0 = black, 1 = original, 2 = double bright
     return half4(color.rgb * half(amount), color.a);
 }
 </code></pre>
 <h2>Contrast</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 contrast(float2 pos, half4 color, float amount) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 contrast(float2 pos, half4 color, float amount) {
     // amount: 0 = flat gray, 1 = original, 2 = high contrast
     half3 adjusted = (color.rgb - 0.5h) * half(amount) + 0.5h;
     return half4(saturate(adjusted), color.a);
 }
 </code></pre>
 <h2>Saturation</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 saturation(float2 pos, half4 color, float amount) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 saturation(float2 pos, half4 color, float amount) {
     half luma = dot(color.rgb, half3(0.2126, 0.7152, 0.0722));
     half3 adjusted = mix(half3(luma), color.rgb, half(amount));
     return half4(adjusted, color.a);
 }
 </code></pre>
 <h2>Hue Rotation</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 hueRotate(float2 pos, half4 color, float angle) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 hueRotate(float2 pos, half4 color, float angle) {
     float cosA = cos(angle);
     float sinA = sin(angle);
 
@@ -3165,7 +3165,7 @@ encoder.drawIndexedPrimitives(
 }
 </code></pre>
 <h2>Sepia</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 sepia(float2 pos, half4 color, float intensity) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 sepia(float2 pos, half4 color, float intensity) {
     half3 sepiaColor = half3(
         dot(color.rgb, half3(0.393, 0.769, 0.189)),
         dot(color.rgb, half3(0.349, 0.686, 0.168)),
@@ -3175,25 +3175,25 @@ encoder.drawIndexedPrimitives(
 }
 </code></pre>
 <h2>Invert</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 invert(float2 pos, half4 color) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 invert(float2 pos, half4 color) {
     return half4(1.0h - color.rgb, color.a);
 }
 </code></pre>
 <h2>Posterize (Reduce Color Levels)</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 posterize(float2 pos, half4 color, float levels) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 posterize(float2 pos, half4 color, float levels) {
     half3 posterized = floor(color.rgb * half(levels)) / half(levels - 1.0);
     return half4(posterized, color.a);
 }
 </code></pre>
 <h2>Threshold (Black &amp; White)</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 threshold(float2 pos, half4 color, float cutoff) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 threshold(float2 pos, half4 color, float cutoff) {
     half luma = dot(color.rgb, half3(0.2126, 0.7152, 0.0722));
     half bw = step(half(cutoff), luma);
     return half4(bw, bw, bw, color.a);
 }
 </code></pre>
 <h2>Color Temperature (Warm/Cool)</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 temperature(float2 pos, half4 color, float temp) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 temperature(float2 pos, half4 color, float temp) {
     // temp: -1 = cool (blue), 0 = neutral, 1 = warm (orange)
     half3 adjusted = color.rgb;
     adjusted.r += half(temp * 0.1);
@@ -3202,7 +3202,7 @@ encoder.drawIndexedPrimitives(
 }
 </code></pre>
 <h2>Vignette</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 vignette(float2 pos, half4 color, float2 size, float intensity) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 vignette(float2 pos, half4 color, float2 size, float intensity) {
     float2 uv = pos / size;
     float2 center = uv - 0.5;
     float dist = length(center) * 1.4;
@@ -3257,10 +3257,10 @@ encoder.drawIndexedPrimitives(
 <h2>Level 1: Box Blur (Simplest)</h2>
 <p>Average all pixels in a square region. Simple but produces boxy artifacts.</p>
 <pre><code class="language-cpp">fragment half4 boxBlur(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    constant float &amp;radius &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    constant float2 &amp;texSize &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; tex [[texture(0)]],
+    constant float &amp;radius [[buffer(0)]],
+    constant float2 &amp;texSize [[buffer(1)]])
 {
     constexpr sampler s(filter::linear, address::clamp_to_edge);
 
@@ -3285,10 +3285,10 @@ encoder.drawIndexedPrimitives(
 <p>Key insight: a 2D Gaussian can be decomposed into two 1D passes (horizontal then vertical). This reduces O(r^2) to O(2r).</p>
 <pre><code class="language-cpp">// Pass 1: Horizontal blur
 fragment half4 blurH(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    constant float &amp;radius &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    constant float2 &amp;texSize &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; tex [[texture(0)]],
+    constant float &amp;radius [[buffer(0)]],
+    constant float2 &amp;texSize [[buffer(1)]])
 {
     constexpr sampler s(filter::linear, address::clamp_to_edge);
 
@@ -3309,10 +3309,10 @@ fragment half4 blurH(
 
 // Pass 2: Vertical blur (same shader, different direction)
 fragment half4 blurV(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    constant float &amp;radius &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    constant float2 &amp;texSize &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; tex [[texture(0)]],
+    constant float &amp;radius [[buffer(0)]],
+    constant float2 &amp;texSize [[buffer(1)]])
 {
     constexpr sampler s(filter::linear, address::clamp_to_edge);
 
@@ -3349,9 +3349,9 @@ constant float offsets[3] = { 0.0, 1.3846153846, 3.2307692308 };
 constant float weights[3] = { 0.2270270270, 0.3162162162, 0.0702702703 };
 
 fragment half4 optimizedBlurH(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    constant float2 &amp;texSize &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; tex [[texture(0)]],
+    constant float2 &amp;texSize [[buffer(0)]])
 {
     constexpr sampler s(filter::linear, address::clamp_to_edge);
     float texelSize = 1.0 / texSize.x;
@@ -3372,10 +3372,10 @@ fragment half4 optimizedBlurH(
 <h2>Level 4: Kawase Blur (Best Quality/Performance Ratio)</h2>
 <p>Used by many game engines and real-time renderers. Instead of one large-radius blur, apply multiple small blurs at increasing sample distances. Each pass is just 5 taps.</p>
 <pre><code class="language-cpp">fragment half4 kawaseBlur(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    constant float &amp;iteration &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,  // 0, 1, 2, 3...
-    constant float2 &amp;texSize &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; tex [[texture(0)]],
+    constant float &amp;iteration [[buffer(0)]],  // 0, 1, 2, 3...
+    constant float2 &amp;texSize [[buffer(1)]])
 {
     constexpr sampler s(filter::linear, address::clamp_to_edge);
 
@@ -3405,9 +3405,9 @@ fragment half4 optimizedBlurH(
 <p>The technique used by many production renderers. Downscale with blur, then upscale with blur. Very fast, very smooth.</p>
 <pre><code class="language-cpp">// Downsample pass (halves resolution + blurs)
 fragment half4 dualKawaseDown(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    constant float2 &amp;texelSize &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; tex [[texture(0)]],
+    constant float2 &amp;texelSize [[buffer(0)]])
 {
     constexpr sampler s(filter::linear, address::clamp_to_edge);
     float2 halfTexel = texelSize * 0.5;
@@ -3423,9 +3423,9 @@ fragment half4 dualKawaseDown(
 
 // Upsample pass (doubles resolution + blurs)
 fragment half4 dualKawaseUp(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    constant float2 &amp;texelSize &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; tex [[texture(0)]],
+    constant float2 &amp;texelSize [[buffer(0)]])
 {
     constexpr sampler s(filter::linear, address::clamp_to_edge);
 
@@ -3565,7 +3565,7 @@ Distorted:  Read pixel at position (x + offset_x, y + offset_y)
 <p>The fragment shader calculates the offset and samples the original texture at the shifted position.</p>
 <hr />
 <h2>Ripple</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 ripple(float2 position, float2 origin, float time) {
+<pre><code class="language-cpp">[[ stitchable ]] float2 ripple(float2 position, float2 origin, float time) {
     float dist = distance(position, origin);
     float wave = sin(dist * 0.1 - time * 8.0) * 8.0;
     float falloff = exp(-dist * 0.01) * exp(-time * 1.5);
@@ -3574,14 +3574,14 @@ Distorted:  Read pixel at position (x + offset_x, y + offset_y)
 }
 </code></pre>
 <h2>Wave</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 wave(float2 position, float time, float amplitude, float frequency) {
+<pre><code class="language-cpp">[[ stitchable ]] float2 wave(float2 position, float time, float amplitude, float frequency) {
     float offsetY = sin(position.x * frequency * 0.01 + time * 3.0) * amplitude;
     float offsetX = cos(position.y * frequency * 0.01 + time * 2.0) * amplitude * 0.5;
     return position + float2(offsetX, offsetY);
 }
 </code></pre>
 <h2>Swirl</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 swirl(float2 position, float2 center, float radius, float angle) {
+<pre><code class="language-cpp">[[ stitchable ]] float2 swirl(float2 position, float2 center, float radius, float angle) {
     float2 diff = position - center;
     float dist = length(diff);
 
@@ -3601,7 +3601,7 @@ Distorted:  Read pixel at position (x + offset_x, y + offset_y)
 }
 </code></pre>
 <h2>Barrel Distortion (Lens Effect)</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 barrel(float2 position, float2 center, float2 size, float strength) {
+<pre><code class="language-cpp">[[ stitchable ]] float2 barrel(float2 position, float2 center, float2 size, float strength) {
     float2 uv = (position - center) / (size * 0.5);
     float r2 = dot(uv, uv);
     float distortion = 1.0 + r2 * strength;
@@ -3609,12 +3609,12 @@ Distorted:  Read pixel at position (x + offset_x, y + offset_y)
 }
 </code></pre>
 <h2>Pixelation</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 pixelate(float2 position, float blockSize) {
+<pre><code class="language-cpp">[[ stitchable ]] float2 pixelate(float2 position, float blockSize) {
     return floor(position / blockSize) * blockSize + blockSize * 0.5;
 }
 </code></pre>
 <h2>Magnifying Glass</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 magnify(float2 position, float2 center, float radius, float zoom) {
+<pre><code class="language-cpp">[[ stitchable ]] float2 magnify(float2 position, float2 center, float radius, float zoom) {
     float dist = distance(position, center);
     if (dist &gt; radius) return position;
 
@@ -3625,7 +3625,7 @@ Distorted:  Read pixel at position (x + offset_x, y + offset_y)
 }
 </code></pre>
 <h2>Shockwave</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 shockwave(float2 position, float2 center, float time,
+<pre><code class="language-cpp">[[ stitchable ]] float2 shockwave(float2 position, float2 center, float time,
                                   float waveWidth, float amplitude) {
     float dist = distance(position, center);
     float radius = time * 300.0;  // Expanding ring
@@ -3777,7 +3777,7 @@ float2 random2(float2 st) {
 <hr />
 <h2>Practical Uses</h2>
 <h3>Cloud/Fog</h3>
-<pre><code class="language-cpp">fragment half4 clouds(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;, constant float &amp;time &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;) {
+<pre><code class="language-cpp">fragment half4 clouds(VertexOut in [[stage_in]], constant float &amp;time [[buffer(0)]]) {
     float2 uv = in.uv * 4.0;
     uv += float2(time * 0.1, time * 0.05);  // Drift
 
@@ -3789,13 +3789,13 @@ float2 random2(float2 st) {
 }
 </code></pre>
 <h3>Film Grain</h3>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 filmGrain(float2 pos, half4 color, float time, float intensity) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 filmGrain(float2 pos, half4 color, float time, float intensity) {
     float grain = random(pos * 0.01 + time) * 2.0 - 1.0;
     return half4(color.rgb + half(grain * intensity), color.a);
 }
 </code></pre>
 <h3>Dissolve Transition</h3>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 dissolve(float2 pos, half4 color, float progress) {
+<pre><code class="language-cpp">[[ stitchable ]] half4 dissolve(float2 pos, half4 color, float progress) {
     float noise = random(pos * 0.05);
     float threshold = progress * 1.2;  // Slightly over 1.0 for full dissolve
 
@@ -4014,7 +4014,7 @@ float3 add(float3 base, float3 blend) { return min(base + blend, 1.0); }
 <p>The other big idea here is that the GPU's output doesn't have to go straight to the screen — it can go into a texture instead. That's what makes multi-pass effects possible: render once into an off-screen picture, then feed that picture back in as input for a second pass. Blur works exactly this way (blur horizontally, then blur that result vertically).</p>
 <p>Setting up the full Metal rendering pipeline with MTKView, CAMetalLayer, and UIKit integration.</p>
 <blockquote>
-<p><strong>When do you actually need this?</strong> Only for <em>full</em> Metal: games, custom multi-pass render graphs, hosting Metal in a UIKit app, or work <code>colorEffect</code>/<code>layerEffect</code> can't express. If you just want a shader effect over a SwiftUI view, you do <strong>not</strong> build any of this — you mark the function <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> and apply it with one modifier (<a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>). This lesson is the "manual transmission" version; read it to understand the machinery SwiftUI runs for you.</p>
+<p><strong>When do you actually need this?</strong> Only for <em>full</em> Metal: games, custom multi-pass render graphs, hosting Metal in a UIKit app, or work <code>colorEffect</code>/<code>layerEffect</code> can't express. If you just want a shader effect over a SwiftUI view, you do <strong>not</strong> build any of this — you mark the function <code>[[ stitchable ]]</code> and apply it with one modifier (<a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>). This lesson is the "manual transmission" version; read it to understand the machinery SwiftUI runs for you.</p>
 </blockquote>
 <hr />
 <h2>Option 1: MTKView (Recommended)</h2>
@@ -4221,10 +4221,10 @@ func captureView(_ view: UIView) -&gt; MTLTexture {
 </ul><div class="pager"><a href="#16-blending-and-compositing"><span>Prev</span>← 16 — Blending and Compositing</a><a href="#18-metal-in-swiftui"><span>Next</span>18 — Metal Shaders in SwiftUI (iOS 17+) →</a></div></section>
 <section class="page" id="18-metal-in-swiftui" data-title="18 — Metal Shaders in SwiftUI (iOS 17+)" data-num="18" data-hasdemo="0" data-group="Curriculum"><h1>18 — Metal Shaders in SwiftUI (iOS 17+)</h1>
 <h2>Start here — the plain idea</h2>
-<p>In UIKit you had to build the whole kitchen yourself. SwiftUI hands you a shortcut: take any view you already drew — text, an image, a whole scroll view — and run a tiny GPU program over its pixels with one modifier. The <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> keyword is just a label that says "this shader is allowed to be plugged into SwiftUI's own pipeline," the same way <code>throws</code> labels a function.</p>
+<p>In UIKit you had to build the whole kitchen yourself. SwiftUI hands you a shortcut: take any view you already drew — text, an image, a whole scroll view — and run a tiny GPU program over its pixels with one modifier. The <code>[[ stitchable ]]</code> keyword is just a label that says "this shader is allowed to be plugged into SwiftUI's own pipeline," the same way <code>throws</code> labels a function.</p>
 <p>There are three flavors, and the difference is simply <em>what your shader is allowed to touch</em>. A <strong>colorEffect</strong> gets one pixel's color and can change that color — recolor, tint, grayscale — but it can't peek at the neighbors. A <strong>distortionEffect</strong> can't change colors at all; instead it answers a different question: "for the pixel landing <em>here</em>, where should I go grab its color from?" Move that lookup around and you get ripples, pixelation, fisheye. A <strong>layerEffect</strong> is the powerful one — it hands you the whole rendered view as something you can sample anywhere, so you can read many neighboring pixels and average them. That's what blur, glow, and edge detection need.</p>
 <p><code>maxSampleOffset</code> is just you telling SwiftUI "my shader might reach this far for a pixel," so it knows how big a region to keep around. Too small and the edges get clipped; too big and you pay for area you never use.</p>
-<p>iOS 17 introduced <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> shaders — the ability to apply custom Metal shaders directly to SwiftUI views. This is the most practical way to use Metal for visual effects in modern iOS apps.</p>
+<p>iOS 17 introduced <code>[[ stitchable ]]</code> shaders — the ability to apply custom Metal shaders directly to SwiftUI views. This is the most practical way to use Metal for visual effects in modern iOS apps.</p>
 <hr />
 <h2>Three Effect Types</h2>
 <pre><code class="language-swift">// 1. colorEffect — per-pixel color transformation
@@ -4245,20 +4245,20 @@ view.layerEffect(ShaderLibrary.myBlur(.float(radius)),
 <pre><code class="language-cpp">#include &lt;metal_stdlib&gt;
 using namespace metal;
 
-// MUST have &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; attribute
+// MUST have [[ stitchable ]] attribute
 // First param: position, second param: current color
 // Additional params: your custom data
 
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 grayscale(float2 position, half4 color) {
+[[ stitchable ]] half4 grayscale(float2 position, half4 color) {
     half luma = dot(color.rgb, half3(0.2126, 0.7152, 0.0722));
     return half4(luma, luma, luma, color.a);
 }
 
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 tint(float2 position, half4 color, half4 tintColor) {
+[[ stitchable ]] half4 tint(float2 position, half4 color, half4 tintColor) {
     return color * tintColor;
 }
 
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 wave(float2 position, half4 color, float time) {
+[[ stitchable ]] half4 wave(float2 position, half4 color, float time) {
     float brightness = sin(position.x * 0.05 + time * 3.0) * 0.5 + 0.5;
     return half4(color.rgb * half(brightness), color.a);
 }
@@ -4279,7 +4279,7 @@ Text(&quot;Waves&quot;)
 <p>Receives a position, returns a new position to sample from. Shifts where each pixel reads its color from. <strong>Cannot change colors, only positions.</strong></p>
 <h3>Metal Shader</h3>
 <pre><code class="language-cpp">// Returns a float2 — the new sample position
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 ripple(float2 position, float2 origin, float time,
+[[ stitchable ]] float2 ripple(float2 position, float2 origin, float time,
                               float amplitude, float frequency, float decay) {
     float dist = distance(position, origin);
     float wave = sin(dist * frequency - time * 10.0);
@@ -4289,11 +4289,11 @@ Text(&quot;Waves&quot;)
     return position + direction * wave * amplitude * falloff;
 }
 
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 pixelate(float2 position, float size) {
+[[ stitchable ]] float2 pixelate(float2 position, float size) {
     return floor(position / size) * size + size * 0.5;
 }
 
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; float2 fisheye(float2 position, float2 center, float radius, float strength) {
+[[ stitchable ]] float2 fisheye(float2 position, float2 center, float radius, float strength) {
     float2 diff = position - center;
     float dist = length(diff);
 
@@ -4330,7 +4330,7 @@ Text(&quot;Pixelated&quot;)
 <p>The most powerful type. Receives the view as a <code>SwiftUI::Layer</code> that you can sample at any position. This enables blur, glow, edge detection, and any effect that reads neighboring pixels.</p>
 <h3>Metal Shader</h3>
 <pre><code class="language-cpp">// The Layer parameter gives you access to the full rendered view
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 simpleBlur(float2 position, SwiftUI::Layer layer, float radius) {
+[[ stitchable ]] half4 simpleBlur(float2 position, SwiftUI::Layer layer, float radius) {
     half4 sum = half4(0);
     float count = 0;
 
@@ -4344,7 +4344,7 @@ Text(&quot;Pixelated&quot;)
     return sum / half(count);
 }
 
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 glow(float2 position, SwiftUI::Layer layer, float radius, float intensity) {
+[[ stitchable ]] half4 glow(float2 position, SwiftUI::Layer layer, float radius, float intensity) {
     half4 original = layer.sample(position);
     half4 blurred = half4(0);
     float count = 0;
@@ -4361,7 +4361,7 @@ Text(&quot;Pixelated&quot;)
     return original + blurred * half(intensity);
 }
 
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 progressiveBlur(float2 position, SwiftUI::Layer layer,
+[[ stitchable ]] half4 progressiveBlur(float2 position, SwiftUI::Layer layer,
                                       float2 size, float maxRadius) {
     // Blur increases from top to bottom
     float progress = position.y / size.y;
@@ -4547,7 +4547,7 @@ struct ShaderModifier: ViewModifier {
 <hr />
 <h2>Checkpoint</h2>
 <p>Before moving on, you should understand:
-- [x] <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> attribute makes shaders usable in SwiftUI
+- [x] <code>[[ stitchable ]]</code> attribute makes shaders usable in SwiftUI
 - [x] Three types: <code>colorEffect</code> (color only), <code>distortionEffect</code> (position only), <code>layerEffect</code> (full access)
 - [x] Function signatures: position + color/layer + custom params
 - [x] Passing data: <code>.float()</code>, <code>.float2()</code>, <code>.color()</code>, <code>.image()</code>
@@ -4556,7 +4556,7 @@ struct ShaderModifier: ViewModifier {
 - [x] <code>SwiftUI::Layer</code> provides <code>.sample(position)</code> in layer effects</p>
 <h2>The foundation</h2>
 <ul>
-<li><strong><code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code></strong> = a label saying "this shader may be plugged into SwiftUI," just like <code>throws</code> labels a function.</li>
+<li><strong><code>[[ stitchable ]]</code></strong> = a label saying "this shader may be plugged into SwiftUI," just like <code>throws</code> labels a function.</li>
 <li><strong>colorEffect</strong> = recolors one pixel at a time; sees its own color, never the neighbors.</li>
 <li><strong>distortionEffect</strong> = leaves colors alone and instead moves <em>where</em> each pixel reads from — bend that lookup and you get ripples or fisheye.</li>
 <li><strong>layerEffect</strong> = the full-access one; hands you the whole view to sample anywhere, which is what blur and glow need.</li>
@@ -4719,7 +4719,7 @@ White = full blur, Black = no blur
 </code></pre>
 <hr />
 <h2>Method 1: Mask-Driven (Texture Mask)</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 variableBlur(
+<pre><code class="language-cpp">[[ stitchable ]] half4 variableBlur(
     float2 position, SwiftUI::Layer layer,
     float2 size, float maxRadius, float maskY)
 {
@@ -4749,7 +4749,7 @@ White = full blur, Black = no blur
 </code></pre>
 <h2>Method 2: Radial Variable Blur</h2>
 <pre><code class="language-cpp">// Tilt-shift / miniature effect
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 tiltShift(
+[[ stitchable ]] half4 tiltShift(
     float2 position, SwiftUI::Layer layer,
     float2 size, float focusY, float focusRange, float maxBlur)
 {
@@ -4829,7 +4829,7 @@ myView.layer.setValue([filter], forKey: &quot;filters&quot;)
 <hr />
 <h2>Frosted Glass Recipe</h2>
 <p>Apple's glass = backdrop blur + saturation boost + tint + specular highlight + compositing.</p>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 frostedGlass(
+<pre><code class="language-cpp">[[ stitchable ]] half4 frostedGlass(
     float2 position, SwiftUI::Layer layer,
     float2 size, float blurRadius, half4 tintColor)
 {
@@ -4862,7 +4862,7 @@ myView.layer.setValue([filter], forKey: &quot;filters&quot;)
 </code></pre>
 <hr />
 <h2>Refraction (Light Bending)</h2>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 refraction(
+<pre><code class="language-cpp">[[ stitchable ]] half4 refraction(
     float2 position, SwiftUI::Layer layer,
     float2 size, float2 center, float radius, float ior)
 {
@@ -4891,7 +4891,7 @@ myView.layer.setValue([filter], forKey: &quot;filters&quot;)
 <hr />
 <h2>Chromatic Aberration</h2>
 <p>Light splits into colors at glass edges:</p>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 chromaticAberration(
+<pre><code class="language-cpp">[[ stitchable ]] half4 chromaticAberration(
     float2 position, SwiftUI::Layer layer,
     float2 size, float strength)
 {
@@ -4912,7 +4912,7 @@ myView.layer.setValue([filter], forKey: &quot;filters&quot;)
 <hr />
 <h2>Liquid Glass (iOS 26-Style)</h2>
 <p>Combines refraction + blur + specular + Fresnel:</p>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 liquidGlass(
+<pre><code class="language-cpp">[[ stitchable ]] half4 liquidGlass(
     float2 position, SwiftUI::Layer layer,
     float2 size, float2 glassCenter, float2 glassSize, float cornerRadius, float time)
 {
@@ -5024,10 +5024,10 @@ float3 phongLighting(float3 normal, float3 viewDir, float3 lightDir,
 <h2>Normal Maps</h2>
 <p>Normal maps store surface detail as RGB colors where R=X, G=Y, B=Z direction:</p>
 <pre><code class="language-cpp">fragment half4 normalMapped(
-    VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;,
-    texture2d&lt;half&gt; colorTex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    texture2d&lt;half&gt; normalTex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(1)&lt;/span&gt;,
-    constant Light &amp;light &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;)
+    VertexOut in [[stage_in]],
+    texture2d&lt;half&gt; colorTex [[texture(0)]],
+    texture2d&lt;half&gt; normalTex [[texture(1)]],
+    constant Light &amp;light [[buffer(0)]])
 {
     constexpr sampler s(filter::linear);
 
@@ -5049,9 +5049,9 @@ float3 phongLighting(float3 normal, float3 viewDir, float3 lightDir,
 <h2>Generating Normals from Height Map</h2>
 <p>Create a normal map from a grayscale height texture:</p>
 <pre><code class="language-cpp">kernel void heightToNormal(
-    texture2d&lt;float, access::read&gt; heightMap &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;,
-    texture2d&lt;float, access::write&gt; normalMap &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(1)&lt;/span&gt;,
-    uint2 gid &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_grid&lt;/span&gt;)
+    texture2d&lt;float, access::read&gt; heightMap [[texture(0)]],
+    texture2d&lt;float, access::write&gt; normalMap [[texture(1)]],
+    uint2 gid [[thread_position_in_grid]])
 {
     float l = heightMap.read(uint2(max(int(gid.x)-1, 0), gid.y)).r;
     float r = heightMap.read(uint2(min(gid.x+1, heightMap.get_width()-1), gid.y)).r;
@@ -5093,7 +5093,7 @@ var time = Float(CACurrentMediaTime() - startTime)
 encoder.setFragmentBytes(&amp;time, length: 4, index: 0)
 </code></pre>
 <pre><code class="language-cpp">// Metal: use time for animation
-fragment half4 animated(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;, constant float &amp;time &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;) {
+fragment half4 animated(VertexOut in [[stage_in]], constant float &amp;time [[buffer(0)]]) {
     float pulse = sin(time * 3.0) * 0.5 + 0.5;  // Oscillate 0 to 1
     return half4(half(pulse), 0, 0, 1);
 }
@@ -5201,14 +5201,14 @@ float smoothLoop = smoothstep(0.0, 1.0, pingPong);       // Smooth ping-pong
 <hr />
 <h2>half vs float</h2>
 <pre><code class="language-cpp">// SLOW
-fragment float4 slowShader(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;, texture2d&lt;float&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;) {
+fragment float4 slowShader(VertexOut in [[stage_in]], texture2d&lt;float&gt; tex [[texture(0)]]) {
     float4 color = tex.sample(s, in.uv);
     float luminance = dot(color.rgb, float3(0.2126, 0.7152, 0.0722));
     return float4(float3(luminance), color.a);
 }
 
 // FAST (2x on Apple GPUs)
-fragment half4 fastShader(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;, texture2d&lt;half&gt; tex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;) {
+fragment half4 fastShader(VertexOut in [[stage_in]], texture2d&lt;half&gt; tex [[texture(0)]]) {
     half4 color = tex.sample(s, in.uv);
     half luminance = dot(color.rgb, half3(0.2126h, 0.7152h, 0.0722h));
     return half4(half3(luminance), color.a);
@@ -5405,7 +5405,7 @@ threadgroup_barrier(mem_flags::mem_threadgroup);
 </code></pre>
 <h3>SwiftUI Version (Public API)</h3>
 <pre><code class="language-cpp">// Progressive blur for scroll header
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 navBarBlur(float2 position, SwiftUI::Layer layer,
+[[ stitchable ]] half4 navBarBlur(float2 position, SwiftUI::Layer layer,
                                  float2 size, float blurRadius) {
     // Only blur the top portion
     float navBarHeight = 100.0;
@@ -5502,7 +5502,7 @@ threadgroup_barrier(mem_flags::mem_threadgroup);
 <h2>Effect 3: Scroll Edge Blur (Messages Send Menu)</h2>
 <p>What Apple does: <code>calculatePercentEdgeEffected</code> computes proximity to scroll edges, applies proportional blur + opacity.</p>
 <h3>Metal Shader Version</h3>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 scrollEdgeBlur(
+<pre><code class="language-cpp">[[ stitchable ]] half4 scrollEdgeBlur(
     float2 position, SwiftUI::Layer layer,
     float2 size, float edgeDistance)
 {
@@ -5599,7 +5599,7 @@ threadgroup_barrier(mem_flags::mem_threadgroup);
 <hr />
 <h2>Effect 5: Liquid Glass Refraction</h2>
 <p>What Apple uses internally: custom Metal shaders in ChatKit's <code>default.metallib</code>.</p>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 liquidGlass(
+<pre><code class="language-cpp">[[ stitchable ]] half4 liquidGlass(
     float2 position, SwiftUI::Layer layer,
     float2 size, float time)
 {
@@ -5659,7 +5659,7 @@ threadgroup_barrier(mem_flags::mem_threadgroup);
 <hr />
 <h2>Effect 6: Photo Scrubber Blur (Photos App)</h2>
 <p>Thumbnails blur as they move away from the center selection.</p>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 scrubberBlur(
+<pre><code class="language-cpp">[[ stitchable ]] half4 scrubberBlur(
     float2 position, SwiftUI::Layer layer,
     float2 center, float focusRadius, float maxBlur)
 {
@@ -5713,7 +5713,7 @@ threadgroup_barrier(mem_flags::mem_threadgroup);
 <ul>
 <li><strong>the Apple recipe</strong> = blur + saturation boost + faint highlight + continuous corners + spring timing, stacked together.</li>
 <li><strong>CABackdropLayer / CAFilter</strong> = the private-API route that runs in the render server and matches Apple's look exactly.</li>
-<li><strong>public Metal route</strong> = the same effects rebuilt as <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> shaders you can actually ship.</li>
+<li><strong>public Metal route</strong> = the same effects rebuilt as <code>[[ stitchable ]]</code> shaders you can actually ship.</li>
 <li><strong>saturation boost (1.6-1.8x)</strong> = pumping color back into a blurred backdrop so it doesn't look washed-out gray.</li>
 <li><strong>plusL compositing</strong> = an additive blend that lays a soft light highlight onto glass.</li>
 <li><strong>spring physics</strong> = mass/stiffness/damping (≈1 / 200-400 / 18-30) that make motion settle naturally instead of linearly.</li>
@@ -5969,12 +5969,12 @@ float3 calcNormal(float2 uv, float strength, float cardType, float2 res) {
 }
 
 // --- Fragment Shader (stitchable — drives .colorEffect) ---
-// &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; exposes this to SwiftUI's ShaderLibrary. The required
+// [[ stitchable ]] exposes this to SwiftUI's ShaderLibrary. The required
 // (position, color) come first; every argument after them is a uniform
 // you pass from Swift, in order. We ignore the incoming color and compute
 // our own, so it's named inColor.
 
-&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 cardShader(
+[[ stitchable ]] half4 cardShader(
     float2 position, half4 inColor,
     float rotate, float2 resolution, float cardType
 ) {
@@ -6030,7 +6030,7 @@ float3 calcNormal(float2 uv, float strength, float cardType, float2 res) {
 }
 </code></pre>
 <h3>SwiftUI Integration (iOS 17+)</h3>
-<p>One <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> function, one modifier — no <code>MTKView</code>, no renderer. The uniforms line up with the argument order in the shader:</p>
+<p>One <code>[[ stitchable ]]</code> function, one modifier — no <code>MTKView</code>, no renderer. The uniforms line up with the argument order in the shader:</p>
 <pre><code class="language-swift">struct MetalCard: View {
     var rotation: Float
     var cardType: Float
@@ -6318,7 +6318,7 @@ struct Uniforms {
 };
 
 struct VertexOut {
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;;
+    float4 position [[position]];
     float3 color;
     float shade;
     float isTop;
@@ -6357,13 +6357,13 @@ float gridShadow(float myH, float col, float row,
 }
 
 vertex VertexOut terrainVertex(
-    uint vertexID &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;vertex_id&lt;/span&gt;,
-    uint instanceID &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;instance_id&lt;/span&gt;,
-    constant Uniforms &amp;u &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    device const packed_float3* positions &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;,
-    device const float* heights &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(2)&lt;/span&gt;,
-    device const uint* colors &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(3)&lt;/span&gt;,
-    device const float* heightGrid &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(4)&lt;/span&gt;
+    uint vertexID [[vertex_id]],
+    uint instanceID [[instance_id]],
+    constant Uniforms &amp;u [[buffer(0)]],
+    device const packed_float3* positions [[buffer(1)]],
+    device const float* heights [[buffer(2)]],
+    device const uint* colors [[buffer(3)]],
+    device const float* heightGrid [[buffer(4)]]
 ) {
     VertexOut out;
 
@@ -6428,7 +6428,7 @@ vertex VertexOut terrainVertex(
 }
 </code></pre>
 <h3>Fragment Shader</h3>
-<pre><code class="language-cpp">fragment float4 terrainFragment(VertexOut in &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stage_in&lt;/span&gt;) {
+<pre><code class="language-cpp">fragment float4 terrainFragment(VertexOut in [[stage_in]]) {
     float3 bg = float3(0.976, 0.965, 0.945);
 
     // Tone mapping
@@ -6605,9 +6605,9 @@ float3 hsl2rgb(float h, float s, float l) {
 }
 
 kernel void fibonacciSphere(
-    device Particle* particles &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    constant Uniforms &amp;u &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;,
-    uint id &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_grid&lt;/span&gt;
+    device Particle* particles [[buffer(0)]],
+    constant Uniforms &amp;u [[buffer(1)]],
+    uint id [[thread_position_in_grid]]
 ) {
     const uint N = 2000;
     if (id &gt;= N) return;
@@ -6713,8 +6713,8 @@ struct FibonacciSphereView: View {
 <h3>Approach C: Metal Fragment Shader (no geometry, SDF circles)</h3>
 <p>Render all particles in a single fragment shader using SDF circles:</p>
 <pre><code class="language-cpp">fragment float4 sphereWavesFragment(
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;,
-    constant Uniforms &amp;u &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;
+    float4 position [[position]],
+    constant Uniforms &amp;u [[buffer(0)]]
 ) {
     float2 fragCoord = position.xy;
     float3 col = float3(0);
@@ -6934,8 +6934,8 @@ struct Uniforms {
 };
 
 fragment float4 metaballFragment(
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;,
-    constant Uniforms &amp;u &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;
+    float4 position [[position]],
+    constant Uniforms &amp;u [[buffer(0)]]
 ) {
     float2 uv = position.xy;
 
@@ -6994,7 +6994,7 @@ TimelineView(.animation) { _ in
 <tr>
 <td><strong>Metal SDF via <code>.colorEffect</code></strong></td>
 <td>Exact control, GPU-accelerated, scalable to N blobs</td>
-<td>A <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> shader + one modifier — no <code>MTKView</code> needed (<a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>)</td>
+<td>A <code>[[ stitchable ]]</code> shader + one modifier — no <code>MTKView</code> needed (<a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a>)</td>
 </tr>
 </tbody>
 </table>
@@ -7179,9 +7179,9 @@ float boxSDF(float2 uv, float4 rect) {
 }
 
 fragment float4 fractalGlassFragment(
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;,
-    constant Uniforms &amp;u &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    texture2d&lt;float&gt; blurredTex &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;  // pre-blurred circle
+    float4 position [[position]],
+    constant Uniforms &amp;u [[buffer(0)]],
+    texture2d&lt;float&gt; blurredTex [[texture(0)]]  // pre-blurred circle
 ) {
     float2 uv = position.xy;
     float2 normUV = uv / u.resolution;
@@ -7411,9 +7411,9 @@ float3 sweepGradient(float2 uv, float2 center) {
 }
 
 fragment float4 blurCirclesFragment(
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;,
-    constant Uniforms &amp;u &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    texture2d&lt;float&gt; blurredCircle1 &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;texture(0)&lt;/span&gt;  // pre-blurred
+    float4 position [[position]],
+    constant Uniforms &amp;u [[buffer(0)]],
+    texture2d&lt;float&gt; blurredCircle1 [[texture(0)]]  // pre-blurred
 ) {
     float2 uv = position.xy;
 
@@ -7590,9 +7590,9 @@ struct Uniforms {
 };
 
 kernel void logarithmicSpiral(
-    device Particle* particles &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;,
-    constant Uniforms &amp;u &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(1)&lt;/span&gt;,
-    uint id &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;thread_position_in_grid&lt;/span&gt;
+    device Particle* particles [[buffer(0)]],
+    constant Uniforms &amp;u [[buffer(1)]],
+    uint id [[thread_position_in_grid]]
 ) {
     if (id &gt;= u.count) return;
 
@@ -7615,8 +7615,8 @@ kernel void logarithmicSpiral(
 <p>Then render particles with instanced drawing or a fragment shader SDF approach.</p>
 <h3>Approach C: Metal Fragment Shader (SDF)</h3>
 <pre><code class="language-cpp">fragment float4 spiralFragment(
-    float4 position &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;position&lt;/span&gt;,
-    constant Uniforms &amp;u &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;buffer(0)&lt;/span&gt;
+    float4 position [[position]],
+    constant Uniforms &amp;u [[buffer(0)]]
 ) {
     float2 uv = position.xy;
     float3 col = float3(0);
@@ -7705,7 +7705,7 @@ kernel void logarithmicSpiral(
 <p>Think of it like an artist who never paints a lamp, only paints where the lamp's light <em>lands</em>. The shader runs once per pixel and asks "how close am I to the bottom edge, and how much light should pile up here?" Near the bottom it answers "a lot," and the answer fades the higher you go. Stack a few of those fading glows together, jiggle them with some slow waves so they breathe, sprinkle in a few drifting specks, and your eye reads the whole thing as warm ambient light.</p>
 <p>The reason it looks alive instead of like a flat gradient is the "decay" — light falls off sharply and smoothly, exactly like real light in a dark room. Everything else is just making that falloff wobble in believable ways.</p>
 <blockquote>
-<p>A soft, animated ambient light rising from the bottom edge of the screen — built as a SwiftUI <code>layerEffect</code> powered by a single <code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> Metal shader. No image assets: every wisp, mote, and bloom is generated procedurally from math. Great for notification reveals, media surfaces, or controller/game UI underglow.</p>
+<p>A soft, animated ambient light rising from the bottom edge of the screen — built as a SwiftUI <code>layerEffect</code> powered by a single <code>[[ stitchable ]]</code> Metal shader. No image assets: every wisp, mote, and bloom is generated procedurally from math. Great for notification reveals, media surfaces, or controller/game UI underglow.</p>
 </blockquote>
 <h2>How It Works</h2>
 <h3>Architecture</h3>
@@ -7742,12 +7742,12 @@ kernel void logarithmicSpiral(
 <li><strong><code>maxSampleOffset: .zero</code></strong> tells SwiftUI the shader never samples neighboring pixels — it only ever calls <code>layer.sample(position)</code> — which lets the system optimize.</li>
 </ul>
 <h3>The shader signature</h3>
-<pre><code class="language-cpp">&lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;stitchable&lt;/span&gt; half4 bottomAmbientLighting(
+<pre><code class="language-cpp">[[ stitchable ]] half4 bottomAmbientLighting(
     float2 position, SwiftUI::Layer layer,
     float2 size, float time, float progress, half4 tint
 ) { ... }
 </code></pre>
-<p><code>&lt;span class="xref-missing" title="note not in this site"&gt;stitchable&lt;/span&gt;</code> exposes it to <code>ShaderLibrary</code>; <code>SwiftUI::Layer</code> is the rasterized source; it returns a <strong>premultiplied</strong> <code>half4</code> (color already scaled by alpha). The extra parameters after <code>layer</code> are the uniforms passed from Swift, in order.</p>
+<p><code>[[ stitchable ]]</code> exposes it to <code>ShaderLibrary</code>; <code>SwiftUI::Layer</code> is the rasterized source; it returns a <strong>premultiplied</strong> <code>half4</code> (color already scaled by alpha). The extra parameters after <code>layer</code> are the uniforms passed from Swift, in order.</p>
 <h3>Stage 1 — coordinates &amp; vertical falloff</h3>
 <pre><code class="language-cpp">float2 uv = position / max(size, float2(1.0));   // 0..1 across the view
 float bottomDistance = 1.0 - uv.y;               // 0 at bottom, 1 at top

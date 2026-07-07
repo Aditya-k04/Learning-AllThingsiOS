@@ -4451,7 +4451,7 @@ print(Person(name: &quot;Ada&quot;).shout())   // &quot;HELLO, I'M ADA!&quot;
         count &gt;= 2 ? self[1] : nil
     }
 
-    func chunked(into size: Int) -&gt; &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;Element&lt;/span&gt; {
+    func chunked(into size: Int) -&gt; [[Element]] {
         stride(from: 0, to: count, by: size).map {
             Array(self[$0..&lt;Swift.min($0 + size, count)])
         }
@@ -6657,7 +6657,7 @@ struct ArrayBuilder&lt;E&gt; {
     static func buildOptional(_ c: [E]?) -&gt; [E] { c ?? [] }
     static func buildEither(first c: [E]) -&gt; [E] { c }
     static func buildEither(second c: [E]) -&gt; [E] { c }
-    static func buildArray(_ cs: &lt;span class=&quot;xref-missing&quot; title=&quot;note not in this site&quot;&gt;E&lt;/span&gt;) -&gt; [E] { cs.flatMap { $0 } }
+    static func buildArray(_ cs: [[E]]) -&gt; [E] { cs.flatMap { $0 } }
 }
 
 func buildArray&lt;T&gt;(@ArrayBuilder&lt;T&gt; content: () -&gt; [T]) -&gt; [T] { content() }
