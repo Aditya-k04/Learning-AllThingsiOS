@@ -4727,7 +4727,316 @@ struct ShaderModifier: ViewModifier {
 <li><strong>maxSampleOffset</strong> = how far out your shader is allowed to reach for a pixel — set it to your real reach, no more.</li>
 <li><strong><code>SwiftUI::Layer.sample(position)</code></strong> = "give me the color at this spot" — the tool that lets a layer effect read its neighbors.</li>
 <li><strong>TimelineView(.animation)</strong> = a clock that re-renders every frame so you can feed elapsed time into a shader and make it move.</li>
-</ul><div class="pager"><a href="#17-metal-in-uikit"><span>Prev</span>← 17 — Metal in UIKit</a><a href="#19-metal-performance-shaders"><span>Next</span>19 — Metal Performance Shaders (MPS) →</a></div></section>
+</ul><div class="pager"><a href="#17-metal-in-uikit"><span>Prev</span>← 17 — Metal in UIKit</a><a href="#18a-feeding-data-into-shaders"><span>Next</span>18a — Feeding Data In: Time, Size, Colors &amp; Uniforms →</a></div></section>
+<section class="page" id="18a-feeding-data-into-shaders" data-title="18a — Feeding Data In: Time, Size, Colors &amp; Uniforms" data-num="18" data-hasdemo="1" data-group="Curriculum"><h1>18a — Feeding Data In: Time, Size, Colors &amp; Uniforms</h1><div class="demo-mount" data-demo="sh-plasma"></div>
+<h2>Start here — the plain idea</h2>
+<p>A shader is a <strong>pure function</strong>: it runs on the GPU, sees only the arguments you hand it, and returns a color. It can't reach into your app to read the clock, the user's finger, or a slider. So the entire art of "making a shader do something" is <strong>feeding it the right data every frame</strong>. This lesson is the catalog of <em>what</em> you can pass from SwiftUI and <em>how</em>.</p>
+<p>Think of the shader as a vending machine. It already knows two things for free — <code>position</code> (which pixel) and <code>color</code> (that pixel's current color). Everything else is a coin you drop in the slot: the current time, the view's size, a tint color, a texture, a touch point. Drop the right coins and the machine produces the effect. The order of the coins matters, and each has a specific shape.</p>
+<p>The whole flow is <strong>one-way</strong>: SwiftUI → GPU, argument by argument, every frame. Get comfortable with this menu and you can drive <em>any</em> shader.</p>
+<hr />
+<h2>The menu: argument types you can pass</h2>
+<p>In Swift you build a shader call like <code>ShaderLibrary.myShader(arg, arg, …)</code>. Each <code>arg</code> is a typed helper that matches one parameter in the Metal function (after the required <code>position</code>/<code>color</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Swift helper</th>
+<th>Metal parameter it feeds</th>
+<th>Use it for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.float(x)</code></td>
+<td><code>float x</code></td>
+<td>time, a slider, intensity, radius</td>
+</tr>
+<tr>
+<td><code>.float2(p)</code></td>
+<td><code>float2 p</code></td>
+<td>size, a point, a direction (from <code>CGPoint</code>/<code>CGSize</code>)</td>
+</tr>
+<tr>
+<td><code>.float3(_)</code> / <code>.float4(_)</code></td>
+<td><code>float3</code> / <code>float4</code></td>
+<td>raw vectors, a packed RGBA</td>
+</tr>
+<tr>
+<td><code>.color(c)</code></td>
+<td><code>half4 c</code></td>
+<td>a tint or theme color (<code>Color</code> → premapped)</td>
+</tr>
+<tr>
+<td><code>.image(img)</code></td>
+<td><code>texture2d&lt;half&gt; t</code></td>
+<td>a photo/gradient/mask to sample</td>
+</tr>
+<tr>
+<td><code>.floatArray([…])</code></td>
+<td><code>constant float *a</code></td>
+<td>a handful of values (pass the count too)</td>
+</tr>
+<tr>
+<td><code>.data(d)</code></td>
+<td><code>constant T *</code></td>
+<td>a packed struct/array of bytes</td>
+</tr>
+<tr>
+<td><code>.boundingRect</code></td>
+<td><code>float4 rect</code></td>
+<td>the view's bounds — size without <code>GeometryReader</code></td>
+</tr>
+</tbody>
+</table>
+<p>Two rules that never change: arguments are <strong>positional</strong> (the 1st <code>.float2</code> fills the 1st <code>float2</code> parameter after <code>color</code>), and <strong>types must line up exactly</strong>. There are no names to save you — a mismatch is garbage or a crash.</p>
+<hr />
+<h2>Time — the "timeline" that drives animation</h2>
+<p>The single most common thing you'll pass is <strong>elapsed seconds</strong>. SwiftUI's <code>TimelineView(.animation)</code> re-renders every frame and hands you the current date; subtract a start date to get seconds, and pass it as a <code>.float</code>:</p>
+<pre><code class="language-swift">struct AnimatedView: View {
+    let start = Date()
+    var body: some View {
+        TimelineView(.animation) { tl in                    // ticks ~60–120×/sec
+            let t = Float(tl.date.timeIntervalSince(start))  // elapsed seconds
+            Rectangle().colorEffect(ShaderLibrary.pulse(.float(t)))
+        }
+    }
+}
+</code></pre>
+<pre><code class="language-cpp">[[ stitchable ]] half4 pulse(float2 position, half4 color, float t) {
+    float b = 0.5 + 0.5 * sin(t * 3.0);      // a value that breathes over time
+    return half4(half3(b), 1.0h);
+}
+</code></pre>
+<p><code>TimelineView(.animation)</code> <strong>is</strong> the timeline: it's the clock that keeps the shader moving. The multiplier on <code>t</code> (<code>* 3.0</code>) sets the speed, exactly like the <code>sin</code> math from <a class="xref" href="interaction-math.html#01b-the-seven-building-blocks">the building blocks</a>. (For a very long-running app you can wrap <code>t</code> with <code>fmod(t, 6.2831)</code> to keep the float small and precise — <code>sin</code> only cares about the angle mod 2π.)</p>
+<hr />
+<h2>Size — so your shader is resolution-independent</h2>
+<p>Because <code>position</code> arrives in <strong>points</strong>, you almost always need the view's <strong>size</strong> to compute <code>uv = position / size</code>. Two ways to get it:</p>
+<pre><code class="language-swift">// A) GeometryReader — explicit
+GeometryReader { geo in
+    Rectangle().colorEffect(ShaderLibrary.myShader(.float2(geo.size)))
+}
+
+// B) .visualEffect — inline, no wrapper view
+Rectangle().visualEffect { content, proxy in
+    content.colorEffect(ShaderLibrary.myShader(.float2(proxy.size)))
+}
+</code></pre>
+<p>Or skip passing it at all and use <code>.boundingRect</code> inside the shader — SwiftUI fills a <code>float4</code> with the view's rect (<code>origin.xy</code>, <code>size.zw</code>):</p>
+<pre><code class="language-cpp">[[ stitchable ]] half4 myShader(float2 position, half4 color, float4 bounds) {
+    float2 uv = position / bounds.zw;   // .zw = width, height
+    ...
+}
+</code></pre>
+<hr />
+<h2>Colors, images, and bulk data</h2>
+<p><strong>Colors</strong> — pass a SwiftUI <code>Color</code>; it arrives as a <code>half4</code> you can tint with:</p>
+<pre><code class="language-swift">.colorEffect(ShaderLibrary.tint(.color(.orange)))
+</code></pre>
+<pre><code class="language-cpp">[[ stitchable ]] half4 tint(float2 position, half4 color, half4 tint) {
+    return color * tint;                 // multiply the view's pixels by the tint
+}
+</code></pre>
+<p><strong>Images/textures</strong> — hand over an <code>Image</code> and sample it inside the shader (great for masks, gradients, look-up tables):</p>
+<pre><code class="language-swift">.colorEffect(ShaderLibrary.overlay(.image(Image(&quot;grain&quot;))))
+</code></pre>
+<pre><code class="language-cpp">[[ stitchable ]] half4 overlay(float2 position, half4 color, texture2d&lt;half&gt; tex) {
+    constexpr sampler s(filter::linear);
+    half4 g = tex.sample(s, position / float2(tex.get_width(), tex.get_height()));
+    return color * g;
+}
+</code></pre>
+<p><strong>Several values at once</strong> — use <code>.floatArray</code> for a small set (and pass the count as a separate <code>.float</code>), or <code>.data</code> for a packed struct. For <strong>large or per-frame-changing arrays</strong> (thousands of particles), stitchable arguments aren't the right tool — that's when you drop to a full Metal buffer (<a class="xref" href="#10-buffers-and-uniforms">10-buffers-and-uniforms</a>).</p>
+<hr />
+<h2>Putting it together: a little "control panel" shader</h2>
+<p>Here's a shader fed <strong>time + size + two colors</strong>, with the Swift call and the Metal signature lined up so you can see every coin drop into its slot:</p>
+<pre><code class="language-swift">TimelineView(.animation) { tl in
+    let t = Float(tl.date.timeIntervalSinceReferenceDate)
+    Rectangle().visualEffect { content, proxy in
+        content.colorEffect(
+            ShaderLibrary.bandsShader(
+                .float(t),                 // → float time
+                .float2(proxy.size),       // → float2 size
+                .color(.blue),             // → half4 a
+                .color(.pink)              // → half4 b
+            )
+        )
+    }
+}
+</code></pre>
+<pre><code class="language-cpp">[[ stitchable ]] half4 bandsShader(float2 position, half4 color,
+                                   float time, float2 size, half4 a, half4 b) {
+    float2 uv = position / size;
+    float wave = 0.5 + 0.5 * sin(uv.y * 20.0 + time * 2.0);  // moving bands
+    return mix(a, b, half(wave));                            // blend the two colors
+}
+</code></pre>
+<p>Read the argument list top to bottom in both blocks — they're the same sequence. That one-to-one correspondence is the whole skill: decide what the effect needs, pass exactly those, in order.</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>shaders are pure functions</strong> = they know only what you pass; there's no global clock or touch they can read on their own.</li>
+<li><strong>argument helpers</strong> = <code>.float</code>, <code>.float2</code>, <code>.color</code>, <code>.image</code>, <code>.floatArray</code>, <code>.data</code>, <code>.boundingRect</code> — each maps to one Metal parameter, positionally.</li>
+<li><strong>time</strong> = <code>TimelineView(.animation)</code> → elapsed seconds → <code>.float(t)</code>; this is the "timeline" that animates a shader.</li>
+<li><strong>size</strong> = <code>GeometryReader</code>/<code>.visualEffect</code> <code>proxy.size</code> → <code>.float2</code>, or <code>.boundingRect</code> inside the shader, so you can compute <code>uv</code>.</li>
+<li><strong>color / image</strong> = pass a <code>Color</code> (arrives as <code>half4</code>) or an <code>Image</code> (a <code>texture2d</code> you sample).</li>
+<li><strong>bulk data</strong> = <code>.floatArray</code>/<code>.data</code> for a few values; a real <code>MTLBuffer</code> (<a class="xref" href="#10-buffers-and-uniforms">10-buffers-and-uniforms</a>) for big/per-frame arrays.</li>
+<li><strong>it's one-way</strong> = Swift feeds the GPU every frame; the shader only returns a color (see <a class="xref" href="#18b-gestures-to-shaders">18b-gestures-to-shaders</a> for the interaction loop).</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The three effect types this builds on: <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a></li>
+<li>Map user input into these arguments: <a class="xref" href="#18b-gestures-to-shaders">18b-gestures-to-shaders</a></li>
+<li>Animating with the time you pass: <a class="xref" href="#23-animation-in-shaders">23-animation-in-shaders</a></li>
+<li>Low-level buffers under the hood: <a class="xref" href="#10-buffers-and-uniforms">10-buffers-and-uniforms</a></li>
+<li>Prev: <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a> · Next: <a class="xref" href="#18b-gestures-to-shaders">18b-gestures-to-shaders</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
+</ul><div class="pager"><a href="#18-metal-in-swiftui"><span>Prev</span>← 18 — Metal Shaders in SwiftUI (iOS 17+)</a><a href="#18b-gestures-to-shaders"><span>Next</span>18b — Gestures → Shaders: Tap, Drag, Pinch, Swipe →</a></div></section>
+<section class="page" id="18b-gestures-to-shaders" data-title="18b — Gestures → Shaders: Tap, Drag, Pinch, Swipe" data-num="18" data-hasdemo="1" data-group="Curriculum"><h1>18b — Gestures → Shaders: Tap, Drag, Pinch, Swipe</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>Now the fun part: making the shader react to the <strong>user</strong>. Tap and a ripple spreads from your finger; pinch and the image bulges; drag and the light follows. The trick is always the same three-step loop, and once you see it you can wire <em>any</em> gesture to <em>any</em> effect.</p>
+<p>The loop is: <strong>a gesture updates some SwiftUI <code>@State</code> → that state is passed to the shader as a uniform → the shader redraws using it.</strong> The finger doesn't talk to the GPU directly; it talks to your <code>@State</code>, and your <code>@State</code> is what you feed the shader every frame. SwiftUI re-renders whenever the state changes, so the effect tracks the gesture in real time.</p>
+<p>One honest thing up front, since it clears up a common confusion: <strong>a fragment shader can't "write back" to your app.</strong> It only ever returns a color. So the source of truth (where the finger is, how zoomed you are) lives in Swift <code>@State</code>; the shader is a fast, stateless <em>renderer</em> of that truth. When you want motion to continue after the finger lifts — momentum, a settling ripple — you keep a timeline running and let the numbers evolve in Swift or in the shader's own math. (For true GPU-side state that persists — particle systems, fluid — you need compute shaders with ping-pong buffers; see <a class="xref" href="#08-compute-shaders">08-compute-shaders</a> and <a class="xref" href="#10-buffers-and-uniforms">10-buffers-and-uniforms</a>.)</p>
+<hr />
+<h2>The universal pattern (memorize this)</h2>
+<p>Every gesture-driven shader is these three steps:</p>
+<ol>
+<li><strong>Capture</strong> the gesture into <code>@State</code> (a point, a scale, an angle, a velocity).</li>
+<li><strong>Normalize</strong> it into the shader's world — points → <code>uv</code> (divide by size), or clamp a scale into a sane range.</li>
+<li><strong>Pass &amp; map</strong> it as a uniform, then use <code>remap</code>/<code>smoothstep</code> inside the shader to turn the raw input into the effect's range.</li>
+</ol>
+<p>Step 3 is pure <a class="xref" href="interaction-math.html#01a-choosing-the-math">Choosing the Math</a>: <em>"as the pinch goes 1→3, make the bulge go 0→0.5."</em> The shader is just the place you apply that mapping.</p>
+<hr />
+<h2>Tap — a ripple from where you touched</h2>
+<p>Capture the tap location, remember <em>when</em> it happened, and let a <code>TimelineView</code> animate the elapsed time so the ripple expands and fades:</p>
+<pre><code class="language-swift">struct TapRipple: View {
+    @State private var center: CGPoint = .zero
+    @State private var tapTime: Date = .distantPast
+
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let elapsed = Float(tl.date.timeIntervalSince(tapTime))
+            Image(&quot;photo&quot;).resizable().scaledToFill()
+                .visualEffect { content, proxy in
+                    content.distortionEffect(
+                        ShaderLibrary.ripple(
+                            .float2(center),   // where the finger landed (points)
+                            .float(elapsed)    // seconds since the tap
+                        ),
+                        maxSampleOffset: CGSize(width: 30, height: 30)
+                    )
+                }
+                .onTapGesture { location in     // ← capture step
+                    center = location
+                    tapTime = .now
+                }
+        }
+    }
+}
+</code></pre>
+<pre><code class="language-cpp">[[ stitchable ]] float2 ripple(float2 position, float2 center, float t) {
+    float d = distance(position, center);                 // pixels from the touch
+    float wave = sin(d * 0.08 - t * 12.0);                // outgoing ring
+    float falloff = exp(-d * 0.01) * exp(-t * 3.0);       // fade with distance + time
+    float2 dir = normalize(position - center + 1e-4);
+    return position + dir * wave * 12.0 * falloff;        // shove the sample point
+}
+</code></pre>
+<p>This is a <strong>distortionEffect</strong>, so it returns a <em>position</em> (where to read the pixel from), not a color — bending the lookup around the touch makes the image wobble. Note the loop: <code>onTapGesture</code> writes <code>@State</code>, the <code>TimelineView</code> re-feeds <code>elapsed</code> each frame, and the ripple animates itself out.</p>
+<hr />
+<h2>Drag — the effect follows your finger</h2>
+<p><code>DragGesture</code> gives you a live <code>location</code> (and <code>translation</code>, and even <code>velocity</code>). Store it and normalize to <code>uv</code>:</p>
+<pre><code class="language-swift">struct DragLight: View {
+    @State private var finger: CGPoint = .init(x: 150, y: 150)
+    var body: some View {
+        Rectangle().visualEffect { content, proxy in
+            content.colorEffect(
+                ShaderLibrary.spotlight(.float2(finger), .float2(proxy.size))
+            )
+        }
+        .gesture(
+            DragGesture(minimumDistance: 0)          // 0 = also fire on touch-down
+                .onChanged { finger = $0.location }   // ← capture step
+        )
+    }
+}
+</code></pre>
+<pre><code class="language-cpp">[[ stitchable ]] half4 spotlight(float2 position, half4 color, float2 finger, float2 size) {
+    float d = distance(position / size, finger / size);   // normalized distance
+    float glow = smoothstep(0.4, 0.0, d);                 // bright near the finger
+    return color + half4(half3(glow) * 0.6h, 0.0h);
+}
+</code></pre>
+<p>Same three steps: capture <code>location</code> → normalize by <code>size</code> → map distance to brightness with <code>smoothstep</code>. Swap <code>smoothstep</code> bounds to tighten or spread the light.</p>
+<hr />
+<h2>Pinch — scale a bulge or zoom</h2>
+<p><code>MagnifyGesture</code> (iOS 17+) reports a <code>magnification</code> value (1.0 = no zoom). Clamp it to a sane range and feed it in:</p>
+<pre><code class="language-swift">@State private var zoom: CGFloat = 1
+// …
+.gesture(
+    MagnifyGesture()
+        .onChanged { zoom = min(max($0.magnification, 1), 3) }   // clamp 1×–3×
+)
+.visualEffect { content, proxy in
+    content.distortionEffect(
+        ShaderLibrary.fisheye(.float2(proxy.size), .float(Float(zoom))),
+        maxSampleOffset: CGSize(width: 60, height: 60)
+    )
+}
+</code></pre>
+<pre><code class="language-cpp">[[ stitchable ]] float2 fisheye(float2 position, float2 size, float zoom) {
+    float2 c = size * 0.5;
+    float2 v = position - c;
+    float r = length(v) / length(c);            // 0 at center → 1 at corner
+    float strength = (zoom - 1.0);              // 0 when not pinched
+    float k = 1.0 - strength * (1.0 - r);       // bulge more near center
+    return c + v * k;
+}
+</code></pre>
+<p><code>zoom</code> arrives already clamped from Swift (never below 1, never past 3), so the shader math stays stable — clamping in <code>@State</code> is doing the same protective job as <code>clamp</code> in a shader.</p>
+<hr />
+<h2>Rotation &amp; swipe (velocity)</h2>
+<p><strong>Rotation</strong> — <code>RotateGesture</code> (iOS 17+) gives an <code>Angle</code>; pass <code>.float(Float(angle.radians))</code> and spin <code>uv</code> with a 2×2 rotation inside the shader (<code>float2(u*cosθ - v*sinθ, u*sinθ + v*cosθ)</code>).</p>
+<p><strong>Swipe / flick</strong> — a swipe is just a <code>DragGesture</code> you read <code>.velocity</code> from in <code>onEnded</code>. Feed the release velocity in, then let a <code>TimelineView</code> <strong>decay</strong> it so the effect coasts and settles — the spring/momentum idea from <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">springs &amp; easing</a>:</p>
+<pre><code class="language-swift">.gesture(
+    DragGesture()
+        .onEnded { value in
+            velocity = value.velocity.width      // points/sec at release
+        }
+)
+// in a TimelineView, each frame: velocity *= 0.92 (decay), feed it to the shader
+</code></pre>
+<p><strong>Combining gestures</strong> — pan <em>and</em> pinch at once with <code>SimultaneousGesture(dragGesture, magnifyGesture)</code> (or <code>.gesture</code> stacked), each writing its own <code>@State</code>. The shader just receives both uniforms.</p>
+<hr />
+<h2>Try it live</h2>
+<p>The demo above is the whole idea in miniature: it feeds <code>u_time</code> and <code>u_mouse</code> (your pointer, normalized 0–1) into a GLSL shader running on your GPU. Move the mouse over the canvas and watch the effect track it — that's exactly <code>@State</code> → uniform → redraw, just in the browser. Edit the code and hit run to map the mouse to something new.</p>
+<hr />
+<h2>The mapping is the real work (not the plumbing)</h2>
+<p>Capturing a gesture is easy; making it <em>feel</em> right is the craft, and it's the interaction-math you already know:</p>
+<ul>
+<li><strong><code>remap(input, a, b, c, d)</code></strong> — turn the gesture's natural range into the effect's range. "Drag 0→300pt ⇒ blur 0→20."</li>
+<li><strong><code>smoothstep</code></strong> — soften the ends so the effect eases in instead of snapping.</li>
+<li><strong><code>clamp</code> / clamp-in-<code>@State</code></strong> — keep values in bounds (pinch can't zoom to 0×).</li>
+<li><strong>decay / spring in a <code>TimelineView</code></strong> — carry momentum after the finger lifts.</li>
+</ul>
+<p>The shader is where you <em>apply</em> the mapping; the decision of which mapping is <a class="xref" href="interaction-math.html#01a-choosing-the-math">Choosing the Math</a> all over again.</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>the interaction loop</strong> = gesture → <code>@State</code> → shader uniform → redraw; SwiftUI re-renders on state change so the effect tracks the finger.</li>
+<li><strong>capture / normalize / map</strong> = the three steps behind every gesture-driven shader.</li>
+<li><strong>tap</strong> = <code>onTapGesture { location }</code> + a <code>tapTime</code>, animated by <code>TimelineView</code> for an expanding ripple (a <code>distortionEffect</code>).</li>
+<li><strong>drag</strong> = <code>DragGesture().onChanged { $0.location }</code>, normalized by size, mapped with <code>smoothstep</code>.</li>
+<li><strong>pinch</strong> = <code>MagnifyGesture</code> <code>magnification</code>, clamped in <code>@State</code>, fed as a <code>.float</code> to a fisheye/bulge.</li>
+<li><strong>swipe</strong> = <code>DragGesture</code> <code>.velocity</code> in <code>onEnded</code>, then decayed in a <code>TimelineView</code> for momentum.</li>
+<li><strong>shaders don't write back</strong> = they only return a color; the source of truth stays in <code>@State</code>. True GPU-side feedback needs compute + ping-pong buffers (<a class="xref" href="#08-compute-shaders">08-compute-shaders</a>).</li>
+<li><strong>feel = mapping</strong> = <code>remap</code>/<code>smoothstep</code>/<code>clamp</code> decide how raw input becomes the effect — pure <a class="xref" href="interaction-math.html#01a-choosing-the-math">Choosing the Math</a>.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>What you're passing in: <a class="xref" href="#18a-feeding-data-into-shaders">18a-feeding-data-into-shaders</a></li>
+<li>The effect types you're driving: <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a></li>
+<li>Momentum &amp; settling after a flick: <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">Springs &amp; Easing</a></li>
+<li>True GPU-side state (particles, fluid): <a class="xref" href="#08-compute-shaders">08-compute-shaders</a></li>
+<li>Prev: <a class="xref" href="#18a-feeding-data-into-shaders">18a-feeding-data-into-shaders</a> · Next: <a class="xref" href="#19-metal-performance-shaders">19-metal-performance-shaders</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
+</ul><div class="pager"><a href="#18a-feeding-data-into-shaders"><span>Prev</span>← 18a — Feeding Data In: Time, Size, Colors &amp; Uniforms</a><a href="#19-metal-performance-shaders"><span>Next</span>19 — Metal Performance Shaders (MPS) →</a></div></section>
 <section class="page" id="19-metal-performance-shaders" data-title="19 — Metal Performance Shaders (MPS)" data-num="19" data-hasdemo="0" data-group="Curriculum"><h1>19 — Metal Performance Shaders (MPS)</h1>
 <h2>Start here — the plain idea</h2>
 <p>You've been hand-writing shaders. MPS is Apple saying: "for the common stuff, don't bother — we already wrote it, and we tuned it for every chip we ship." Think of it as a shelf of pre-built power tools. Need a Gaussian blur, an edge detector, a histogram, an image resize? Grab the tool, point it at a source texture and a destination texture, and let it run.</p>
@@ -4863,7 +5172,7 @@ blur.encode(commandBuffer: cmdBuf, inPlaceTexture: &amp;texture, fallbackCopyAll
 <li><strong>chaining</strong> = stacking filters on one command buffer so each one's output feeds the next (blur, sharpen, scale).</li>
 <li><strong>in-place processing</strong> = letting a filter overwrite the same texture it read, saving a memory allocation.</li>
 <li><strong>why MPS wins</strong> = it's hand-optimized for each GPU generation, so it beats a general-purpose custom shader at the same job.</li>
-</ul><div class="pager"><a href="#18-metal-in-swiftui"><span>Prev</span>← 18 — Metal Shaders in SwiftUI (iOS 17+)</a><a href="#20-variable-blur"><span>Next</span>20 — Variable Blur →</a></div></section>
+</ul><div class="pager"><a href="#18b-gestures-to-shaders"><span>Prev</span>← 18b — Gestures → Shaders: Tap, Drag, Pinch, Swipe</a><a href="#20-variable-blur"><span>Next</span>20 — Variable Blur →</a></div></section>
 <section class="page" id="20-variable-blur" data-title="20 — Variable Blur" data-num="20" data-hasdemo="0" data-group="Curriculum"><h1>20 — Variable Blur</h1>
 <h2>Start here — the plain idea</h2>
 <p>A normal blur treats every pixel the same — smear everything by the same amount. Variable blur is the small twist that makes it look professional: the blur amount <em>changes across the image</em>. Sharp where it matters, soft everywhere else. That's the scroll-edge fade at the top of a list, the dreamy out-of-focus background in portrait mode, the toy-town tilt-shift look.</p>
