@@ -54,7 +54,8 @@ arc length ∫√(1+y'²)dx →  distance ALONG the path (even spacing)
 <li><a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a> — calculus, read geometrically</li>
 <li><a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a> — dot, cross, rotation matrices, normals</li>
 <li><a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a> — paths, Béziers, tangents on any curve</li>
-<li><a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> — lerp, smoothstep, remap, spring as an ODE</li>
+<li><a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> — lerp, smoothstep, remap, spring as an ODE
+   - <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a> — the physics family: smoothing, momentum, rubber-band, gravity, snap, SmoothDamp, verlet</li>
 <li><a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a> — damping, summed sines, noise</li>
 <li><a class="xref" href="#08-worked-example-wavy-carousel">08-worked-example-wavy-carousel</a> — the full derivation, end to end</li>
 <li><a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a> — the bridge to iOS: function vs tween vs frame-loop</li>
@@ -883,7 +884,141 @@ x += v * dt
 <li>Vault deep-dives: <span class="xref-missing" title="note not in this site">interpolation-and-easing</span>, <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span>, <span class="xref-missing" title="note not in this site">momentum-and-deceleration</span>, <span class="xref-missing" title="note not in this site">rubber-banding-formula</span></li>
 <li>Timing in CA: <a class="xref" href="coreanimation.html#14-animation-timing">14-animation-timing</a>, <a class="xref" href="coreanimation.html#11-caspringanimation">11-caspringanimation</a></li>
 <li>Prev: <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
-</ul><div class="pager"><a href="#05-parametric-curves-and-splines"><span>Prev</span>← 05 — Parametric Curves &amp; Splines</a><a href="#07-oscillations-noise-and-organic-motion"><span>Next</span>07 — Oscillations, Noise &amp; Organic Motion →</a></div></section>
+</ul><div class="pager"><a href="#05-parametric-curves-and-splines"><span>Prev</span>← 05 — Parametric Curves &amp; Splines</a><a href="#06a-simulations-beyond-the-spring"><span>Next</span>06a — Simulations Beyond the Spring →</a></div></section>
+<section class="page" id="06a-simulations-beyond-the-spring" data-title="06a — Simulations Beyond the Spring" data-num="06" data-hasdemo="0" data-group=""><h1>06a — Simulations Beyond the Spring</h1>
+<h2>Start here — the plain idea</h2>
+<p>The spring taught you a powerful move: instead of <em>drawing</em> a motion curve, you <strong>give a tiny simulation a rule and let it generate the motion</strong>. The spring is just one member of a whole family that works this way — and once you have a few of them, you can make almost anything <em>feel</em> physical.</p>
+<p>They all share the exact same shape. You keep a little bit of <strong>state</strong> — usually a <code>position</code>, sometimes a <code>velocity</code> too — and every frame you update it from a small formula. Because the value reacts to a rule instead of following a script, the path <em>emerges</em>, and emergent paths are what read as "natural." The spring's <code>a = −k·x − c·v</code> was one such rule; here are the other rules worth owning.</p>
+<p>Think of this as your <strong>physics cabinet</strong>: reach for the one whose <em>feel</em> matches what you want (glide, bounce, snap, drift), tune one or two knobs by hand, and let the frame loop do the rest.</p>
+<blockquote>
+<p>Every formula below runs inside a per-frame loop (a <code>TimelineView(.animation)</code> in SwiftUI, or any 60–120 fps tick). <code>dt</code> is the seconds since the last frame — it keeps the motion the same real-world speed on any display. See <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a>.</p>
+</blockquote>
+<hr />
+<h2>1. Exponential smoothing — the "chase"</h2>
+<p>No velocity, so it can never overshoot — it just eases toward a target and slows as it arrives.</p>
+<pre><code class="language-swift">current += (target - current) * rate            // rate ≈ 0.1–0.2 per frame
+// frame-rate-correct: current += (target - current) * (1 - exp(-dt / tau))
+</code></pre>
+<p><strong>Feel:</strong> calm ease-out, always settles gently. <strong>Use:</strong> smoothing a jittery sensor or cursor, easing a number counter, a soft follow. It's a spring with the bounce surgically removed — the same trick as the lerp "chase" from <a class="xref" href="#01b-the-seven-building-blocks">01b-the-seven-building-blocks</a>.</p>
+<hr />
+<h2>2. Momentum / inertial decay — flick and glide</h2>
+<p>Keep a velocity and bleed it off with friction each frame.</p>
+<pre><code class="language-swift">position += velocity * dt
+velocity *= pow(friction, dt * 60)              // friction ≈ 0.92; stop when |velocity| is tiny
+</code></pre>
+<p><strong>Feel:</strong> throw it and it coasts to a stop. <strong>Use:</strong> custom scroll views, swipe-to-dismiss, spinning a carousel or wheel. Pair it with #5 so it <em>snaps</em> to the nearest item as it slows.</p>
+<hr />
+<h2>3. Rubber-banding — resistance past a limit</h2>
+<p>Apple's own overscroll formula: the farther you drag past an edge, the harder it fights back.</p>
+<pre><code class="language-swift">// x = how far past the edge you've pulled, d = the dimension (e.g. view height)
+func rubberBand(_ x: CGFloat, _ d: CGFloat, c: CGFloat = 0.55) -&gt; CGFloat {
+    (1 - 1 / (x * c / d + 1)) * d
+}
+</code></pre>
+<p><strong>Feel:</strong> the signature iOS "you can pull, but it resists, then springs back." <strong>Use:</strong> overscroll, dragging past bounds, pull-to-refresh. On release, hand the value to a spring (#lesson 06) to snap home.</p>
+<hr />
+<h2>4. Gravity + bounce — the most literal physics</h2>
+<p>Constant downward pull; flip and shrink the velocity on impact.</p>
+<pre><code class="language-swift">velocity += gravity * dt                         // gravity ≈ 2000 pt/s²
+position += velocity * dt
+if position.y &gt; floor {                           // hit the ground
+    position.y = floor
+    velocity.y = -velocity.y * restitution        // restitution ≈ 0.6 → each bounce smaller
+}
+</code></pre>
+<p><strong>Feel:</strong> falling, bouncing, settling. <strong>Use:</strong> playful drops, confetti, a toast that plops in. <code>restitution</code> is your bounciness knob — 1 bounces forever, 0 is a dead thud.</p>
+<hr />
+<h2>5. Attraction / magnetic snap — a spring toward the nearest anchor</h2>
+<p>A spring whose target is recomputed each frame as the closest snap point.</p>
+<pre><code class="language-swift">let target = nearestSnapPoint(to: position)       // grid line, page, detent
+acceleration = -k * (position - target) - c * velocity   // then integrate (see lesson 06)
+</code></pre>
+<p><strong>Feel:</strong> magnetic — it drifts, gets grabbed, and clicks into place. <strong>Use:</strong> snap-to-grid, paging, bottom-sheet detents, ruler/wheel pickers.</p>
+<hr />
+<h2>6. SmoothDamp — critically damped, but time-specified ⭐</h2>
+<p>The most useful general-purpose one. It's a spring tuned so you say <em>"settle in about N seconds"</em> instead of guessing stiffness and damping — and it never overshoots.</p>
+<pre><code class="language-swift">func smoothDamp(_ current: CGFloat, _ target: CGFloat,
+                _ vel: inout CGFloat, smoothTime: CGFloat, dt: CGFloat) -&gt; CGFloat {
+    let omega = 2 / smoothTime
+    let x = omega * dt
+    let exp = 1 / (1 + x + 0.48*x*x + 0.235*x*x*x)
+    let change = current - target
+    let temp = (vel + omega * change) * dt
+    vel = (vel - omega * temp) * exp
+    return target + (change + temp) * exp
+}
+</code></pre>
+<p><strong>Feel:</strong> the smoothness of a spring with the <em>predictability</em> of a duration. <strong>Use:</strong> camera/scroll follow, easing a value where you want "arrives in ~0.3s" but with zero bounce. This is the sweet spot between #1 and a full spring.</p>
+<hr />
+<h2>7. Verlet / trailing follow — chains and tails</h2>
+<p>Each segment chases the one ahead of it, so a lag ripples down the line.</p>
+<pre><code class="language-swift">for i in 1..&lt;nodes.count {
+    nodes[i] += (nodes[i-1] - nodes[i]) * k        // each node lags the previous
+}
+// true Verlet for rope/cloth: x_new = x + (x - x_prev) * damping + accel * dt * dt
+</code></pre>
+<p><strong>Feel:</strong> ropey, comet-tail, snake-like. <strong>Use:</strong> cursor trails, connected-dot effects, a dangling handle, cloth.</p>
+<hr />
+<h2>8. Noise wander — organic idle</h2>
+<p>Not a simulation exactly, but the same spirit: drive a value from smooth <strong>noise</strong> instead of a fixed curve, so it's alive and never repeats.</p>
+<pre><code class="language-swift">x = baseX + amplitude * noise(t * frequency)       // 1D drift
+// 2D: two noise fields with different seeds for x and y
+</code></pre>
+<p><strong>Feel:</strong> gently breathing, floating, hand-held-camera. <strong>Use:</strong> idle-state motion, ambient background elements, making anything feel less mechanical. Full treatment in <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a>.</p>
+<hr />
+<h2>How to pick one</h2>
+<p>The through-line is why they all feel natural: <strong>each keeps state and updates it from a local rule, so the path emerges instead of being drawn</strong> — the same move as the spring. Bucket them by feel:</p>
+<table>
+<thead>
+<tr>
+<th>You want…</th>
+<th>Reach for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ease to a target, no overshoot</td>
+<td>exponential smoothing (#1), SmoothDamp (#6)</td>
+</tr>
+<tr>
+<td>Something that was thrown</td>
+<td>inertial decay (#2), gravity (#4)</td>
+</tr>
+<tr>
+<td>Constraints &amp; boundaries</td>
+<td>rubber-band (#3), magnetic snap (#5)</td>
+</tr>
+<tr>
+<td>Coupled / many-body</td>
+<td>verlet trailing (#7)</td>
+</tr>
+<tr>
+<td>Organic / ambient</td>
+<td>noise (#8)</td>
+</tr>
+</tbody>
+</table>
+<p>Two you'll reach for constantly: <strong>SmoothDamp</strong> (best default "follow a target") and <strong>inertial decay + snap</strong> (best default "flickable list").</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>the family move</strong> = keep <code>state</code> (position, maybe velocity) and update it each frame from a rule; the path <em>emerges</em> — same as the spring.</li>
+<li><strong>exponential smoothing</strong> = ease to a target by a fraction of the remaining gap; no velocity, no overshoot.</li>
+<li><strong>inertial decay</strong> = carry a velocity and multiply it by friction each frame → flick-and-glide.</li>
+<li><strong>rubber-band</strong> = resistance that grows the farther you pull past a limit (the iOS overscroll formula).</li>
+<li><strong>gravity + restitution</strong> = constant pull plus a velocity flip on impact → falling and bouncing.</li>
+<li><strong>magnetic snap</strong> = a spring whose target is the nearest anchor, recomputed each frame.</li>
+<li><strong>SmoothDamp</strong> = a critically damped spring you tune by <em>settle time</em> — smooth like a spring, predictable like a duration.</li>
+<li><strong>verlet trailing</strong> = each node chases the one ahead → ropes, tails, cloth.</li>
+<li><strong><code>dt</code></strong> = seconds per frame; multiply rates by it so motion runs the same speed on 60 and 120 Hz.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The spring this extends: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></li>
+<li>Choosing map vs cycle vs simulate: <a class="xref" href="#01a-choosing-the-math">01a-choosing-the-math</a></li>
+<li>The organic/noise family: <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a></li>
+<li>Who runs the per-frame loop on iOS: <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></li>
+<li>Prev: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> · Next: <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#06-interpolation-easing-and-springs"><span>Prev</span>← 06 — Interpolation, Easing &amp; Springs</a><a href="#07-oscillations-noise-and-organic-motion"><span>Next</span>07 — Oscillations, Noise &amp; Organic Motion →</a></div></section>
 <section class="page" id="07-oscillations-noise-and-organic-motion" data-title="07 — Oscillations, Noise &amp; Organic Motion" data-num="07" data-hasdemo="1" data-group=""><h1>07 — Oscillations, Noise &amp; Organic Motion</h1><div class="demo-mount" data-demo="oscillation"></div>
 <h2>Start here — the plain idea</h2>
 <p>A plain <code>sin</code> wave wiggles forever at the same size — fine for a steady pulse, but real things lose energy. Multiply the wave by a fading curtain (<code>e^(−λt)</code>, a shrinking envelope) and the wiggle dies down over time — that's a bounce settling, the natural cousin of a spring.</p>
@@ -939,7 +1074,7 @@ x += v * dt
 <li>Wave basics: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></li>
 <li>Noise in shaders: <a class="xref" href="shaders.html#15-noise-and-patterns">15-noise-and-patterns</a>, <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></li>
 <li>Prev: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
-</ul><div class="pager"><a href="#06-interpolation-easing-and-springs"><span>Prev</span>← 06 — Interpolation, Easing &amp; Springs</a><a href="#08-worked-example-wavy-carousel"><span>Next</span>08 — Worked Example: The Wavy Carousel →</a></div></section>
+</ul><div class="pager"><a href="#06a-simulations-beyond-the-spring"><span>Prev</span>← 06a — Simulations Beyond the Spring</a><a href="#08-worked-example-wavy-carousel"><span>Next</span>08 — Worked Example: The Wavy Carousel →</a></div></section>
 <section class="page" id="08-worked-example-wavy-carousel" data-title="08 — Worked Example: The Wavy Carousel" data-num="08" data-hasdemo="1" data-group=""><h1>08 — Worked Example: The Wavy Carousel</h1><div class="demo-mount" data-demo="carousel"></div>
 <h2>Start here — the plain idea</h2>
 <p>This is the victory lap — the one screen that ties the whole course together. Picture a row of cards riding a gentle sine wave, each tilted so it lies flush on the curve like beads on a wire, and when you pinch, the wave grows taller and the tilts adjust themselves. Every tool you've learned shows up here, working as a team.</p>
