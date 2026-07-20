@@ -235,6 +235,69 @@
 </tr>
 </tbody>
 </table>
+<h2>Part 7: Advanced Procedural (Shadertoy-Grade)</h2>
+<p>The composition toolkit behind smoke, sparks, nebulae, and generative art.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>File</th>
+<th>What You'll Learn</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>26</td>
+<td><code>26-advanced-noise-fbm.md</code></td>
+<td>fBm: octaves, lacunarity, gain; turbulence &amp; ridged noise</td>
+</tr>
+<tr>
+<td>27</td>
+<td><code>27-voronoi-deep-dive.md</code></td>
+<td>Cellular noise: cell space, F1/F2, sparks &amp; cell borders</td>
+</tr>
+<tr>
+<td>28</td>
+<td><code>28-domain-warping.md</code></td>
+<td>Feeding noise into noise → flowing smoke and marble</td>
+</tr>
+<tr>
+<td>29</td>
+<td><code>29-sdf-toolkit.md</code></td>
+<td>SDF shapes, smooth-min unions, soft particles &amp; glows</td>
+</tr>
+<tr>
+<td>30</td>
+<td><code>30-layering-and-parallax.md</code></td>
+<td>Stacked offset fields → fake volumetric depth</td>
+</tr>
+<tr>
+<td>31</td>
+<td><code>31-stateless-procedural-animation.md</code></td>
+<td>Motion from <code>(uv, time)</code> with zero stored state</td>
+</tr>
+<tr>
+<td>32</td>
+<td><code>32-cosine-palettes.md</code></td>
+<td>Infinite procedural color from four constants</td>
+</tr>
+<tr>
+<td>33</td>
+<td><code>33-post-processing.md</code></td>
+<td>Bloom, vignette, grain, tone mapping, anti-aliasing</td>
+</tr>
+<tr>
+<td>34</td>
+<td><code>34-raymarching-3d-sdf.md</code></td>
+<td>Shadertoy-style 3D from a distance function</td>
+</tr>
+<tr>
+<td>35</td>
+<td><code>35-capstone-smoke-sparks-nebula.md</code></td>
+<td>Capstone: combine everything into a living nebula</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2>Prerequisites</h2>
 <ul>
@@ -6192,7 +6255,996 @@ threadgroup_barrier(mem_flags::mem_threadgroup);
 <li><strong>spring physics</strong> = mass/stiffness/damping (≈1 / 200-400 / 18-30) that make motion settle naturally instead of linearly.</li>
 <li><strong>stagger (0.03-0.05s/item)</strong> = a small per-item delay that makes a group animate in sequence, like the iMessage menu.</li>
 <li><strong>continuous corners</strong> = the smooth, non-circular rounding (<code>cornerCurve = .continuous</code>) that gives Apple shapes their look.</li>
-</ul><div class="pager"><a href="#24-shader-performance"><span>Prev</span>← 24 — Shader Performance</a><a href="#01-card-shader-reflections"><span>Next</span>Card Shader Reflections — PBR Metallic Card →</a></div></section>
+</ul><div class="pager"><a href="#24-shader-performance"><span>Prev</span>← 24 — Shader Performance</a><a href="#26-advanced-noise-fbm"><span>Next</span>26 — Fractal Brownian Motion: Noise with Detail →</a></div></section>
+<section class="page" id="26-advanced-noise-fbm" data-title="26 — Fractal Brownian Motion: Noise with Detail" data-num="26" data-hasdemo="1" data-group="Curriculum"><h1>26 — Fractal Brownian Motion: Noise with Detail</h1><div class="demo-mount" data-demo="sh-noise"></div>
+<h2>Start here — the plain idea</h2>
+<p>Think of fBm as <strong>stacking transparent layers of noise on a light table</strong>. The bottom layer is big and soft — the broad shapes, like a mountain range seen from far away. On top of it you lay a fainter layer that's half as strong but twice as busy — those are the hills. Then a fainter, busier one still — the rocks. Then the pebbles. Each layer adds finer detail while barely changing the big picture. Add them all up and you get something that looks natural at every zoom level, the way real terrain, clouds, and smoke do.</p>
+<p>That's the whole trick. One octave of noise looks blobby and fake. Six octaves stacked with the right ratios looks <em>organic</em>. The two numbers that control the stacking are <strong>lacunarity</strong> (how much busier each layer gets — usually the frequency doubles) and <strong>gain</strong> (how much fainter each layer gets — usually the amplitude halves). Inigo Quilez's ("IQ") favorite defaults are <code>gain = 0.5</code> and <code>lacunarity = 2.0</code>, and honestly you'll rarely need anything else.</p>
+<p>If you're shaky on plain value noise, revisit <a class="xref" href="#15-noise-and-patterns">15-noise-and-patterns</a> first — this lesson assumes you know what a single noise octave is and builds the fractal version on top.</p>
+<h2>The building blocks: hash and value noise</h2>
+<pre><code class="language-cpp">float hash21(float2 p){ p = fract(p*float2(123.34, 345.45)); p += dot(p, p+34.345); return fract(p.x*p.y); }
+float valueNoise(float2 p){
+    float2 i = floor(p), f = fract(p);
+    float a = hash21(i), b = hash21(i+float2(1,0)), c = hash21(i+float2(0,1)), d = hash21(i+float2(1,1));
+    float2 u = f*f*(3.0-2.0*f);                 // smoothstep weights
+    return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+}
+</code></pre>
+<p>Line by line:</p>
+<ul>
+<li><code>hash21</code> turns a 2D point into one pseudo-random float in <code>[0,1)</code>. It's not "real" randomness — it's a deterministic scramble. Multiply by two big irrational-ish constants, throw away the whole-number part with <code>fract</code> so only the chaotic decimals survive, mix the coordinates together with <code>dot</code>, and <code>fract</code> again. Same input always gives the same output, which is exactly what we want (a pixel must get the same random value every frame).</li>
+<li><code>valueNoise</code> picks the <strong>grid cell</strong> the point lives in. <code>i = floor(p)</code> is the cell's integer corner; <code>f = fract(p)</code> is where inside that cell we are (0..1 on each axis).</li>
+<li><code>a, b, c, d</code> are the random values at the four corners of the cell, via <code>hash21</code>.</li>
+<li><code>u = f*f*(3.0-2.0*f)</code> is the smoothstep curve applied to the fractional position. This is what stops the noise from looking like a blocky grid — instead of blending linearly between corners, we ease in and out so the transitions are smooth.</li>
+<li>The nested <code>mix</code> is <strong>bilinear interpolation</strong>: blend the top edge (<code>a→b</code>) by <code>u.x</code>, blend the bottom edge (<code>c→d</code>) by <code>u.x</code>, then blend those two results vertically by <code>u.y</code>. Out comes one smooth value.</li>
+</ul>
+<h2>Stacking octaves: fBm itself</h2>
+<pre><code class="language-cpp">float fbm(float2 p){
+    float sum = 0.0, amp = 0.5, freq = 1.0;
+    for (int i = 0; i &lt; 6; i++){                 // 6 octaves
+        sum += amp * valueNoise(p * freq);
+        freq *= 2.0;                             // lacunarity: frequency doubles
+        amp  *= 0.5;                             // gain: amplitude halves
+    }
+    return sum;
+}
+</code></pre>
+<ul>
+<li><code>sum</code> accumulates the layers. <code>amp</code> (amplitude) starts at 0.5 — how strongly this layer contributes. <code>freq</code> (frequency) starts at 1.0 — how zoomed-in this layer is.</li>
+<li>Each pass: sample noise at <code>p * freq</code> (higher frequency = we're stretching the coordinates so the noise repeats faster = finer detail), scale it by <code>amp</code>, and add it in.</li>
+<li><code>freq *= 2.0</code> is <strong>lacunarity = 2.0</strong>: every octave is twice as busy as the last.</li>
+<li><code>amp *= 0.5</code> is <strong>gain = 0.5</strong>: every octave is half as strong.</li>
+<li>Six octaves is a sweet spot — enough detail to look rich, cheap enough to run per-pixel. Because the amplitudes are <code>0.5 + 0.25 + 0.125 + …</code>, the sum lands roughly in <code>[0,1)</code> without extra normalization.</li>
+</ul>
+<h2>Two useful variants</h2>
+<p>Swap the accumulation line and you get very different textures:</p>
+<pre><code class="language-cpp">// turbulence — billowy clouds / smoke (folds the noise at zero, so valleys become creases)
+sum += amp * abs(valueNoise(p*freq)*2.0-1.0);
+
+// ridged — sharp ridges, veins, lightning (turbulence flipped so creases become bright edges)
+sum += amp * (1.0 - abs(valueNoise(p*freq)*2.0-1.0));
+</code></pre>
+<p>The move in both is <code>valueNoise(...)*2.0-1.0</code>, which remaps noise from <code>[0,1]</code> to <code>[-1,1]</code>. Then <code>abs(...)</code> folds the negative half up — everything that used to cross zero now has a sharp crease. <strong>Turbulence</strong> keeps those creases as dark folds (great for puffy cloud/smoke bodies). <strong>Ridged</strong> does <code>1.0 - abs(...)</code>, flipping the fold so the creases become bright thin lines — perfect for mountain ridges, cracked veins, or lightning.</p>
+<h2>Animated fBm as a stitchable shader</h2>
+<p>Scroll the coordinates over time and the noise field drifts like slow smoke. Here it's mapped straight to grayscale:</p>
+<pre><code class="language-cpp">#include &lt;metal_stdlib&gt;
+using namespace metal;
+
+// ... hash21, valueNoise, fbm from above live in the same file ...
+
+[[ stitchable ]] half4 fbmField(float2 position, half4 color, float2 size, float time){
+    float2 uv = position / size;                 // 0..1 across the view
+    uv *= 3.0;                                    // zoom out so we see several blobs
+    uv += float2(0.0, time * 0.15);              // scroll upward over time -&gt; drifting smoke
+    float n = fbm(uv);                            // 0..1-ish
+    return half4(half3(n), 1.0);                  // grayscale
+}
+</code></pre>
+<ul>
+<li><code>uv = position / size</code> gives normalized 0..1 coordinates (same idea as Shadertoy's <code>fragCoord/iResolution</code>).</li>
+<li><code>uv *= 3.0</code> fits about three noise "blobs" across the screen; bigger = finer.</li>
+<li><code>uv += float2(0, time*0.15)</code> shifts the sampling point upward every frame, so the field appears to flow. Change the axis or sign to steer the drift.</li>
+<li><code>fbm(uv)</code> returns a value near 0..1; <code>half3(n)</code> paints it as gray.</li>
+</ul>
+<p>SwiftUI side — drive <code>time</code> with a <code>TimelineView</code>:</p>
+<pre><code class="language-swift">struct FBMView: View {
+    let start = Date()
+    var body: some View {
+        TimelineView(.animation) { ctx in
+            let t = ctx.date.timeIntervalSince(start)
+            Rectangle()
+                .colorEffect(
+                    ShaderLibrary.fbmField(
+                        .float2(0, 0),          // filled by the effect with pixel position
+                        .float(Float(t))
+                    )
+                )
+        }
+    }
+}
+</code></pre>
+<p>Shadertoy names map straight over: <code>iTime</code> is the <code>time</code> you pass in, and <code>iResolution</code> is <code>size</code>. Porting an fBm shader from Shadertoy is mostly renaming those two.</p>
+<h2>Where this goes next</h2>
+<p>Everything smoky, marbled, or nebula-like starts here. The next big leap is <strong>domain warping</strong> — sampling <code>fbm</code> at coordinates that have <em>themselves</em> been pushed around by <code>fbm</code>, i.e. <code>fbm(uv + fbm(uv))</code>. That "fbm of fbm" is what makes noise swirl and flow instead of just sit there; we build it in <a class="xref" href="#28-domain-warping">28-domain-warping</a>. If you want data-driven parameters (octave count, drift speed) fed from Swift, see <a class="xref" href="#18a-feeding-data-into-shaders">18a-feeding-data-into-shaders</a>.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>octave</strong> = one layer of noise in the stack; more octaves = more fine detail.</li>
+<li><strong>lacunarity</strong> = the frequency multiplier between octaves; 2.0 means each layer is twice as busy.</li>
+<li><strong>gain</strong> = the amplitude multiplier between octaves; 0.5 means each layer is half as strong.</li>
+<li><strong>fBm</strong> = fractal Brownian motion; the sum of octaves, giving natural detail at every scale.</li>
+<li><strong>turbulence</strong> = fBm built from <code>abs()</code>-folded noise; billowy, cloud-like bodies.</li>
+<li><strong>ridged</strong> = <code>1 - abs()</code> folded noise; sharp bright veins, ridges, lightning.</li>
+<li><strong>value noise</strong> = smooth noise made by hashing grid corners and bilinearly blending them.</li>
+<li><strong>animating fBm</strong> = scroll the input coordinates with <code>time</code> so the field drifts.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="#15-noise-and-patterns">15-noise-and-patterns</a> — the single-octave noise this builds on</li>
+<li><a class="xref" href="#28-domain-warping">28-domain-warping</a> — fbm of fbm, for swirling flow</li>
+<li><a class="xref" href="#23-animation-in-shaders">23-animation-in-shaders</a> — driving <code>time</code> and motion</li>
+<li><a class="xref" href="#18a-feeding-data-into-shaders">18a-feeding-data-into-shaders</a> — passing parameters from Swift</li>
+</ul>
+<p>Prev: <a class="xref" href="#25-real-world-apple-effects">25-real-world-apple-effects</a> · Next: <a class="xref" href="#27-voronoi-deep-dive">27-voronoi-deep-dive</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#25-real-world-apple-effects"><span>Prev</span>← 25 — Real-World Apple Effects: Recreating iOS Animations</a><a href="#27-voronoi-deep-dive"><span>Next</span>27 — Voronoi &amp; Cellular Noise: Cells, Sparks &amp; Cracks →</a></div></section>
+<section class="page" id="27-voronoi-deep-dive" data-title="27 — Voronoi &amp; Cellular Noise: Cells, Sparks &amp; Cracks" data-num="27" data-hasdemo="1" data-group="Curriculum"><h1>27 — Voronoi &amp; Cellular Noise: Cells, Sparks &amp; Cracks</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>Think of it as <strong>scattering fireflies across a tiled floor</strong>. Chop the plane into a grid of square cells, and drop exactly one firefly at a random spot inside each cell. Now every pixel on the floor asks a simple question: <em>"How far is the nearest firefly to me?"</em> That nearest distance is called <strong>F1</strong>. Points sitting right on top of a firefly get F1 ≈ 0 (bright); points stranded between fireflies get a big F1 (dark). Paint brightness from F1 and you get glowing dots — sparks, embers, a starfield.</p>
+<p>There's a second, sneakier question: <em>"How far is the </em><em>second</em><em>-nearest firefly?"</em> — that's <strong>F2</strong>. On its own F2 isn't very interesting, but <strong>F2 minus F1</strong> is magic: it's near zero exactly where two fireflies are equally close, which is the <em>border</em> between their territories. So F2−F1 lights up the seams between cells — cracks, cobweb, cracked-mud, caustic webbing.</p>
+<p>One catch on efficiency: a pixel only needs to check its own cell and the eight around it (a 3×3 neighborhood), because a firefly two cells away can't possibly be the closest. That keeps it cheap. If you've only seen the intro version, <a class="xref" href="#15-noise-and-patterns">15-noise-and-patterns</a> has the gentle warm-up; this lesson is the full F1/F2 treatment.</p>
+<h2>The core: F1 and F2 over a 3×3 search</h2>
+<pre><code class="language-cpp">float2 hash22(float2 p){
+    p = float2(dot(p, float2(127.1,311.7)), dot(p, float2(269.5,183.3)));
+    return fract(sin(p)*43758.5453);
+}
+// returns (F1, F2): nearest and second-nearest feature-point distances
+float2 voronoi(float2 x, float time){
+    float2 n = floor(x), f = fract(x);
+    float f1 = 8.0, f2 = 8.0;
+    for (int j=-1;j&lt;=1;j++)
+    for (int i=-1;i&lt;=1;i++){
+        float2 g = float2(i,j);                 // neighbor cell offset
+        float2 o = hash22(n+g);                 // that cell's random point (0..1)
+        o = 0.5 + 0.5*sin(time + 6.2831*o);     // animate the point in a little orbit
+        float2 r = g + o - f;                   // vector from pixel to the point
+        float d = dot(r,r);                     // squared distance (cheaper)
+        if (d &lt; f1){ f2 = f1; f1 = d; }
+        else if (d &lt; f2){ f2 = d; }
+    }
+    return float2(sqrt(f1), sqrt(f2));
+}
+</code></pre>
+<p>Reading it:</p>
+<ul>
+<li><code>hash22</code> is a <strong>2D→2D</strong> hash: feed it a cell's integer coordinate, get back a stable random point in <code>[0,1)²</code>. Same cell always yields the same firefly location. It uses two <code>dot</code>s with big constants and <code>fract(sin(...)*43758.5453)</code> — the classic "sine scramble."</li>
+<li><code>n = floor(x)</code> is <strong>which cell</strong> the pixel is in; <code>f = fract(x)</code> is <strong>where inside that cell</strong> (0..1), i.e. the pixel's local position.</li>
+<li><code>f1</code> and <code>f2</code> start at 8.0 — a "very far" sentinel that any real distance will beat.</li>
+<li>The double loop walks the 3×3 block of neighbor cells: <code>g</code> is the offset to each neighbor (from <code>(-1,-1)</code> to <code>(1,1)</code>).</li>
+<li><code>o = hash22(n+g)</code> fetches that neighbor's firefly, as a position inside <em>its own</em> cell.</li>
+<li><code>o = 0.5 + 0.5*sin(time + 6.2831*o)</code> <strong>animates</strong> the firefly: <code>6.2831</code> is 2π, so <code>sin</code> sweeps a full circle over time, and the <code>0.5 + 0.5*</code> remap keeps <code>o</code> in <code>[0,1]</code>. Each firefly drifts on its own little orbit. Drop this line for a static pattern.</li>
+<li><code>r = g + o - f</code> is the vector from the pixel to that firefly, measured in cell units (<code>g</code> gets us to the neighbor cell, <code>+o</code> to the firefly inside it, <code>-f</code> back to the pixel).</li>
+<li><code>d = dot(r,r)</code> is the <strong>squared</strong> distance. We compare in squared space to skip the <code>sqrt</code> inside the loop — cheaper, and ordering is preserved.</li>
+<li>The <code>if/else if</code> keeps the two smallest distances seen so far: a new nearest bumps the old nearest down into second place.</li>
+<li>Only at the end do we <code>sqrt</code> both, returning true distances <code>(F1, F2)</code>.</li>
+</ul>
+<h2>Sparks — glowing dots with F1</h2>
+<pre><code class="language-cpp">[[ stitchable ]] half4 sparks(float2 position, half4 color, float2 size, float time){
+    float2 uv = position / size;
+    uv *= 8.0;                                   // 8x8 grid of cells -&gt; 64 sparks
+    float2 v = voronoi(uv, time);
+    float spark = smoothstep(0.12, 0.0, v.x);    // bright where F1 is tiny (near a point)
+    half3 col = half3(spark) * half3(1.0, 0.7, 0.3); // warm ember tint
+    return half4(col, 1.0);
+}
+</code></pre>
+<ul>
+<li><code>uv *= 8.0</code> sets the cell density: an 8×8 grid means 64 fireflies on screen.</li>
+<li><code>v.x</code> is F1. <code>smoothstep(0.12, 0.0, v.x)</code> reads <em>backwards</em> (high edge first), so it returns 1 when <code>v.x</code> is near 0 (right on a firefly) and fades to 0 by <code>v.x = 0.12</code>. That's a soft glowing dot per cell.</li>
+<li>Multiply by a warm color for embers. Because the points move with <code>time</code>, the sparks twinkle and drift.</li>
+</ul>
+<h2>Cracks — cell borders with F2 − F1</h2>
+<pre><code class="language-cpp">[[ stitchable ]] half4 cracks(float2 position, half4 color, float2 size, float time){
+    float2 uv = position / size;
+    uv *= 8.0;
+    float2 v = voronoi(uv, time);
+    float edge = smoothstep(0.04, 0.0, v.y - v.x); // bright on the seams between cells
+    return half4(half3(edge), 1.0);
+}
+</code></pre>
+<ul>
+<li><code>v.y - v.x</code> is <strong>F2 − F1</strong>. It's ~0 exactly on the border between two cells (where the nearest and second-nearest fireflies are the same distance) and grows toward cell interiors.</li>
+<li><code>smoothstep(0.04, 0.0, ...)</code> lights up only that thin near-zero band — a glowing web of cracks. Widen <code>0.04</code> for fatter seams.</li>
+</ul>
+<p>Use this for cracked mud, shattered glass, dragonfly-wing veins, or caustic light on a pool floor.</p>
+<h2>SwiftUI usage</h2>
+<pre><code class="language-swift">struct SparksView: View {
+    let start = Date()
+    var body: some View {
+        TimelineView(.animation) { ctx in
+            let t = ctx.date.timeIntervalSince(start)
+            Rectangle()
+                .colorEffect(
+                    ShaderLibrary.sparks(
+                        .float2(0, 0),        // pixel position, filled by the effect
+                        .float(Float(t))
+                    )
+                )
+        }
+    }
+}
+</code></pre>
+<p>Shadertoy names carry over unchanged: <code>iTime</code> is the <code>time</code> argument, and <code>iResolution</code> is <code>size</code>. A <code>smoothstep</code> and a <code>voronoi</code> port straight across.</p>
+<h2>One honest caveat</h2>
+<p>The F2−F1 border trick is an <strong>approximation</strong>. IQ points out that a firefly two cells away can occasionally own the true second-nearest slot near a border, so a rigorous edge needs a wider <strong>5×5</strong> second pass that re-measures distance to the actual cell boundary. For sparks, glows, and good-looking cracks, the 3×3 version here is plenty — just know the seams aren't mathematically exact if you zoom way in.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>cell space</strong> = <code>floor(x)</code> tells you which cell, <code>fract(x)</code> your position inside it.</li>
+<li><strong>feature point</strong> = one random point (firefly) per cell, placed by a 2D hash.</li>
+<li><strong>3×3 search</strong> = check your cell plus its 8 neighbors; farther cells can't win.</li>
+<li><strong>F1</strong> = distance to the nearest feature point; small F1 = bright sparks/glows.</li>
+<li><strong>F2</strong> = distance to the second-nearest feature point.</li>
+<li><strong>F2 − F1</strong> = ~0 on cell borders; lights up cracks, webs, caustics.</li>
+<li><strong>squared distance</strong> = compare <code>dot(r,r)</code> in the loop, <code>sqrt</code> only at the end for speed.</li>
+<li><strong>animation</strong> = orbit each feature point with <code>sin(time + 2π·o)</code> so cells shimmer.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="#15-noise-and-patterns">15-noise-and-patterns</a> — the intro Voronoi/cellular noise</li>
+<li><a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a> — fractal noise; pairs well with cellular for texture</li>
+<li><a class="xref" href="#28-domain-warping">28-domain-warping</a> — warp the input to Voronoi for organic cell shapes</li>
+<li><a class="xref" href="#23-animation-in-shaders">23-animation-in-shaders</a> — driving the <code>time</code> orbit</li>
+</ul>
+<p>Prev: <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a> · Next: <a class="xref" href="#28-domain-warping">28-domain-warping</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#26-advanced-noise-fbm"><span>Prev</span>← 26 — Fractal Brownian Motion: Noise with Detail</a><a href="#28-domain-warping"><span>Next</span>28 — Domain Warping: Feeding Noise Into Noise →</a></div></section>
+<section class="page" id="28-domain-warping" data-title="28 — Domain Warping: Feeding Noise Into Noise" data-num="28" data-hasdemo="1" data-group="Curriculum"><h1>28 — Domain Warping: Feeding Noise Into Noise</h1><div class="demo-mount" data-demo="sh-plasma"></div>
+<h2>Start here — the plain idea</h2>
+<p>Think of it as <strong>reading a map printed on a flag flapping in the wind</strong>. The map itself — the noise pattern — never changes. But <em>where you look</em> on it keeps getting pushed around, because the fabric is rippling. So the coastlines bend, the rivers swirl, the whole thing seems to flow, even though it's the same static picture underneath. That's domain warping: you don't change the noise, you change the <em>coordinates</em> you feed into it.</p>
+<p>Normally you sample noise at <code>uv</code>. With domain warping you first <strong>displace</strong> <code>uv</code> by <em>more</em> noise, then sample there: the one-liner intuition is <code>fbm(uv + fbm(uv))</code>. The inner <code>fbm</code> nudges each pixel's lookup position a little; nearby pixels get nudged by similar-but-different amounts, so the sampling grid itself becomes wavy. The result stops looking like static blobs and starts looking like smoke, marble, flowing lava, or a nebula.</p>
+<p>This lesson <strong>reuses the <code>fbm()</code> from <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a></strong> — same <code>hash21</code>, <code>valueNoise</code>, <code>fbm</code>. Make sure those are in your Metal file before the code below.</p>
+<h2>The two-level recipe (IQ's classic)</h2>
+<pre><code class="language-cpp">// q and r are successive coordinate displacements (IQ's classic recipe)
+float warpedFbm(float2 p, float time, thread float2 &amp;q, thread float2 &amp;r){
+    q = float2(fbm(p + float2(0.0,0.0)),
+               fbm(p + float2(5.2,1.3)));
+    r = float2(fbm(p + 4.0*q + float2(1.7,9.2) + 0.15*time),
+               fbm(p + 4.0*q + float2(8.3,2.8) + 0.126*time));
+    return fbm(p + 4.0*r);
+}
+</code></pre>
+<p>Read it as three layers of "look somewhere else, then look":</p>
+<ul>
+<li><strong><code>q</code> — the first warp.</strong> We build a 2D displacement vector out of two <code>fbm</code> samples. The first uses <code>p</code> as-is; the second uses <code>p + (5.2, 1.3)</code>. That offset is <strong>arbitrary on purpose</strong>: sampling <code>fbm</code> at two nearby points would give almost the same value, and then <code>q.x ≈ q.y</code>, so the displacement would only ever push diagonally. Shoving the second sample far across the noise field (<code>+5.2, +1.3</code>) <strong>decorrelates</strong> the two channels, so <code>q</code> points in genuinely varied directions. Any large-ish, unrelated pair of constants works — these are just IQ's.</li>
+<li><strong><code>r</code> — the second warp.</strong> Now we sample <code>fbm</code> again, but at <code>p + 4.0*q</code> — the coordinates already bent by the first warp. The <code>4.0</code> amplifies how far <code>q</code> pushes (bigger = wilder swirl). Two more arbitrary offsets <code>(1.7, 9.2)</code> and <code>(8.3, 2.8)</code> decorrelate <code>r.x</code> from <code>r.y</code> the same way. And here we add <strong><code>time</code></strong>: <code>0.15*time</code> and <code>0.126*time</code> slowly drift the two channels. The two speeds are deliberately <em>different</em> (0.15 vs 0.126) so the x and y drift never sync up — that's what keeps the motion from looking like a flat slide and makes it churn instead.</li>
+<li><strong>The final sample.</strong> <code>fbm(p + 4.0*r)</code> reads the noise at coordinates that have now been warped <strong>twice</strong>. That double displacement is what turns flat noise into rich, organic flow.</li>
+</ul>
+<p>We pass <code>q</code> and <code>r</code> back out by reference (<code>thread float2 &amp;q</code>) because they're useful for <strong>coloring</strong> — their magnitudes tell you how strongly each region got warped, which makes a natural tint map.</p>
+<h2>A smoke / marble stitchable shader</h2>
+<pre><code class="language-cpp">#include &lt;metal_stdlib&gt;
+using namespace metal;
+
+// ... hash21, valueNoise, fbm (from lesson 26) and warpedFbm (above) live here ...
+
+[[ stitchable ]] half4 smoke(float2 position, half4 color, float2 size, float time){
+    float2 uv = position / size;
+    uv *= 3.0;                                    // zoom so we see a few swirls
+
+    float2 q, r;                                  // filled by reference
+    float f = warpedFbm(uv, time, q, r);          // the twice-warped noise value
+
+    // base gradient from the warped noise itself
+    half3 col = mix(half3(0.10, 0.12, 0.25),      // deep blue-grey
+                    half3(0.90, 0.55, 0.20),      // warm ember
+                    half(f));
+
+    // use the warp magnitudes to add depth / variation
+    col = mix(col, half3(0.20, 0.05, 0.10), half(clamp(length(q), 0.0, 1.0)));  // q -&gt; shadowed folds
+    col = mix(col, half3(1.00, 0.95, 0.85), half(clamp(length(r), 0.0, 1.0)));  // r -&gt; bright wisps
+
+    return half4(col, 1.0);
+}
+</code></pre>
+<ul>
+<li><code>uv *= 3.0</code> frames a few swirls; larger for finer smoke.</li>
+<li><code>warpedFbm(uv, time, q, r)</code> returns the final noise value <code>f</code> <strong>and</strong> hands back the two displacement vectors.</li>
+<li>The first <code>mix</code> turns <code>f</code> (roughly 0..1) into a base color ramp — deep blue-grey up to warm ember, so low noise is cool/dark and high noise is hot/bright.</li>
+<li>The next two <code>mix</code>es use <code>length(q)</code> and <code>length(r)</code> as tint weights: regions warped hard by the <em>first</em> pass get pushed toward shadowed folds, and regions warped hard by the <em>second</em> pass get bright wisps. <code>clamp(..., 0, 1)</code> keeps the weights sane. This is why passing <code>q</code> and <code>r</code> out was worth it — they're free structure information.</li>
+</ul>
+<p>SwiftUI, animated with <code>time</code>:</p>
+<pre><code class="language-swift">struct SmokeView: View {
+    let start = Date()
+    var body: some View {
+        TimelineView(.animation) { ctx in
+            let t = ctx.date.timeIntervalSince(start)
+            Rectangle()
+                .colorEffect(
+                    ShaderLibrary.smoke(
+                        .float2(0, 0),        // pixel position, filled by the effect
+                        .float(Float(t))
+                    )
+                )
+        }
+    }
+}
+</code></pre>
+<p>Shadertoy names map over directly: <code>iTime</code> is the <code>time</code> you pass, and <code>iResolution</code> is <code>size</code>. Nearly every "flowing smoke/fire/nebula" shader you find there is some flavor of this recipe.</p>
+<h2>How many warps?</h2>
+<ul>
+<li><strong>Zero warps</strong> (<code>fbm(uv)</code>): static blobs. Fine for texture, dead for motion.</li>
+<li><strong>One warp</strong> (<code>fbm(uv + fbm(uv))</code>): a gentle wobble — good for water, subtle marble.</li>
+<li><strong>Two warps</strong> (the recipe above): rich, organic, churning flow — smoke, fire, nebulae. This is the sweet spot.</li>
+<li><strong>Three or more</strong>: the structure starts eating itself and turns to visual mush. Stop at two unless you have a specific reason.</li>
+</ul>
+<p>Domain warping is genuinely <strong>the</strong> trick behind most convincing flowing-substance shaders. Once it clicks, you'll spot it everywhere.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>domain warping</strong> = displace the <em>input coordinates</em> with noise before sampling, so the pattern flows.</li>
+<li><strong>the one-liner</strong> = <code>fbm(uv + fbm(uv))</code>: sample noise at a position that noise itself pushed around.</li>
+<li><strong><code>q</code> (first warp)</strong> = a noise-built displacement vector applied to <code>uv</code>.</li>
+<li><strong><code>r</code> (second warp)</strong> = a second displacement, sampled at the already-warped coordinates.</li>
+<li><strong>arbitrary offsets</strong> = constants like <code>(5.2,1.3)</code> that decorrelate the x/y channels so displacement isn't stuck diagonal.</li>
+<li><strong>different time speeds</strong> = drifting channels at <code>0.15</code> vs <code>0.126</code> keeps motion churning, not sliding.</li>
+<li><strong>warp magnitudes for color</strong> = <code>length(q)</code>, <code>length(r)</code> reveal where warping was strong; great tint maps.</li>
+<li><strong>stop at two</strong> = one warp wobbles, two warps flow, three-plus turns to mush.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a> — the <code>fbm()</code> this whole lesson reuses</li>
+<li><a class="xref" href="#32-cosine-palettes">32-cosine-palettes</a> — cheap, beautiful coloring for the warped result</li>
+<li><a class="xref" href="#27-voronoi-deep-dive">27-voronoi-deep-dive</a> — warp Voronoi input for organic cell shapes</li>
+<li><a class="xref" href="#23-animation-in-shaders">23-animation-in-shaders</a> — driving the <code>time</code> drift</li>
+</ul>
+<p>Prev: <a class="xref" href="#27-voronoi-deep-dive">27-voronoi-deep-dive</a> · Next: <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#27-voronoi-deep-dive"><span>Prev</span>← 27 — Voronoi &amp; Cellular Noise: Cells, Sparks &amp; Cracks</a><a href="#29-sdf-toolkit"><span>Next</span>29 — The SDF Toolkit: Shapes, Smooth-Min &amp; Soft Particles →</a></div></section>
+<section class="page" id="29-sdf-toolkit" data-title="29 — The SDF Toolkit: Shapes, Smooth-Min &amp; Soft Particles" data-num="29" data-hasdemo="1" data-group="Curriculum"><h1>29 — The SDF Toolkit: Shapes, Smooth-Min &amp; Soft Particles</h1><div class="demo-mount" data-demo="sh-sdf"></div>
+<h2>Start here — the plain idea</h2>
+<p>Imagine standing anywhere on a map and, instead of coordinates, being handed a single number: <em>how far is the nearest coastline?</em> Stand on land and it's positive, wade into the sea and it flips negative, and right on the water's edge it reads zero. That number, computed for every pixel at once, is a <strong>signed distance field</strong> (SDF). It doesn't draw a shape — it describes the <em>distance to</em> a shape's surface, with a sign that tells you which side you're on.</p>
+<p>Once you have that "how far to the edge" map, drawing is easy. Feed the distance into <code>smoothstep</code> and you turn distance into ink: black where you're deep inside, fading to nothing just outside the edge. Want two shapes at once? Take the <code>min</code> of their distances — the closer surface wins, and you get their union for free.</p>
+<p>The magic trick is <strong>smooth-min</strong>. Ordinary <code>min</code> gives a hard crease where two shapes meet. Smooth-min rounds that crease off, so two circles flow together like two blobs of mercury pulling into one. That single function is what makes procedural smoke, lava lamps, and gooey blobs look organic instead of geometric. We built the first SDFs back in <a class="xref" href="#04-coordinates-and-color">04-coordinates-and-color</a>; this lesson turns them into a real toolkit.</p>
+<h2>The two building-block SDFs</h2>
+<p>Every SDF is a function from a point <code>p</code> to a distance. Here are the two you'll reuse constantly.</p>
+<pre><code class="language-cpp">float sdCircle(float2 p, float r){ return length(p) - r; }
+float sdBox(float2 p, float2 b){ float2 d = abs(p) - b; return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0); }
+</code></pre>
+<p><code>sdCircle</code> is the whole idea in one line. <code>length(p)</code> is the distance from the origin to <code>p</code>; subtracting the radius <code>r</code> shifts the "zero" out to the circle's rim. Inside the circle <code>length(p) &lt; r</code>, so the result is <strong>negative</strong>; outside it's <strong>positive</strong>; exactly on the rim it's zero. To move the circle, subtract a center first: <code>sdCircle(p - center, r)</code>.</p>
+<p><code>sdBox</code> is trickier because a box has flat sides and sharp corners. <code>abs(p)</code> folds all four quadrants into one, so we only reason about the top-right corner. <code>d = abs(p) - b</code> measures how far past the box's half-extents <code>b</code> we are on each axis (negative means still inside on that axis). The <code>length(max(d, 0.0))</code> term handles the <em>outside</em>: clamping negatives to zero means only the axes we've actually exceeded contribute, giving true straight-line distance to the nearest edge or corner. The <code>min(max(d.x, d.y), 0.0)</code> term handles the <em>inside</em>: when both <code>d</code> components are negative, <code>max(d.x, d.y)</code> is the least-negative one — the distance to the closest wall — and <code>min(..., 0.0)</code> keeps it only when we're inside. Together they give a correct signed distance everywhere.</p>
+<h2>Turning distance into a drawn shape</h2>
+<p>A distance field is invisible until you map it to brightness. <code>smoothstep</code> is the standard tool.</p>
+<pre><code class="language-cpp">float d = sdCircle(p - center, 0.3);
+float m = smoothstep(0.0, edge, -d);   // 1 inside, 0 outside, soft ramp of width `edge`
+</code></pre>
+<p>We negate <code>d</code> so that <em>inside</em> (negative distance) becomes positive. <code>smoothstep(0.0, edge, -d)</code> then reads 1 wherever <code>-d</code> is past <code>edge</code> (well inside the shape), 0 wherever <code>-d</code> is below 0 (outside the edge), and a smooth ramp of width <code>edge</code> across the boundary. Larger <code>edge</code> means a softer, blurrier rim.</p>
+<p>That soft rim is nice for glows, but for a <em>crisp</em> shape you want the edge to be exactly one pixel wide no matter how far you zoom. <code>fwidth</code> gives you that — it reports how fast <code>d</code> changes between neighboring pixels, i.e. the size of one pixel measured in distance units.</p>
+<pre><code class="language-cpp">float fw = fwidth(d);
+float m = smoothstep(fw, -fw, d);   // anti-aliased edge, always ~1px wide
+</code></pre>
+<p>Here the ramp goes from <code>+fw</code> (just outside) to <code>-fw</code> (just inside), so the transition straddles the true edge and spans a single pixel's worth of distance. Note the order — <code>fw</code> then <code>-fw</code> — which makes the shape 1 <em>inside</em> (small/negative <code>d</code>) and 0 outside. This is the reliable way to anti-alias any SDF without multisampling.</p>
+<h2>Union, and the gooey smooth-union</h2>
+<p>Two shapes combine by taking the closer surface, which is just <code>min</code> of their distances.</p>
+<pre><code class="language-cpp">float d = min(sdCircle(p - a, 0.3), sdCircle(p - b, 0.3));   // hard union
+</code></pre>
+<p>This works, but where the two circles overlap you get a sharp crease — a kink in the field. To make them <em>merge</em> organically, replace <code>min</code> with the IQ polynomial smooth minimum.</p>
+<pre><code class="language-cpp">// IQ polynomial smooth minimum — gooey union, k = blend radius
+float smin(float a, float b, float k){
+    float h = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
+    return mix(a, b, h) - k*h*(1.0-h);
+}
+</code></pre>
+<p>Read it as a smarter <code>min</code>. <code>h</code> measures how close the two distances are, normalized by the blend radius <code>k</code>: when <code>a</code> and <code>b</code> are far apart, <code>h</code> saturates to 0 or 1 and <code>mix(a, b, h)</code> picks the smaller one — you get ordinary <code>min</code>. But when the two surfaces are within <code>k</code> of each other, <code>h</code> sits near 0.5 and the correction term <code>-k*h*(1.0-h)</code> subtracts a little extra distance, pulling the field <em>below</em> either shape and bulging out a smooth bridge between them. That subtracted bulge is the merging mercury. Bigger <code>k</code> means a wider, softer weld; <code>k</code> near zero collapses back to a hard <code>min</code>. Swap <code>min</code> for <code>smin</code> in the union above and the two circles flow into a peanut.</p>
+<h2>Soft particles and glows</h2>
+<p>Not everything needs a hard edge. Smoke motes, sparks, and bokeh are just soft round falloffs — brightest at a center, fading to nothing at some radius.</p>
+<pre><code class="language-cpp">// soft round particle / glow: 1 at the center, fading to 0 at radius r
+float glow(float2 p, float2 center, float r){ return smoothstep(r, 0.0, length(p - center)); }
+</code></pre>
+<p><code>length(p - center)</code> is the distance from the particle's center. <code>smoothstep(r, 0.0, dist)</code> reverses the usual direction: it reads 1 when the distance is 0 (dead center) and ramps down to 0 at distance <code>r</code>. The result is a smooth circular blob you can add straight into your color.</p>
+<p>For an even softer, haloed falloff with no hard cutoff, use an exponential instead:</p>
+<pre><code class="language-cpp">float g = exp(-length(p - center) * k);   // never truly reaches 0; k controls tightness
+</code></pre>
+<p><code>exp(-dist * k)</code> starts at 1 and decays forever, so the glow has a bright core and an endless faint halo — great for stars and embers. Larger <code>k</code> tightens it; smaller <code>k</code> spreads a wide bloom.</p>
+<h2>A field of soft particles, summed additively</h2>
+<p>The reason glows are worth having is that they <strong>stack</strong>. Scatter several and <em>add</em> their contributions — light is additive, so overlapping glows brighten and bloom exactly like real light.</p>
+<pre><code class="language-cpp">[[ stitchable ]] half4 particleField(float2 position, half4 color, float2 size, float time) {
+    float2 p = (position - 0.5*size) / size.y;   // centered, aspect-correct
+    half3 col = half3(0.0h);
+    for (int i = 0; i &lt; 8; i++) {
+        float fi = float(i);
+        float2 c = 0.5 * float2(sin(fi * 1.7 + time), cos(fi * 2.3 + time * 0.7));
+        col += half3(glow(p, c, 0.25)) * 0.6h;   // additive accumulation
+    }
+    return half4(min(col, 1.0h), 1.0h);
+}
+</code></pre>
+<p>We center coordinates with <code>(position - 0.5*size) / size.y</code> so <code>(0,0)</code> is the middle and the aspect ratio is preserved. Each iteration places a glow at a slowly-orbiting center <code>c</code> driven by <code>time</code>, and <code>col +=</code> sums them — where blobs overlap, brightness piles up. The final <code>min(col, 1.0h)</code> just keeps values from blowing past white. This additive-layering instinct is the whole basis of the next lesson: stack many offset fields and the eye reads volume and depth (<a class="xref" href="#30-layering-and-parallax">30-layering-and-parallax</a>).</p>
+<p>Brief SwiftUI usage, passing <code>time</code> for the drift:</p>
+<pre><code class="language-swift">TimelineView(.animation) { ctx in
+    let t = ctx.date.timeIntervalSinceReferenceDate
+    Color.black
+        .visualEffect { content, proxy in
+            content.colorEffect(
+                ShaderLibrary.particleField(.float2(proxy.size), .float(t))
+            )
+        }
+}
+</code></pre>
+<p>Shadertoy names map directly: <code>iTime</code> is our <code>time</code>, <code>iResolution</code> is our <code>size</code>.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>signed distance field (SDF)</strong> = a per-pixel number giving distance to a shape's surface, negative inside and positive outside.</li>
+<li><strong>sdCircle / sdBox</strong> = the two primitive SDFs; translate by subtracting a center, and <code>abs</code>-folding lets a box reason about one corner.</li>
+<li><strong>smoothstep-to-ink</strong> = feeding <code>-d</code> into <code>smoothstep</code> turns distance into a filled shape with a soft rim.</li>
+<li><strong>fwidth anti-aliasing</strong> = <code>smoothstep(fw, -fw, d)</code> makes an edge exactly one pixel wide at any zoom.</li>
+<li><strong>union</strong> = <code>min</code> of two distances draws both shapes, but with a hard crease where they meet.</li>
+<li><strong>smooth-min (smin)</strong> = a polynomial blend that welds shapes together like merging mercury; <code>k</code> sets the weld radius.</li>
+<li><strong>glow</strong> = <code>smoothstep(r, 0.0, length(p-c))</code> or <code>exp(-dist*k)</code> makes a soft round particle with a bright core.</li>
+<li><strong>additive layering</strong> = summing glows brightens overlaps like real light, and is the seed of depth and volume.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#04-coordinates-and-color">04-coordinates-and-color</a> · <a class="xref" href="#30-layering-and-parallax">30-layering-and-parallax</a> · <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a></p>
+<p>Prev: <a class="xref" href="#28-domain-warping">28-domain-warping</a> · Next: <a class="xref" href="#30-layering-and-parallax">30-layering-and-parallax</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#28-domain-warping"><span>Prev</span>← 28 — Domain Warping: Feeding Noise Into Noise</a><a href="#30-layering-and-parallax"><span>Next</span>30 — Layering &amp; Fake Parallax: Volumetric Depth Without 3D →</a></div></section>
+<section class="page" id="30-layering-and-parallax" data-title="30 — Layering &amp; Fake Parallax: Volumetric Depth Without 3D" data-num="30" data-hasdemo="1" data-group="Curriculum"><h1>30 — Layering &amp; Fake Parallax: Volumetric Depth Without 3D</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>Look out a train window and something odd happens: the fence beside the track blurs past, the fields roll by at a walking pace, and the distant mountains barely move at all. Nothing changed about the scenery's <em>flatness</em> — it's the difference in <strong>speed</strong> that your brain reads as depth. Near things sweep fast, far things crawl. This is motion parallax, and it's the cheapest depth cue there is.</p>
+<p>An old theatre used the same trick with painted backdrop flats slid across the stage at different rates. Every flat is dead flat, yet slide the foreground bush faster than the painted hills behind it and the audience perceives a deep, layered world. No one built a 3D set.</p>
+<p>We can do exactly this in a shader. Take one particle or noise field, stamp out fifteen copies, and give each copy its own scale, drift speed, and brightness — big-fast-bright in front, small-slow-dim behind. Add them all up. The eye stitches the speed-and-size gradient into volume, and you get smoke, dust, or a deep starfield with <strong>zero real 3D</strong>. This is the "15 offset particle fields" technique, and it's the additive layering from <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> turned into depth.</p>
+<h2>The whole pattern in one loop</h2>
+<p>Here is the complete shader. Everything interesting happens inside the loop.</p>
+<pre><code class="language-cpp">[[ stitchable ]] half4 layeredField(float2 position, half4 color, float2 size, float time) {
+    float2 uv = (position - 0.5*size) / size.y;
+    half3 col = half3(0.0h);
+    const int LAYERS = 15;
+    for (int i = 0; i &lt; LAYERS; i++) {
+        float fi = float(i) / float(LAYERS);          // 0 (near) .. ~1 (far)
+        float scale = mix(1.0, 3.0, fi);              // far layers tiled smaller
+        float speed = mix(0.25, 0.05, fi);            // far layers drift slower
+        float bright = mix(1.0, 0.25, fi);            // far layers dimmer
+        float2 p = uv * scale + float2(fi * 13.7, time * speed);
+        float spark = smoothstep(0.9, 1.0, fract(sin(dot(floor(p), float2(41.3, 289.1))) * 43758.5)); // cheap per-cell spark
+        col += half3(spark) * half(bright);
+    }
+    return half4(col, 1.0h);
+}
+</code></pre>
+<p>We start with centered, aspect-correct coordinates: <code>(position - 0.5*size) / size.y</code> puts <code>(0,0)</code> in the middle and divides by height so the field isn't stretched on wide screens. <code>col</code> accumulates the result, and <code>LAYERS</code> is how many flats we're sliding.</p>
+<h2>The depth ramp: <code>fi</code></h2>
+<pre><code class="language-cpp">float fi = float(i) / float(LAYERS);   // 0 (near) .. ~1 (far)
+</code></pre>
+<p><code>fi</code> is the single knob that decides how "far away" this layer is. For layer 0 it's 0 (nearest), climbing toward 1 for the last layer (farthest). Every per-layer property is just a <code>mix</code> driven by <code>fi</code>, so one number sweeps a whole layer from foreground to background.</p>
+<pre><code class="language-cpp">float scale = mix(1.0, 3.0, fi);    // far layers tiled smaller
+float speed = mix(0.25, 0.05, fi);  // far layers drift slower
+float bright = mix(1.0, 0.25, fi);  // far layers dimmer
+</code></pre>
+<p>Read all three as the parallax rules made literal. Near layers (<code>fi≈0</code>) use <code>scale</code> 1, so features are large — like the fence right at the window. Far layers (<code>fi≈1</code>) use <code>scale</code> 3, tiling the field three times smaller so features look tiny and distant. <code>speed</code> runs the <em>opposite</em> way: 0.25 for near, 0.05 for far, so the foreground sweeps and the background crawls — the exact train-window gradient. <code>bright</code> fades from full to a quarter, because distant things are dimmer and hazier. These three gradients are the entire depth illusion.</p>
+<h2>The sampling coordinate, and why offsets decorrelate</h2>
+<pre><code class="language-cpp">float2 p = uv * scale + float2(fi * 13.7, time * speed);
+</code></pre>
+<p>Two things are added to the scaled coordinate. <code>time * speed</code> is the drift — it scrolls this layer's field along Y at that layer's own pace, which is what your eye reads as motion. The <code>fi * 13.7</code> term is a per-layer <strong>spatial offset</strong>: an arbitrary, irregular shove that lands each layer at a different place in the field. Without it, every layer would sample the same pattern at the same spot and they'd all light up in lockstep — you'd see one bright field, not fifteen independent ones. The offset <strong>decorrelates</strong> the layers so their sparks fall in different places and the accumulation looks like genuine scattered depth rather than a stack of identical stencils. The odd constant <code>13.7</code> is just there to be irrational-ish and avoid accidental alignment.</p>
+<h2>The per-cell spark, and additive accumulation</h2>
+<pre><code class="language-cpp">float spark = smoothstep(0.9, 1.0, fract(sin(dot(floor(p), float2(41.3, 289.1))) * 43758.5));
+</code></pre>
+<p>This is a placeholder field, not the point of the lesson. <code>floor(p)</code> snaps to an integer grid cell; the <code>sin(dot(...)) * 43758.5</code> then <code>fract</code> is the classic cheap hash, giving each cell a pseudo-random value in <code>[0,1)</code>. <code>smoothstep(0.9, 1.0, ...)</code> keeps only the top tenth of cells, lighting a sparse scatter of bright points — a stand-in for stars or dust motes.</p>
+<pre><code class="language-cpp">col += half3(spark) * half(bright);
+</code></pre>
+<p>Each layer's sparks, dimmed by its own <code>bright</code>, are <strong>added</strong> into <code>col</code>. Additive accumulation is what stacks the "volume": overlapping layers pile brightness the way real light and haze do, and the summed result reads as something with depth and density rather than a single flat plane.</p>
+<h2>Swap the spark for a real field</h2>
+<p>The <code>spark</code> line is deliberately crude so the <em>structure</em> stays visible. In practice you replace it with a proper field from earlier lessons — a Voronoi cell pattern, the soft particles/glows from <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a>, or fbm noise from <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a>:</p>
+<pre><code class="language-cpp">// float layerValue = fbm(p);                 // drifting smoke layers
+// float layerValue = glow(p, cellPoint, r);  // soft particle layer
+col += half3(layerValue) * half(bright);
+</code></pre>
+<p>The loop, the <code>fi</code> ramp, and the additive sum are unchanged — only the thing being sampled differs. That's the reusable skeleton: <strong>the depth illusion comes purely from per-layer scale + speed + brightness</strong>, never from the field you happen to plug in.</p>
+<h2>Brief SwiftUI usage</h2>
+<p>Drive <code>time</code> from a <code>TimelineView</code> so the layers drift:</p>
+<pre><code class="language-swift">TimelineView(.animation) { ctx in
+    let t = ctx.date.timeIntervalSinceReferenceDate
+    Color.black
+        .visualEffect { content, proxy in
+            content.colorEffect(
+                ShaderLibrary.layeredField(.float2(proxy.size), .float(t))
+            )
+        }
+}
+</code></pre>
+<p>Shadertoy names map straight across: <code>iTime</code> is <code>time</code>, <code>iResolution</code> is <code>size</code>.</p>
+<h2>A word on performance</h2>
+<p>Every layer is a <strong>full evaluation</strong> of the field. Fifteen fbm layers means fifteen fbm calls <em>per pixel</em>, per frame — the cost scales linearly with <code>LAYERS</code> and with how expensive one field sample is. A cheap hash spark is nearly free; an eight-octave fbm times fifteen is not. Tune <code>LAYERS</code> down, or use cheaper fields for the far, dim layers where detail is wasted anyway.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>motion parallax</strong> = the brain reads difference in <em>speed</em> as depth; near things move fast, far things move slow.</li>
+<li><strong>layering</strong> = stack many copies of one field and add them, giving volume without real 3D.</li>
+<li><strong>fi depth ramp</strong> = a single <code>0→1</code> value per layer that drives scale, speed, and brightness via <code>mix</code>.</li>
+<li><strong>scale/speed/brightness gradient</strong> = far layers are smaller, slower, and dimmer — this trio <em>is</em> the depth illusion.</li>
+<li><strong>decorrelating offset</strong> = a per-layer spatial shove (<code>fi * 13.7</code>) so layers don't sample in lockstep.</li>
+<li><strong>additive accumulation</strong> = summing layers stacks brightness like real light and haze, building apparent density.</li>
+<li><strong>field is swappable</strong> = replace the placeholder spark with Voronoi, glows, or fbm; the layering skeleton stays.</li>
+<li><strong>linear cost</strong> = each layer is a full field evaluation, so cost grows with <code>LAYERS</code> times field expense.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> · <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a> · <a class="xref" href="#23-animation-in-shaders">23-animation-in-shaders</a></p>
+<p>Prev: <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> · Next: <a class="xref" href="#31-stateless-procedural-animation">31-stateless-procedural-animation</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#29-sdf-toolkit"><span>Prev</span>← 29 — The SDF Toolkit: Shapes, Smooth-Min &amp; Soft Particles</a><a href="#31-stateless-procedural-animation"><span>Next</span>31 — Stateless Procedural Animation: Motion Without Memory →</a></div></section>
+<section class="page" id="31-stateless-procedural-animation" data-title="31 — Stateless Procedural Animation: Motion Without Memory" data-num="31" data-hasdemo="1" data-group="Curriculum"><h1>31 — Stateless Procedural Animation: Motion Without Memory</h1><div class="demo-mount" data-demo="sh-plasma"></div>
+<h2>Start here — the plain idea</h2>
+<p>A fragment shader has amnesia. It runs fresh for every pixel, every frame, and when it's done it <strong>remembers nothing</strong> — no positions saved, no velocities carried over, no "where was this ember last frame?" The next frame starts from a blank slate. And yet on screen, smoke curls upward, sparks orbit, embers rise and wink out. How?</p>
+<p>The trick is that motion isn't <em>stored</em>, it's <em>computed</em>. Everything you see is a pure function of two inputs: the pixel's coordinate <code>uv</code> and the clock <code>time</code>. Change <code>time</code> a little and the same formula produces a slightly-shifted picture; play those pictures in sequence and it looks like continuous motion. Because the formula is deterministic, frame 100 and frame 101 line up perfectly — there's no drift or jitter, even though nothing was passed between them.</p>
+<p>Think of a flip-book where each page isn't drawn by hand but <em>calculated from its page number</em>. Page 42 doesn't need to peek at page 41; it just plugs 42 into the formula and out comes the right frame. That's the opposite of a CPU particle system, which keeps arrays of positions and velocities and nudges them each tick. The shader keeps nothing — and as <a class="xref" href="#18b-gestures-to-shaders">18b-gestures-to-shaders</a> explains, it <em>can't</em>: there's no way to write state back. So we lean into it. Motion here is <code>(uv, time) → look</code>, recomputed from scratch, forever.</p>
+<h2>Pattern 1: scroll a whole field by time</h2>
+<p>The simplest animation is to slide the coordinate you sample at. Move where you look, and the whole pattern appears to flow.</p>
+<pre><code class="language-cpp">float f = fbm(uv * 3.0 + float2(0.0, time * 0.2));   // smoke drifting up
+</code></pre>
+<p><code>fbm(uv * 3.0)</code> is a static cloud of noise (fractal Brownian motion — see <a class="xref" href="#15-noise-and-patterns">15-noise-and-patterns</a> and <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a>). Adding <code>float2(0.0, time * 0.2)</code> shifts the <em>sampling point</em> along Y as <code>time</code> advances. Since we're reading the noise field at a coordinate that keeps sliding, the pattern appears to drift upward at speed 0.2 — smoke rising. Nothing about the noise is stored or regenerated; we simply <em>look at a different part of it</em> each frame. Swap the offset to <code>float2(time * 0.2, 0.0)</code> for horizontal flow, or feed noise into the offset itself for a swirl.</p>
+<h2>Pattern 2: per-element independent motion via a hashed phase</h2>
+<p>Scrolling moves everything together. To make individual particles or cells move <em>independently</em> — each with its own rhythm — give each one a private random seed, and derive its motion from that seed.</p>
+<pre><code class="language-cpp">float2 hash22(float2 p){ p = float2(dot(p,float2(127.1,311.7)), dot(p,float2(269.5,183.3))); return fract(sin(p)*43758.5453); }
+float2 cellPoint(float2 cell, float time){
+    float2 seed = hash22(cell);
+    return 0.5 + 0.4 * sin(time * (0.5 + seed) + 6.2831 * seed);   // each cell orbits at its own rate/phase
+}
+</code></pre>
+<p><code>hash22</code> turns a 2D input into a repeatable 2D pseudo-random value in <code>[0,1)</code>. It's <em>deterministic</em>: the same <code>cell</code> always hashes to the same <code>seed</code>, which is exactly why we can rebuild a particle's motion every frame without storing it — the seed is recomputed, not remembered.</p>
+<p><code>cellPoint</code> uses that seed twice inside a <code>sin</code>. <code>time * (0.5 + seed)</code> sets each cell's <strong>rate</strong> — a cell with a bigger seed oscillates faster — so no two cells share a tempo. <code>+ 6.2831 * seed</code> (that's <code>2π · seed</code>) sets each cell's <strong>phase</strong>, a random starting point in its cycle, so they're not all at the peak of their swing at once. The <code>0.5 + 0.4 * sin(...)</code> wraps it into a gentle orbit centered in the cell. The result: a grid of points each drifting on its own little loop, all from a hash and the clock. This is the heart of animated Voronoi, twinkling stars, and jittering particle fields.</p>
+<h2>Pattern 3: loop a lifetime without storing it</h2>
+<p>Particles are born, rise, fade, and die — a <em>cycle</em>. You'd think you need to track each particle's age. You don't: <code>fract</code> gives you a repeating <code>0→1</code> ramp for free.</p>
+<pre><code class="language-cpp">float life = fract(time * 0.3 + hash22(cell).x);   // 0→1 repeating; use for rise + fade
+</code></pre>
+<p><code>time * 0.3</code> is an ever-climbing number; <code>fract</code> keeps only its fractional part, so it sweeps <code>0 → 1</code> then snaps back to 0 and climbs again — a sawtooth that loops every <code>1/0.3 ≈ 3.3</code> seconds. Adding <code>hash22(cell).x</code> offsets each cell's phase so they don't all reset in unison. Read <code>life</code> as <strong>normalized age</strong>: 0 is just-born, 1 is about-to-die. You map it to whatever a particle's life should do — position (rise as <code>life</code> grows), opacity (fade as <code>life → 1</code>), size, color. When it wraps to 0 the "next" particle begins, no bookkeeping required.</p>
+<h2>Putting it together: rising, fading embers</h2>
+<p>Here's a small stitchable shader combining pattern 1's coordinate-scroll idea with pattern 3's looping life — a field of embers that rise and fade.</p>
+<pre><code class="language-cpp">float2 hash22(float2 p){ p = float2(dot(p,float2(127.1,311.7)), dot(p,float2(269.5,183.3))); return fract(sin(p)*43758.5453); }
+
+[[ stitchable ]] half4 embers(float2 position, half4 color, float2 size, float time) {
+    float2 uv = (position - 0.5*size) / size.y;
+    half3 col = half3(0.0h);
+    for (int i = 0; i &lt; 12; i++) {
+        float2 cell = float2(float(i), 0.0);
+        float2 h = hash22(cell);
+        float life = fract(time * 0.3 + h.x);          // normalized age, looping
+        float x = (h.y - 0.5) * 1.2 + 0.02 * sin(time + h.x * 6.2831); // lane + gentle sway
+        float y = mix(-0.5, 0.6, life);                // rise from bottom to top
+        float fade = life * (1.0 - life) * 4.0;        // 0 at birth/death, 1 mid-life
+        float d = length(uv - float2(x, y));
+        col += half3(1.0h, 0.5h, 0.15h) * half(fade * exp(-d * 40.0)); // warm glow
+    }
+    return half4(col, 1.0h);
+}
+</code></pre>
+<p>Each of the 12 embers gets a stable <code>hash22</code> seed from its index. <code>life</code> is its looping age; <code>y = mix(-0.5, 0.6, life)</code> carries it from below the screen up past the top as it ages. <code>x</code> places it in a horizontal lane (from <code>h.y</code>) with a small time-driven sway so it doesn't rise ramrod-straight. <code>fade = life*(1-life)*4</code> is a parabola that's 0 at birth and death and peaks at mid-life — so each ember brightens in, then dims out, exactly once per loop. <code>exp(-d * 40.0)</code> is the soft glow falloff from <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a>, tinted warm and <strong>added</strong> in. Every ember is reconstructed from its index and <code>time</code> alone — recompute the frame at any moment and you get a consistent picture.</p>
+<h2>Brief SwiftUI usage</h2>
+<p>Feed <code>time</code> from a <code>TimelineView</code> and the whole thing animates:</p>
+<pre><code class="language-swift">TimelineView(.animation) { ctx in
+    let t = ctx.date.timeIntervalSinceReferenceDate
+    Color.black
+        .visualEffect { content, proxy in
+            content.colorEffect(
+                ShaderLibrary.embers(.float2(proxy.size), .float(t))
+            )
+        }
+}
+</code></pre>
+<p>As always, Shadertoy's <code>iTime</code> is our <code>time</code> and <code>iResolution</code> is <code>size</code> (more on the animation setup in <a class="xref" href="#23-animation-in-shaders">23-animation-in-shaders</a>).</p>
+<h2>Why this matters</h2>
+<p>The payoff of statelessness is scale. Because every pixel's value depends only on <code>(uv, time)</code> and nothing else, there are <strong>no buffers to allocate, no arrays to update, no data dependency between pixels</strong>. The GPU can compute millions of pixels fully in parallel, each in isolation, and it all stays perfectly in sync because they share the same deterministic formula and the same clock. A CPU particle system fights memory and update order; a procedural shader sidesteps both by refusing to remember anything at all.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>stateless</strong> = a fragment shader stores nothing between frames; each frame is recomputed from scratch.</li>
+<li><strong>motion = f(uv, time)</strong> = animation is a pure, deterministic function of coordinate and clock, not saved state.</li>
+<li><strong>coordinate scroll</strong> = adding <code>time</code> to the sampling coordinate slides a whole field (drifting smoke).</li>
+<li><strong>hashed seed</strong> = <code>hash22(cell)</code> gives each element a repeatable random value, so its motion can be rebuilt every frame.</li>
+<li><strong>per-element phase &amp; rate</strong> = feeding the seed into <code>sin(time*rate + phase)</code> makes cells move independently.</li>
+<li><strong>fract lifetime</strong> = <code>fract(time*speed + seed)</code> is a looping <code>0→1</code> age for rise/fade with no stored counter.</li>
+<li><strong>determinism</strong> = same <code>(uv, time)</code> always yields the same look, so frames line up and motion stays continuous.</li>
+<li><strong>free scaling</strong> = no buffers and no inter-pixel dependency means the GPU runs millions of pixels in parallel.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#18b-gestures-to-shaders">18b-gestures-to-shaders</a> · <a class="xref" href="#23-animation-in-shaders">23-animation-in-shaders</a> · <a class="xref" href="#30-layering-and-parallax">30-layering-and-parallax</a> · <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a></p>
+<p>Prev: <a class="xref" href="#30-layering-and-parallax">30-layering-and-parallax</a> · Next: <a class="xref" href="#32-cosine-palettes">32-cosine-palettes</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#30-layering-and-parallax"><span>Prev</span>← 30 — Layering &amp; Fake Parallax: Volumetric Depth Without 3D</a><a href="#32-cosine-palettes"><span>Next</span>32 — Cosine Palettes: Infinite Color From Four Numbers →</a></div></section>
+<section class="page" id="32-cosine-palettes" data-title="32 — Cosine Palettes: Infinite Color From Four Numbers" data-num="32" data-hasdemo="1" data-group="Curriculum"><h1>32 — Cosine Palettes: Infinite Color From Four Numbers</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>Imagine three little dials, one each for Red, Green, and Blue. Each dial slowly sweeps up and down as you turn a single master knob <code>t</code>. Because they sweep at slightly different rates and start at slightly different points, they never all peak at once — so as <code>t</code> slides from 0 to 1 you get a smooth, ever-shifting parade of color: warm ambers, teals, violets, back to warm. That is a cosine palette. One number in, a beautiful color out.</p>
+<p>The magic is that a cosine is just a smooth wave that rolls between two values forever. If you build R, G, and B each from their own cosine wave, and give each channel its own starting phase, you get a gradient that loops seamlessly and looks hand-tuned — without storing a single texture or gradient stop.</p>
+<p>Inigo Quilez boiled the whole thing down to four <code>float3</code> constants: <code>a</code>, <code>b</code>, <code>c</code>, <code>d</code>. Feed any scalar you already have lying around — fbm, distance from center, an angle, <code>time</code> — and this is how nearly every gorgeous Shadertoy gradient gets its color. It is cheap (GPUs love <code>cos</code>), resolution-independent, and endlessly tweakable.</p>
+<h2>The palette function</h2>
+<pre><code class="language-cpp">half3 palette(float t, float3 a, float3 b, float3 c, float3 d){
+    return half3(a + b * cos(6.28318 * (c * t + d)));    // 6.28318 = 2π
+}
+// A classic warm-to-cool rainbow:
+//   a = float3(0.5), b = float3(0.5), c = float3(1.0), d = float3(0.00, 0.33, 0.67)
+</code></pre>
+<p>Read it as one cosine wave per channel, evaluated all three at once because everything is a <code>float3</code>:</p>
+<ul>
+<li><strong><code>t</code></strong> is your input scalar. It can be anything in roughly <code>0..1</code> — the master knob. When <code>t</code> grows past 1 the palette simply loops, which is often exactly what you want.</li>
+<li><strong><code>c * t + d</code></strong> is the <em>phase</em> fed into the cosine. <code>c</code> scales <code>t</code> (how fast we spin), <code>d</code> offsets it (where we start).</li>
+<li><strong><code>6.28318</code></strong> is 2π. Multiplying by it means "one full color cycle happens when <code>c * t</code> advances by 1," so the numbers stay human-friendly.</li>
+<li><strong><code>cos(...)</code></strong> returns a value in <code>-1..1</code> for each channel.</li>
+<li><strong><code>b * cos(...)</code></strong> scales that wave to <code>-b..b</code>. <code>b</code> is the <em>amplitude</em>.</li>
+<li><strong><code>a + ...</code></strong> shifts the whole wave up so it oscillates around <code>a</code>. So each channel ranges over <code>a - b .. a + b</code>.</li>
+</ul>
+<p>Now the four dials in plain words:</p>
+<ul>
+<li><strong><code>a</code> — base color.</strong> The midpoint each channel wobbles around. <code>float3(0.5)</code> centers everything at mid-grey so colors stay balanced.</li>
+<li><strong><code>b</code> — contrast / amplitude.</strong> How far each channel swings from <code>a</code>. Bigger <code>b</code> = punchier, more saturated. Small <code>b</code> = washed-out, pastel. With <code>a = b = 0.5</code> the channels sweep the full <code>0..1</code> range.</li>
+<li><strong><code>c</code> — frequency (cycles per channel).</strong> How many times each channel goes through the rainbow as <code>t</code> runs 0→1. <code>c = 1</code> gives one clean sweep; <code>c = 3</code> packs three color bands into the same range.</li>
+<li><strong><code>d</code> — phase offset per channel.</strong> <em>Where</em> each channel starts in its cycle. The classic <code>(0.00, 0.33, 0.67)</code> staggers R, G, B by a third of a cycle each, which is precisely what makes it read as a rainbow instead of grey.</li>
+</ul>
+<h2>Driving it in a stitchable shader</h2>
+<p>Here we color an fbm field — but notice the last line is all that changes if you swap in radial distance or <code>time</code>.</p>
+<pre><code class="language-cpp">[[ stitchable ]] half4 cosPalette(float2 position, half4 color, float2 size, float time){
+    float2 uv = position / size;
+
+    // pick ONE scalar to drive the color:
+    float t = fbm(uv * 3.0 + time * 0.1);        // noisy, organic
+    // float t = length(uv - 0.5) * 2.0;          // radial rings
+    // float t = fract(time * 0.1);               // pure time sweep
+
+    float3 a = float3(0.5);
+    float3 b = float3(0.5);
+    float3 c = float3(1.0);
+    float3 d = float3(0.00, 0.33, 0.67);
+
+    half3 col = palette(t, a, b, c, d);
+    return half4(col, 1.0h);
+}
+</code></pre>
+<p><code>fbm</code> is the fractal noise from <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a>; <code>uv = position / size</code> maps pixels into <code>0..1</code> as usual. Shadertoy readers: <code>time</code> is <code>iTime</code>, <code>size</code> is <code>iResolution</code>. Animate it from SwiftUI so <code>time</code> advances:</p>
+<pre><code class="language-swift">TimelineView(.animation) { ctx in
+    let t = ctx.date.timeIntervalSinceReferenceDate
+    Rectangle()
+        .colorEffect(ShaderLibrary.cosPalette(.float(t)))
+}
+</code></pre>
+<h2>Presets — and what each dial does to them</h2>
+<pre><code class="language-cpp">// Fire: warm, low green, no blue — d holds R ahead, kills the cool end
+//   a = float3(0.5, 0.3, 0.2)
+//   b = float3(0.5, 0.3, 0.2)
+//   c = float3(1.0, 1.0, 1.0)
+//   d = float3(0.0, 0.1, 0.2)
+
+// Ocean: blue-green dominant, quiet red
+//   a = float3(0.2, 0.5, 0.6)
+//   b = float3(0.2, 0.4, 0.5)
+//   c = float3(1.0, 1.0, 1.0)
+//   d = float3(0.5, 0.4, 0.3)
+
+// Nebula: high frequency + offset phases = magenta/cyan banding
+//   a = float3(0.5, 0.5, 0.5)
+//   b = float3(0.5, 0.5, 0.5)
+//   c = float3(2.0, 1.0, 1.0)
+//   d = float3(0.5, 0.2, 0.25)
+</code></pre>
+<p>Three knobs to feel out by hand:</p>
+<ul>
+<li><strong>Shift the hue: move <code>d</code>.</strong> Adding the same amount to all of <code>d</code> rotates the whole palette through the rainbow — a free "hue slider." Nudge one channel of <code>d</code> and you recolor just that channel's timing.</li>
+<li><strong>Add bands: raise <code>c</code>.</strong> Going from <code>c = 1</code> to <code>c = 2</code> or <code>3</code> makes each channel cycle more times across the same <code>t</code>, so a smooth gradient turns into stripes or shells. Great for contour lines and nebula filaments.</li>
+<li><strong>Flatten or pop contrast: change <code>b</code>.</strong> Shrink <code>b</code> toward 0 and the color collapses toward the flat base <code>a</code> (pastel, muted). Grow <code>b</code> and the swings get bold and saturated. Keep <code>a + b ≤ 1</code> and <code>a - b ≥ 0</code> to avoid clipping.</li>
+</ul>
+<p>Because it is just three cosines, it costs almost nothing per pixel and looks identical at any resolution. Pair it with <a class="xref" href="#28-domain-warping">28-domain-warping</a> to color a warped field — feed the warped coordinate's length or an fbm sample straight into <code>t</code> — and you get those liquid, marbled Shadertoy looks for free.</p>
+<p>Credit and a live editor for the four constants: Inigo Quilez, "Palettes" (iquilezles.org/articles/palettes).</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>cosine palette</strong> = smooth procedural color from <code>a + b·cos(2π(c·t + d))</code>, one wave per RGB channel.</li>
+<li><strong>a (base)</strong> = the midpoint each channel oscillates around; sets overall brightness/tint.</li>
+<li><strong>b (amplitude)</strong> = swing size; controls contrast and saturation, flat when small.</li>
+<li><strong>c (frequency)</strong> = color cycles across <code>t</code>; raise it to add bands and rings.</li>
+<li><strong>d (phase)</strong> = per-channel start offset; the staggered <code>(0, 0.33, 0.67)</code> is what makes a rainbow, and shifting it slides the hue.</li>
+<li><strong>t (input)</strong> = any scalar you have — fbm, distance, angle, or <code>time</code> — mapped to a color.</li>
+<li><strong>cheap &amp; scalable</strong> = a few <code>cos</code> per pixel, no textures, identical at every resolution.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#28-domain-warping">28-domain-warping</a> · <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a> · <a class="xref" href="#04-coordinates-and-color">04-coordinates-and-color</a></p>
+<p>Prev: <a class="xref" href="#31-stateless-procedural-animation">31-stateless-procedural-animation</a> · Next: <a class="xref" href="#33-post-processing">33-post-processing</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#31-stateless-procedural-animation"><span>Prev</span>← 31 — Stateless Procedural Animation: Motion Without Memory</a><a href="#33-post-processing"><span>Next</span>33 — Post-Processing: Bloom, Vignette, Grain &amp; Grade →</a></div></section>
+<section class="page" id="33-post-processing" data-title="33 — Post-Processing: Bloom, Vignette, Grain &amp; Grade" data-num="33" data-hasdemo="1" data-group="Curriculum"><h1>33 — Post-Processing: Bloom, Vignette, Grain &amp; Grade</h1><div class="demo-mount" data-demo="sh-blur"></div>
+<h2>Start here — the plain idea</h2>
+<p>You have made a shape. Maybe a glowing SDF, maybe a noisy nebula. It is fine — but it looks <em>rendered</em>, a little clinical. Post-processing is the pass you run <em>after</em> the main image to turn "a shape" into "a mood." It is the difference between a raw photo and one that has been through a film lab.</p>
+<p>Think of these as the Instagram filters of shaders: bloom makes bright things bleed light, a vignette gently darkens the corners so your eye lands in the middle, grain adds a faint living texture, chromatic aberration fakes the color fringing of a real lens, and tone mapping tames blown-out highlights so nothing clips to ugly flat white. None of them are big; together they read as "produced."</p>
+<p>One important split in SwiftUI. Effects that only need <em>this</em> pixel — vignette, grain, tone mapping — are <strong>colorEffect</strong> shaders. Effects that need to peek at <em>neighboring</em> pixels — bloom (blur the bright parts), chromatic aberration (sample the image at an offset) — are <strong>layerEffect</strong> shaders, because those get a sampler over the whole rendered layer. See <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a> for the layerEffect mechanics and <a class="xref" href="#13-blur-effects">13-blur-effects</a> for the full neighbor-sampling blur.</p>
+<h2>The per-pixel toolkit</h2>
+<pre><code class="language-cpp">// vignette (per-pixel)
+float vig(float2 uv){ float2 q = uv*(1.0-uv); return pow(q.x*q.y*15.0, 0.25); }   // ~1 center → 0 edges
+
+// film grain
+float grain(float2 uv, float time){ return fract(sin(dot(uv, float2(12.99,78.23)) + time)*43758.55); }
+
+// Reinhard tone map
+half3 tonemap(half3 c){ return c / (c + 1.0h); }
+
+// ACES-ish (punchier)
+half3 aces(half3 x){ return clamp((x*(2.51h*x+0.03h))/(x*(2.43h*x+0.59h)+0.14h), 0.0h, 1.0h); }
+</code></pre>
+<p><strong><code>vig(uv)</code></strong> — the parabola <code>q = uv*(1-uv)</code> peaks at 0.25 in the center of each axis and falls to 0 at both edges (0 and 1). Multiplying <code>q.x*q.y</code> gives a 2D bump that is brightest dead-center. The <code>*15.0</code> rescales that small product back up toward 1 in the middle, and <code>pow(..., 0.25)</code> softens the falloff so the darkening rolls off gently instead of a hard oval. Result: ~1 in the center, →0 at the corners. Multiply your color by it.</p>
+<p><strong><code>grain(uv, time)</code></strong> — the classic hash: take a dot product of the pixel coordinate with two "magic" irrational-ish numbers, add <code>time</code> so the pattern reshuffles every frame, feed it through <code>sin</code> and <code>*43758.55</code>, then <code>fract</code> to keep only the chaotic fractional part. Out comes pseudo-random noise in <code>0..1</code>, different per pixel and per frame — TV static you can dial down to a whisper.</p>
+<p><strong><code>tonemap(c)</code> (Reinhard)</strong> — <code>c / (c + 1)</code> maps <code>0..∞</code> into <code>0..1</code>: dark values pass almost unchanged, but very bright values get gently compressed instead of clipping to flat white. This is how you keep HDR-ish bloom and lights from turning into featureless blobs.</p>
+<p><strong><code>aces(x)</code></strong> — a cheap approximation of the film-industry ACES curve. Same job as Reinhard but with more contrast and richer highlights — punchier, more "cinematic." Use whichever you like the look of; do not use both.</p>
+<h2>Neighbor-sampling effects (layerEffect)</h2>
+<p>These need the whole rendered image as a sampler, so in SwiftUI they are <code>layerEffect</code> shaders with a <code>SwiftUI::Layer</code> argument. Keep them short here — <a class="xref" href="#13-blur-effects">13-blur-effects</a> has the real multi-tap blur.</p>
+<pre><code class="language-cpp">#include &lt;SwiftUI/SwiftUI.h&gt;
+
+// Chromatic aberration: sample R shifted one way, B the other, keep G centered.
+[[ stitchable ]] half4 aberrate(float2 position, SwiftUI::Layer layer, float2 size, float amount){
+    float2 dir = (position - 0.5*size) / size.y;     // outward from center
+    float2 off = dir * amount;
+    half r = layer.sample(position + off).r;         // red pushed out
+    half g = layer.sample(position).g;               // green stays put
+    half b = layer.sample(position - off).b;         // blue pulled in
+    return half4(r, g, b, 1.0h);
+}
+
+// Cheap &quot;bloom&quot;: average a few taps, keep only the bright part, add it back.
+[[ stitchable ]] half4 bloom(float2 position, SwiftUI::Layer layer, float2 size, float time){
+    half4 src = layer.sample(position);
+    half4 blur = 0.0h;
+    for (int i = -2; i &lt;= 2; i++)
+        for (int j = -2; j &lt;= 2; j++)
+            blur += layer.sample(position + float2(i, j) * 2.0);
+    blur /= 25.0h;
+    half3 bright = max(blur.rgb - 0.6h, 0.0h);        // threshold: only glowing parts
+    return half4(src.rgb + bright, 1.0h);             // add the glow on top
+}
+</code></pre>
+<p>The idea, not the optimization: <strong>aberration</strong> samples each color channel at a slightly different position so the image's colors separate at the edges, exactly like a cheap lens; the offset grows with distance from center so the middle stays sharp. <strong>Bloom</strong> blurs the layer (a tiny 5×5 box average here — swap in the proper Gaussian from <a class="xref" href="#13-blur-effects">13-blur-effects</a>), subtracts a threshold so only the <em>bright</em> regions survive, then adds that soft bright ghost back onto the original. Bright things now bleed light.</p>
+<h2>Composing the pass</h2>
+<p>Order matters. Tone map first (bring HDR into range), then darken the edges, then sprinkle grain on top so the noise is not itself compressed:</p>
+<pre><code class="language-cpp">[[ stitchable ]] half4 grade(float2 position, half4 color, float2 size, float time){
+    float2 uv = position / size;
+    half3 col = color.rgb;
+
+    col = tonemap(col);                 // squash highlights into 0..1
+    col *= vig(uv);                     // darken the corners
+    col += grain(uv, time) * 0.04;      // faint living texture (0.04 = subtle)
+
+    return half4(col, color.a);
+}
+</code></pre>
+<p>That is a full color grade in three lines. Keep grain low (<code>0.02–0.06</code>); more than that reads as "broken," not "film." In SwiftUI wire the animated ones with a clock:</p>
+<pre><code class="language-swift">TimelineView(.animation) { ctx in
+    let t = ctx.date.timeIntervalSinceReferenceDate
+    myView
+        .colorEffect(ShaderLibrary.grade(.float(t)))                 // per-pixel grade
+        .layerEffect(ShaderLibrary.bloom(.float(t)), maxSampleOffset: .init(width: 4, height: 4))
+}
+</code></pre>
+<p>Note the <code>maxSampleOffset</code> on the layerEffect — it tells SwiftUI how far your neighbor taps reach.</p>
+<h2>One more polish: cheap anti-aliasing</h2>
+<p>When you draw shapes from an SDF, a hard <code>step(0, d)</code> edge shimmers and jaggies. Fade across exactly one pixel instead, using <code>fwidth</code> (how fast <code>d</code> changes between neighboring pixels):</p>
+<pre><code class="language-cpp">float fw = fwidth(d);
+float mask = smoothstep(fw, -fw, d);   // 1 inside the shape, 0 outside, soft over ~1px
+</code></pre>
+<p>Because <code>fw</code> scales with resolution automatically, the edge stays one pixel wide whether the view is tiny or Retina. SDF details live in <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> and <a class="xref" href="#04-coordinates-and-color">04-coordinates-and-color</a>.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>post-processing</strong> = the polish pass run after the main image; turns a shape into a mood.</li>
+<li><strong>colorEffect vs layerEffect</strong> = per-pixel effects (vignette, grain, tonemap) vs neighbor-sampling ones (bloom, aberration) that need a <code>SwiftUI::Layer</code>.</li>
+<li><strong>vignette</strong> = darken toward the edges so the eye lands center; multiply color by <code>vig(uv)</code>.</li>
+<li><strong>film grain</strong> = per-pixel, per-frame hash noise added faintly (~0.04) for texture.</li>
+<li><strong>tone mapping</strong> = compress HDR into 0..1 without clipping; Reinhard is soft, ACES is punchier.</li>
+<li><strong>bloom</strong> = blur the bright parts past a threshold and add them back for glow.</li>
+<li><strong>chromatic aberration</strong> = sample R and B at opposite offsets for lens-style color fringing.</li>
+<li><strong>fwidth AA</strong> = <code>smoothstep(fw, -fw, d)</code> fades an SDF edge over one resolution-independent pixel.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#13-blur-effects">13-blur-effects</a> · <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a> · <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> · <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a></p>
+<p>Prev: <a class="xref" href="#32-cosine-palettes">32-cosine-palettes</a> · Next: <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#32-cosine-palettes"><span>Prev</span>← 32 — Cosine Palettes: Infinite Color From Four Numbers</a><a href="#34-raymarching-3d-sdf"><span>Next</span>34 — Raymarching &amp; 3D SDFs: Shadertoy-Style 3D →</a></div></section>
+<section class="page" id="34-raymarching-3d-sdf" data-title="34 — Raymarching &amp; 3D SDFs: Shadertoy-Style 3D" data-num="34" data-hasdemo="1" data-group="Curriculum"><h1>34 — Raymarching &amp; 3D SDFs: Shadertoy-Style 3D</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>Every 3D scene you have seen on Shadertoy — glossy spheres, infinite floors, gooey blobs, whole alien landscapes — was drawn by a flat 2D fragment shader with <em>no meshes at all</em>. No vertices, no triangles, no geometry buffer. Just math that answers one question for any point in space: "how far am I from the nearest surface?" That function is a 3D signed distance field, <code>map(p)</code>.</p>
+<p>Here is the trick that makes it work. Picture walking toward a wall through thick fog, blindfolded, but you hold a magic compass that always tells you the exact distance to the <em>nearest</em> object in any direction. If it says "3 meters," you can safely stride 3 meters forward — nothing can be closer than that, so you cannot bump into anything. Take another reading, stride again. Each step you get closer, the safe distance shrinks, your strides get smaller, and you converge right onto the surface. That is <em>sphere tracing</em>: step forward by exactly the SDF's value, repeat until the distance is tiny (you have hit) or you have gone too far (you missed).</p>
+<p>Once a ray hits, you find the surface's <em>normal</em> by sampling how the distance field changes in each direction — its gradient — and then do ordinary lighting with it. This is heavier than everything before: it is a whole loop <em>per pixel</em>, so we cap the step count and the max distance. But it is the finale technique — the door to real procedural 3D. Bring your 2D SDF intuition from <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> and your lighting from <a class="xref" href="#22-lighting-and-normals">22-lighting-and-normals</a>.</p>
+<h2>The whole thing</h2>
+<pre><code class="language-cpp">float sdSphere(float3 p, float r){ return length(p) - r; }
+
+float map(float3 p){                          // the whole scene as one distance
+    float s = sdSphere(p, 1.0);
+    float ground = p.y + 1.0;                  // a floor plane
+    return min(s, ground);
+}
+
+float3 calcNormal(float3 p){                   // gradient of the field = surface normal
+    float2 e = float2(0.001, 0.0);
+    return normalize(float3(
+        map(p+e.xyy) - map(p-e.xyy),
+        map(p+e.yxy) - map(p-e.yxy),
+        map(p+e.yyx) - map(p-e.yyx)));
+}
+
+[[ stitchable ]] half4 raymarch(float2 position, half4 color, float2 size, float time){
+    float2 uv = (position - 0.5*size) / size.y;
+    float3 ro = float3(0.0, 0.0, 3.0);         // ray origin (camera)
+    float3 rd = normalize(float3(uv, -1.5));   // ray direction
+    float t = 0.0;
+    for (int i = 0; i &lt; 80; i++){              // sphere trace
+        float3 p = ro + rd * t;
+        float d = map(p);
+        if (d &lt; 0.001 || t &gt; 20.0) break;      // hit, or gone too far
+        t += d;                                // safe step = distance to nearest surface
+    }
+    half3 col = half3(0.02h);                  // background
+    if (t &lt; 20.0){
+        float3 p = ro + rd * t;
+        float3 n = calcNormal(p);
+        float3 lightDir = normalize(float3(0.8, 0.7, 0.5));
+        float diff = max(dot(n, lightDir), 0.0);
+        col = half3(0.2h) + half3(diff);       // ambient + diffuse
+    }
+    return half4(col, 1.0h);
+}
+</code></pre>
+<h3>The scene: <code>map(p)</code></h3>
+<p><code>sdSphere</code> is the simplest 3D SDF: the distance from point <code>p</code> to a sphere of radius <code>r</code> is just <code>length(p) - r</code> — positive outside, zero on the shell, negative inside. <code>map(p)</code> is your <em>entire world</em> expressed as distance. Here it holds two things: the sphere, and a ground plane. The plane's distance is beautifully simple — <code>p.y + 1.0</code> is how far a point is above the horizontal plane at <code>y = -1</code>. Then <code>min(s, ground)</code> unions them: the distance to the <em>nearest</em> of the two surfaces. Union of SDFs is just <code>min</code>. Everything you place in the scene funnels through this one <code>min</code>/<code>max</code>/<code>smin</code> expression.</p>
+<h3>The march loop</h3>
+<p><code>uv = (position - 0.5*size) / size.y</code> centers coordinates on the screen and divides by height so the aspect ratio is correct (this is the centered/aspect form from the coordinates lesson).</p>
+<ul>
+<li><strong><code>ro</code></strong> — the ray origin, i.e. the camera, sitting at <code>z = 3</code> looking toward the origin.</li>
+<li><strong><code>rd</code></strong> — the ray direction for <em>this</em> pixel: aim through the pixel's <code>uv</code> with <code>z = -1.5</code> (into the screen), normalized to unit length. The <code>-1.5</code> is effectively the focal length; smaller magnitude = wider field of view.</li>
+<li>The loop is the sphere trace. Each iteration: <code>p = ro + rd * t</code> is the current point along the ray; <code>d = map(p)</code> is the safe distance to the nearest surface; if <code>d</code> is tiny we have <strong>hit</strong>, and if <code>t</code> has run past 20 we have <strong>missed</strong> empty space — either way, break. Otherwise <code>t += d</code> strides forward by exactly that safe distance. That single line is the whole magic: because the SDF guarantees nothing is closer than <code>d</code>, stepping <code>d</code> can never overshoot a surface.</li>
+<li><strong><code>80</code></strong> is the step cap and <strong><code>20.0</code></strong> the max distance — the performance guardrails. Too few steps and grazing rays give up before converging (you see fuzzy silhouettes); too many and it is slow. This is the cost of raymarching: a bounded loop for every pixel.</li>
+</ul>
+<h3>The normal from the gradient</h3>
+<p><code>calcNormal</code> asks: which way does the distance field increase fastest? That direction <em>is</em> the outward surface normal. We estimate it by finite differences — sample <code>map</code> a hair (<code>0.001</code>) in the <code>+</code> and <code>-</code> direction along each axis and subtract. The <code>e.xyy</code>, <code>e.yxy</code>, <code>e.yyx</code> swizzles are a compact way to build the offset vectors <code>(0.001,0,0)</code>, <code>(0,0.001,0)</code>, <code>(0,0,0.001)</code> since <code>e = (0.001, 0)</code>. Six <code>map</code> calls, normalize, done — no stored normals anywhere.</p>
+<h3>The shading</h3>
+<p>With a normal in hand it is textbook diffuse lighting (see <a class="xref" href="#22-lighting-and-normals">22-lighting-and-normals</a>): <code>diff = max(dot(n, lightDir), 0.0)</code> — surfaces facing the light are bright, surfaces facing away clamp to 0. <code>col = ambient + diff</code> adds a flat <code>0.2</code> fill so shadowed sides are not pure black. Rays that missed keep the dark <code>0.02</code> background.</p>
+<h2>Animating and combining</h2>
+<p>Because the scene is <em>just code</em>, animation is trivial — perturb <code>map</code> with <code>time</code>. Bob the sphere up and down:</p>
+<pre><code class="language-cpp">float map(float3 p, float time){
+    float3 c = float3(0.0, sin(time) * 0.5, 0.0);   // moving center
+    float s = sdSphere(p - c, 1.0);
+    float ground = p.y + 1.0;
+    return min(s, ground);
+}
+</code></pre>
+<p>Subtracting a center <code>c</code> from <code>p</code> <em>translates</em> the sphere — a general SDF move: to place a shape at <code>c</code>, evaluate the shape at <code>p - c</code>. Drive <code>time</code> from SwiftUI with the animation clock:</p>
+<pre><code class="language-swift">TimelineView(.animation) { ctx in
+    let t = ctx.date.timeIntervalSinceReferenceDate
+    Rectangle()
+        .colorEffect(ShaderLibrary.raymarch(.float(t)))
+}
+</code></pre>
+<p>To <strong>orbit the camera</strong>, rotate <code>ro</code> (and re-aim <code>rd</code> at the origin) with a 2D rotation on its <code>x</code>/<code>z</code> using <code>sin(time)</code>/<code>cos(time)</code>. To make shapes <em>melt together</em>, swap the <code>min</code> in <code>map</code> for the smooth minimum <code>smin</code> from <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> — instead of a hard crease where two SDFs meet you get a gooey, liquid blend, the signature look of metaballs in 3D. Add more primitives (boxes, tori), union or subtract them, and you are building whole scenes out of nothing but distance.</p>
+<p>Shadertoy note: <code>time</code> is <code>iTime</code>, <code>size</code> is <code>iResolution</code>. Most 3D shaders you find online are exactly this skeleton — a richer <code>map</code>, fancier lighting, and shadows/AO layered on top.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>3D SDF</strong> = a function <code>map(p)</code> giving signed distance from any point to the nearest surface; negative inside.</li>
+<li><strong>sphere tracing</strong> = step along each ray by exactly <code>map(p)</code>; the safe distance guarantees no overshoot.</li>
+<li><strong>ray origin / direction</strong> = <code>ro</code> is the camera, <code>rd</code> is the per-pixel look direction into the scene.</li>
+<li><strong>step &amp; distance caps</strong> = the <code>for</code> limit and <code>t &gt; max</code> bail-out; raymarching's per-pixel loop cost lives here.</li>
+<li><strong>union / blend</strong> = <code>min</code> joins SDFs into one scene; <code>smin</code> blends them gooily.</li>
+<li><strong>gradient normal</strong> = surface normal from finite-difference samples of <code>map</code> around the hit point.</li>
+<li><strong>shading</strong> = <code>max(dot(n, lightDir), 0)</code> diffuse plus an ambient fill, using the SDF-derived normal.</li>
+<li><strong>translate a shape</strong> = evaluate it at <code>p - center</code>; animate by driving <code>center</code> (or the camera) with <code>time</code>.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> · <a class="xref" href="#22-lighting-and-normals">22-lighting-and-normals</a> · <a class="xref" href="#04-coordinates-and-color">04-coordinates-and-color</a> · <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a></p>
+<p>Prev: <a class="xref" href="#33-post-processing">33-post-processing</a> · Next: <a class="xref" href="#35-capstone-smoke-sparks-nebula">35-capstone-smoke-sparks-nebula</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#33-post-processing"><span>Prev</span>← 33 — Post-Processing: Bloom, Vignette, Grain &amp; Grade</a><a href="#35-capstone-smoke-sparks-nebula"><span>Next</span>35 — Capstone: A Drifting Smoke / Sparks / Nebula →</a></div></section>
+<section class="page" id="35-capstone-smoke-sparks-nebula" data-title="35 — Capstone: A Drifting Smoke / Sparks / Nebula" data-num="35" data-hasdemo="1" data-group="Curriculum"><h1>35 — Capstone: A Drifting Smoke / Sparks / Nebula</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<h2>Start here — the plain idea</h2>
+<p>This is where the whole advanced cluster pays off. On its own, each technique is small — but <em>stacked</em>, they make the kind of shader that looks like it took a studio to build. We're going to assemble a living nebula: soft drifting smoke, glowing embers, colored by a palette, with fake depth — and <strong>not a single particle stored anywhere.</strong> Every frame is recomputed from <code>(uv, time)</code>.</p>
+<p>The recipe is just the last nine lessons, layered like a cake:</p>
+<ol>
+<li><strong>fBm</strong> (<a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a>) makes the base cloud shape.</li>
+<li><strong>Domain warping</strong> (<a class="xref" href="#28-domain-warping">28-domain-warping</a>) makes it <em>flow</em> instead of sitting still.</li>
+<li><strong>Voronoi</strong> (<a class="xref" href="#27-voronoi-deep-dive">27-voronoi-deep-dive</a>) sprinkles in glowing sparks.</li>
+<li><strong>Layering</strong> (<a class="xref" href="#30-layering-and-parallax">30-layering-and-parallax</a>) stacks a few offset copies for depth.</li>
+<li><strong>Cosine palette</strong> (<a class="xref" href="#32-cosine-palettes">32-cosine-palettes</a>) colors the density.</li>
+<li><strong>Stateless animation</strong> (<a class="xref" href="#31-stateless-procedural-animation">31-stateless-procedural-animation</a>) drives all of it from <code>time</code>.</li>
+<li><strong>Post</strong> (<a class="xref" href="#33-post-processing">33-post-processing</a>) — a vignette and a whisper of grain to finish.</li>
+</ol>
+<p>Read it as "density → color → depth → polish." Once you see how the pieces snap together, you can rebuild any of them into your own effect.</p>
+<hr />
+<h2>The building blocks (from the earlier lessons)</h2>
+<p>Paste the helpers you already met — hash, value noise, fBm, and the Voronoi and palette functions. They're unchanged; this is just gathering them in one file.</p>
+<pre><code class="language-cpp">#include &lt;metal_stdlib&gt;
+#include &lt;SwiftUI/SwiftUI.h&gt;
+using namespace metal;
+
+float hash21(float2 p){ p = fract(p*float2(123.34, 345.45)); p += dot(p, p+34.345); return fract(p.x*p.y); }
+
+float valueNoise(float2 p){
+    float2 i = floor(p), f = fract(p);
+    float a = hash21(i), b = hash21(i+float2(1,0)), c = hash21(i+float2(0,1)), d = hash21(i+float2(1,1));
+    float2 u = f*f*(3.0-2.0*f);
+    return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+}
+
+float fbm(float2 p){
+    float sum = 0.0, amp = 0.5, freq = 1.0;
+    for (int i = 0; i &lt; 6; i++){ sum += amp*valueNoise(p*freq); freq *= 2.0; amp *= 0.5; }
+    return sum;
+}
+
+float2 hash22(float2 p){
+    p = float2(dot(p, float2(127.1,311.7)), dot(p, float2(269.5,183.3)));
+    return fract(sin(p)*43758.5453);
+}
+
+// Voronoi F1 (nearest feature-point distance) — for sparks
+float voronoiF1(float2 x, float time){
+    float2 n = floor(x), f = fract(x);
+    float f1 = 8.0;
+    for (int j=-1;j&lt;=1;j++)
+    for (int i=-1;i&lt;=1;i++){
+        float2 g = float2(i,j);
+        float2 o = hash22(n+g);
+        o = 0.5 + 0.5*sin(time*0.6 + 6.2831*o);   // sparks twinkle in place
+        float2 r = g + o - f;
+        f1 = min(f1, dot(r,r));
+    }
+    return sqrt(f1);
+}
+
+// Inigo Quilez cosine palette — nebula colors
+half3 palette(float t){
+    float3 a = float3(0.35, 0.20, 0.45);   // base (violet)
+    float3 b = float3(0.45, 0.35, 0.55);   // amplitude
+    float3 c = float3(1.0,  1.0,  1.0);    // frequency
+    float3 d = float3(0.10, 0.25, 0.55);   // phase → magenta→blue sweep
+    return half3(a + b * cos(6.28318 * (c*t + d)));
+}
+</code></pre>
+<hr />
+<h2>The nebula shader</h2>
+<p>Now the main event. Read the comments top to bottom — each block is one lesson doing its job.</p>
+<pre><code class="language-cpp">[[ stitchable ]] half4 nebula(float2 position, half4 color, float2 size, float time) {
+    // centered, aspect-correct coordinates (see lesson 04 / 29)
+    float2 uv = (position - 0.5*size) / size.y;
+
+    half3 col = half3(0.0h);
+
+    // --- LAYERING: a few offset copies for volumetric depth (lesson 30) ---
+    const int LAYERS = 5;
+    for (int i = 0; i &lt; LAYERS; i++) {
+        float fi    = float(i) / float(LAYERS);
+        float scale = mix(1.2, 3.0, fi);            // far layers finer
+        float speed = mix(0.10, 0.03, fi);          // far layers slower
+        float dim   = mix(1.0, 0.35, fi);           // far layers dimmer
+
+        float2 p = uv * scale + float2(fi*7.3, time*speed);
+
+        // --- DOMAIN WARP: bend the coordinates by noise so smoke flows (lesson 28) ---
+        float2 q = float2(fbm(p + float2(0.0, time*0.05)),
+                          fbm(p + float2(5.2, 1.3)));
+        float density = fbm(p + 3.0*q);             // warped fBm = drifting smoke (lessons 26, 28)
+
+        // --- COLOR: palette driven by the local density (lesson 32) ---
+        half3 smoke = palette(density + fi*0.15) * half(density * density);
+
+        // --- SPARKS: Voronoi points glowing through the smoke (lesson 27) ---
+        float f1    = voronoiF1(p*1.5, time);
+        float spark = smoothstep(0.10, 0.0, f1);    // tight bright dot per cell
+        half3 ember = half3(1.0h, 0.75h, 0.4h) * half(spark) * half(density);
+
+        col += (smoke + ember) * half(dim);          // additive accumulation
+    }
+
+    // --- POST: tone map + vignette + a little grain (lesson 33) ---
+    col = col / (col + 0.7h);                                    // Reinhard-ish tone map
+    float2 vq = (position/size) * (1.0 - position/size);
+    col *= half(pow(vq.x*vq.y*15.0, 0.25));                       // vignette
+    col += half(fract(sin(dot(position, float2(12.99,78.23)) + time)*43758.55) * 0.03 - 0.015); // grain
+
+    return half4(col, 1.0h);
+}
+</code></pre>
+<p>Everything you see moving is <code>time</code> scrolling the sampling coordinates — there is <strong>no particle array, no simulation state.</strong> Each pixel independently recomputes its color from <code>(uv, time)</code>, which is exactly why this runs at full frame rate on millions of pixels.</p>
+<hr />
+<h2>Hook it up in SwiftUI</h2>
+<pre><code class="language-swift">struct NebulaView: View {
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let t = Float(tl.date.timeIntervalSinceReferenceDate)
+            Rectangle()
+                .visualEffect { content, proxy in
+                    content.colorEffect(
+                        ShaderLibrary.nebula(.float2(proxy.size), .float(t))
+                    )
+                }
+                .ignoresSafeArea()
+        }
+    }
+}
+</code></pre>
+<p>That's it — a full animated nebula behind your UI in ~40 lines of shader.</p>
+<hr />
+<h2>Make it yours (the point of the exercise)</h2>
+<p>Every knob here maps to a lesson, so tuning it <em>is</em> the review:</p>
+<ul>
+<li><strong>More/thicker smoke</strong> → raise the fBm octaves or the <code>3.0*q</code> warp strength (26, 28).</li>
+<li><strong>Wilder flow</strong> → add a second warp level <code>r</code> before the final <code>fbm</code> (28).</li>
+<li><strong>Denser sparks</strong> → raise the Voronoi frequency <code>p*1.5</code>, or widen the <code>smoothstep(0.10, 0.0, f1)</code> (27).</li>
+<li><strong>Different mood</strong> → swap the four palette constants — try a fire preset or an ocean one (32).</li>
+<li><strong>More depth</strong> → raise <code>LAYERS</code>, spread the <code>scale</code>/<code>speed</code>/<code>dim</code> ranges wider (30).</li>
+<li><strong>Calmer or faster</strong> → scale <code>time</code> up or down where it enters each block (31).</li>
+</ul>
+<p>Build it once, then spend ten minutes turning knobs. That muscle — "I want <em>this</em> feeling, which knob is it?" — is the whole skill, and it's the same <a class="xref" href="interaction-math.html#01a-choosing-the-math">Choosing the Math</a> instinct from the interaction course, now in pixels.</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>the recipe</strong> = density (warped fBm) → color (palette) → sparks (Voronoi) → depth (layering) → polish (post) — assembled, not invented.</li>
+<li><strong>domain-warped fBm</strong> = the flowing smoke base; the warp is what makes it <em>drift</em> instead of freeze.</li>
+<li><strong>Voronoi F1</strong> = one glowing spark per cell, twinkling via a time-animated point.</li>
+<li><strong>cosine palette</strong> = turns a scalar density into nebula color from four constants.</li>
+<li><strong>layering</strong> = a few offset copies with different scale/speed/brightness fake volumetric depth.</li>
+<li><strong>stateless</strong> = the entire scene is a pure function of <code>(uv, time)</code> — no particles stored, so it's cheap and infinitely scalable.</li>
+<li><strong>post</strong> = tone map + vignette + grain is the 3-line difference between "a shape" and "a mood."</li>
+<li><strong>the real skill</strong> = knowing which knob produces which feeling — pure <a class="xref" href="interaction-math.html#01a-choosing-the-math">Choosing the Math</a>, in shader form.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The techniques it combines: <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a>, <a class="xref" href="#27-voronoi-deep-dive">27-voronoi-deep-dive</a>, <a class="xref" href="#28-domain-warping">28-domain-warping</a>, <a class="xref" href="#30-layering-and-parallax">30-layering-and-parallax</a>, <a class="xref" href="#32-cosine-palettes">32-cosine-palettes</a>, <a class="xref" href="#33-post-processing">33-post-processing</a></li>
+<li>Driving it from SwiftUI: <a class="xref" href="#18a-feeding-data-into-shaders">18a-feeding-data-into-shaders</a>, <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a></li>
+<li>The 3D sibling technique: <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a></li>
+<li>Prev: <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
+</ul><div class="pager"><a href="#34-raymarching-3d-sdf"><span>Prev</span>← 34 — Raymarching &amp; 3D SDFs: Shadertoy-Style 3D</a><a href="#01-card-shader-reflections"><span>Next</span>Card Shader Reflections — PBR Metallic Card →</a></div></section>
 <section class="page" id="01-card-shader-reflections" data-title="Card Shader Reflections — PBR Metallic Card" data-num="01" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>Card Shader Reflections — PBR Metallic Card</h1>
 <h2>Start here — the plain idea</h2>
 <p>Picture one of those shiny metal credit cards — silver, gold, platinum — and how the light slides across the surface as you tilt it. That's the effect here: a flat rectangle that <em>looks</em> like polished metal, with reflections that move as you scroll.</p>
@@ -6543,7 +7595,7 @@ float3 calcNormal(float2 uv, float strength, float cardType, float2 res) {
 <li><a class="xref" href="swiftui.html#enzomangano-demos-reference">enzomangano-demos-reference</a> — Full repo reference</li>
 </ul>
 <hr />
-<p><em>Source: enzomanuelmangano/demos/card-shader-reflections</em></p><div class="pager"><a href="#25-real-world-apple-effects"><span>Prev</span>← 25 — Real-World Apple Effects: Recreating iOS Animations</a><a href="#02-github-terrain"><span>Next</span>GitHub Terrain — WebGPU 3D Contribution Graph →</a></div></section>
+<p><em>Source: enzomanuelmangano/demos/card-shader-reflections</em></p><div class="pager"><a href="#35-capstone-smoke-sparks-nebula"><span>Prev</span>← 35 — Capstone: A Drifting Smoke / Sparks / Nebula</a><a href="#02-github-terrain"><span>Next</span>GitHub Terrain — WebGPU 3D Contribution Graph →</a></div></section>
 <section class="page" id="02-github-terrain" data-title="GitHub Terrain — WebGPU 3D Contribution Graph" data-num="02" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>GitHub Terrain — WebGPU 3D Contribution Graph</h1>
 <h2>Start here — the plain idea</h2>
 <p>You know the green GitHub contribution grid? This effect takes that flat grid and pushes each square up into a little 3D block — busier days become taller towers — so the whole thing looks like a tiny landscape you can tilt and zoom. Then it can morph smoothly back down to the flat 2D grid.</p>
