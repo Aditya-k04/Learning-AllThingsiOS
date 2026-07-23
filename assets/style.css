@@ -269,3 +269,8 @@ html[data-theme=dark] .sidebar-show{background:#15171d}
   html[data-sidebar="hidden"] .sidebar{display:none}
   html[data-sidebar="hidden"] .sidebar-show{display:flex}
 }
+
+/* --- Blender course figure illustrations (inline SVG diagrams) --- */
+figure.fig{margin:1.4rem 0;}
+figure.fig svg{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:12px;background:#1e1e20;}
+figure.fig figcaption{font-size:.8rem;color:var(--muted);margin-top:.45rem;text-align:center;line-height:1.45;}
