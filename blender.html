@@ -1,0 +1,1112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blender for Shader Prototyping · Learning All things Apple</title>
+<meta name="description" content="Zero to an animated procedural water surface with moving caustics in Blender&#x27;s node editor — built to translate straight into Metal shaders.">
+<meta property="og:title" content="Blender for Shader Prototyping · Learning All things Apple">
+<meta property="og:description" content="Zero to an animated procedural water surface with moving caustics in Blender&#x27;s node editor — built to translate straight into Metal shaders.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-sidebar',localStorage.getItem('lar-sidebar')||'shown');}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Blender for Shader Prototyping</div><div class="cs">Zero to an animated procedural water surface with moving caustics in Blender&#x27;s node editor — built to translate straight into Metal shaders.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html" selected>Blender for Shader Prototyping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-roadmap" data-title="Blender for Shader Prototyping" data-num="·" data-hasdemo="0" data-group=""><h1>Blender for Shader Prototyping</h1>
+<p>Start with zero prior 3D knowledge and finish with an animated procedural water surface with moving caustics — built deliberately so the node graph translates straight into Metal shaders. No modeling, no sculpting, just textures, math, and light. Targets Blender 4.2 LTS+ and the EEVEE Next renderer.</p>
+<h2>What you'll be able to do</h2>
+<p>You can build an animated procedural water surface with moving caustics — and understand it well enough to translate it to code.</p>
+<h2>The lessons</h2>
+<ol>
+<li><a class="xref" href="#01-getting-around-blender">01-getting-around-blender</a> — the interface, moving the camera, your first plane.</li>
+<li><a class="xref" href="#02-shading-modes-and-first-material">02-shading-modes-and-first-material</a> — make it a blue glossy surface.</li>
+<li><a class="xref" href="#03-shader-editor-nodes">03-shader-editor-nodes</a> — the node graph, explained.</li>
+<li><a class="xref" href="#04-procedural-textures-101">04-procedural-textures-101</a> — Noise, Voronoi, Wave.</li>
+<li><a class="xref" href="#05-coordinates-and-mapping">05-coordinates-and-mapping</a> — position &amp; scale textures; set up the value you'll animate.</li>
+<li><a class="xref" href="#06-bump-and-normals">06-bump-and-normals</a> — fake ripples that catch the light.</li>
+<li><a class="xref" href="#07-build-a-water-material">07-build-a-water-material</a> — transmission, IOR, glassy water.</li>
+<li><a class="xref" href="#08-keyframe-animation">08-keyframe-animation</a> — make ripples drift on the timeline.</li>
+<li><a class="xref" href="#09-drivers-and-frame">09-drivers-and-frame</a> — endless motion with <code>#frame</code> (= a time uniform).</li>
+<li><a class="xref" href="#10-fake-caustics">10-fake-caustics</a> — the shimmering pool-floor light web.</li>
+<li><a class="xref" href="#11-lookdev-and-translate-to-code">11-lookdev-and-translate-to-code</a> — tidy up and prep to translate to Metal.</li>
+</ol>
+<h2>How to use this course</h2>
+<p>One <code>.blend</code> file carries through all 11 lessons — each page links a starter and an end file (currently placeholders) so you can jump in anywhere. Every lesson takes 20 minutes or less. Keyboard shortcuts appear as chips like <kbd>Shift</kbd>+<kbd>A</kbd>, but the full menu path is always given too, so you never need to memorize a key. A running <a class="xref" href="#12-glossary">12-glossary</a> collects every term as you meet it.</p>
+<p>Take your time, follow one step at a time, and by the end you'll have real water — and a shader spec to show for it.</p><div class="pager"><span class="sp"></span><a href="#01-getting-around-blender"><span>Next</span>01 — Getting Around Blender (No-Fear Edition) →</a></div></section>
+<section class="page" id="01-getting-around-blender" data-title="01 — Getting Around Blender (No-Fear Edition)" data-num="01" data-hasdemo="0" data-group=""><h1>01 — Getting Around Blender (No-Fear Edition)</h1>
+<p><em>By the end you'll have a saved .blend with one flat plane you can orbit around confidently.</em></p>
+<p><strong>⏱ ~15 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson01-start.blend</code> · end → <code>lesson01-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A single flat plane sitting in an empty Blender scene, viewed from a slight angle, with the plane centered and filling most of the viewport.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>Before you can build a water shader, you need a surface to put it on and the confidence to move around it. This lesson gives you both: a flat plane (your future water) and the camera moves you'll use in every lesson that follows.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Viewport</strong> — the big 3D window in the middle where you see and edit your scene.</li>
+<li><strong>3D cursor</strong> — the little red-and-white target; new objects appear wherever it sits. It starts at the center.</li>
+<li><strong>Orbit / pan / zoom</strong> — the three ways you move your view: spin around (orbit), slide sideways (pan), and move closer/further (zoom).</li>
+<li><strong>Regions</strong> — the panels around the viewport: the Outliner (top-right, a list of everything) and the Properties editor (bottom-right, all the settings).</li>
+<li><strong>Scene Collection</strong> — the top-level folder in the Outliner that holds every object in your scene.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>Download and install Blender from <strong>blender.org → Download</strong>. Pick Blender 4.2 LTS (or newer) and run the installer.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The blender.org download page with the 4.2 LTS button highlighted.</p>
+</blockquote>
+</li>
+<li>Open Blender and close the splash screen by clicking any empty spot. You'll see the default scene: a <strong>cube</strong>, a <strong>light</strong>, and a <strong>camera</strong>. Menu path: <strong>(none — it opens automatically)</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The default Blender scene showing the cube, light, and camera, with the Outliner listing all three on the right.</p>
+</blockquote>
+</li>
+<li>Orbit the view: hold the middle mouse button and drag. Shortcut: <kbd>MMB drag</kbd>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The cube seen from a new rotated angle after orbiting.</p>
+</blockquote>
+</li>
+<li>Pan the view: hold <kbd>Shift</kbd> and drag with the middle mouse button. Shortcut: <kbd>Shift+MMB</kbd>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The cube shifted off to one side after panning.</p>
+</blockquote>
+</li>
+<li>Zoom the view: roll the scroll wheel forward to get closer, backward to pull away. Shortcut: <kbd>Scroll wheel</kbd>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The cube much larger in frame after zooming in.</p>
+</blockquote>
+</li>
+<li>Snap to straight-on views: press <kbd>Numpad 1</kbd> for front, <kbd>Numpad 3</kbd> for right, <kbd>Numpad 7</kbd> for top. Menu path: <strong>View → Viewpoint → Front / Right / Top</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The scene from directly overhead (top view) after pressing Numpad 7.</p>
+</blockquote>
+</li>
+<li>Delete the default cube: click it to select it (its outline turns orange), then press <kbd>X</kbd> and confirm. Menu path: <strong>Object → Delete</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The scene now empty of the cube, with only the light and camera left.</p>
+</blockquote>
+</li>
+<li>Add your plane: press <kbd>Shift+A</kbd> and choose <strong>Mesh → Plane</strong>. Menu path: <strong>Add → Mesh → Plane</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A flat square plane now sitting at the center of the scene.</p>
+</blockquote>
+</li>
+<li>Practice the transform tools on the plane (optional): press <kbd>S</kbd> to scale, <kbd>G</kbd> to move (grab), <kbd>R</kbd> to rotate, then move the mouse and left-click to confirm. Menu path: <strong>Object → Transform → Scale / Move / Rotate</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane slightly larger after a scale operation.</p>
+</blockquote>
+</li>
+<li>Save your file: press <kbd>Ctrl+S</kbd>, pick a folder, name it, and confirm. Menu path: <strong>File → Save</strong>.
+    &gt; 📷 <strong>[SCREENSHOT]</strong> — The save dialog with a filename typed in.</li>
+</ol>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> you can orbit smoothly around the plane with <kbd>MMB drag</kbd>, and pressing <kbd>Numpad 7</kbd> (top view) shows the plane filling most of the viewport as a clean square. Your saved .blend now contains exactly one plane.</p>
+<h2>Try it yourself</h2>
+<p>Add a second object with <kbd>Shift+A</kbd> — try <strong>Mesh → Cube</strong> — then delete it again with <kbd>X</kbd>. Repeating add-then-delete builds muscle memory for the two moves you'll use most.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Nothing happens when I orbit</strong> — you need a real middle mouse button (the scroll wheel clicks down). On a trackpad, enable <strong>Edit → Preferences → Input → Emulate 3 Button Mouse</strong> and orbit with <kbd>Alt+Left-drag</kbd>.</li>
+<li><strong>My new object appears in a weird spot</strong> — objects spawn at the 3D cursor. Reset it to the center with <kbd>Shift+C</kbd> before adding.</li>
+<li><strong>I pressed X and deleted the wrong thing</strong> — press <kbd>Ctrl+Z</kbd> to undo; Blender undoes many steps back.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#02-shading-modes-and-first-material">02-shading-modes-and-first-material</a> — turn that flat grey plane into a blue, glossy surface.</p><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Blender for Shader Prototyping</a><a href="#02-shading-modes-and-first-material"><span>Next</span>02 — Shading Modes &amp; Your First Material →</a></div></section>
+<section class="page" id="02-shading-modes-and-first-material" data-title="02 — Shading Modes &amp; Your First Material" data-num="02" data-hasdemo="0" data-group=""><h1>02 — Shading Modes &amp; Your First Material</h1>
+<p><em>By the end you'll have a blue, glossy plane glowing under real lighting in Rendered view.</em></p>
+<p><strong>⏱ ~15 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson02-start.blend</code> · end → <code>lesson02-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The flat plane from lesson 1, now colored deep blue and shiny, catching a highlight in Rendered viewport shading.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>Water is defined by how it reflects and colors light, so your first job is learning to give a surface a color and a shine. This lesson introduces materials and the shading modes you'll flip between constantly while building your water shader.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Viewport shading modes</strong> — four ways to preview your scene: <strong>Wireframe</strong> (just edges), <strong>Solid</strong> (flat grey, fast), <strong>Material Preview</strong> (shows materials with a studio light), and <strong>Rendered</strong> (the real, final look).</li>
+<li><strong>EEVEE Next vs Cycles</strong> — the two render engines. EEVEE Next is real-time and fast; Cycles is slower but ultra-realistic. We use <strong>EEVEE Next</strong> throughout this course.</li>
+<li><strong>Material</strong> — the recipe for how a surface looks: its color, shininess, metalness, and more.</li>
+<li><strong>Base Color</strong> — the main color of the surface.</li>
+<li><strong>Metallic</strong> — how metal-like the surface is (0 = non-metal like water, 1 = raw metal).</li>
+<li><strong>Roughness</strong> — how blurry the reflections are (low = mirror-glossy, high = matte).</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>Open your saved plane file from lesson 1 (<strong>File → Open</strong>, or your recent-files list). We build directly on that one plane.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — Lesson 1's plane loaded in Solid shading.</p>
+</blockquote>
+</li>
+<li>Confirm the render engine is EEVEE Next: in <strong>Properties → Render Properties</strong> (the little TV/camera-back icon), check that <strong>Render Engine</strong> reads <strong>EEVEE Next</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Render Properties tab with Render Engine set to EEVEE Next.</p>
+</blockquote>
+</li>
+<li>Switch to Material Preview shading: click the third sphere icon in the row at the top-right of the viewport. Menu path: <strong>(viewport header → shading sphere icons)</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane rendered against a soft studio backdrop in Material Preview mode.</p>
+</blockquote>
+</li>
+<li>Select the plane (left-click it), then create a material: <strong>Properties → Material Properties</strong> (the checkered-sphere icon) <strong>→ New</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Material Properties panel now showing a fresh material with Base Color, Metallic, and Roughness rows.</p>
+</blockquote>
+</li>
+<li>Change the Base Color to blue: click the <strong>Base Color</strong> swatch and pick a blue from the color wheel.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane now colored blue in the viewport.</p>
+</blockquote>
+</li>
+<li>Drag the <strong>Roughness</strong> slider down toward 0 and watch the plane get glossy and reflective.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The blue plane now shiny with a bright highlight after lowering Roughness.</p>
+</blockquote>
+</li>
+<li>Leave <strong>Metallic</strong> at 0 — water is not a metal, so a value of 0 keeps it reading as a liquid surface rather than polished chrome.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Metallic slider sitting at 0.000.</p>
+</blockquote>
+</li>
+<li>Switch to Rendered shading: click the fourth (rightmost) sphere icon at the top-right of the viewport to see the plane under the scene's real light. Menu path: <strong>(viewport header → rightmost shading sphere)</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The blue glossy plane lit by the scene lamp in Rendered mode.</p>
+</blockquote>
+</li>
+<li>Save your progress with <kbd>Ctrl+S</kbd>. Menu path: <strong>File → Save</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The title bar showing the saved filename with no unsaved-changes asterisk.</p>
+</blockquote>
+</li>
+</ol>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> the plane appears clearly blue and glossy in Rendered view, with a visible highlight where the scene light hits it. If it looks flat grey, you're still in Solid shading — switch to the rightmost sphere.</p>
+<h2>Try it yourself</h2>
+<p>Drag the <strong>Roughness</strong> slider all the way up to 1.0 and back down to 0.0. Notice how high roughness makes a chalky, matte surface and low roughness makes a sharp mirror — this single slider will do a lot of work in your water shader.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>My plane stays grey no matter what</strong> — you're in Solid shading. Click the third or fourth sphere icon (Material Preview or Rendered) to see materials.</li>
+<li><strong>The New button does nothing</strong> — the plane wasn't selected. Left-click the plane first so it has an orange outline, then click <strong>New</strong>.</li>
+<li><strong>It looks like shiny metal, not water</strong> — your Metallic slider crept above 0. Set <strong>Metallic</strong> back to 0 for a water-like surface.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#03-shader-editor-nodes">03-shader-editor-nodes</a> — open the node editor and meet the two nodes behind every material.</p><div class="pager"><a href="#01-getting-around-blender"><span>Prev</span>← 01 — Getting Around Blender (No-Fear Edition)</a><a href="#03-shader-editor-nodes"><span>Next</span>03 — Meet the Shader Editor (Nodes Explained) →</a></div></section>
+<section class="page" id="03-shader-editor-nodes" data-title="03 — Meet the Shader Editor (Nodes Explained)" data-num="03" data-hasdemo="0" data-group=""><h1>03 — Meet the Shader Editor (Nodes Explained)</h1>
+<p><em>By the end you'll be able to add a node, connect it, and explain what the two default nodes do.</em></p>
+<p><strong>⏱ ~15 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson03-start.blend</code> · end → <code>lesson03-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Shader Editor open at the bottom of the screen, showing a Principled BSDF node wired into a Material Output node, with the blue plane visible above.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>Everything advanced in this course — procedural water, ripples, caustics — is built by wiring nodes together in the Shader Editor. This lesson is pure node literacy: no new look, just the skill of adding and connecting nodes so nothing feels mysterious later.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Node</strong> — a single box that does one job (holds a color, makes a texture, combines things).</li>
+<li><strong>Socket</strong> — a connection dot on a node. Its <strong>color = data type</strong>: yellow = color, grey = value/float, blue = vector (like a position or direction).</li>
+<li><strong>Principled BSDF</strong> — one big node that describes a whole physical material (the color, metallic, and roughness you set last lesson all live here).</li>
+<li><strong>Material Output</strong> — the final node; whatever connects into its Surface socket is what you actually see.</li>
+<li><strong>Noodles</strong> — the curvy wires that carry data from one socket to another. Everything flows left → right into the Output.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>Open your blue-plane file from lesson 2 and select the plane. We reuse the exact material you built.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The blue plane selected in the viewport.</p>
+</blockquote>
+</li>
+<li>Open the Shader Editor. Easiest way: click the <strong>Shading</strong> workspace tab along the very top of the window. Alternative: change any panel's editor type using the dropdown in its top-left corner and pick <strong>Shader Editor</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Shading workspace, with the Shader Editor filling the bottom half of the screen.</p>
+</blockquote>
+</li>
+<li>Identify the two default nodes: <strong>Principled BSDF</strong> on the left feeding <strong>Material Output</strong> on the right. Trace the noodle connecting them.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — Close-up of the two nodes with the BSDF-to-Surface noodle highlighted.</p>
+</blockquote>
+</li>
+<li>Add a new node to experiment with: press <kbd>Shift+A</kbd> and choose <strong>Search</strong> (or <strong>Color → RGB</strong>). Menu path: <strong>Add → Color → RGB</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A new RGB node floating in the editor, not yet connected.</p>
+</blockquote>
+</li>
+<li>Connect a noodle: drag from the RGB node's output socket to the Principled BSDF's <strong>Base Color</strong> input socket.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A noodle now running from the RGB node into Base Color, and the plane taking that color.</p>
+</blockquote>
+</li>
+<li>Disconnect a noodle: click-drag the end of the noodle off its socket and release over empty space.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The RGB node disconnected again, its noodle gone.</p>
+</blockquote>
+</li>
+<li>Mute a node to prove it does nothing: select the Principled BSDF and press <kbd>M</kbd>. A red line crosses it and the plane goes flat/black. Press <kbd>M</kbd> again to un-mute. Menu path: <strong>Node → Mute</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Principled BSDF crossed out with a red mute line and the plane turned dark.</p>
+</blockquote>
+</li>
+</ol>
+<h2>The node setup</h2>
+<pre><code>+-------------------+          +-------------------+
+| Principled BSDF   |          | Material Output   |
+|                   |  BSDF    |                   |
+|            (BSDF) *----------&gt;* Surface           |
+|                   |          |                   |
++-------------------+          +-------------------+
+        left  ------- flow -------&gt;  right
+</code></pre>
+<p><strong>Connections:</strong>
+- Principled BSDF.BSDF → Material Output.Surface</p>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> you can add an RGB node with <kbd>Shift+A</kbd>, drag a noodle into Base Color to change the plane's color, and then explain out loud that the Principled BSDF builds the material and the Material Output displays it. Muting the BSDF with <kbd>M</kbd> should make the plane go dark.</p>
+<h2>Try it yourself</h2>
+<p>Add a second node with <kbd>Shift+A</kbd> — try <strong>Converter → Value</strong> — and just leave it floating unconnected. Notice its single grey socket (a float). Recognizing socket colors now will save you confusion when you start plugging textures in.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>The Shader Editor is empty</strong> — no material is selected. Left-click the plane in the viewport so its material loads into the editor.</li>
+<li><strong>My noodle won't stick</strong> — you dropped it on the wrong socket type; drag onto the input dot directly, and remember color-to-color and value-to-value connect most cleanly.</li>
+<li><strong>The plane went black and I can't undo the look</strong> — the Principled BSDF is muted. Select it and press <kbd>M</kbd> again to un-mute.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#04-procedural-textures-101">04-procedural-textures-101</a> — add your first texture node and make a pattern with math instead of an image.</p><div class="pager"><a href="#02-shading-modes-and-first-material"><span>Prev</span>← 02 — Shading Modes &amp; Your First Material</a><a href="#04-procedural-textures-101"><span>Next</span>04 — Procedural Textures 101 (Noise, Voronoi, Wave) →</a></div></section>
+<section class="page" id="04-procedural-textures-101" data-title="04 — Procedural Textures 101 (Noise, Voronoi, Wave)" data-num="04" data-hasdemo="0" data-group=""><h1>04 — Procedural Textures 101 (Noise, Voronoi, Wave)</h1>
+<p><em>By the end you'll have a material you can swap between three procedural textures — and describe how each one looks.</em></p>
+<p><strong>⏱ ~15 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson04-start.blend</code> · end → <code>lesson04-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The flat plane from Lesson 3, now showing a soft cloudy noise pattern instead of a plain color, with the Shader Editor open below.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>Real water shaders almost never use photos — they build ripples, foam, and caustics out of pure math so the pattern can move and never repeat. Learning these three texture nodes is learning the exact primitives (Perlin, Worley, sine) you'll later write in Metal.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Procedural texture</strong> — a pattern generated from math, not an image. It's infinite and resolution-free, so you can zoom in forever and it never gets blurry.</li>
+<li><strong>Noise Texture</strong> — a soft, cloudy Perlin-style pattern. Great for gentle water swell and irregular surface detail.</li>
+<li><strong>Voronoi Texture</strong> — a cellular pattern made of packed cells. This is the seed of caustics — those bright web-like light shapes on a pool floor.</li>
+<li><strong>Wave Texture</strong> — evenly spaced ripple bands, made from a sine wave. Think of clean, repeating wavefronts.</li>
+<li><strong>Scale and Detail</strong> — <em>Scale</em> zooms the pattern in or out (bigger number = smaller features); <em>Detail</em> adds finer sub-wrinkles on top of the big shapes.</li>
+<li><strong>Fac vs Color outputs</strong> — <em>Fac</em> is a single grey value (one number, 0–1). <em>Color</em> is full RGB. Grey is often all you need for a heightmap; Color gives you tint.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>
+<p>Open the <strong>Shader Editor</strong> at the bottom of the screen (it should still show your material from Lesson 3). Menu path: <strong>Editor Type dropdown (top-left of a panel) → Shader Editor</strong>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Shader Editor showing a Principled BSDF wired into Material Output.</p>
+</blockquote>
+</li>
+<li>
+<p>Add a Noise Texture node. Menu path: <strong>Add → Texture → Noise Texture</strong>. Shortcut: <kbd>Shift+A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A new Noise Texture node floating next to your cursor, ready to place.</p>
+</blockquote>
+</li>
+<li>
+<p>Drag the Noise Texture's <strong>Color</strong> output into the Principled BSDF's <strong>Base Color</strong> input, then let go. (You can use <strong>Fac</strong> instead for a grey version.)</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A cloudy grey-and-white noise pattern now covering the plane in the viewport.</p>
+</blockquote>
+</li>
+<li>
+<p>Change the Noise Texture's <strong>Scale</strong> (try <code>2</code> then <code>10</code>) and <strong>Detail</strong> (try <code>2</code> then <code>8</code>) and watch the clouds shrink and gain fine wrinkles.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The same plane with a tighter, more detailed noise pattern after raising Scale and Detail.</p>
+</blockquote>
+</li>
+<li>
+<p>Delete the Noise Texture and add a <strong>Voronoi Texture</strong> in its place. Menu path: select the node then <strong>Delete</strong> (<kbd>X</kbd>), then <strong>Add → Texture → Voronoi Texture</strong> (<kbd>Shift+A</kbd>). Wire its <strong>Color</strong> → <strong>Base Color</strong>. Notice the packed-cell look — this becomes caustics later.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane now covered in colored cellular Voronoi cells.</p>
+</blockquote>
+</li>
+<li>
+<p>Delete the Voronoi and add a <strong>Wave Texture</strong>. Menu path: <strong>Delete</strong> (<kbd>X</kbd>), then <strong>Add → Texture → Wave Texture</strong> (<kbd>Shift+A</kbd>). Wire <strong>Color</strong> → <strong>Base Color</strong> and see the evenly spaced ripple bands.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane showing clean parallel ripple bands from the Wave Texture.</p>
+</blockquote>
+</li>
+</ol>
+<p><em>These three are the same math primitives that live in shader code: Noise ≈ Perlin, Voronoi ≈ Worley, Wave ≈ sine. You're learning the vocabulary of every water shader.</em></p>
+<h2>The node setup</h2>
+<pre><code>[Noise Texture] --Color--&gt; [Principled BSDF] --&gt; [Material Output]
+</code></pre>
+<p><strong>Connections:</strong>
+- Noise Texture.Color → Principled BSDF.Base Color
+- Principled BSDF.BSDF → Material Output.Surface</p>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> you can swap the texture node between Noise, Voronoi, and Wave, and describe each in a sentence: Noise = soft clouds, Voronoi = cells, Wave = bands.</p>
+<h2>Try it yourself</h2>
+<p>Put the Voronoi Texture back and crank its <strong>Scale</strong> to about <code>50</code>. Watch the cells shrink into a fine web pattern — that dense web is exactly the shape caustics take.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Plugging Color into the wrong socket</strong> — dropping it onto Metallic or Roughness gives a weird result. Fix: connect the texture's Color to <strong>Base Color</strong> for now.</li>
+<li><strong>Scale set too high, so it looks like flat noise</strong> — a Scale of <code>1000</code> is just static. Fix: keep Scale between about <code>2</code> and <code>20</code> while learning.</li>
+<li><strong>Expecting the pattern to move</strong> — procedural textures sit still until you drive them with coordinates. Fix: that's Lesson 5; for now, static is correct.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#05-coordinates-and-mapping">05-coordinates-and-mapping</a> — learn to slide, rotate, and stretch a texture across the plane, and set up the one value you'll animate later.</p><div class="pager"><a href="#03-shader-editor-nodes"><span>Prev</span>← 03 — Meet the Shader Editor (Nodes Explained)</a><a href="#05-coordinates-and-mapping"><span>Next</span>05 — Coordinates &amp; Mapping (Where Textures Live) →</a></div></section>
+<section class="page" id="05-coordinates-and-mapping" data-title="05 — Coordinates &amp; Mapping (Where Textures Live)" data-num="05" data-hasdemo="0" data-group=""><h1>05 — Coordinates &amp; Mapping (Where Textures Live)</h1>
+<p><em>By the end you'll have a texture you can slide across the plane by dragging one slider — the exact value you'll animate later.</em></p>
+<p><strong>⏱ ~15 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson05-start.blend</code> · end → <code>lesson05-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane with a Noise pattern, plus a Texture Coordinate and Mapping node feeding into it, and the pattern shifted off-center to show it has moved.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>A texture doesn't know where it lives until you tell it — and controlling position is how water flows. The single Mapping slider you set up here is the value you'll keyframe in Lesson 8 to make the whole surface drift.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Texture Coordinate node</strong> — the source that says <em>where</em> to sample a texture. It offers several outputs: <strong>Generated</strong> (0–1 based on the object's bounds), <strong>Object</strong> (based on another object's position), and <strong>UV</strong> (the surface's own flat coordinates).</li>
+<li><strong>Mapping node</strong> — a transform box with <strong>Location</strong>, <strong>Rotation</strong>, and <strong>Scale</strong> for a texture. It moves, spins, and stretches the pattern before the texture reads it.</li>
+<li><strong>Why UV matters for a flat plane</strong> — UV is the plane's own built-in 0–1 surface grid. For a flat plane it's the cleanest, most predictable coordinate to map onto.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>
+<p>In the Shader Editor, make sure you have a <strong>Noise Texture</strong> wired into <strong>Base Color</strong> (rebuild it from Lesson 4 if needed). Menu path: <strong>Add → Texture → Noise Texture</strong>. Shortcut: <kbd>Shift+A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — Noise Texture → Principled BSDF → Material Output, clouds on the plane.</p>
+</blockquote>
+</li>
+<li>
+<p>Add a <strong>Texture Coordinate</strong> node. Menu path: <strong>Add → Input → Texture Coordinate</strong>. Shortcut: <kbd>Shift+A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A Texture Coordinate node placed to the left, showing its Generated/Object/UV outputs.</p>
+</blockquote>
+</li>
+<li>
+<p>Add a <strong>Mapping</strong> node. Menu path: <strong>Add → Vector → Mapping</strong>. Shortcut: <kbd>Shift+A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A Mapping node placed between Texture Coordinate and Noise Texture.</p>
+</blockquote>
+</li>
+<li>
+<p>Wire it up: <strong>Texture Coordinate.UV</strong> → <strong>Mapping.Vector</strong>, then <strong>Mapping.Vector</strong> → <strong>Noise Texture.Vector</strong>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The three nodes connected in a chain: Texture Coordinate → Mapping → Noise Texture.</p>
+</blockquote>
+</li>
+<li>
+<p>Drag the Mapping <strong>Location X</strong> slider and watch the noise pattern SLIDE across the plane. <em>(Remember this slider — in Lesson 8 we animate it so the water moves on its own.)</em></p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The noise pattern visibly shifted sideways after raising Location X.</p>
+</blockquote>
+</li>
+<li>
+<p>Change the Mapping <strong>Scale</strong> — set X to <code>4</code> and leave Y at <code>1</code> — to stretch the ripples directionally, so features become long and thin along one axis.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The pattern stretched into long streaks after changing Scale X.</p>
+</blockquote>
+</li>
+</ol>
+<h2>The node setup</h2>
+<pre><code>[Texture Coordinate] --UV--&gt; [Mapping] --Vector--&gt; [Noise Texture] --Color--&gt; [Principled BSDF] --&gt; [Material Output]
+</code></pre>
+<p><strong>Connections:</strong>
+- Texture Coordinate.UV → Mapping.Vector
+- Mapping.Vector → Noise Texture.Vector
+- Noise Texture.Color → Principled BSDF.Base Color
+- Principled BSDF.BSDF → Material Output.Surface</p>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> dragging the Mapping <strong>Location X</strong> slider slides the whole texture across the plane in real time.</p>
+<h2>Try it yourself</h2>
+<p>Set Mapping <strong>Scale X</strong> to <code>6</code> and <strong>Scale Y</strong> to <code>1</code>, then drag <strong>Location X</strong> again. You've just made directional ripples that flow along one axis — the start of a current.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Wiring Generated instead of UV</strong> — on some setups Generated looks fine, but UV is the reliable choice for a flat plane. Fix: connect the <strong>UV</strong> output specifically.</li>
+<li><strong>Dragging Location but nothing moves</strong> — usually the Mapping.Vector isn't actually plugged into Noise Texture.Vector. Fix: check that middle connection.</li>
+<li><strong>Confusing Scale with the texture's own Scale</strong> — the Mapping Scale stretches direction; the Noise Texture Scale zooms features. Fix: use Mapping Scale for stretch, Noise Scale for zoom.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#06-bump-and-normals">06-bump-and-normals</a> — turn this flat grey pattern into raised ripples that catch the light, with no real geometry added.</p><div class="pager"><a href="#04-procedural-textures-101"><span>Prev</span>← 04 — Procedural Textures 101 (Noise, Voronoi, Wave)</a><a href="#06-bump-and-normals"><span>Next</span>06 — From Flat to Rippled: Bump &amp; Normals →</a></div></section>
+<section class="page" id="06-bump-and-normals" data-title="06 — From Flat to Rippled: Bump &amp; Normals" data-num="06" data-hasdemo="0" data-group=""><h1>06 — From Flat to Rippled: Bump &amp; Normals</h1>
+<p><em>By the end you'll have a flat plane that shows raised ripples which shimmer as you orbit around it.</em></p>
+<p><strong>⏱ ~15 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson06-start.blend</code> · end → <code>lesson06-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane in Rendered shading, its surface covered in raised-looking ripples catching a highlight from the scene light — but still geometrically flat.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>Water reads as water because light bounces off tiny slopes on its surface. Faking those slopes with a Bump node — instead of adding millions of real polygons — is exactly how a fast water shader is built, in Blender and in Metal alike.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Height vs Normal</strong> — a <em>height</em> is a grey heightmap (bright = high, dark = low). A <em>normal</em> is the direction a surface faces at each point. Light cares about normals, not heights.</li>
+<li><strong>Bump node</strong> — converts a grey height signal into per-pixel normals, so a flat surface <em>acts</em> bumpy to the light without changing its geometry.</li>
+<li><strong>Strength / Distance</strong> — <em>Strength</em> is how strongly the fake bumps affect shading; <em>Distance</em> is the apparent height difference. Small values look like gentle water.</li>
+<li><strong>ColorRamp</strong> — remaps values to control contrast. Placed before the Bump, it sharpens soft noise into crisper ripple edges.</li>
+<li><strong>How light reacts to normals</strong> — as you orbit, the highlight slides across the tilted normals, creating the shimmer that sells the ripple illusion.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>
+<p>Start from your Lesson 5 setup: Texture Coordinate → Mapping → Noise Texture → Principled BSDF. Switch the viewport to <strong>Rendered</strong> shading so you can see lighting. Menu path: <strong>Viewport Shading icons (top-right of the 3D view) → Rendered</strong>. Shortcut: <kbd>Z</kbd> then choose <strong>Rendered</strong>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane in Rendered shading, currently flat with the noise showing as flat color.</p>
+</blockquote>
+</li>
+<li>
+<p>Add a <strong>Bump</strong> node. Menu path: <strong>Add → Vector → Bump</strong>. Shortcut: <kbd>Shift+A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A Bump node placed between the Noise Texture and the Principled BSDF.</p>
+</blockquote>
+</li>
+<li>
+<p>Feed the Noise into it: wire <strong>Noise Texture.Color</strong> (or Fac) → <strong>Bump.Height</strong>, then <strong>Bump.Normal</strong> → <strong>Principled BSDF.Normal</strong>. (Bump goes into <strong>Normal</strong>, never Base Color.)</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane now showing subtle raised ripples in the Rendered view.</p>
+</blockquote>
+</li>
+<li>
+<p>Adjust the Bump <strong>Strength</strong> — try <code>0.2</code> for calm water, up to <code>0.6</code> for choppier — and watch the ripples deepen.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The same ripples looking deeper after raising Bump Strength.</p>
+</blockquote>
+</li>
+<li>
+<p>Add a <strong>ColorRamp</strong> BEFORE the Bump to sharpen contrast. Menu path: <strong>Add → Converter → Color Ramp</strong>. Shortcut: <kbd>Shift+A</kbd>. Wire <strong>Noise Texture.Color</strong> → <strong>ColorRamp.Fac</strong>, then <strong>ColorRamp.Color</strong> → <strong>Bump.Height</strong>. Slide the black and white stops closer together to crisp up the ripples.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The ripples now sharper and more defined after inserting the ColorRamp.</p>
+</blockquote>
+</li>
+<li>
+<p>Orbit the view (middle-mouse drag) and watch the highlight travel across the ripples. Menu path: <strong>drag with Middle Mouse Button</strong> in the 3D view.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The plane from a new angle, highlight shifted, ripples shimmering.</p>
+</blockquote>
+</li>
+</ol>
+<h2>The node setup</h2>
+<pre><code>[Noise Texture] --Color--&gt; [ColorRamp] --Color--&gt; [Bump] --Normal--&gt; [Principled BSDF Normal] --&gt; [Material Output]
+</code></pre>
+<p><strong>Connections:</strong>
+- Noise Texture.Color → ColorRamp.Fac
+- ColorRamp.Color → Bump.Height
+- Bump.Normal → Principled BSDF.Normal
+- Principled BSDF.BSDF → Material Output.Surface</p>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> the flat plane now shows raised ripples that shimmer and shift their highlight as you orbit the view.</p>
+<h2>Try it yourself</h2>
+<p>Drag the ColorRamp's two color stops very close together. The ripples turn into sharp, high-contrast crests — a rougher, more turbulent water look.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Bump plugged into Base Color instead of Normal (looks flat/wrong)</strong> — fix: connect <strong>Bump.Normal → Principled BSDF.Normal</strong>, and route color separately if you still want it.</li>
+<li><strong>Strength cranked to maximum</strong> — huge Strength makes jagged, plastic-looking spikes. Fix: keep Bump Strength around <code>0.2</code>–<code>0.5</code> for believable water.</li>
+<li><strong>Still in Solid shading, so nothing looks bumpy</strong> — Bump only shows with real lighting. Fix: switch the viewport to <strong>Rendered</strong> shading (<kbd>Z</kbd>).</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#07-build-a-water-material">07-build-a-water-material</a> — combine color, transparency, roughness, and these ripples into a single convincing water material.</p><div class="pager"><a href="#05-coordinates-and-mapping"><span>Prev</span>← 05 — Coordinates &amp; Mapping (Where Textures Live)</a><a href="#07-build-a-water-material"><span>Next</span>07 — Build a Water Material →</a></div></section>
+<section class="page" id="07-build-a-water-material" data-title="07 — Build a Water Material" data-num="07" data-hasdemo="0" data-group=""><h1>07 — Build a Water Material</h1>
+<p><em>By the end you'll have a glassy, slightly rippled, see-through water plane sitting over a visible floor.</em></p>
+<p><strong>⏱ 20 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson07-start.blend</code> · end → <code>lesson07-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A calm, faintly blue water plane you can see straight through to a grey floor below, with gentle ripples catching the light.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>This is the moment all the earlier pieces click together — ripples, color, and light passing through glass. Once you can make convincing still water in Blender, translating the same ideas (transmission, index of refraction, roughness) into a Metal shader becomes a matter of copying numbers you already understand.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Transmission</strong> — a slider that lets light pass <em>through</em> the surface instead of bouncing off. At 1.0 the material becomes see-through, like glass or water.</li>
+<li><strong>IOR (Index of Refraction)</strong> — how much light bends as it enters the material. Water's real-world value is <strong>1.33</strong>, which is why a straw looks broken at the waterline.</li>
+<li><strong>Roughness (for water)</strong> — how blurry reflections and refractions are. Calm water is almost mirror-smooth, so we keep this near <strong>0</strong>.</li>
+<li><strong>Base Color</strong> — the material's underlying tint. Water is nearly clear, so we use a very faint blue.</li>
+<li><strong>Raytracing (EEVEE Next)</strong> — the setting that lets EEVEE actually compute see-through refraction. Without it, transmission looks flat.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>Select your water plane, open the <strong>Material Properties</strong> tab, and find the <strong>Principled BSDF</strong>. Set <strong>Transmission</strong> to <strong>1.0</strong> by dragging the slider (or click the field and type <code>1.0</code>).<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Transmission value now reads 1.000; the plane starts looking glassy in the viewport.</p>
+</blockquote>
+</li>
+<li>Set the <strong>IOR</strong> field to <strong>1.33</strong>. Menu path: <strong>Material Properties → Principled BSDF → IOR</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — IOR field showing 1.330, giving the surface a watery bend.</p>
+</blockquote>
+</li>
+<li>Set <strong>Roughness</strong> to about <strong>0.05</strong> so reflections stay crisp and mirror-like.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — Roughness field at 0.050; the surface reads smooth and calm.</p>
+</blockquote>
+</li>
+<li>Click the <strong>Base Color</strong> swatch and pick a very faint blue (nudge the color wheel slightly toward blue, keep it almost white). Menu path: <strong>Principled BSDF → Base Color</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A subtle blue tint appears in the water without making it opaque.</p>
+</blockquote>
+</li>
+<li>Confirm your <strong>Lesson 6 bump ripples</strong> are still wired into the <strong>Normal</strong> input of the Principled BSDF (the <code>Bump</code> node feeding <code>Normal</code>). If it came loose, reconnect it.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Bump node's Normal output linked to the Principled BSDF Normal input.</p>
+</blockquote>
+</li>
+<li>Add a floor underneath the water. Menu path: <strong>Add → Mesh → Plane</strong>. Then press <kbd>G</kbd> then <kbd>Z</kbd>, move the mouse down a little, and click to drop it below the water.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A second grey plane now sits below the water plane.</p>
+</blockquote>
+</li>
+<li>Enable refraction. Menu path: <strong>Render Properties → Raytracing</strong> — tick the <strong>Raytracing</strong> checkbox (EEVEE Next needs this for good transmission).<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Raytracing checkbox is enabled in Render Properties.</p>
+</blockquote>
+</li>
+<li>Switch to <strong>Rendered</strong> shading to judge the result. Shortcut: <kbd>Z</kbd> then pick <strong>Rendered</strong> from the pie menu.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — Rendered view: you can now see the floor through the rippled, faintly blue water.</p>
+</blockquote>
+</li>
+</ol>
+<h2>The node setup</h2>
+<pre><code>[TexCoord] --Generated--&gt; [Mapping] --Vector--&gt; [Noise Texture]
+                                                     |
+                                                    Fac
+                                                     v
+                                              [ColorRamp] --Color--&gt; [Bump]
+                                                                       |
+                                                                    Normal
+                                                                       v
+[Principled BSDF]  Base Color: faint blue                       Normal input
+  Transmission = 1.0                                                  |
+  IOR = 1.33                                              (connected here)
+  Roughness = 0.05
+        |
+      BSDF
+        v
+   [Material Output] Surface
+</code></pre>
+<p><strong>Connections:</strong>
+- TexCoord.Generated → Mapping.Vector
+- Mapping.Vector → Noise Texture.Vector
+- Noise Texture.Fac → ColorRamp.Fac
+- ColorRamp.Color → Bump.Height
+- Bump.Normal → Principled BSDF.Normal
+- Principled BSDF.BSDF → Material Output.Surface</p>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> you have a glassy, slightly rippled, see-through water plane and you can clearly see the floor plane through it in Rendered shading.</p>
+<h2>Try it yourself</h2>
+<p>Nudge <strong>IOR</strong> up to about <strong>1.5</strong> (closer to glass) and watch the floor appear to shift and bend more strongly through the surface — then return it to 1.33 for accurate water.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Floor is invisible / water looks solid</strong> — Raytracing is off. Turn it on in <strong>Render Properties → Raytracing</strong>.</li>
+<li><strong>Water looks milky, not clear</strong> — Roughness is too high. Bring it down toward 0.05.</li>
+<li><strong>Base Color too saturated</strong> — a strong blue makes water look like paint. Keep the blue almost white and let transmission do the work.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#08-keyframe-animation">08-keyframe-animation</a> — press play and watch those ripples start to drift across the surface.</p><div class="pager"><a href="#06-bump-and-normals"><span>Prev</span>← 06 — From Flat to Rippled: Bump &amp; Normals</a><a href="#08-keyframe-animation"><span>Next</span>08 — Make It Move: Keyframe Animation →</a></div></section>
+<section class="page" id="08-keyframe-animation" data-title="08 — Make It Move: Keyframe Animation" data-num="08" data-hasdemo="0" data-group=""><h1>08 — Make It Move: Keyframe Animation</h1>
+<p><em>By the end you'll have ripples that visibly drift across the water when you press play.</em></p>
+<p><strong>⏱ 15 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson08-start.blend</code> · end → <code>lesson08-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The water plane mid-playback, ripples caught partway across the surface as the timeline playhead moves.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>Static water is only half the story — real water moves. Keyframing teaches you Blender's core animation loop (a value, saved at a frame, interpolated over time), which is the same mental model behind every animated shader parameter you'll write later.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Timeline</strong> — the strip along the bottom of the window that shows frames and lets you scrub through time.</li>
+<li><strong>Keyframe</strong> — a value you've saved at a specific frame. Blender fills in the frames between two keyframes automatically.</li>
+<li><strong>Playhead / scrubbing</strong> — the vertical marker showing the current frame; dragging it back and forth is called scrubbing.</li>
+<li><strong>Insert Keyframe (<kbd>I</kbd>)</strong> — hover over any value field and press <kbd>I</kbd> to save that value at the current frame.</li>
+<li><strong>Graph Editor</strong> — an editor that shows keyframes as a curve, so you can see and shape the easing (speed-up / slow-down) between them.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>Go to <strong>frame 1</strong> by dragging the playhead to the far left of the Timeline (or typing <code>1</code> in the current-frame field).<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Timeline playhead sits at frame 1.</p>
+</blockquote>
+</li>
+<li>Hover your mouse over the <strong>Mapping node's Location X</strong> field and press <kbd>I</kbd> to insert a keyframe. Menu path: right-click the field → <strong>Insert Keyframe</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Location X field turns yellow/green, showing a keyframe is set at frame 1.</p>
+</blockquote>
+</li>
+<li>Go to <strong>frame 120</strong> by typing <code>120</code> in the current-frame field or dragging the playhead to the right.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The playhead now sits at frame 120.</p>
+</blockquote>
+</li>
+<li>Change the <strong>Mapping Location X</strong> to a new value (for example <code>2.0</code>) so the ripple pattern has shifted.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — Location X now reads 2.000 and the ripples have visibly slid across the plane.</p>
+</blockquote>
+</li>
+<li>Hover the <strong>Location X</strong> field again and press <kbd>I</kbd> to insert the second keyframe. Menu path: right-click → <strong>Insert Keyframe</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — A second keyframe appears at frame 120 in the Timeline.</p>
+</blockquote>
+</li>
+<li>Press <strong>Play</strong>. Shortcut: <kbd>Spacebar</kbd>. Watch the ripples drift.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — Playback running; the playhead sweeps and the water surface flows.</p>
+</blockquote>
+</li>
+<li>Peek at the easing. Open a <strong>Graph Editor</strong> (change an editor's type via its top-left dropdown → <strong>Graph Editor</strong>) to see the smooth curve between your two keyframes.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Graph Editor showing a gentle S-curve connecting frame 1 and frame 120.</p>
+</blockquote>
+</li>
+</ol>
+<p><strong>A note on the limitation:</strong> keyframes live inside the Timeline and only cover a fixed range — here, frames 1 to 120. Play past the end and the motion stops or jumps back to the start. In Lesson 9 we'll swap this for motion that never ends.</p>
+<h2>The node setup</h2>
+<pre><code>[TexCoord] --Generated--&gt; [Mapping] --Vector--&gt; [Noise Texture] --&gt; [ColorRamp] --&gt; [Bump] --&gt; [Principled BSDF] --&gt; [Output]
+                              ^
+                              |
+                     Location X  ◆ KEYFRAMED
+                     (frame 1 = 0.0, frame 120 = 2.0)
+</code></pre>
+<p><strong>Connections:</strong>
+- TexCoord.Generated → Mapping.Vector
+- Mapping.Vector → Noise Texture.Vector
+- Noise Texture.Fac → ColorRamp.Fac
+- ColorRamp.Color → Bump.Height
+- Bump.Normal → Principled BSDF.Normal
+- Principled BSDF.BSDF → Material Output.Surface
+- <em>(animated)</em> Mapping.Location X ◆ keyframed at frames 1 and 120</p>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> pressing <kbd>Spacebar</kbd> makes the ripples visibly drift across the water surface.</p>
+<h2>Try it yourself</h2>
+<p>Change the frame-120 Location X value to a larger number (like <code>5.0</code>) and the water will appear to flow faster over the same 120 frames.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Nothing animates on play</strong> — you only set one keyframe. You need at least two, at different frames, with different values.</li>
+<li><strong>Ripples snap back at the end</strong> — that's expected: keyframes stop at frame 120. Extend the range or move to drivers (Lesson 9).</li>
+<li><strong>Pressed <kbd>I</kbd> but nothing saved</strong> — your mouse wasn't hovering over the Location X field when you pressed it. Hover directly over the field first.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#09-drivers-and-frame">09-drivers-and-frame</a> — replace keyframes with a tiny expression so the water flows forever.</p><div class="pager"><a href="#07-build-a-water-material"><span>Prev</span>← 07 — Build a Water Material</a><a href="#09-drivers-and-frame"><span>Next</span>09 — Endless Motion with Drivers (#frame) →</a></div></section>
+<section class="page" id="09-drivers-and-frame" data-title="09 — Endless Motion with Drivers (#frame)" data-num="09" data-hasdemo="0" data-group=""><h1>09 — Endless Motion with Drivers (#frame)</h1>
+<p><em>By the end you'll have water that flows forever, at a speed you control, with zero keyframes.</em></p>
+<p><strong>⏱ 15 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson09-start.blend</code> · end → <code>lesson09-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The water plane flowing continuously, with a small driver expression popover open showing <code>#frame * 0.02</code>.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>Keyframes are great for fixed animations, but real-time shaders need motion that never loops and never stops. A driver computes a value from an expression every single frame — and the <code>#frame</code> expression maps almost exactly to the <code>time</code> uniform you'll feed a Metal shader later.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Driver vs keyframe</strong> — a keyframe is a value you saved by hand; a <strong>driver</strong> computes the value from an expression, fresh, every frame. No manual saving.</li>
+<li><strong>Add Driver</strong> — right-click any value field → <strong>Add Driver</strong> to attach an expression to it.</li>
+<li><strong><code>#frame</code></strong> — a built-in expression that equals Blender's current frame number (1, 2, 3, … and it keeps counting up without looping).</li>
+<li><strong>Scaling speed</strong> — multiply <code>#frame</code> by a small number (like <code>* 0.02</code>) to control how fast the value changes.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>Remove the Lesson 8 keyframes. Right-click the <strong>Mapping Location X</strong> field → <strong>Clear Keyframes</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Location X field returns to plain grey, no keyframe coloring.</p>
+</blockquote>
+</li>
+<li>Right-click the <strong>Mapping Location X</strong> field again → <strong>Add Driver</strong>. Menu path: right-click field → <strong>Add Driver</strong>.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The field turns purple and the driver popover appears.</p>
+</blockquote>
+</li>
+<li>In the driver popover, find the <strong>Expression</strong> field and type <code>#frame * 0.02</code>. (Set the driver <strong>Type</strong> to <strong>Scripted Expression</strong> if it isn't already.)<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — The Expression field reads <code>#frame * 0.02</code> in the driver popover.</p>
+</blockquote>
+</li>
+<li>Press <strong>Play</strong>. Shortcut: <kbd>Spacebar</kbd>. The water now flows endlessly.<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — Playback running past frame 120 with the ripples still drifting smoothly, no reset.</p>
+</blockquote>
+</li>
+</ol>
+<blockquote>
+<p>💡 This <code>#frame</code> is exactly the time value you'll feed a Metal shader later (the <code>time</code> uniform). Multiplying by <code>0.02</code> here is the same idea as scaling <code>time</code> before you use it in your shader math.</p>
+</blockquote>
+<h2>The node setup</h2>
+<pre><code>[TexCoord] --Generated--&gt; [Mapping] --Vector--&gt; [Noise Texture] --&gt; [ColorRamp] --&gt; [Bump] --&gt; [Principled BSDF] --&gt; [Output]
+                              ^
+                              |
+                     Location X  ⚙ DRIVEN
+                     driver: #frame * 0.02
+</code></pre>
+<p><strong>Connections:</strong>
+- TexCoord.Generated → Mapping.Vector
+- Mapping.Vector → Noise Texture.Vector
+- Noise Texture.Fac → ColorRamp.Fac
+- ColorRamp.Color → Bump.Height
+- Bump.Normal → Principled BSDF.Normal
+- Principled BSDF.BSDF → Material Output.Surface
+- <em>(driven)</em> Mapping.Location X ⚙ driver expression <code>#frame * 0.02</code></p>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> the water flows forever at a controllable speed, with zero keyframes on the Location X field — and it never snaps back to the start.</p>
+<h2>Try it yourself</h2>
+<p>Change the driver expression to <code>#frame * 0.05</code> for faster flow, or <code>#frame * 0.005</code> for a slow, lazy drift. Same water, different speed — no re-keying required.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Field turned purple but nothing moves</strong> — the expression is empty or misspelled. It must read exactly <code>#frame * 0.02</code>.</li>
+<li><strong>Old keyframes still fighting the driver</strong> — you didn't clear them first. Right-click → <strong>Clear Keyframes</strong>, then add the driver.</li>
+<li><strong>Motion far too fast or slow</strong> — your multiplier is off. Tune the <code>0.02</code> up or down until the flow feels right.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#10-fake-caustics">10-fake-caustics</a> — layer in those dancing light patterns on the floor beneath the water.</p><div class="pager"><a href="#08-keyframe-animation"><span>Prev</span>← 08 — Make It Move: Keyframe Animation</a><a href="#10-fake-caustics"><span>Next</span>10 — Fake Caustics (The Payoff) →</a></div></section>
+<section class="page" id="10-fake-caustics" data-title="10 — Fake Caustics (The Payoff)" data-num="10" data-hasdemo="0" data-group=""><h1>10 — Fake Caustics (The Payoff)</h1>
+<p><em>By the end you'll have an animated caustic web dancing across the pool floor under your water.</em></p>
+<p><strong>⏱ 20 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson10-start.blend</code> · end → <code>lesson10-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the pool floor lit by a shimmering, slowly-moving net of bright light lines, seen through the transparent water above.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>Caustics are the single detail that makes water read as <em>water</em> instead of blue glass. Building them by hand teaches you the exact trick real-time engines use — because, as you'll see, nobody actually simulates them in a game.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>Caustics</strong> — the bright, focused net of light you see on a pool floor, made when the wavy surface bends sunlight into concentrated lines. In real-time (games, EEVEE) they are <em>faked</em> with a texture, never physically simulated, because true light-focusing is far too slow to compute per frame.</li>
+<li><strong>Voronoi cells</strong> — a procedural texture that scatters points and draws the regions around them; its edges make natural-looking web/net patterns.</li>
+<li><strong>Contrast crush</strong> — pushing a soft gradient into thin bright veins using a Power math node or a steep ColorRamp, so only the cell edges glow.</li>
+<li><strong>Emission / Add Shader</strong> — Emission makes a surface <em>give off</em> light (glow); Add Shader lets that glow sit on top of the floor's normal color.</li>
+<li><strong>Projection</strong> — placing the pattern onto the floor using its coordinates so the web appears painted across the surface.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>
+<p>In the Outliner, click the <strong>Floor</strong> plane you made in Lesson 7 to select it. Menu path: <strong>Outliner → Floor</strong>. Shortcut: click the object name.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the Floor plane highlighted with an orange outline.</p>
+</blockquote>
+</li>
+<li>
+<p>Open the Shader Editor and make sure it shows the Floor's material. Menu path: <strong>Editor Type → Shader Editor</strong>. Shortcut: <kbd>Shift</kbd>+<kbd>F3</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the Shader Editor showing the floor's existing Principled BSDF → Material Output.</p>
+</blockquote>
+</li>
+<li>
+<p>Add a Texture Coordinate node. Menu path: <strong>Add → Input → Texture Coordinate</strong>. Shortcut: <kbd>Shift</kbd>+<kbd>A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the new Texture Coordinate node with its list of outputs (Generated, Object, UV…).</p>
+</blockquote>
+</li>
+<li>
+<p>Add a Mapping node and connect the Texture Coordinate's <strong>Generated</strong> output into its <strong>Vector</strong> input. Menu path: <strong>Add → Vector → Mapping</strong>. Shortcut: <kbd>Shift</kbd>+<kbd>A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — a noodle running from Texture Coordinate.Generated into Mapping.Vector.</p>
+</blockquote>
+</li>
+<li>
+<p>Add a Voronoi Texture and connect Mapping's <strong>Vector</strong> output into its <strong>Vector</strong> input. Set <strong>Scale</strong> to about <code>50</code> and, if your Feature dropdown offers it, choose <strong>Smooth F1</strong> (otherwise leave it on <strong>F1</strong>). Menu path: <strong>Add → Texture → Voronoi Texture</strong>. Shortcut: <kbd>Shift</kbd>+<kbd>A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — a dense cellular pattern previewing in the Voronoi node.</p>
+</blockquote>
+</li>
+<li>
+<p>Add a ColorRamp and connect Voronoi's <strong>Distance</strong> output into its <strong>Fac</strong> input, then drag the black and white handles very close together to crush the soft cells into thin bright veins. Menu path: <strong>Add → Converter → Color Ramp</strong>. Shortcut: <kbd>Shift</kbd>+<kbd>A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the ColorRamp gradient pinched narrow, showing only sharp bright edges.</p>
+</blockquote>
+</li>
+<li>
+<p>Add an Emission shader and connect the ColorRamp's <strong>Color</strong> output into its <strong>Color</strong> input; set <strong>Strength</strong> to about <code>3</code>. Menu path: <strong>Add → Shader → Emission</strong>. Shortcut: <kbd>Shift</kbd>+<kbd>A</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the Emission node glowing white where the veins are.</p>
+</blockquote>
+</li>
+<li>
+<p>Connect the Emission node's <strong>Emission</strong> output into the Material Output's <strong>Surface</strong> input to see the raw web. Menu path: drag from socket to socket. Shortcut: drag the noodle.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the floor now showing only the bright caustic net.</p>
+</blockquote>
+</li>
+<li>
+<p>Add a driver to animate the pattern: right-click the Mapping node's <strong>Location</strong> X field and choose <strong>Add Driver</strong>, then set its expression to <code>frame*0.02</code>. Menu path: <strong>Right-click field → Add Driver</strong>. Shortcut: right-click.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the Location X field turned purple, showing it is now driven.</p>
+</blockquote>
+</li>
+<li>
+<p>Press Play and watch the web drift. Menu path: <strong>Timeline → Play</strong>. Shortcut: <kbd>Spacebar</kbd>.
+    &gt; 📷 <strong>[SCREENSHOT]</strong> — two frames side by side showing the caustic net shifted along the floor.</p>
+</li>
+</ol>
+<h2>The node setup</h2>
+<pre><code>[TexCoord]--Generated--&gt;[Mapping]--Vector--&gt;[Voronoi]--Distance--&gt;[ColorRamp]--Color--&gt;[Emission]--Emission--&gt;[Material Output]
+                          (driver:                Scale 50            crush to        Strength 3
+                        Location X = frame*0.02)   Smooth F1           thin veins
+</code></pre>
+<p><strong>Connections:</strong>
+- Texture Coordinate.Generated → Mapping.Vector
+- Mapping.Vector → Voronoi Texture.Vector
+- Voronoi Texture.Distance → ColorRamp.Fac
+- ColorRamp.Color → Emission.Color
+- Emission.Emission → Material Output.Surface</p>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> when you press play, an animated caustic web dances on the pool floor under the water — thin bright lines that slowly slide and shimmer rather than a flat blue plane.</p>
+<h2>Try it yourself</h2>
+<p>Add a second Voronoi Texture at a different Scale (try <code>25</code>) with its own ColorRamp, then blend the two webs together with a Mix node set to <strong>Darken</strong> (Minimum). Feed the mixed result into the Emission for a richer, layered net.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>The whole floor glows evenly</strong> — your ColorRamp handles are too far apart; drag them close together so only the cell edges stay bright.</li>
+<li><strong>The web is a giant blurry blob</strong> — the Voronoi Scale is too low; raise it toward <code>50</code> for tight pool-sized cells.</li>
+<li><strong>The pattern won't move</strong> — the driver expression is empty or misspelled; it must be exactly <code>frame*0.02</code>, and the field should turn purple.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#11-lookdev-and-translate-to-code">11-lookdev-and-translate-to-code</a> — tidy the graph, light it properly, and turn your node network into a values sheet an AI can read.</p><div class="pager"><a href="#09-drivers-and-frame"><span>Prev</span>← 09 — Endless Motion with Drivers (#frame)</a><a href="#11-lookdev-and-translate-to-code"><span>Next</span>11 — Look-Dev &amp; Prepping to Translate to Code →</a></div></section>
+<section class="page" id="11-lookdev-and-translate-to-code" data-title="11 — Look-Dev &amp; Prepping to Translate to Code" data-num="11" data-hasdemo="0" data-group=""><h1>11 — Look-Dev &amp; Prepping to Translate to Code</h1>
+<p><em>By the end you'll have a clean, labeled .blend plus a values cheat-sheet ready to hand to an AI to draft the Metal shader.</em></p>
+<p><strong>⏱ 20 min · beginner</strong>  ·  <strong>Files:</strong> starter → <code>lesson11-start.blend</code> · end → <code>lesson11-end.blend</code> <em>(placeholder)</em></p>
+<h2>What you'll build</h2>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the finished scene lit by a soft environment light, the Shader Editor showing two tidy labeled Frames (one boxing the water material, one boxing the caustics), beside a written values table.</p>
+</blockquote>
+<h2>Why this matters</h2>
+<p>A shader you can't read is a shader you can't port. Judging the look under real lighting and writing every number down is what turns a pile of nodes into a spec you — or an AI — can rebuild in Metal.</p>
+<h2>New concepts</h2>
+<ul>
+<li><strong>HDRI / world lighting</strong> — an image (or flat color) used as an all-around environment light, so materials are judged under believable light instead of a black void.</li>
+<li><strong>Node Frame / labeling</strong> — a titled box you draw around related nodes with <kbd>Ctrl</kbd>+<kbd>J</kbd> to group and name them, keeping a big graph readable.</li>
+<li><strong>Values table</strong> — a plain written list of every final number in the material, so nothing lives only inside a node you might lose.</li>
+<li><strong>Node → shader-function mapping</strong> — a one-to-one note of which Blender node equals which code function, so translation is mechanical rather than guesswork.</li>
+</ul>
+<h2>Step-by-step</h2>
+<ol>
+<li>
+<p>Open World Properties and set a simple environment light — either load a soft HDRI into the Color slot, or use a flat color with <strong>Strength</strong> around <code>1</code>. Menu path: <strong>Properties → World Properties → Surface → Color</strong>. Shortcut: click the World tab.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the World Properties panel with an HDRI or flat color assigned and the viewport now softly lit.</p>
+</blockquote>
+</li>
+<li>
+<p>Switch the viewport to Rendered shading to judge the real look. Menu path: <strong>Viewport header → Rendered sphere icon</strong>. Shortcut: <kbd>Z</kbd> then choose <strong>Rendered</strong>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the water and caustics shown under final EEVEE Next lighting.</p>
+</blockquote>
+</li>
+<li>
+<p>In the Shader Editor, box-select the nodes that make the water surface. Menu path: <strong>Select → Box Select</strong>. Shortcut: <kbd>B</kbd>, then drag.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — a group of water nodes highlighted together.</p>
+</blockquote>
+</li>
+<li>
+<p>Press <kbd>Ctrl</kbd>+<kbd>J</kbd> to wrap them in a Frame, then double-click the Frame header and name it <code>WATER</code>. Menu path: <strong>Node → Join in New Frame</strong>. Shortcut: <kbd>Ctrl</kbd>+<kbd>J</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — a labeled box titled WATER around the water nodes.</p>
+</blockquote>
+</li>
+<li>
+<p>Repeat for the caustics nodes: box-select them, press <kbd>Ctrl</kbd>+<kbd>J</kbd>, and name the Frame <code>CAUSTICS</code>. Menu path: <strong>Node → Join in New Frame</strong>. Shortcut: <kbd>Ctrl</kbd>+<kbd>J</kbd>.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — a second labeled box titled CAUSTICS around the caustics nodes.</p>
+</blockquote>
+</li>
+<li>
+<p>Rename each key node by double-clicking its header so the graph reads like a spec (e.g. <code>Voronoi → caustic-cells</code>, <code>Mapping → time-offset</code>). Menu path: <strong>double-click node header</strong>. Shortcut: <kbd>F2</kbd> with the node selected.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — nodes now carrying descriptive names instead of defaults.</p>
+</blockquote>
+</li>
+<li>
+<p>Write down the final numbers in a values table (see below), reading each one straight off its node. Menu path: <strong>click each node → read its fields</strong>. Shortcut: hover to reveal exact values.</p>
+<blockquote>
+<p>📷 <strong>[SCREENSHOT]</strong> — the completed values table next to the graph.</p>
+</blockquote>
+</li>
+</ol>
+<p><strong>Values cheat-sheet (fill in your final numbers):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Node</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Voronoi Scale (caustics)</td>
+<td>caustic-cells</td>
+<td>~50</td>
+</tr>
+<tr>
+<td>Water IOR</td>
+<td>Principled BSDF</td>
+<td>~1.33</td>
+</tr>
+<tr>
+<td>Water Roughness</td>
+<td>Principled BSDF</td>
+<td>~0.05</td>
+</tr>
+<tr>
+<td>Bump Strength</td>
+<td>Bump</td>
+<td>~0.2</td>
+</tr>
+<tr>
+<td>Caustics driver speed</td>
+<td>time-offset</td>
+<td>frame*0.02</td>
+</tr>
+<tr>
+<td>Ripple driver speed</td>
+<td>(Lesson 9 mapping)</td>
+<td>frame*0.01</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Node → shader-function map:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Blender node</th>
+<th>Metal / shader equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Noise Texture</td>
+<td>Perlin <code>noise()</code></td>
+</tr>
+<tr>
+<td>Voronoi Texture</td>
+<td>Worley / <code>voronoi()</code></td>
+</tr>
+<tr>
+<td>Mapping offset (driven)</td>
+<td>a <code>time</code> uniform</td>
+</tr>
+<tr>
+<td>ColorRamp</td>
+<td><code>smoothstep()</code> / remap</td>
+</tr>
+</tbody>
+</table>
+<h2>The node setup</h2>
+<pre><code>+-------------------- WATER --------------------+
+| [TexCoord]-&gt;[Mapping:ripple]-&gt;[Noise]-&gt;[Bump] |
+|                              -&gt;[Principled BSDF]-&gt;|---&gt; [Material Output]
++-----------------------------------------------+
++------------------ CAUSTICS -------------------+
+| [TexCoord]-&gt;[Mapping:time-offset]-&gt;[caustic-  |
+|   cells Voronoi]-&gt;[ColorRamp]-&gt;[Emission]-----+---&gt; (floor Material Output)
++-----------------------------------------------+
+</code></pre>
+<p><strong>Connections:</strong>
+- WATER Frame → contains the ripple Mapping, Noise, Bump, and Principled BSDF feeding Material Output.
+- CAUSTICS Frame → contains the time-offset Mapping, Voronoi, ColorRamp, and Emission feeding the floor's Material Output.
+- Mapping:time-offset.Location X ← driver <code>frame*0.02</code></p>
+<h2>Checkpoint</h2>
+<p><strong>You did it right if</strong> you have a clean, labeled .blend — two named Frames, descriptively renamed nodes, soft world lighting — plus a filled-in values cheat-sheet listing every final number.</p>
+<h2>How to hand this to an AI to draft the Metal shader</h2>
+<ul>
+<li>Export the values table above with your real final numbers filled in.</li>
+<li>Describe each node's role in one line (what it does, not just its name).</li>
+<li>Name the driver explicitly as the <strong>time input</strong> (<code>frame*0.02</code> → <code>time * 0.02</code>).</li>
+<li>Point the AI at the node → function map so it knows which primitive to reach for.</li>
+</ul>
+<p>Your code destinations, once you're ready to write the shader:
+- <a class="xref" href="shaders.html#27-voronoi-deep-dive">Voronoi in Metal</a> — the caustic cells.
+- <a class="xref" href="shaders.html#26-advanced-noise-fbm">fBm in Metal</a> — the water surface noise.
+- <a class="xref" href="shaders.html#31-stateless-procedural-animation">time-driven motion</a> — replacing <code>#frame</code> with a time uniform.</p>
+<h2>Try it yourself</h2>
+<p>Duplicate your values table into a plain text note and rewrite each row as a line of pseudo-code (e.g. <code>float cells = voronoi(uv * 50.0);</code>) — a first rough draft of the shader before you ever open an editor.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Judging the look in Solid mode</strong> — colors and glow lie without lighting; always switch to Rendered under a world light before deciding.</li>
+<li><strong>Framing without naming</strong> — an unlabeled Frame helps nobody; always rename the Frame and its key nodes.</li>
+<li><strong>Trusting your memory for values</strong> — numbers vanish the moment you tweak a node; write every final value down in the table.</li>
+</ul>
+<h2>Next up</h2>
+<p>→ <a class="xref" href="#00-roadmap">00-roadmap</a> — you finished the course; here's the map back to where you started.</p><div class="pager"><a href="#10-fake-caustics"><span>Prev</span>← 10 — Fake Caustics (The Payoff)</a><a href="#12-glossary"><span>Next</span>Glossary →</a></div></section>
+<section class="page" id="12-glossary" data-title="Glossary" data-num="12" data-hasdemo="0" data-group=""><h1>Glossary</h1>
+<p>Every "New concept" term from the course, grouped by the lesson where it first appears, each defined in one plain-English sentence. Skim it any time a word stops making sense.</p>
+<h2>Lesson 1 — Getting around Blender</h2>
+<h3>viewport (L1)</h3>
+<p>The main 3D window where you see and move around your scene.</p>
+<h3>3D cursor (L1)</h3>
+<p>A crosshair marker showing where newly added objects will appear.</p>
+<h3>orbit / pan / zoom (L1)</h3>
+<p>The three ways to move your view — rotate around, slide sideways, and move closer or further.</p>
+<h3>UI regions (L1)</h3>
+<p>The panels that make up the window — the viewport, the Outliner (object list), and the Properties editor (settings).</p>
+<h3>scene collection (L1)</h3>
+<p>The top-level container in the Outliner that holds everything in your scene.</p>
+<h2>Lesson 2 — Shading modes &amp; first material</h2>
+<h3>viewport shading modes (L2)</h3>
+<p>The four preview styles — Wireframe, Solid, Material Preview, and Rendered — that trade speed for realism.</p>
+<h3>EEVEE Next vs Cycles (L2)</h3>
+<p>EEVEE Next is Blender's fast real-time renderer (what this course uses); Cycles is the slower, physically accurate one.</p>
+<h3>material (L2)</h3>
+<p>The recipe describing how a surface looks — its color, shine, and more.</p>
+<h3>Base Color (L2)</h3>
+<p>The main flat color of a material before lighting effects.</p>
+<h3>Metallic (L2)</h3>
+<p>A slider setting how metal-like a surface behaves, from 0 (non-metal) to 1 (full metal).</p>
+<h3>Roughness (L2)</h3>
+<p>A slider setting how blurry or sharp reflections are — low is glossy, high is matte.</p>
+<h2>Lesson 3 — Shader Editor nodes</h2>
+<h3>node (L3)</h3>
+<p>A single box in the shader graph that does one job.</p>
+<h3>socket (L3)</h3>
+<p>A connection dot on a node; its color shows its type — yellow = color, grey = value, blue = vector.</p>
+<h3>Principled BSDF (L3)</h3>
+<p>The all-in-one main shader node that handles most real-world surfaces.</p>
+<h3>Material Output (L3)</h3>
+<p>The final node that sends a material to the renderer.</p>
+<h3>noodle (L3)</h3>
+<p>The curved wire connecting one socket to another.</p>
+<h3>mute (L3)</h3>
+<p>Temporarily switching a node off without deleting it.</p>
+<h2>Lesson 4 — Procedural textures 101</h2>
+<h3>procedural texture (L4)</h3>
+<p>A pattern generated by math instead of a painted image, so it never pixelates.</p>
+<h3>Noise Texture (L4)</h3>
+<p>A procedural texture making soft, cloud-like random variation.</p>
+<h3>Voronoi Texture (L4)</h3>
+<p>A procedural texture that scatters points and draws cell-like regions around them.</p>
+<h3>Wave Texture (L4)</h3>
+<p>A procedural texture making bands, rings, or ripples.</p>
+<h3>Scale (L4)</h3>
+<p>A setting controlling how large or small a texture's pattern appears.</p>
+<h3>Detail (L4)</h3>
+<p>A setting adding finer layers of variation on top of a texture.</p>
+<h3>Fac vs Color (L4)</h3>
+<p>Two outputs of a texture — Fac is a single grey value, Color is full RGB.</p>
+<h2>Lesson 5 — Coordinates &amp; mapping</h2>
+<h3>Texture Coordinate (L5)</h3>
+<p>A node providing the position system a texture is placed on — Generated, Object, or UV.</p>
+<h3>Mapping node (L5)</h3>
+<p>A node that moves, rotates, and scales a texture via its Location, Rotation, and Scale inputs.</p>
+<h3>UV (L5)</h3>
+<p>A flat coordinate layout describing how a texture wraps onto a surface.</p>
+<h2>Lesson 6 — Bump &amp; normals</h2>
+<h3>height vs normal (L6)</h3>
+<p>Height is how high a fake bump sticks up; a normal is the surface direction the light bounces off.</p>
+<h3>Bump node (L6)</h3>
+<p>A node that turns a grey height pattern into fake surface bumpiness.</p>
+<h3>Strength / Distance (L6)</h3>
+<p>Bump settings controlling how strong and how deep the fake bumps appear.</p>
+<h3>ColorRamp (L6)</h3>
+<p>A node that remaps input values to a custom gradient, often to sharpen or tint them.</p>
+<h3>normals (L6)</h3>
+<p>The invisible surface directions that decide how light reflects across a shape.</p>
+<h2>Lesson 7 — Build a water material</h2>
+<h3>Transmission (L7)</h3>
+<p>A setting letting light pass through a surface, making it see-through like glass or water.</p>
+<h3>IOR (L7)</h3>
+<p>Index of Refraction — how much light bends passing into a material (water is about 1.33).</p>
+<h3>Roughness (for water) (L7)</h3>
+<p>Kept very low here so the water stays glassy and reflective rather than foggy.</p>
+<h2>Lesson 8 — Keyframe animation</h2>
+<h3>Timeline (L8)</h3>
+<p>The strip along the bottom showing frames and playback controls.</p>
+<h3>keyframe (L8)</h3>
+<p>A saved value at a specific frame; Blender fills in the frames between two keyframes.</p>
+<h3>playhead / scrubbing (L8)</h3>
+<p>The marker showing the current frame; dragging it back and forth is scrubbing.</p>
+<h3>insert keyframe (I) (L8)</h3>
+<p>The action of recording a value at the current frame, done with the <kbd>I</kbd> key.</p>
+<h3>Graph Editor / easing (L8)</h3>
+<p>An editor showing animation as curves, where you shape the acceleration (easing) between keyframes.</p>
+<h2>Lesson 9 — Drivers &amp; #frame</h2>
+<h3>driver (L9)</h3>
+<p>A tiny formula that sets a value automatically instead of you keyframing it.</p>
+<h3>Add Driver (L9)</h3>
+<p>The right-click command that attaches a driver to a field.</p>
+<h3>#frame (L9)</h3>
+<p>A built-in variable equal to the current frame number — the course's stand-in for a time uniform.</p>
+<h3>speed scaling (L9)</h3>
+<p>Multiplying <code>#frame</code> by a small number to control how fast the driven motion runs.</p>
+<h2>Lesson 10 — Fake caustics</h2>
+<h3>caustics (L10)</h3>
+<p>The bright light-web on a pool floor, faked with a texture in real-time renderers instead of physically simulated.</p>
+<h3>Voronoi cells (L10)</h3>
+<p>The cell regions of a Voronoi texture whose edges form the caustic web.</p>
+<h3>Power / contrast crush (L10)</h3>
+<p>Pushing a soft gradient into thin bright veins with a Power node or a steep ColorRamp.</p>
+<h3>Emission / Add Shader (L10)</h3>
+<p>Emission makes a surface glow; Add Shader lays that glow on top of the base material.</p>
+<h3>projection (L10)</h3>
+<p>Placing the caustic pattern onto the floor using its coordinates so it reads as painted across the surface.</p>
+<h2>Lesson 11 — Look-dev &amp; translate to code</h2>
+<h3>HDRI / world lighting (L11)</h3>
+<p>An image-based environment light used to judge materials under believable all-around light.</p>
+<h3>node Frame / labeling (L11)</h3>
+<p>A titled box drawn around related nodes with <kbd>Ctrl</kbd>+<kbd>J</kbd> to keep a big graph readable.</p>
+<h3>values table (L11)</h3>
+<p>A written list of every final number in a material, so nothing lives only inside a node.</p>
+<h3>node → shader-function mapping (L11)</h3>
+<p>A one-to-one note of which Blender node equals which code function, making translation mechanical.</p>
+<hr />
+<p>← Back to <a class="xref" href="#00-roadmap">00-roadmap</a> — the full course map.</p><div class="pager"><a href="#11-lookdev-and-translate-to-code"><span>Prev</span>← 11 — Look-Dev &amp; Prepping to Translate to Code</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>
