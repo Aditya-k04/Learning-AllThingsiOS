@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visualization · Learning All things Apple</title>
+<meta name="description" content="See it, don't just read it: interactive visual explanations of tricky graphics ideas — starting with the iOS app-open mesh transform.">
+<meta property="og:title" content="Visualization · Learning All things Apple">
+<meta property="og:description" content="Interactive visual explanations of tricky graphics ideas — starting with the iOS app-open mesh transform.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-sidebar',localStorage.getItem('lar-sidebar')||'shown');}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Visualization</div><div class="cs">See it, don’t just read it — interactive pictures of tricky graphics ideas.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option><option value="visualization.html" selected>Visualization</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+
+<section class="page" id="00-intro" data-title="What a mesh transform is" data-num="·" data-hasdemo="0" data-group="Mesh Transform">
+<h1>What a “mesh transform” actually is</h1>
+<h2>The plain idea</h2>
+<p>When you tap an app icon on modern iOS, the icon doesn’t just grow into the app. If you slow it down, the whole thing <em>flexes</em> — the top races ahead of the bottom, a corner bulges toward the middle of the screen, and it settles like a sheet of rubber. That bend is called a <strong>mesh transform</strong>.</p>
+<p>Here’s the one sentence to hold onto: <strong>a mesh is a grid of points (a net) laid over an image, and you animate the effect by moving those points.</strong> Whatever picture is “printed” on the grid stretches and bends along with it — exactly like a photo printed on a stretchy fabric that you pull at the corners.</p>
+<blockquote>
+<p>Reading about this is genuinely hard — it’s a spatial, moving idea. So the next lesson is a live one you can drag. Come back to these words after you’ve played with it.</p>
+</blockquote>
+<h2>Two words you’ll keep seeing</h2>
+<ul>
+<li><strong>Vertex</strong> — a single point on the grid (plural: <em>vertices</em>). A 6×13 grid has 7×14 = 98 vertices.</li>
+<li><strong>Mesh</strong> — all those vertices joined into little cells (quads/triangles). Move the vertices → the mesh warps → the image warps.</li>
+</ul>
+<div class="pager"><span class="sp"></span><a href="#01-see-it"><span>Next</span>See the mesh move →</a></div>
+</section>
+
+<section class="page" id="01-see-it" data-title="See the mesh move" data-num="01" data-hasdemo="1" data-group="Mesh Transform">
+<h1>See the mesh move</h1>
+<p>This is the whole effect, built the “true mesh” way — a grid over a fake app screen, with every vertex moving from a small icon rectangle (bottom-left) out to the full screen. <strong>Drag the progress slider</strong>, or drag up directly on the phone.</p>
+<div data-demo="mesh-transform"></div>
+<h2>How to read it</h2>
+<ul>
+<li><strong>mesh density</strong> — turn this up to see the actual grid. At low density you can count the vertices; at high density the warp looks smooth and continuous.</li>
+<li><strong>texture</strong> — fills the cells with a mock app UI (header, hero, list rows, tab bar) so you watch the <em>image</em> bend, not just the wireframe.</li>
+<li><strong>grid</strong> / <strong>vertices</strong> — show the net and its points on their own.</li>
+<li><strong>row timing</strong>, <strong>skew</strong>, <strong>arc hop</strong> — the three ingredients that make it feel alive. Switch them off one at a time in the next lesson to see what each one is doing.</li>
+</ul>
+<p>The faint solid outline is the <em>end</em> state (full screen); the dashed square is the <em>start</em> state (the icon). The animation is just interpolating every vertex between those two rectangles — with a few twists.</p>
+<div class="pager"><a href="#00-intro"><span>Prev</span>← What a mesh transform is</a><a href="#02-math"><span>Next</span>The three ingredients →</a></div>
+</section>
+
+<section class="page" id="02-math" data-title="The three ingredients, decoded" data-num="02" data-hasdemo="0" data-group="Mesh Transform">
+<h1>The three ingredients, decoded</h1>
+<p>Interpolating a rectangle from “icon” to “full screen” is trivial. What makes it feel like iOS and not a boring zoom is three cheap tricks layered on top. Toggle each one in the demo above while you read this.</p>
+
+<h2>1. Row timing — the top leads</h2>
+<p>Instead of every vertex animating on the same clock, a vertex’s progress depends on how far <em>down</em> the grid it is. The top rows finish first; the bottom rows lag. That’s the skewed, “peeling open” feel.</p>
+<pre><code class="language-swift">// v = 0 at the top of the grid, 1 at the bottom
+let progressEffect = mix(1.0, 0.35, v)   // top = 1.0, bottom = 0.35
+let p = pow(progress, 1.0 / progressEffect)   // bottom rows use a slower curve</code></pre>
+<p>Turn <strong>row timing</strong> off and the whole sheet expands uniformly — instantly more boring.</p>
+
+<h2>2. Skew — the corner bulge</h2>
+<p>A horizontal push that’s strongest at the top and toward the screen’s center, peaking mid-animation and returning to zero. It’s what makes a corner “lean” into the motion.</p>
+<pre><code class="language-swift">let skewAmount = sin(progress * .pi) * 35   // 0 → peak → 0
+// strongest at the top (1 - v) and toward center (horizontalInfluence)
+px += skewAmount * (1 - v) * horizontalInfluence * 1.38 * skewDirection</code></pre>
+
+<h2>3. Arc hop — a little jump toward center</h2>
+<p>The whole rectangle nudges toward the middle of the screen and back, following a single sine bump. It’s the same trick as an <a href="origami.html">Origami</a> <em>Arc</em> transition driving an offset.</p>
+<pre><code class="language-swift">let arc = sin(progress * .pi)            // 0 → 1 → 0
+let offset = (screenCenter - startCenter) * simd_float2(0.2, 0.4)
+position += offset * arc</code></pre>
+<p>Notice all three use <code>sin(progress · π)</code> — a bump that’s zero at the start and end and peaks in the middle. That shared shape is why the effect feels like <em>one</em> gesture instead of three separate animations.</p>
+<div class="pager"><a href="#01-see-it"><span>Prev</span>← See the mesh move</a><a href="#03-vs-pixels"><span>Next</span>Mesh vs pixels →</a></div>
+</section>
+
+<section class="page" id="03-vs-pixels" data-title="Mesh vs pixels (the honest bit)" data-num="03" data-hasdemo="0" data-group="Mesh Transform">
+<h1>Mesh vs pixels — the honest bit</h1>
+<p>There are two ways to make this look, and they are <em>fundamentally different</em> even though they look identical:</p>
+<ul>
+<li><strong>True mesh (geometry):</strong> you move real grid vertices; the rasterizer stretches the texture across the moving cells. This is what the demo draws, and what Apple’s system effect does. Warping the picture is a side effect of moving points.</li>
+<li><strong>Pixel / fragment shader:</strong> you keep one flat rectangle and, for every pixel, compute “where should I sample the image from?” No vertices exist — the bend is faked by remapping coordinates. (Gavin Nelson’s well-known SwiftUI recreation works this way.)</li>
+</ul>
+<h2>Why subdivide? (the density slider)</h2>
+<p>A mesh can only bend at its vertices — between them, each cell is a flat straight-edged patch. Too few vertices and curves look faceted; enough vertices and the eye reads it as smooth. That’s the whole point of the <strong>mesh density</strong> slider: it’s the trade-off between “blocky but cheap” and “smooth but more work for the GPU.”</p>
+<h2>What the demo leaves out</h2>
+<ul>
+<li><strong>Rounded corners</strong> are added separately (a rounded-rect/squircle mask), not by the mesh itself.</li>
+<li><strong>The icon→app crossfade</strong> is a second texture blended over the same moving grid — both images ride the identical warp, which is what sells “the icon became the app.”</li>
+</ul>
+<blockquote>
+<p>Now scroll back up to Lesson 01 and toggle things with all of this in mind — it should click into place.</p>
+</blockquote>
+<div class="pager"><a href="#02-math"><span>Prev</span>← The three ingredients</a><span class="sp"></span></div>
+</section>
+
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>

@@ -794,4 +794,92 @@ D["sh-edgeglow"]=function(m){
   loop(c,function(now){render(now,{thick:+thick.value,speed:+speed.value,intensity:+intensity.value});});
 };
 
+/* ============================================================
+   VISUALIZATION — the app-open "mesh transform"
+   ============================================================ */
+D["mesh-transform"]=function(m){
+  var d=box(m,"The mesh transform — vertex by vertex"),c=addCanvas(d,380),ctrls=addControls(d),row=addRow(d);
+  var prog=slider(ctrls,{label:"progress",min:0,max:1,step:0.005,value:0,fmt:function(v){return Math.round(v*100)+"%";}});
+  var dens=slider(ctrls,{label:"mesh density",min:2,max:14,step:1,value:6});
+  var playing=true,dragging=false,_g=null;
+  var bPlay=btn(row,"⏸ auto",true);
+  var bTex=btn(row,"texture",true), bGrid=btn(row,"grid",true), bVert=btn(row,"vertices",true);
+  var bRow=btn(row,"row timing",true), bSkew=btn(row,"skew",true), bArc=btn(row,"arc hop",true);
+  [bTex,bGrid,bVert,bRow,bSkew,bArc].forEach(function(b){b.addEventListener("click",function(){b.classList.toggle("on");});});
+  bPlay.addEventListener("click",function(){playing=!playing;bPlay.classList.toggle("on",playing);bPlay.textContent=playing?"⏸ auto":"▶ auto";});
+  prog.addEventListener("input",function(){playing=false;bPlay.classList.remove("on");bPlay.textContent="▶ auto";});
+  var ro=addReadout(d);
+  cap(d,"Tapping an app icon doesn’t just scale it — a grid (a <b>mesh</b>) is laid over the app and <b>every point on that grid is moved</b>. Drag <b>progress</b> (or drag up on the phone). Switch <b>row timing</b>, <b>skew</b> and <b>arc hop</b> off one at a time to see exactly what each one adds. Raise <b>mesh density</b> to reveal the grid that’s actually being warped.");
+
+  var INT=0.35;
+  function lerp(a,b,t){return a+(b-a)*t;}
+  function smooth(t){return t*t*(3-2*t);}
+  function geo(){return _g;}
+  function rr(x,X,Y,W,H,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+W,Y,X+W,Y+H,r);x.arcTo(X+W,Y+H,X,Y+H,r);x.arcTo(X,Y+H,X,Y,r);x.arcTo(X,Y,X+W,Y,r);x.closePath();}
+  function fauxUI(u,v){
+    if(v<0.13) return "hsl(211,80%,58%)";               // status / header bar
+    if(v<0.34) return "hsl(210,72%,73%)";               // hero block
+    if(v>0.90) return "hsl(265,55%,64%)";               // tab bar
+    var r=Math.floor((v-0.34)/0.085);                   // list rows
+    return (r%2===0)?"hsl(220,16%,74%)":"hsl(220,14%,85%)";
+  }
+  pointer(c,
+    function(p){var g=geo();if(!g||!dragging)return;var t=(g.sy+g.sh-p.y)/(g.sh*0.85);prog.value=Math.max(0,Math.min(1,t));},
+    function(){dragging=true;playing=false;bPlay.classList.remove("on");bPlay.textContent="▶ auto";},
+    function(){dragging=false;});
+
+  var x;loop(c,function(){
+    x=x||fit(c);var w=c._w,h=c._h;clr(x,c);
+    var sh=h-34, sw=sh*0.46, sx=(w-sw)/2, sy=17;
+    _g={sx:sx,sy:sy,sw:sw,sh:sh};
+    var C=+dens.value, R=Math.max(2,Math.round(C*sh/sw));
+    var texOn=bTex.classList.contains("on"),gridOn=bGrid.classList.contains("on"),vertOn=bVert.classList.contains("on"),
+        rowOn=bRow.classList.contains("on"),skewOn=bSkew.classList.contains("on"),arcOn=bArc.classList.contains("on");
+
+    if(playing&&!dragging){var tt=(clock()/1500)%2;prog.value=smooth(tt<1?tt:2-tt);}
+    var progress=+prog.value;
+
+    var iconS=sw*0.30, mrg=sw*0.09;
+    var fromX=mrg, fromY=sh-iconS-mrg, fromW=iconS, fromH=iconS;
+    var scx=sw*0.5, scy=sh*0.5, stcx=fromX+fromW*0.5, stcy=fromY+fromH*0.5;
+    var offX=(scx-stcx)*0.2, offY=(scy-stcy)*0.4, skewDir=scx>stcx?1:-1;
+    var arcA=Math.sin(progress*Math.PI), skewAmt=Math.sin(progress*Math.PI)*sw*0.16;
+
+    // reference outlines: full-screen target + icon origin
+    x.strokeStyle=COL.muted;x.globalAlpha=0.5;x.lineWidth=1;
+    rr(x,sx,sy,sw,sh,14);x.stroke();
+    x.setLineDash([4,4]);rr(x,sx+fromX,sy+fromY,fromW,fromH,10);x.stroke();x.setLineDash([]);
+    x.globalAlpha=1;
+
+    var P=[];
+    for(var j=0;j<=R;j++){P[j]=[];
+      for(var i=0;i<=C;i++){
+        var u=i/C, v=j/R;
+        var pe=rowOn?lerp(1.0,INT,v):1.0;               // top of the grid leads
+        var p=Math.pow(progress,1.0/pe);
+        var ox=lerp(fromX,0,p),oy=lerp(fromY,0,p),ww=lerp(fromW,sw,p),hh=lerp(fromH,sh,p);
+        var px=ox+u*ww, py=oy+v*hh;
+        if(arcOn){px+=offX*arcA;py+=offY*arcA;}          // hop toward center and back
+        if(skewOn){var hi=skewDir<0?(1-u):u;px+=skewAmt*(1-v)*hi*1.38*skewDir;} // corner bulge
+        P[j][i]={x:sx+px,y:sy+py};
+      }
+    }
+    if(texOn){
+      for(var jt=0;jt<R;jt++)for(var it=0;it<C;it++){
+        var a=P[jt][it],b2=P[jt][it+1],cc=P[jt+1][it+1],dd=P[jt+1][it];
+        x.fillStyle=fauxUI((it+0.5)/C,(jt+0.5)/R);
+        x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b2.x,b2.y);x.lineTo(cc.x,cc.y);x.lineTo(dd.x,dd.y);x.closePath();x.fill();
+      }
+    }
+    if(gridOn){
+      x.strokeStyle="rgba(37,99,235,0.55)";x.lineWidth=1;
+      for(var jr=0;jr<=R;jr++){x.beginPath();for(var ir=0;ir<=C;ir++){var q=P[jr][ir];ir===0?x.moveTo(q.x,q.y):x.lineTo(q.x,q.y);}x.stroke();}
+      for(var ic=0;ic<=C;ic++){x.beginPath();for(var jc=0;jc<=R;jc++){var q2=P[jc][ic];jc===0?x.moveTo(q2.x,q2.y):x.lineTo(q2.x,q2.y);}x.stroke();}
+    }
+    if(vertOn){for(var jv=0;jv<=R;jv++)for(var iv=0;iv<=C;iv++){dot(x,P[jv][iv].x,P[jv][iv].y,2.1,COL.red);}}
+
+    ro.innerHTML="progress <b>"+Math.round(progress*100)+"%</b> · mesh <b>"+C+"×"+R+"</b> = <b>"+((C+1)*(R+1))+"</b> vertices"+(playing?" · auto":"");
+  });
+};
+
 })();
