@@ -1009,4 +1009,129 @@ D["reactdiff"]=function(m){
   });
 };
 
+/* ============================================================
+   DERIVATIVES AS ANIMATION CHANNELS (value · rate · force)
+   ============================================================ */
+
+/* --- Value → rate → force: three lanes --- */
+D["deriv-ladder"]=function(m){
+  var d=box(m,"Value → rate → force: watch differentiation happen");
+  var c=addCanvas(d,300),row=addRow(d);
+  var ab=btn(row,"auto",true),jb=btn(row,"jolt",false);
+  cap(d,"One signal, three lanes: its <b>value</b>, its <b>rate</b> (1st derivative = velocity), and its <b>rate-of-rate</b> (2nd = acceleration/force). Drag left–right to steer the value, or hit <b>jolt</b> for a sudden move — a sharp change barely shows in the value but screams in the force lane.");
+  var ctx,auto=true,val=0,tval=0,vel=0,acc=0,pval=0,pvel=0,H=[[],[],[]],t=0,drag=false,dragx=0,jolt=0;
+  ab.onclick=function(){auto=!auto;ab.classList.toggle("on",auto);ab.textContent=auto?"auto":"manual";};
+  jb.onclick=function(){jolt=1;};
+  pointer(c,function(p){dragx=p.x;auto=false;ab.classList.remove("on");ab.textContent="manual";},function(p){drag=true;dragx=p.x;},function(){drag=false;});
+  loop(c,function(){ctx=ctx||fit(c);var w=c._w,h=c._h;t+=1/60;
+    if(jolt>0){tval=(tval>0?-1:1)*0.85;jolt=0;}
+    else if(auto){tval=0.8*Math.sin(t*1.1)+0.15*Math.sin(t*2.7);}
+    else if(drag){tval=Math.max(-1,Math.min(1,(dragx-w/2)/(w*0.4)));}
+    pval=val;val+=(tval-val)*0.35;
+    var nvel=(val-pval)*60;pvel=vel;vel+=(nvel-vel)*0.3;
+    var nacc=(vel-pvel)*60;acc+=(nacc-acc)*0.3;
+    H[0].push(val);H[1].push(vel/6);H[2].push(acc/40);
+    for(var i=0;i<3;i++){if(H[i].length>w)H[i].shift();}
+    clr(ctx,c);
+    var labels=["value  (where it is)","rate  (momentum)","force  (impact)"],cols=[COL.fg,COL.blue,COL.red];
+    for(i=0;i<3;i++){var laneY=(i+0.5)*h/3;ctx.strokeStyle=COL.grid;ctx.beginPath();ctx.moveTo(0,laneY);ctx.lineTo(w,laneY);ctx.stroke();
+      ctx.fillStyle=COL.muted;ctx.font="12px sans-serif";ctx.textAlign="left";ctx.fillText(labels[i],10,laneY-h/6+14);
+      ctx.strokeStyle=cols[i];ctx.lineWidth=2;ctx.beginPath();var hh=H[i];
+      for(var k=0;k<hh.length;k++){var y=laneY-Math.max(-1,Math.min(1,hh[k]))*(h/6-8);k===0?ctx.moveTo(w-hh.length+k,y):ctx.lineTo(w-hh.length+k,y);}
+      ctx.stroke();}
+  });
+};
+
+/* --- Squash & stretch: force becomes deformation --- */
+D["squash-drop"]=function(m){
+  var d=box(m,"Squash & stretch — force becomes deformation");
+  var c=addCanvas(d,320),ctrls=addControls(d),row=addRow(d);
+  var kk=slider(ctrls,{label:"squash gain",min:0,max:0.06,step:0.001,value:0.03,fmt:function(v){return v.toFixed(3);}});
+  var stf=slider(ctrls,{label:"recovery spring",min:60,max:600,step:5,value:260,fmt:function(v){return v.toFixed(0);}});
+  var db=btn(row,"drop",false);
+  cap(d,"A ball under gravity on a springy floor. Deform = <b>1 + gain·(a·v̂)</b>: it stretches while falling (force along motion), squashes at contact (force opposes motion), and the <b>recovery spring</b> jiggles it back — area is preserved, so a flat squash bulges it wide. Click anywhere to drop it from there.");
+  var ctx,y=0.15,vy=0,scale=1,vs=0;
+  db.onclick=function(){y=0.1;vy=0;};
+  pointer(c,null,function(p){ctx=ctx||fit(c);y=Math.max(0.05,Math.min(0.7,p.y/c._h));vy=0;});
+  loop(c,function(){ctx=ctx||fit(c);var w=c._w,h=c._h,g=2.0,kFloor=420,cFloor=7,R=Math.min(w,h)*0.11,Rf=R/h,floorFrac=0.9,yc=floorFrac-Rf;
+    var sub=6,dt=(1/60)/sub,st=+stf.value,dmp=2*Math.sqrt(st);
+    for(var sIt=0;sIt<sub;sIt++){var force=g;if(y>yc)force+=-kFloor*(y-yc)-cFloor*vy;
+      var pvy=vy;vy+=force*dt;y+=vy*dt;
+      var acc=(vy-pvy)/dt,vh=vy/(Math.abs(vy)+0.001),aAlong=acc*vh;
+      var target=Math.max(0.5,Math.min(1.7,1+(+kk.value)*aAlong));
+      vs+=(st*(target-scale)-dmp*vs)*dt;scale+=vs*dt;}
+    clr(ctx,c);
+    ctx.strokeStyle=COL.line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,floorFrac*h);ctx.lineTo(w,floorFrac*h);ctx.stroke();
+    var sy=Math.max(0.4,Math.min(1.8,scale)),sx=1/sy;
+    ctx.save();ctx.translate(w/2,y*h);ctx.scale(sx,sy);
+    ctx.fillStyle=COL.blue;ctx.beginPath();ctx.arc(0,0,R,0,7);ctx.fill();ctx.restore();
+  });
+};
+
+/* --- Fling along a curve: banking + squash from derivatives --- */
+D["curve-fling"]=function(m){
+  var d=box(m,"Fling along a curve — banking + squash from the derivatives");
+  var c=addCanvas(d,320),ctrls=addControls(d);
+  var spd=slider(ctrls,{label:"speed",min:0.2,max:2,step:0.05,value:0.8,fmt:function(v){return v.toFixed(2);}});
+  var kk=slider(ctrls,{label:"squash gain",min:0,max:0.04,step:0.001,value:0.02,fmt:function(v){return v.toFixed(3);}});
+  var lean=slider(ctrls,{label:"lean into turns",min:0,max:1.5,step:0.05,value:0.7,fmt:function(v){return v.toFixed(2);}});
+  cap(d,"A dart rides an editable curve. It <b>faces</b> its velocity (tangent), <b>leans</b> into turns (from the sideways acceleration), and <b>squashes</b> from the forward acceleration — easing in/out at the ends makes the deform pop. Drag the hollow control points to reshape the path.");
+  var ctx,P=[{x:0.12,y:0.5},{x:0.38,y:0.22},{x:0.64,y:0.8},{x:0.9,y:0.42}],s=0,dir=1,scale=1,vs=0,drag=-1;
+  function cr(u){var n=P.length,seg=u*(n-1),i=Math.floor(seg);if(i>n-2)i=n-2;var lt=seg-i;
+    var p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(n-1,i+2)];
+    function hh(a,b,cc,dd,uu){var u2=uu*uu,u3=u2*uu;return 0.5*((2*b)+(-a+cc)*uu+(2*a-5*b+4*cc-dd)*u2+(-a+3*b-3*cc+dd)*u3);}
+    return {x:hh(p0.x,p1.x,p2.x,p3.x,lt),y:hh(p0.y,p1.y,p2.y,p3.y,lt)};}
+  pointer(c,function(p){if(drag<0)return;P[drag].x=Math.max(0.05,Math.min(0.95,p.x/c._w));P[drag].y=Math.max(0.08,Math.min(0.92,p.y/c._h));},
+    function(p){var best=-1,bd=18;for(var i=0;i<P.length;i++){var dx=p.x-P[i].x*c._w,dy=p.y-P[i].y*c._h,dd=Math.sqrt(dx*dx+dy*dy);if(dd<bd){bd=dd;best=i;}}drag=best;},function(){drag=-1;});
+  loop(c,function(){ctx=ctx||fit(c);var w=c._w,h=c._h;
+    s+=dir*(+spd.value)*(1/60)*0.5;if(s>1){s=1;dir=-1;}if(s<0){s=0;dir=1;}
+    var se=s*s*(3-2*s),ds=0.004;
+    function pt(u){u=Math.max(0,Math.min(1,u));var q=cr(u);return {x:q.x*w,y:q.y*h};}
+    var pos=pt(se),a1=pt(se-ds),a2=pt(se+ds);
+    var vx=a2.x-a1.x,vy=a2.y-a1.y,sp=Math.sqrt(vx*vx+vy*vy)||0.0001;
+    var ax=a2.x-2*pos.x+a1.x,ay=a2.y-2*pos.y+a1.y;
+    var vhx=vx/sp,vhy=vy/sp,nhx=-vhy,nhy=vhx;
+    var aAlong=ax*vhx+ay*vhy,aNorm=ax*nhx+ay*nhy;
+    var target=Math.max(0.6,Math.min(1.5,1+(+kk.value)*aAlong*60));
+    var st=240,dmp=2*Math.sqrt(st),dt=1/60;vs+=(st*(target-scale)-dmp*vs)*dt;scale+=vs*dt;
+    var ang=Math.atan2(vhy,vhx)+(+lean.value)*aNorm*8;
+    clr(ctx,c);
+    ctx.strokeStyle=COL.line;ctx.lineWidth=2;ctx.beginPath();for(var u=0;u<=1.0001;u+=0.02){var q=pt(u);u===0?ctx.moveTo(q.x,q.y):ctx.lineTo(q.x,q.y);}ctx.stroke();
+    for(var i=0;i<P.length;i++){ctx.strokeStyle=COL.muted;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(P[i].x*w,P[i].y*h,6,0,7);ctx.stroke();}
+    var sy=Math.max(0.5,Math.min(1.7,scale)),sx=1/sy,L=Math.min(w,h)*0.06;
+    ctx.save();ctx.translate(pos.x,pos.y);ctx.rotate(ang);ctx.scale(sy,sx);
+    ctx.fillStyle=COL.blue;ctx.beginPath();ctx.moveTo(L*1.6,0);ctx.lineTo(-L,L*0.8);ctx.lineTo(-L*0.5,0);ctx.lineTo(-L,-L*0.8);ctx.closePath();ctx.fill();ctx.restore();
+  });
+};
+
+/* --- The derivative machine: wire an order into a channel --- */
+D["deriv-machine"]=function(m){
+  var d=box(m,"The derivative machine — wire an order into a channel");
+  var c=addCanvas(d,300),row1=addRow(d),row2=addRow(d);
+  cap(d,"Same driver signal, your choice of <b>which derivative</b> to read and <b>which channel</b> to drive. Feel each order's personality — value = where, velocity = momentum, acceleration = impact. Drag on the canvas to steer the driver.");
+  var order="vel",chan="scale";
+  var ob=[btn(row1,"value",false),btn(row1,"velocity",true),btn(row1,"acceleration",false)];
+  var cb=[btn(row2,"scale",true),btn(row2,"blur",false),btn(row2,"rotate",false),btn(row2,"color",false)];
+  function setO(o,i){order=o;ob.forEach(function(b,j){b.classList.toggle("on",j===i);});}
+  function setC(cc,i){chan=cc;cb.forEach(function(b,j){b.classList.toggle("on",j===i);});}
+  ob[0].onclick=function(){setO("val",0);};ob[1].onclick=function(){setO("vel",1);};ob[2].onclick=function(){setO("acc",2);};
+  cb[0].onclick=function(){setC("scale",0);};cb[1].onclick=function(){setC("blur",1);};cb[2].onclick=function(){setC("rotate",2);};cb[3].onclick=function(){setC("color",3);};
+  var ctx,t=0,val=0,tval=0,vel=0,acc=0,pval=0,pvel=0,drag=false,dx=0;
+  pointer(c,function(p){dx=p.x;drag=true;},function(p){dx=p.x;drag=true;},function(){drag=false;});
+  loop(c,function(){ctx=ctx||fit(c);var w=c._w,h=c._h;t+=1/60;
+    tval=drag?Math.max(-1,Math.min(1,(dx-w/2)/(w*0.4))):0.8*Math.sin(t*1.2);
+    pval=val;val+=(tval-val)*0.35;var nv=(val-pval)*60;pvel=vel;vel+=(nv-vel)*0.3;var na=(vel-pvel)*60;acc+=(na-acc)*0.3;
+    var metric=order==="val"?val:order==="vel"?vel/6:acc/45;metric=Math.max(-1,Math.min(1,metric));
+    clr(ctx,c);var cx=w/2,cy=h/2,R=Math.min(w,h)*0.16;
+    ctx.save();ctx.translate(cx,cy);
+    if(chan==="rotate")ctx.rotate(metric*1.6);
+    if(chan==="scale"){var scc=1+metric*0.5;ctx.scale(scc,scc);}
+    if(chan==="blur"){ctx.shadowColor="rgba(37,99,235,0.9)";ctx.shadowBlur=Math.abs(metric)*40;}
+    var col=COL.blue;if(chan==="color"){col="hsl("+(210+metric*150)+",70%,55%)";}
+    ctx.fillStyle=col;var s=R;ctx.beginPath();ctx.rect(-s,-s,2*s,2*s);ctx.fill();ctx.restore();
+    ctx.fillStyle=COL.muted;ctx.font="12px sans-serif";ctx.textAlign="left";
+    ctx.fillText("driver "+({val:"value",vel:"velocity",acc:"acceleration"})[order]+" → "+chan+"   ("+metric.toFixed(2)+")",10,18);
+  });
+};
+
 })();

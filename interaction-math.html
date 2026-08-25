@@ -70,6 +70,13 @@ arc length ∫√(1+y'²)dx →  distance ALONG the path (even spacing)
 <li><a class="xref" href="#14-fourier-sum-of-sines">14-fourier-sum-of-sines</a> — the frequency domain: any signal is a sum of sines; epicycles, spectra, blur</li>
 <li><a class="xref" href="#15-transforms-and-matrices">15-transforms-and-matrices</a> — the grammar of moving things: 2×2 → affine → the transform stack → perspective</li>
 </ol>
+<p><strong>Derivatives as animation channels</strong> (lay → hard) — the value/rate/force ladder, and how to swap the input to generate whole families of reactive motion:</p>
+<ol start="16">
+<li><a class="xref" href="#16-value-rate-force">16-value-rate-force</a> — a signal's value, rate (1st derivative), and force (2nd); each order's personality</li>
+<li><a class="xref" href="#17-squash-and-stretch">17-squash-and-stretch</a> — force → deformation: <code>1 + k·(a·v̂)</code>, area preservation, the falling ball</li>
+<li><a class="xref" href="#18-curves-banking-and-recovery">18-curves-banking-and-recovery</a> — reading motion off a curve: facing, leaning into turns, arc-length, spring recovery</li>
+<li><a class="xref" href="#19-the-derivative-machine">19-the-derivative-machine</a> — swap the signal: the pick-&amp;-replace matrix (scroll→blur, value→color…) + smoothing</li>
+</ol>
 <hr />
 <h2>How this connects to the rest of your vault</h2>
 <ul>
@@ -1916,7 +1923,596 @@ MyView()
 <li>The 3D / perspective payoff in practice: <a class="xref" href="coreanimation.html#15-transform-3d">Core Animation 3D transforms</a></li>
 <li>Mapping one range to another (the gesture→effect knob): <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></li>
 <li>Prev: <a class="xref" href="#14-fourier-sum-of-sines">14-fourier-sum-of-sines</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
-</ul><div class="pager"><a href="#14-fourier-sum-of-sines"><span>Prev</span>← 14 — Fourier: Everything Is a Sum of Sines</a><span class="sp"></span></div></section>
+</ul><div class="pager"><a href="#14-fourier-sum-of-sines"><span>Prev</span>← 14 — Fourier: Everything Is a Sum of Sines</a><a href="#16-value-rate-force"><span>Next</span>16 — Value, Rate &amp; Force →</a></div></section>
+<section class="page" id="16-value-rate-force" data-title="16 — Value, Rate &amp; Force" data-num="16" data-hasdemo="1" data-group="Master Keys"><h1>16 — Value, Rate &amp; Force</h1><div class="demo-mount" data-demo="deriv-ladder"></div>
+<blockquote>
+<p><strong>Interactive demo (top of page): the 3-lane plotter.</strong> One signal, three stacked lanes: its <strong>value</strong> on top, its <strong>rate</strong> in the middle, its <strong>force</strong> on the bottom. <strong>Drag left–right</strong> to steer the value and watch the lower lanes react in real time. Then hit <strong>"jolt"</strong> for a sudden move — and watch the spike <em>travel down</em> the lanes. In the value lane the jolt is a barely-there wiggle; by the time it reaches the force lane it's a cliff. Keep it open. This whole lesson is just narrating what that bottom lane is screaming about.</p>
+</blockquote>
+<h2>Start here — the plain idea</h2>
+<p>Here's a small idea that quietly rewires how you build interactions: <strong>any changing signal is telling you three things at once.</strong> Take a knob turning, a finger dragging, a scroll offset — anything with a number that moves over time. At every instant it has a <strong>value</strong> (where it is right now), a <strong>rate</strong> (how fast that value is changing), and a <strong>force</strong> (how fast the <em>rate</em> is changing). Same signal, three readings, all live, all free. You've been staring at the first one and ignoring the other two.</p>
+<p>Think of a car. The <strong>value</strong> is your position on the road — where you are. The <strong>rate</strong> (the first derivative) is your <strong>speedometer</strong> — how fast you're moving, which way you're headed, how much <em>intent</em> is in the motion. The <strong>force</strong> (the second derivative) is what your <strong>body feels</strong> — the shove into the seat when you floor it, the lurch when you slam the brakes. Notice that impacts don't live in <em>where you are</em>; they live in <em>how sharply your speed changed</em>. A gentle cruise and an emergency stop can pass through the exact same position — but one of them throws your coffee. That difference is entirely in the force.</p>
+<p>And there's a bonus fourth reading going the other direction: the <strong>integral</strong> — the <em>accumulation</em> of the value over time, its memory. If value is your speed, the integral is the total distance you've racked up; if value is a spark, the integral is the charge that's built up. You already tapped one of these channels without naming it — back when you drove <strong>squash</strong> off the second derivative. This series is about the realization that each order — value, rate, force, integral — is its own <strong>animation channel</strong> you can reach in and tap. Same signal. Four faucets.</p>
+<h2>The personality of each order</h2>
+<p>Each order has a <em>character</em> — a feel it naturally lends to motion. Reach for the one whose personality matches the effect you want.</p>
+<table>
+<thead>
+<tr>
+<th>Order</th>
+<th>What it is</th>
+<th>It <em>means</em>…</th>
+<th>Tap it for…</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Value</strong> (0th)</td>
+<td>where it is</td>
+<td>position, state</td>
+<td>the thing itself — offset, color, opacity</td>
+</tr>
+<tr>
+<td><strong>Rate</strong> (1st derivative)</td>
+<td>how fast value changes</td>
+<td><strong>momentum, intent, energy</strong></td>
+<td>motion blur, stretch, lean/tilt, follow-through</td>
+</tr>
+<tr>
+<td><strong>Force</strong> (2nd derivative)</td>
+<td>how fast the rate changes</td>
+<td><strong>impact, effort</strong></td>
+<td>squash, shake, flash, haptic tick</td>
+</tr>
+<tr>
+<td><strong>Integral</strong> (accumulation)</td>
+<td>value summed over time</td>
+<td><strong>memory, charge</strong></td>
+<td>trails, progress bars, charge-up glow</td>
+</tr>
+</tbody>
+</table>
+<p>Read it as four <em>personalities</em>. Value is stoic — it just reports position. Rate is the eager one — it knows where you're going before you get there, so it's what you tap when you want motion to look <em>intentional</em>: a card that leans into its own velocity, a stretch that says "I'm really moving." Force is the dramatic one — it only speaks up at moments of change, which is exactly why it's the source of <em>punch</em>: squash on landing, a shake on a hard stop, a haptic tick, a flash. Integral is the one with a long memory — it remembers everywhere the signal has been, which is why it draws trails and fills progress bars.</p>
+<h3>Why a sharp change hides in the value but <em>screams</em> in the force</h3>
+<p>Here's the part worth really sitting with. Do a sudden, abrupt move — a jolt. In terms of <strong>position</strong>, almost nothing happened: you moved a few pixels. The value barely twitched. But to move that far <em>that fast</em>, your speed had to shoot up from zero and then slam back down in a heartbeat — and a fast change in speed <strong>is</strong> a huge force. So the very same event is a <strong>tiny bump in the value lane</strong> and a <strong>giant spike in the force lane.</strong></p>
+<p>That's the whole trick of the demo. <strong>Jolt it and watch.</strong> The event that's nearly invisible up top is enormous down below. Each derivative you take is like turning up a contrast knob on <em>change</em>: it flattens out the slow, boring drift and blows up the sharp, sudden moments. That's precisely why impact effects — squash, shake, flash — read the second derivative. It's the channel where "something abrupt just happened" is loud and unmissable, even when the position barely moved.</p>
+<h2>Getting a derivative — it's just a subtraction</h2>
+<p>You don't need calculus to <em>compute</em> these. On every frame you already have the current value and the value from last frame, and you know how much time passed. Rate is just the change divided by that time — a <strong>finite difference</strong>:</p>
+<pre><code>rate = (value - previousValue) / dt      // then stash: previousValue = value
+</code></pre>
+<p>That's a derivative. Do the exact same thing <em>to the rate</em> and you get the force (the second derivative). Store this frame's number, subtract last frame's, divide by <code>dt</code>. Two subtractions and you've unlocked all three lanes.</p>
+<p>Often you don't even do the subtraction yourself — <strong>gesture APIs hand you the rate for free.</strong> A drag already knows its own speed:</p>
+<pre><code class="language-swift">DragGesture().onChanged { g in
+    let speed = g.velocity            // ← the rate, computed for you (points/second)
+}
+</code></pre>
+<p><strong>One caveat, stated plainly.</strong> Derivatives <em>amplify jitter</em>. That contrast-knob-on-change quality cuts both ways: a little sensor noise or a one-pixel stutter in the value becomes a spiky mess in the rate, and an outright thornbush in the force. So in practice you <strong>smooth the signal first</strong> — a light low-pass filter that lets the slow shape through and shaves off the fast fuzz (that "let the slow through, cut the fast" framing is straight out of <a class="xref" href="#14-fourier-sum-of-sines">14-fourier-sum-of-sines</a>). Don't worry about <em>how</em> to smooth yet — the clean recipe comes in lesson 19. For now just know: <strong>smooth first, then differentiate.</strong></p>
+<h2>Apply it — in your interactions</h2>
+<p>The gentlest possible taste: track a value, compute its <strong>rate</strong> with a one-line finite difference, and use only the <em>sign</em> of that rate to show whether the number is <strong>rising ↑</strong> or <strong>falling ↓</strong> — and tint it to match. No fancy motion, just proof that the rate channel is right there for the taking.</p>
+<pre><code class="language-swift">struct RateReadout: View {
+    let value: Double                 // whatever you're tracking (scroll, score, temp…)
+    @State private var previous: Double = 0
+    @State private var rising = true
+
+    var body: some View {
+        HStack {
+            Text(value, format: .number)
+            Text(rising ? &quot;↑&quot; : &quot;↓&quot;)
+        }
+        .foregroundStyle(rising ? .green : .red)   // tint follows the rate's sign
+        .onChange(of: value) { old, new in
+            let rate = new - old                   // finite difference (dt is one step)
+            if rate != 0 { rising = rate &gt; 0 }     // sign of the rate = direction of travel
+            previous = old
+        }
+    }
+}
+</code></pre>
+<p>That's the entire idea in miniature: the value alone can't tell you if a number is climbing or dropping, but its <strong>rate</strong> can — and the rate was one subtraction away. Swap the readout for a stretch that scales with <code>abs(rate)</code>, or a squash that fires on a big <em>second</em> difference, and you're already animating off the higher channels. (If your source is noisy, smooth <code>value</code> before the subtraction — lesson 19.)</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>value (0th order)</strong> = where the signal is right now; position, state, the thing itself.</li>
+<li><strong>rate (1st derivative)</strong> = how fast the value changes; momentum, intent, energy — drives blur, stretch, lean.</li>
+<li><strong>force (2nd derivative)</strong> = how fast the <em>rate</em> changes; impact, effort — drives squash, shake, flash, haptics.</li>
+<li><strong>integral (accumulation)</strong> = the value summed over time; memory, charge — drives trails and progress.</li>
+<li><strong>each order is an animation channel</strong> = one signal, four faucets you can tap independently.</li>
+<li><strong>finite difference</strong> = <code>(value - previousValue) / dt</code> per frame; the poor man's derivative.</li>
+<li><strong>derivatives amplify sharpness</strong> = a sudden move is tiny in value, huge in force; that's why impact lives in the 2nd derivative.</li>
+<li><strong>derivatives amplify jitter too</strong> = so smooth first (a light low-pass), <em>then</em> differentiate — full recipe in lesson 19.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The derivative as a slope you can read: <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a></li>
+<li>Where these rates come from — systems that evolve over time: <a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a></li>
+<li>The first channel we tap for real, in anger: <a class="xref" href="#17-squash-and-stretch">17-squash-and-stretch</a></li>
+<li>Prev: <a class="xref" href="#15-transforms-and-matrices">15-transforms-and-matrices</a> · Next: <a class="xref" href="#17-squash-and-stretch">17-squash-and-stretch</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#15-transforms-and-matrices"><span>Prev</span>← 15 — Transforms &amp; Matrices: The Grammar of Moving Things</a><a href="#17-squash-and-stretch"><span>Next</span>17 — Squash &amp; Stretch: Force Becomes Deformation →</a></div></section>
+<section class="page" id="17-squash-and-stretch" data-title="17 — Squash &amp; Stretch: Force Becomes Deformation" data-num="17" data-hasdemo="1" data-group="Master Keys"><h1>17 — Squash &amp; Stretch: Force Becomes Deformation</h1><div class="demo-mount" data-demo="squash-drop"></div>
+<blockquote>
+<p>A live demo is mounted at the top of this page: a <strong>ball on a springy floor</strong> that <strong>stretches</strong> while it falls and <strong>squashes</strong> the instant it hits. Two sliders — <strong>squash gain (k)</strong> and <strong>recovery spring</strong> — and you <strong>click to drop</strong> it. It <em>is</em> the lesson; the text just names what you're watching. Crank <strong>k</strong> up and watch the deform exaggerate; notice that as the ball flattens on impact it also <strong>bulges sideways</strong> — that sideways bulge is the whole trick, and it's free.</p>
+</blockquote>
+<h2>Start here — the plain idea</h2>
+<p>Watch a ball fall. As it drops it speeds up, and a good animator draws it <em>stretched</em> — smeared thin along the direction it's racing. Then it hits the floor, and in that instant it <em>squashes</em> — flattened into a pancake, wider than it is tall. A beat later it peels back into a sphere and pops up. Stretch, squash, recover. That little sequence is the single most famous rule in animation, and it's the thing you were excited to build.</p>
+<p>Here's the quiet secret from <a class="xref" href="#16-value-rate-force">16-value-rate-force</a>: you don't have to <em>draw</em> any of that. The ball already carries the information. Its position tells you where it is (value), its velocity tells you how fast (rate), and its <strong>acceleration — the 2nd derivative — is the force it's feeling right now</strong>. Falling under gravity? The force points down, the same way it's moving, so it stretches. Slamming into a floor? The floor shoves back <em>hard</em> against the motion, and that opposing force is what squashes it. The deformation isn't a keyframe you place; it's a number you <em>read off the motion</em>.</p>
+<p>So this lesson does one thing: it turns "the force it feels" into "how much it deforms," with a single small formula. No timeline, no hand-drawn poses — just acceleration in, scale out, every frame. Once you have it, <em>anything</em> that moves can squash and stretch: a dropped card, a snapping sheet, a tapped button. Give it a physical rule (like the ones from <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a>) and the deformation comes along for the ride.</p>
+<hr />
+<h2>Stretch with the motion, squash against it</h2>
+<p>Start with the intuition, because the formula is just this sentence written in symbols.</p>
+<p><strong>A thing stretches when the force pushes <em>along</em> the way it's moving.</strong> A falling ball is speeding up — gravity pulls down, the ball moves down, force and motion agree. It elongates in the direction of travel, like taffy pulled from both ends. Speeding up = stretch.</p>
+<p><strong>A thing squashes when the force <em>opposes</em> the way it's moving.</strong> The moment the ball touches the floor, the floor pushes <em>up</em> while the ball is still moving <em>down</em>. Force and motion disagree — hard. The ball is being violently decelerated, and that's exactly when it flattens. Slowing down = squash.</p>
+<p>Notice that both cases are about <strong>acceleration relative to the direction of travel</strong>, not about "up" or "down." A ball fired sideways and braking would squash horizontally; a rocket accelerating would stretch along its own thrust. The floor isn't special — <em>opposing force</em> is. So the quantity we actually want is: <strong>how much is the force helping or fighting the current motion?</strong> That is a single number, and you already know the tool that produces it. It's the dot product from <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a> — "how aligned are these two arrows?" Point it at velocity and acceleration and it answers "is this force speeding me up or slowing me down, and by how much?"</p>
+<h2>The clean result — one projection sets the deformation</h2>
+<p>Here is the whole model. Every frame, you have a <code>velocity</code> and an <code>acceleration</code> (from lesson 16 you know both are just derivatives of position). Do this:</p>
+<pre><code>v̂ = normalize(velocity)          // unit tangent (which way it's moving)
+aAlong = dot(acceleration, v̂)    // + = speeding up, − = slowing down
+scaleAlongMotion   = 1 + k * aAlong
+scalePerpendicular = 1 / scaleAlongMotion   // preserve area — no mass gained
+</code></pre>
+<p>Four lines. Let's walk each one slowly, because this is the heart of the lesson.</p>
+<p><strong><code>v̂ = normalize(velocity)</code></strong> — strip the speed off velocity and keep only the <em>direction</em> of travel. This is the unit tangent: the axis the ball is moving along, the axis it will stretch or squash <em>on</em>. (Same <code>normalize</code> you met in <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a>.)</p>
+<p><strong><code>aAlong = dot(acceleration, v̂)</code></strong> — project the force onto that direction of travel. The dot product returns one signed number: <strong>positive</strong> when acceleration points the same way as motion (speeding up), <strong>negative</strong> when it points against motion (slowing down), and its <strong>size</strong> is how strongly. This single scalar is the entire input to the deformation. Everything perpendicular to the motion, everything about raw position — thrown away. We kept exactly the piece that matters.</p>
+<p><strong><code>scaleAlongMotion = 1 + k * aAlong</code></strong> — turn that number into a stretch factor. At rest or coasting (<code>aAlong = 0</code>) it's <code>1</code>: a perfect, undeformed sphere. Speeding up (<code>aAlong &gt; 0</code>) makes it <em>greater than 1</em> → the ball grows <strong>along</strong> its motion → <strong>stretch</strong>. Slowing down (<code>aAlong &lt; 0</code>) makes it <em>less than 1</em> → the ball shrinks along its motion → <strong>squash</strong>. The gain <code>k</code> is your only artistic knob: bigger <code>k</code>, more cartoonish exaggeration.</p>
+<p><strong><code>scalePerpendicular = 1 / scaleAlongMotion</code></strong> — the sideways scale is forced to be the <em>reciprocal</em>. This is what makes a squashed ball bulge outward and a stretched ball pinch inward. It's not decoration; it's conservation, and it's the next section.</p>
+<p>Now the moment worth sitting with. <strong>This one formula produces <em>both</em> behaviours with no <code>if</code> statement anywhere.</strong> You never wrote "if falling, stretch" or "if impact, squash." You wrote a single continuous line, and the <em>sign of the dot product</em> selects the behaviour for you:</p>
+<ul>
+<li><strong>Falling ball:</strong> velocity points down, gravity points down → <code>aAlong &gt; 0</code> → <code>scaleAlongMotion &gt; 1</code> → it <strong>stretches vertically</strong>, thin and tall, smeared along its fall.</li>
+<li><strong>Impact:</strong> velocity still points down, but the springy floor shoves <em>up</em> → <code>aAlong &lt; 0</code> (large and negative) → <code>scaleAlongMotion &lt; 1</code> → it <strong>squashes</strong>, short along the motion... and because <code>scalePerpendicular = 1/scaleAlongMotion</code> blows <em>up</em> above 1, it <strong>bulges sideways into a pancake</strong>.</li>
+</ul>
+<p>Stretch and squash are not two rules. They are the <em>same</em> rule read at two moments, and the code doesn't branch because the physics doesn't branch. The direction of the force flipped relative to the motion, and the arithmetic did the rest. That's the payoff: deformation becomes a pure function of acceleration, and the animator's most beloved trick falls straight out of the 2nd derivative.</p>
+<h2>Volume / area preservation — no mass is gained</h2>
+<p>Why the reciprocal? Because real squishy things conserve their material. Flatten a water balloon and it spreads wide; nobody adds water. If you scaled <em>both</em> axes down on impact the ball would just shrink and look like it's flying away from the camera; if you scaled both up it would balloon. Neither reads as "squash." What reads is: <strong>one axis shrinks exactly as much as the other grows.</strong></p>
+<p>In 2D that's a single, clean constraint:</p>
+<pre><code>scaleX · scaleY = 1
+</code></pre>
+<p>which is precisely what <code>scalePerpendicular = 1 / scaleAlongMotion</code> guarantees — their product is always <code>1</code>, so the ball's <strong>area never changes</strong>. Squash on one axis and it <em>must</em> bulge on the other. Stretch on one and it <em>must</em> pinch on the other. The bulge you see in the demo isn't an extra effect layered on; it's the automatic consequence of keeping the area fixed.</p>
+<blockquote>
+<p><strong>In 3D</strong> the same idea is <code>sx · sy · sz = 1</code> (volume, not area). The usual move: stretch/squash along the motion axis by <code>s</code>, and split the compensation across the <em>two</em> perpendicular axes by giving each <code>1/√s</code>, so the product stays <code>1</code>.</p>
+</blockquote>
+<h2>An honesty note — the floor has to be a little soft</h2>
+<p>There's a cheat hiding in "the instant it hits." A <em>truly</em> instantaneous bounce — velocity flipping from full-down to full-up in zero time — is a <strong>discontinuity</strong>: the acceleration at that instant is infinite, a spike with no width. You can't read a finite squash off an infinite spike, and it would look like a single-frame glitch anyway.</p>
+<p>So in practice the contact is <strong>spread over a few frames</strong>. The floor is modelled as a stiff spring (or the ball itself as springy), so the deceleration — while large — is <em>finite and lasts a handful of frames</em>. Over those frames <code>aAlong</code> is strongly negative, the ball visibly flattens, and then the stored spring energy launches it back up. That's exactly why the demo uses a <strong>springy floor</strong> rather than a hard wall: the softness is what gives the squash somewhere to live. And it's why the <em>recovery</em> — the rubbery re-rounding and jiggle after the ball leaves the floor — is a topic of its own, coming next in <a class="xref" href="#18-curves-banking-and-recovery">18-curves-banking-and-recovery</a>.</p>
+<hr />
+<h2>Apply it — in your interactions</h2>
+<p>You already have the position of any moving view every frame. Lesson 16 showed how to get its <strong>acceleration by finite differences</strong> — remember two past positions, and acceleration ≈ <code>(pos - 2·prev + prev2) / dt²</code>. Feed that into the formula and drive <code>.scaleEffect(x:y:)</code>.</p>
+<pre><code class="language-swift">import SwiftUI
+import simd
+
+struct SquashStretch: View {
+    // motion state (drive `pos` however you like: a drop, a drag, a spring)
+    @State private var pos = CGSize.zero
+    @State private var prev = CGSize.zero
+    @State private var prev2 = CGSize.zero
+    @State private var scaleX: CGFloat = 1
+    @State private var scaleY: CGFloat = 1
+    @State private var last = Date()
+
+    let k: CGFloat = 0.0006   // squash gain — the one artistic knob
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            Circle()
+                .fill(.orange)
+                .frame(width: 80, height: 80)
+                .scaleEffect(x: scaleX, y: scaleY)   // ← deformation, read off motion
+                .offset(pos)
+                .onChange(of: timeline.date) { _, now in
+                    let dt = max(min(now.timeIntervalSince(last), 1.0/30), 1.0/120)
+                    last = now
+                    stepMotion(dt: CGFloat(dt))        // update pos however you drive it
+                    updateDeform(dt: CGFloat(dt))
+                }
+        }
+    }
+
+    private func updateDeform(dt: CGFloat) {
+        // finite differences → velocity and acceleration (lesson 16)
+        let vel = SIMD2(Float((pos.width  - prev.width)  / dt),
+                        Float((pos.height - prev.height) / dt))
+        let acc = SIMD2(Float((pos.width  - 2*prev.width  + prev2.width)  / (dt*dt)),
+                        Float((pos.height - 2*prev.height + prev2.height) / (dt*dt)))
+
+        if length(vel) &gt; 1e-3 {
+            let vHat  = normalize(vel)                 // unit tangent
+            let along = CGFloat(dot(acc, vHat))        // + speeding up, − slowing down
+            let s = max(0.2, 1 + k * along)            // clamp so it never inverts
+            scaleX = s                                  // (motion is ~vertical here;
+            scaleY = 1 / s                              //  swap axes if horizontal)
+        }
+        prev2 = prev; prev = pos                        // shift history
+    }
+
+    private func stepMotion(dt: CGFloat) { /* your drop / spring / drag here */ }
+}
+</code></pre>
+<p>The load-bearing lines are the same four from the model: <code>normalize</code> the velocity, <code>dot</code> it with acceleration, <code>1 + k·along</code> on the motion axis, <code>1/s</code> on the other. (For a mostly-vertical drop, <code>scaleX = 1/s</code>, <code>scaleY = s</code>; if your object moves in a general direction, apply the scale along <code>vHat</code> with a rotation instead of straight to X/Y.)</p>
+<p><strong>The 90% version — a tap bounce.</strong> Most of the time you don't need real acceleration at all; you just want the <em>pose</em>. Squash on press, stretch on release, let a spring carry it home:</p>
+<pre><code class="language-swift">struct TapBounce: View {
+    @State private var squash = false
+    var body: some View {
+        Circle().fill(.pink).frame(width: 72, height: 72)
+            .scaleEffect(x: squash ? 1.25 : 1, y: squash ? 0.8 : 1)  // area-ish preserved
+            .animation(.spring(response: 0.28, dampingFraction: 0.45), value: squash)
+            .onTapGesture {
+                squash = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.09) { squash = false }
+            }
+    }
+}
+</code></pre>
+<p>Note <code>1.25 × 0.8 = 1</code> — even the cheap version respects area preservation, which is why it reads as a squish and not a resize. The rubbery <em>recovery</em> and jiggle that make it feel truly alive get their own treatment in <a class="xref" href="#18-curves-banking-and-recovery">18-curves-banking-and-recovery</a>.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>squash &amp; stretch</strong> = deform a shape along its motion to sell speed and impact; the classic animation principle.</li>
+<li><strong>force = 2nd derivative</strong> = acceleration is the force a thing feels right now; it <em>drives</em> the deformation (from <a class="xref" href="#16-value-rate-force">16-value-rate-force</a>).</li>
+<li><strong>stretch = force along motion</strong> = speeding up (<code>aAlong &gt; 0</code>) → elongate in the direction of travel.</li>
+<li><strong>squash = force against motion</strong> = slowing down (<code>aAlong &lt; 0</code>) → flatten along travel, bulge sideways.</li>
+<li><strong><code>aAlong = dot(acceleration, normalize(velocity))</code></strong> = project the force onto the direction of travel; one signed number that <em>is</em> the whole input.</li>
+<li><strong><code>scaleAlongMotion = 1 + k·aAlong</code></strong> = turn that number into a scale; <code>k</code> is the only exaggeration knob.</li>
+<li><strong>area/volume preservation</strong> = <code>scalePerp = 1/scaleAlong</code> so <code>scaleX·scaleY = 1</code> (3D: <code>sx·sy·sz = 1</code>) — no mass gained, so a squash <em>must</em> bulge.</li>
+<li><strong>one formula, both behaviours</strong> = the sign of the dot product selects stretch vs squash — no <code>if</code>, because the physics doesn't branch.</li>
+<li><strong>soft contact</strong> = a real instant bounce is a discontinuity (infinite accel); spread it over a few frames with a springy floor so the squash has room to exist.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The value/rate/force idea and finite-difference acceleration this builds on: <a class="xref" href="#16-value-rate-force">16-value-rate-force</a></li>
+<li><code>normalize</code> and the dot product that make the projection work: <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a></li>
+<li>The rubbery recovery, jiggle, and banking that finish the effect: <a class="xref" href="#18-curves-banking-and-recovery">18-curves-banking-and-recovery</a></li>
+<li>Springy floors, gravity+bounce, and the physics that drive the motion: <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a></li>
+<li>Prev: <a class="xref" href="#16-value-rate-force">16-value-rate-force</a> · Next: <a class="xref" href="#18-curves-banking-and-recovery">18-curves-banking-and-recovery</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#16-value-rate-force"><span>Prev</span>← 16 — Value, Rate &amp; Force</a><a href="#18-curves-banking-and-recovery"><span>Next</span>18 — Curves, Banking &amp; the Spring Recovery →</a></div></section>
+<section class="page" id="18-curves-banking-and-recovery" data-title="18 — Curves, Banking &amp; the Spring Recovery" data-num="18" data-hasdemo="1" data-group="Master Keys"><h1>18 — Curves, Banking &amp; the Spring Recovery</h1><div class="demo-mount" data-demo="curve-fling"></div>
+<blockquote>
+<p><strong>Interactive demo up top — fling a dart along an editable curve.</strong> Flick the dart and it flies down the path: it <strong>faces the tangent</strong>, <strong>leans into its turns</strong>, and <strong>squashes from the forward acceleration</strong> as it whips through bends. Three sliders — <strong>speed</strong>, <strong>squash gain</strong>, and <strong>lean into turns</strong> — plus hollow <strong>control points</strong> you can drag to reshape the path. Grab a control point and yank it into a <em>sharp</em> bend, then watch the dart lean and squash harder right at that corner. Every one of those behaviours is a different derivative of the <em>same</em> curve; keep the demo in the corner of your eye as you read and match each section to what the dart is doing.</p>
+</blockquote>
+<h2>Start here — the plain idea</h2>
+<p>Draw a path and send something along it — a dart, an arrow, a paper plane. If you just slide the sprite down the curve without turning it, it looks <em>dead</em>: a cardboard cutout being dragged on a string. What sells "a thing is really travelling this path" is a handful of instincts you already have about real moving objects. It should <strong>face where it's going</strong>. It should <strong>lean into its turns</strong>, banking like a motorcycle carving a corner. It should <strong>squash when it brakes</strong> and stretch when it launches. And when it slams to a stop it should <strong>wobble back like rubber</strong> instead of freezing dead.</p>
+<p>Here's the beautiful part, and the whole reason this lesson exists: <em>you don't animate any of those by hand.</em> You define <strong>one</strong> function — the curve <code>r(t)</code> — and every one of those behaviours falls out of its derivatives. The velocity (first derivative) tells you which way to face. The acceleration (second derivative), split into two pieces, tells you how hard to lean and how hard to squash. The integral of speed tells you how to space things evenly along the path. You author the <em>shape</em>; the <em>aliveness</em> is already encoded in it, waiting to be read off. This is the payoff of the whole "derivatives as animation channels" idea: one source, many synchronized channels, all automatically in agreement because they come from the same place.</p>
+<p>This is the deep one of the series. We'll go channel by channel — facing, leaning, even spacing — and then, at the end, marry the two directions of calculus: we <strong>differentiate</strong> the path to <em>get</em> the deformation, and then <strong>integrate</strong> a little spring to <em>relax</em> it, so the squash arrives with a rubbery bounce instead of a hard snap.</p>
+<hr />
+<h2>Facing — the tangent</h2>
+<p>The first channel is the one you met back in <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a>, now on a real 2D path. Your curve is a parametric function <code>r(t) = (x(t), y(t))</code> — a point that moves as the parameter <code>t</code> advances (splines, Béziers; see <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a>). Its <strong>velocity</strong> is the derivative:</p>
+<pre><code>v(t) = r'(t) = (x'(t), y'(t))     // how the point is moving RIGHT NOW
+</code></pre>
+<p><code>v(t)</code> is a <em>vector</em>, and geometrically it points straight down the path — it <strong>is</strong> the tangent direction. It has a length too (the speed, which we'll use later), but for facing we only care about its direction. To orient the dart so its nose lies flush along the path, rotate it to the angle of <code>v</code>:</p>
+<pre><code class="language-swift">let v = velocity(t)                     // r'(t): (vx, vy)
+let angle = atan2(v.y, v.x)             // the tangent angle, in radians
+// rotate the sprite by `angle` so its nose points down the path
+</code></pre>
+<p><code>atan2(vy, vx)</code> is the "which way is this vector pointing" function — it turns the two components of the velocity into a single heading angle, handling all four quadrants correctly (unlike plain <code>atan</code>). That's the entire facing trick: <strong>the first derivative is the tangent, and the tangent's angle is your rotation.</strong> In the demo, this is why the dart's nose always aligns with the curve, even as you drag control points around — it's reading <code>atan2</code> off the velocity every frame.</p>
+<p>We'll want the tangent as a <em>unit</em> vector (length 1, direction only) for the next section, so name it now:</p>
+<pre><code>T̂ = v / |v|          // unit tangent: pure direction, no speed
+</code></pre>
+<p>where <code>|v| = sqrt(vx² + vy²)</code> is the speed. (Guard against <code>|v| = 0</code> at a dead stop — keep the last good <code>T̂</code>.)</p>
+<hr />
+<h2>Leaning into turns — tangential vs normal acceleration</h2>
+<p>Facing came from the first derivative. Everything <em>dynamic</em> — braking, launching, banking — comes from the <strong>second</strong> derivative, the acceleration:</p>
+<pre><code>a(t) = r''(t) = (x''(t), y''(t))
+</code></pre>
+<p>But acceleration as one lump isn't directly useful. The insight that unlocks this whole lesson is that acceleration always splits into <strong>two perpendicular pieces</strong>, and they mean completely different things:</p>
+<ul>
+<li>The part <strong>along the direction of motion</strong> — <em>are we speeding up or slowing down?</em></li>
+<li>The part <strong>sideways to the motion</strong> — <em>how hard are we turning?</em></li>
+</ul>
+<p>To split it, we need two reference directions: the unit tangent <code>T̂</code> (down the path) and the unit <strong>normal</strong> <code>N̂</code> (perpendicular to it, pointing "sideways"). The normal is just the tangent rotated 90°:</p>
+<pre><code>T̂ = (Tx, Ty)                 // unit tangent, from the previous section
+N̂ = (−Ty, Tx)                // rotate T̂ by 90° → unit normal (the &quot;sideways&quot; axis)
+</code></pre>
+<p>Now <strong>project</strong> the acceleration onto each axis with a dot product. The dot product <code>a · T̂</code> answers "how much of <code>a</code> lies along <code>T̂</code>":</p>
+<pre><code>a_T = a · T̂  = ax·Tx + ay·Ty      // TANGENTIAL: speeding up (+) or braking (−)
+a_N = a · N̂  = ax·(−Ty) + ay·Tx   // NORMAL: how hard we're turning, and which way
+</code></pre>
+<p>These two numbers are the two channels:</p>
+<p><strong><code>a_T</code> — the tangential component — drives squash.</strong> This is the along-the-path acceleration: positive when the dart is accelerating, negative when it's braking. That is exactly the "acceleration → squash" signal from lesson 17. When the dart whips into a fast section it stretches along its length; when it brakes it compresses. You feed <code>a_T</code> straight into the squash scale (through a spring — see the recovery section below).</p>
+<p><strong><code>a_N</code> — the normal component — drives lean/bank.</strong> This is the sideways acceleration, the part responsible for <em>turning</em>. A deep fact of curves: the size of the normal acceleration is</p>
+<pre><code>a_N = κ · |v|²        // curvature × speed²
+</code></pre>
+<p>where <code>κ</code> (kappa) is the <strong>curvature</strong> — how tightly the path bends at this point (a straight line has <code>κ = 0</code>; a tight corner has large <code>κ</code>). Read that formula as a feeling: <strong>you lean harder on sharper corners, and <em>much</em> harder as you go faster</strong> — the speed is <em>squared</em>. It's the same reason a motorcycle banks gently through a sweeping curve at low speed but has to lay way over to take a tight bend at pace. So use <code>a_N</code> directly as your bank angle:</p>
+<pre><code class="language-swift">let aN = a.x * (-T.y) + a.y * T.x       // signed sideways acceleration
+let lean = leanGain * aN                // roll/tilt the sprite into the turn
+// left turn and right turn get opposite signs → it banks the correct way automatically
+</code></pre>
+<p>Because <code>a_N</code> is <em>signed</em> (the <code>N̂</code> projection), a left turn and a right turn come out with opposite signs, so the dart banks the correct way into each without any extra logic. In the demo, the <strong>lean into turns</strong> slider is exactly <code>leanGain</code>; drag a control point to make a sharp bend and you'll see <code>κ</code> spike there, <code>a_N</code> blow up with it, and the dart heel over into the corner.</p>
+<blockquote>
+<p>The one idea to keep: <strong>acceleration = along + sideways.</strong> The <em>along</em> part (<code>a_T</code>) is your squash/stretch; the <em>sideways</em> part (<code>a_N = κ·speed²</code>) is your lean. Same <code>r''(t)</code>, split into two synchronized channels by two dot products.</p>
+</blockquote>
+<hr />
+<h2>Even spacing / constant-speed progress — the integral side</h2>
+<p>So far both channels came from <em>differentiating</em> the path. There's a third channel that needs the <em>other</em> operation — accumulation — and it fixes a problem you'll hit the moment you place more than one object on a curve.</p>
+<p>Here's the trap. It's tempting to march the parameter evenly: <code>t = 0, 0.1, 0.2, …</code>. But <code>t</code> is <strong>not</strong> distance. On the straight, lazy parts of a spline the point barely moves per step; through the tight, busy parts it races. So evenly-spaced <code>t</code> gives you objects <strong>bunched up on the straights and flung apart on the curves</strong> — and a dart moving at constant <code>t</code> visibly <em>speeds up and slows down</em> for no physical reason. Parameter-even is not distance-even.</p>
+<p>The fix is <strong>arc length</strong> — actual distance travelled along the curve. You already know the pieces: the speed is <code>|r'(t)|</code>, and distance is the accumulation of speed over time. So integrate the speed:</p>
+<pre><code>arc length from a to b  =  ∫_a^b |r'(t)| dt      // add up speed → total distance
+</code></pre>
+<p>Read it as an odometer, exactly like <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a> framed it: at each instant you're moving at speed <code>|r'(t)|</code>; add up all those little <code>speed × dt</code> chunks and you get the distance the point has covered. Where <code>t</code> is the clock, arc length <code>s</code> is the <em>tape measure</em>.</p>
+<p>In practice you don't do the integral symbolically — you build a small <strong>length table</strong> once: walk the curve in many tiny <code>t</code>-steps, sum the segment lengths as you go, and record the running total. That table lets you go <em>backwards</em> — "give me the <code>t</code> that sits at distance <code>s</code> along the path" — which is the key move:</p>
+<pre><code class="language-swift">// Build a cumulative-length table (do this once when the path changes)
+func lengthTable(_ r: (Double) -&gt; CGPoint, n: Int) -&gt; [(t: Double, s: Double)] {
+    var table: [(Double, Double)] = []
+    var s = 0.0
+    var prev = r(0)
+    for i in 0...n {
+        let t = Double(i) / Double(n)
+        let p = r(t)
+        s += hypot(p.x - prev.x, p.y - prev.y)   // segment length ≈ speed·dt
+        table.append((t, s)); prev = p
+    }
+    return table                                 // invert s → t to place things evenly
+}
+</code></pre>
+<p>Now, to drop N objects <strong>evenly along</strong> the path, ask the table for the <code>t</code> at distances <code>0·L/N, 1·L/N, …</code> (where <code>L</code> is total length). To move the dart at <strong>constant visual speed</strong>, advance <code>s</code> by a fixed amount each frame and look up the matching <code>t</code> — the dart then covers equal <em>distance</em> per frame regardless of how the parameter is bunched. This is the same arc-length reparametrization behind evenly-spaced dashes, beads on a string, and text-on-a-path; see <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a> for where these curves come from.</p>
+<blockquote>
+<p>Differentiating the path gave you <em>facing</em> and <em>deformation</em>; integrating the speed gives you <em>even spacing and honest constant speed</em>. Both directions of calculus, read off one curve.</p>
+</blockquote>
+<hr />
+<h2>The rubber recovery — bringing back the spring</h2>
+<p>We have a squash signal (<code>a_T</code>) and a lean signal (<code>a_N</code>). The naive move is to apply them <strong>directly</strong>: set the dart's scale straight from <code>a_T</code> every frame. Don't. Direct application is stiff and lifeless — the squash appears and vanishes in perfect lockstep with the acceleration, with no follow-through. Real rubber doesn't do that. Real rubber <em>overshoots</em> and <em>jiggles</em> on its way back to rest.</p>
+<p>The fix marries the two directions of this lesson. You <strong>differentiate the path to GET the target deformation</strong>, then <strong>integrate a spring to RELAX toward it</strong> — reusing the exact semi-implicit integrator from <a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a> and <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>. The squash you computed from <code>a_T</code> becomes a <em>target</em>, not a command, and a spring chases that target:</p>
+<ul>
+<li>On impact / hard braking, the target jumps → the spring's scale <strong>snaps in</strong> toward it.</li>
+<li>The spring carries momentum, so it <strong>overshoots past 1.0</strong> — squash, then a rebound into stretch.</li>
+<li>It <strong>jiggles</strong> a couple of times, each swing smaller.</li>
+<li>It <strong>settles</strong> back to 1.0. That decaying wobble <em>is</em> the sponge/rubber bounce.</li>
+</ul>
+<p>Here's the whole recovery — a spring living on the scale value:</p>
+<pre><code class="language-swift">// Deformation state: `scale` is what you render; it chases `target`.
+var scale: Double = 1.0        // current squash scale (1.0 = undeformed)
+var vScale: Double = 0.0       // its velocity (the spring's momentum)
+
+let k = 220.0                  // stiffness — snappiness of the recovery
+let c = 16.0                   // damping — how fast the jiggle dies out
+
+func updateSquash(aT: Double, squashGain: Double, dt: Double) {
+    // 1) GET the target by differentiating the path: brake (aT&lt;0) → compress (&lt;1)
+    let target = 1.0 - squashGain * aT          // launch (aT&gt;0) would stretch (&gt;1)
+
+    // 2) RELAX toward it with a semi-implicit spring (velocity FIRST, then position)
+    let a = -k * (scale - target) - c * vScale  // the spring rule
+    vScale += a * dt                             // velocity first…
+    scale  += vScale * dt                        // …then position, with the new velocity
+}
+</code></pre>
+<p>Two lines of calculus, two directions. Line 1 is <em>differentiation</em>: <code>aT</code> is the second derivative of the path, turned into "how squashed should we be right now." Line 2 is <em>integration</em>: the same velocity-first semi-implicit step you trust for every other spring, stepping the scale toward that target with momentum so it overshoots and rings. <code>squashGain</code> is the demo's <strong>squash gain</strong> slider; <code>k</code> and <code>c</code> tune how snappy and how jiggly the rebound is (<code>c ≈ 2·√k</code> is critical damping — snaps in with no wobble; go below it for the rubbery overshoot). Apply <code>scale</code> along <code>T̂</code> and its reciprocal along <code>N̂</code> to preserve area, exactly as in lesson 17.</p>
+<blockquote>
+<p>The synthesis of the whole series: <strong>differentiate the path to get the deform, integrate a spring to relax it.</strong> The curve supplies the <em>what</em>; the spring supplies the <em>feel</em>.</p>
+</blockquote>
+<hr />
+<h2>Apply it — in your interactions</h2>
+<p>Put it together in SwiftUI: animate a view along a <code>Path</code>/Bézier, read the tangent to orient it, read the normal acceleration to bank it, and run a spring on the scale for the rubbery squash. Drive everything from a <code>TimelineView(.animation)</code> loop so you own the per-frame <code>dt</code> (needed for the spring), sampling the curve at the current arc-length position.</p>
+<pre><code class="language-swift">struct DartOnCurve: View {
+    // path r(t); provide point(t), velocity(t)=r'(t), accel(t)=r''(t)
+    @State private var s: Double = 0            // arc-length position (constant speed)
+    @State private var scale = 1.0, vScale = 0.0
+    @State private var lastTime: Date? = nil
+
+    let speed = 260.0, squashGain = 0.03, leanGain = 0.6
+    let k = 220.0, c = 16.0
+
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let now = tl.date
+            let dt = min(lastTime.map { now.timeIntervalSince($0) } ?? 0, 1.0/30)
+
+            let t   = tForArcLength(s)           // arc-length → parameter (even speed)
+            let p   = point(t)
+            let v   = velocity(t)
+            let a   = accel(t)
+
+            let speedMag = max(hypot(v.x, v.y), 0.0001)
+            let T = (x: v.x/speedMag, y: v.y/speedMag)   // unit tangent
+            let N = (x: -T.y, y: T.x)                     // unit normal
+
+            let angle = atan2(v.y, v.x)                   // FACING
+            let aN    = a.x*N.x + a.y*N.y                 // sideways → LEAN
+            let aT    = a.x*T.x + a.y*T.y                 // along    → SQUASH target
+
+            Image(systemName: &quot;location.north.fill&quot;)
+                .scaleEffect(x: scale, y: 1/scale)        // squash preserves area
+                .rotationEffect(.radians(angle + leanGain * aN))  // face + bank
+                .position(x: p.x, y: p.y)
+                .onChange(of: now) { _, _ in
+                    guard dt &gt; 0 else { lastTime = now; return }
+                    s += speed * dt                        // advance by DISTANCE
+                    let target = 1.0 - squashGain * aT     // GET deform
+                    let acc = -k*(scale - target) - c*vScale
+                    vScale += acc * dt                     // RELAX (semi-implicit)
+                    scale  += vScale * dt
+                    lastTime = now
+                }
+        }
+    }
+}
+</code></pre>
+<p>The three channels are all right there in one frame: <code>atan2</code> off the velocity gives <strong>facing</strong>, <code>leanGain * aN</code> added to the rotation gives the <strong>bank</strong>, and the spring on <code>scale</code> fed by <code>aT</code> gives the <strong>rubbery squash</strong>. Advancing <code>s</code> (distance) rather than <code>t</code> keeps the visual speed honest. Tune <code>leanGain</code>, <code>squashGain</code>, <code>k</code>, and <code>c</code> to taste — the same knobs the demo exposes.</p>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>r(t)</code></strong> = the parametric path, a point <code>(x(t), y(t))</code> that moves as <code>t</code> advances — the single source every channel reads from.</li>
+<li><strong>velocity <code>v = r'(t)</code></strong> = first derivative = the tangent vector; its direction is which way to face.</li>
+<li><strong>facing</strong> = <code>atan2(v.y, v.x)</code> = the tangent angle you rotate the sprite to.</li>
+<li><strong>unit tangent <code>T̂</code></strong> = <code>v / |v|</code> = pure direction down the path; <strong>speed</strong> = <code>|v|</code>.</li>
+<li><strong>unit normal <code>N̂</code></strong> = <code>(−T̂y, T̂x)</code> = <code>T̂</code> rotated 90° = the sideways axis.</li>
+<li><strong>acceleration <code>a = r''(t)</code></strong> = second derivative; splits into two perpendicular channels.</li>
+<li><strong>tangential accel <code>a_T = a·T̂</code></strong> = along-path acceleration = speeding up / braking → drives <strong>squash/stretch</strong> (lesson 17).</li>
+<li><strong>normal accel <code>a_N = a·N̂ = κ·|v|²</code></strong> = sideways acceleration = the turning part → drives <strong>lean/bank</strong>; sharper turn or faster speed = more lean (speed is <em>squared</em>).</li>
+<li><strong>curvature <code>κ</code></strong> = how tightly the path bends here (0 on a straight, large in a tight corner).</li>
+<li><strong>arc length <code>s = ∫|r'(t)| dt</code></strong> = accumulated speed = actual distance travelled; the odometer, as opposed to the clock <code>t</code>.</li>
+<li><strong>even spacing / constant speed</strong> = advance <code>s</code> (distance), invert a length table to find <code>t</code>; parameter-even bunches on straights.</li>
+<li><strong>spring recovery</strong> = don't apply squash directly — make it a <em>target</em> and chase it with a semi-implicit spring so it overshoots, jiggles, and settles = the rubber bounce.</li>
+<li><strong>the synthesis</strong> = <em>differentiate the path to GET the deform, integrate a spring to RELAX it.</em></li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Where the squash/stretch signal comes from and how to keep area constant: <a class="xref" href="#17-squash-and-stretch">17-squash-and-stretch</a></li>
+<li>The curves and splines you send the dart along, and arc-length reparametrization: <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a></li>
+<li>The tangent-as-direction idea this builds on: <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a></li>
+<li>The semi-implicit integrator the spring recovery reuses: <a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a></li>
+<li>Prev: <a class="xref" href="#17-squash-and-stretch">17-squash-and-stretch</a> · Next: <a class="xref" href="#19-the-derivative-machine">19-the-derivative-machine</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#17-squash-and-stretch"><span>Prev</span>← 17 — Squash &amp; Stretch: Force Becomes Deformation</a><a href="#19-the-derivative-machine"><span>Next</span>19 — The Derivative Machine: Swap Any Signal →</a></div></section>
+<section class="page" id="19-the-derivative-machine" data-title="19 — The Derivative Machine: Swap Any Signal" data-num="19" data-hasdemo="1" data-group="Master Keys"><h1>19 — The Derivative Machine: Swap Any Signal</h1><div class="demo-mount" data-demo="deriv-machine"></div>
+<blockquote>
+<p><strong>Interactive demo (top of page): the derivative machine.</strong> Three rows of buttons. Pick a <strong>derivative order</strong> (value / velocity / acceleration), pick an <strong>output channel</strong> (scale / blur / rotate / color), then <strong>drag</strong> to steer the driver signal — and <em>feel</em> how each order's personality lands on each channel. The two you must try back-to-back: <strong>velocity → blur</strong> (smears while you're moving, snaps sharp the instant you stop) versus <strong>acceleration → scale</strong> (dead still while you glide, <em>pops</em> only when you jerk direction). Same drag, same code path, two completely different feels — because you swapped one slot. That swap is the whole lesson.</p>
+</blockquote>
+<h2>Start here — the plain idea</h2>
+<p>Everything in this series so far has been <em>one wiring of one machine.</em> In lesson 17 you drove <strong>squash</strong> off the <strong>second derivative</strong> of an object's <strong>position</strong>. In 18 you drove <strong>rotation</strong> off the <strong>first derivative</strong> of a point on a <strong>curve</strong>. Two different effects — but look at the shape of them: a <strong>driver signal</strong> goes in, you <strong>read one of its derivatives</strong>, and you <strong>route that number to a visual channel</strong>. Position → 2nd derivative → scale. Curve position → 1st derivative → rotation. Same three-step pipe, different fittings.</p>
+<p>Here's the realization the whole series was walking toward: <strong>position was never special.</strong> It was just the signal we happened to plug in first. The machine doesn't know or care that its input was a position — it takes <em>any</em> number that changes over time, reads its rate and its force, and hands you clean channels of "momentum" and "impact" to animate with. So swap position for scroll offset, or drag distance, or an opacity value, or the audio level, or a stock price, or the user's typing speed — and the exact same machine spits out a <em>new</em> reactive effect, for free. You don't learn a hundred effects. You learn <strong>one machine with three swappable slots</strong>, and the hundred effects fall out of picking different parts for the slots.</p>
+<p>That's the move. Stop memorizing effects; internalize the machine. Once you see the three slots, "motion-blur on a fast scroll," "a card that leans into a throw," "a number that glows green when it's rising," and "a ring that charges as you hold" stop being four separate tricks you'd have to look up. They're four rows of the same table — four choices of <em>what goes in each slot.</em></p>
+<h2>The three slots</h2>
+<p>The machine has exactly three sockets. Fill each from its menu and you've specified an effect.</p>
+<p><strong>Slot 1 — the DRIVER (what signal goes in).</strong> Any number that moves over time qualifies. Position. Scroll offset. Drag distance. A pinch scale. An opacity. A color's hue. The audio level from the mic. A count, a score, a price, a temperature. Even the user's <strong>typing speed</strong> (characters per second). If you can read it each frame, you can drive off it.</p>
+<p><strong>Slot 2 — the ORDER (which derivative you read).</strong> This is the "contrast knob on change" from <a class="xref" href="#16-value-rate-force">16-value-rate-force</a>. You can tap:
+- the <strong>value</strong> itself (0th) — where the signal is,
+- the <strong>1st derivative</strong> — its rate / velocity,
+- the <strong>2nd derivative</strong> — its force / acceleration,
+- the <strong>integral</strong> — its accumulation / running total.</p>
+<p><strong>Slot 3 — the CHANNEL (which visual property you drive).</strong> Scale / squash. Rotation / lean. Blur. Glow / bloom. Color / tint. Opacity. Shadow (offset or radius). Haptics. Anything with a knob.</p>
+<p>Pick one from each menu → you have an effect. <code>(scroll offset) × (velocity) × (blur)</code> is motion blur. <code>(drag) × (velocity) × (rotation)</code> is a card that tilts into a throw. <code>(audio) × (2nd derivative) × (flash)</code> is a beat detector. The menus are long, so the product is enormous — and every entry is <em>the same machine</em>, re-socketed.</p>
+<h2>Each order keeps its personality no matter the signal</h2>
+<p>Here's the load-bearing fact that makes the machine worth learning, and not just a list. <strong>The derivative order carries the personality — not the signal.</strong> Whatever you feed in, the <em>n</em>th derivative feels the same way it always does. From lesson 16:</p>
+<table>
+<thead>
+<tr>
+<th>Order</th>
+<th>What it reads</th>
+<th>Its permanent personality</th>
+<th>Natural channels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Value</strong> (0th)</td>
+<td><em>where</em> it is</td>
+<td>position, state — stoic, literal</td>
+<td>offset, color, opacity</td>
+</tr>
+<tr>
+<td><strong>1st</strong> (rate)</td>
+<td><em>how fast</em> it moves</td>
+<td><strong>momentum, intent</strong> — the eager one</td>
+<td>blur, stretch, lean/tilt</td>
+</tr>
+<tr>
+<td><strong>2nd</strong> (force)</td>
+<td><em>how sharply</em> the rate changes</td>
+<td><strong>impact, effort</strong> — the dramatic one</td>
+<td>squash, flash, shake, haptic</td>
+</tr>
+<tr>
+<td><strong>Integral</strong></td>
+<td>value <em>summed over time</em></td>
+<td><strong>memory, charge</strong> — the one that remembers</td>
+<td>trail, charge-up, progress</td>
+</tr>
+</tbody>
+</table>
+<p>So when you learned "2nd derivative → squash" in lesson 17, you didn't actually learn a fact about <em>positions.</em> You learned <strong>"force → deform."</strong> That rule holds for <em>any</em> driver. Feed it audio and force → deform becomes "the shape flinches on each beat." Feed it scroll and force → deform becomes "cells squash when the scroll slams to a stop." The channel changes flavor; the <em>personality of the order</em> is invariant. That invariance is exactly why swapping the driver is safe and generative: you already know how the result will <em>feel</em> before you build it, because the order tells you.</p>
+<p>Read the table as a promise: <strong>1st derivative always means momentum, on every signal.</strong> <strong>2nd always means impact, on every signal.</strong> <strong>Integral always means memory.</strong> Learn three personalities, apply them to any driver.</p>
+<h2>The pick-&amp;-replace gallery</h2>
+<p>Rapid-fire. Each of these is one row of the table — a choice for each slot — and nothing more. Read them as "oh, that's just <code>driver × order × channel</code>."</p>
+<ul>
+<li><strong>Scroll offset → velocity → blur.</strong> Read the scroll position each frame, take its 1st derivative (how fast the list is flying), map that to a blur radius. Flick hard and the content smears like a whip-pan; let it coast to rest and it snaps sharp. <em>Momentum → blur.</em></li>
+<li><strong>Scroll velocity → skew / stretch.</strong> Same velocity, different channel: drive a horizontal <code>skew</code> or a vertical <code>scaleY</code> off it. Now the <em>cells themselves</em> rubber-band — leaning and elongating in the direction of travel, springing back to rectangles at rest. <em>Momentum → stretch.</em></li>
+<li><strong>Drag velocity → rotation / tilt.</strong> A draggable card reads its own drag velocity and maps it to a small <code>rotation</code>. Whip it left and it banks left like it's leaning into the throw; the faster the throw, the harder the lean. (This is <a class="xref" href="#18-curves-banking-and-recovery">18-curves-banking-and-recovery</a>'s banking, driven by a raw drag instead of a curve.) <em>Momentum → lean.</em></li>
+<li><strong>A number → velocity → color.</strong> Track any live number — a price, a follower count, a sensor. Take its rate, and map the <em>sign and size</em> to a tint: glows <strong>green</strong> and brighter as it climbs fast, <strong>red</strong> as it drops. The value tells you <em>where</em>; only the derivative tells you <em>which way and how hard it's moving.</em> <em>Momentum → color.</em></li>
+<li><strong>Audio level → 2nd derivative → flash / pulse.</strong> The raw mic level is a soft, rolling hill — the <em>value</em> doesn't cleanly mark beats. But a <strong>beat is a sudden jump in level</strong>, and sudden jumps live in the 2nd derivative. Read the acceleration of the audio level, threshold it, and flash on the spikes. <em>The change is the hit.</em> <em>Impact → flash.</em></li>
+<li><strong>Any value → integral → charge / trail.</strong> Route a signal into its <strong>integral</strong> (a running accumulation) instead of a derivative. Hold a button and integrate a constant → a <strong>charge-up ring</strong> that fills the longer you hold. Integrate a moving position → a <strong>comet trail</strong> that remembers where the thing has been. <em>Memory → charge / trail.</em></li>
+</ul>
+<p>Six effects, one machine, zero new concepts — just six trips through the same <code>driver × order × channel</code> picker. That's the generativity: the gallery isn't a list to memorize, it's a <em>demonstration that the list writes itself.</em></p>
+<h2>The hard part done right — derivatives amplify noise</h2>
+<p>Now the honest catch, the one lesson 16 promised to pay off here. <strong>Every derivative is a contrast knob on change — and noise is nothing but fast change.</strong> So differentiating doesn't just amplify the signal's real motion; it amplifies its <em>jitter</em> right along with it. The 1st derivative of a slightly noisy signal is visibly fuzzy. The <strong>2nd derivative of a jittery signal is garbage</strong> — a spiky thornbush where the real "impact" you wanted is buried under sensor hash and one-pixel stutters. Feed a raw finger drag straight into <code>acceleration → scale</code> and you get a shape that vibrates constantly, not one that pops on real jerks.</p>
+<p>The fix is non-negotiable and it's one rule: <strong>smooth <em>before</em> you differentiate.</strong> Never after — smoothing after differentiation is trying to un-spill milk. You want to shave the fast fuzz off the <em>input</em> so the derivative has something clean to bite on.</p>
+<p><strong>Low-pass filtering, the cheap way (a one-pole EMA).</strong> The exact "exponential chase" you already use to de-jitter a drag <em>is</em> a low-pass filter (this is the punchline of <a class="xref" href="#14-fourier-sum-of-sines">14-fourier-sum-of-sines</a> and the first tool in <a class="xref" href="#01b-the-seven-building-blocks">01b-the-seven-building-blocks</a>):</p>
+<pre><code>smoothed += (raw - smoothed) * alpha      // alpha ∈ (0,1]
+</code></pre>
+<p>It lets the slow shape through and attenuates the fast wiggle. <code>alpha</code> <em>is</em> the cutoff: small <code>alpha</code> = heavy smoothing (very clean, but laggy); large <code>alpha</code> = light smoothing (responsive, but more noise survives). You smooth the raw signal with this, <em>then</em> take finite differences of the smoothed result. One pole is usually enough for input; for a really clean 2nd derivative you sometimes smooth, differentiate, and smooth the <em>derivative's input stage</em> again (i.e. run each order through its own light filter).</p>
+<p><strong>The premium way — the One-Euro filter.</strong> A fixed <code>alpha</code> forces one bad compromise: tune it smooth enough to kill jitter <em>at rest</em> and it feels laggy <em>in motion</em>; tune it responsive enough to feel snappy in motion and jitter leaks through at rest. The <strong>One-Euro filter</strong> resolves this by making <code>alpha</code> <strong>adaptive</strong>: it watches the signal's own speed and smooths <em>more when the signal is slow</em> (where jitter is most visible and lag is cheap) and <em>less when the signal is fast</em> (where lag is most visible and jitter hides in the motion). It's two EMAs — one on the value, one on its speed, the second steering the first's cutoff. For anything driven by a live finger, stylus, or sensor where you want both a rock-steady rest <em>and</em> a lag-free flick, reach for One-Euro over a fixed EMA.</p>
+<p><strong>Two more practical notes.</strong>
+- <strong>Use a real <code>dt</code>.</strong> Frame times aren't constant (a dropped frame doubles the gap), so divide differences by the <em>actual</em> elapsed time — <code>(value - previous) / dt</code> with the true <code>dt</code> from your frame clock (<code>TimelineView</code>'s date, or <code>CADisplayLink</code>). Dividing by a hardcoded <code>1/60</code> makes every hitch look like a fake spike — which the 2nd derivative will then blow up into a bogus impact.
+- <strong>Combine orders — they layer.</strong> The channels aren't exclusive. Drive <strong>stretch off velocity</strong> <em>and</em> <strong>squash off acceleration</strong> on the same object at once, and you get the full animator's feel: it elongates while it's moving fast, <em>and</em> compresses on the sudden stop. Two slots into two channels, summed — that's how real squash-and-stretch reads alive rather than mechanical.</p>
+<h2>Apply it — in your interactions</h2>
+<p>A tiny reusable helper that <em>is</em> the machine's first two slots. Feed it a value each frame; it hands back smoothed <code>velocity</code> and <code>acceleration</code>, already de-jittered. Then wire its output to whatever channel you like.</p>
+<pre><code class="language-swift">import SwiftUI
+
+/// Ingests one sample per frame → smoothed velocity &amp; acceleration.
+/// Smooths BEFORE differentiating (the non-negotiable rule).
+struct Deriv {
+    var value = 0.0            // smoothed signal
+    var velocity = 0.0        // smoothed 1st derivative
+    var acceleration = 0.0    // 2nd derivative
+    private var started = false
+
+    /// alpha: input smoothing. vAlpha: extra smoothing on velocity
+    /// so the 2nd derivative isn't garbage. Both in (0,1].
+    mutating func update(_ raw: Double, dt: Double,
+                         alpha: Double = 0.25, vAlpha: Double = 0.35) {
+        guard dt &gt; 0 else { return }
+        guard started else {                 // seed on first sample, no fake spike
+            value = raw; started = true; return
+        }
+        let newValue = value + (raw - value) * alpha        // low-pass the input
+        let newVel   = (newValue - value) / dt              // finite diff w/ real dt
+        let smoothVel = velocity + (newVel - velocity) * vAlpha
+        acceleration = (smoothVel - velocity) / dt          // diff the SMOOTHED vel
+        velocity = smoothVel
+        value = newValue
+    }
+}
+</code></pre>
+<p>For premium input, swap the two fixed-<code>alpha</code> lines for a One-Euro update (adaptive cutoff from <code>abs(velocity)</code>) — same interface, steadier rest, snappier flick.</p>
+<p><strong>Wiring 1 — scroll velocity → blur (<code>.visualEffect</code>).</strong> In modern SwiftUI read the live scroll offset with <code>onScrollGeometryChange</code>, feed it to a <code>Deriv</code>, and map <code>abs(velocity)</code> to a blur radius on the content:</p>
+<pre><code class="language-swift">@State private var d = Deriv()
+@State private var blur = 0.0
+
+ScrollView {
+    content
+        .visualEffect { effect, _ in           // GPU-side, no layout cost
+            effect.blur(radius: blur)
+        }
+}
+.onScrollGeometryChange(for: Double.self) { geo in
+    geo.contentOffset.y                        // the driver signal
+} action: { _, offset in
+    d.update(offset, dt: 1.0/60.0)             // (use a real frame dt in production)
+    blur = min(abs(d.velocity) * 0.015, 12)    // momentum → blur, clamped
+}
+</code></pre>
+<p>Flick and it whip-blurs; coast to rest and <code>velocity → 0</code>, so the blur melts away on its own. No animation curve authored — the <em>derivative</em> is the animation.</p>
+<p><strong>Wiring 2 — a number's rate → color.</strong> Same helper, different channel. Drive a tint off the <em>sign and magnitude</em> of the rate:</p>
+<pre><code class="language-swift">@State private var d = Deriv()
+
+Text(price, format: .currency(code: &quot;USD&quot;))
+    .foregroundStyle(tint(for: d.velocity))
+    .onChange(of: price) { _, new in
+        d.update(new, dt: /* real dt */ 1.0/60.0)
+    }
+
+func tint(for v: Double) -&gt; Color {
+    // green rising, red falling, brighter the faster it moves
+    let mag = min(abs(v) / 50.0, 1.0)
+    return (v &gt;= 0 ? Color.green : .red).opacity(0.4 + 0.6 * mag)
+}
+</code></pre>
+<p>The value shows <em>what</em> the number is; the color — pure derivative — shows <em>which way and how hard it's moving.</em> Swap <code>tint</code> for a <code>blur</code>, a <code>rotationEffect</code>, or a <code>scaleEffect</code> and you've picked a different channel off the very same driver and order. That swap is the machine.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>the machine</strong> = one pipeline with three swappable slots: <code>driver × order × channel</code>. Fill the slots → get an effect.</li>
+<li><strong>slot 1, driver</strong> = any number that changes over time (position, scroll, drag, opacity, color, audio, a count, typing speed…).</li>
+<li><strong>slot 2, order</strong> = which reading you tap: value (0th), 1st (rate), 2nd (force), or integral (accumulation).</li>
+<li><strong>slot 3, channel</strong> = which visual knob you drive: scale, blur, rotation, glow, color, opacity, shadow, haptics.</li>
+<li><strong>position was never special</strong> = it was just the first driver we plugged in; swap it and the same machine yields a new effect.</li>
+<li><strong>the order carries the personality</strong> = 1st = momentum, 2nd = impact, integral = memory — <em>invariant across every driver.</em></li>
+<li><strong>"force → deform"</strong> = the general form of lesson 17's "2nd derivative → squash"; holds for any signal.</li>
+<li><strong>derivatives amplify noise</strong> = the 2nd derivative of a jittery signal is garbage; you <em>must</em> smooth first.</li>
+<li><strong>smooth before you differentiate</strong> = never after. A one-pole EMA (<code>s += (raw - s)·alpha</code>) <em>is</em> a low-pass filter; <code>alpha</code> is its cutoff.</li>
+<li><strong>One-Euro filter</strong> = adaptive smoothing — less lag when fast, less jitter when slow; the premium choice for live input.</li>
+<li><strong>real <code>dt</code></strong> = divide finite differences by actual elapsed time, or frame hitches read as fake impacts.</li>
+<li><strong>orders layer</strong> = drive stretch off velocity <em>and</em> squash off acceleration together for full, alive motion.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The value/rate/force ladder and each order's personality: <a class="xref" href="#16-value-rate-force">16-value-rate-force</a></li>
+<li>The first wiring, in anger — force → deform: <a class="xref" href="#17-squash-and-stretch">17-squash-and-stretch</a></li>
+<li>Reading rate off a curve — facing, banking, recovery: <a class="xref" href="#18-curves-banking-and-recovery">18-curves-banking-and-recovery</a></li>
+<li>Smoothing <em>is</em> low-pass filtering; the frequency view of "smooth first": <a class="xref" href="#14-fourier-sum-of-sines">14-fourier-sum-of-sines</a></li>
+<li>Which slot to reach for, and when the machine is the wrong tool: <a class="xref" href="#01a-choosing-the-math">01a-choosing-the-math</a></li>
+<li>Prev: <a class="xref" href="#18-curves-banking-and-recovery">18-curves-banking-and-recovery</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#18-curves-banking-and-recovery"><span>Prev</span>← 18 — Curves, Banking &amp; the Spring Recovery</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
