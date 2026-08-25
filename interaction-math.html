@@ -21,11 +21,11 @@
   <aside class="sidebar" id="sidebar">
     <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
     <div class="coursehead"><div class="ct">Math for Interaction</div><div class="cs">Model the visual as a function; read off rotation, spacing, and bend.</div></div>
-    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html" selected>Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option><option value="visualization.html">Visualization</option></optgroup></select></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html" selected>Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option></optgroup></select></div>
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
-<section class="page" id="00-roadmap" data-title="Math for Interaction Design — Roadmap" data-num="·" data-hasdemo="0" data-group=""><h1>Math for Interaction Design — Roadmap</h1>
+<section class="page" id="00-roadmap" data-title="Math for Interaction Design — Roadmap" data-num="·" data-hasdemo="0" data-group="Foundations"><h1>Math for Interaction Design — Roadmap</h1>
 <h2>Start here — the plain idea</h2>
 <p>Think of this whole course as learning one new pair of glasses. Right now, when you see a slick animation, you probably see <em>moves</em> — a card slides, a wave wobbles, cells tilt. Put these glasses on and you start seeing <em>functions</em>: a number going in (a finger, a clock, an item's index) and a number coming out (where, how big, how tilted). The magic word for this course is "model": turn the picture into a little math machine, then turn its knobs.</p>
 <p>The payoff is that you stop guessing. Instead of nudging "0.45" until it feels right, you describe the relationship once and everything downstream follows. The flagship example here is a wavy carousel where cells sit on a sine wave and tilt to match it — that one screen secretly uses a wave, a derivative (for the tilt), and an integral (for even spacing). Learn those few moves and you can place and aim <em>anything</em> on <em>any</em> path.</p>
@@ -61,6 +61,14 @@ arc length ∫√(1+y'²)dx →  distance ALONG the path (even spacing)
 <li><a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a> — the bridge to iOS: function vs tween vs frame-loop</li>
 <li><a class="xref" href="#10-study-method">10-study-method</a> — how to actually learn this so it sticks</li>
 <li><a class="xref" href="#11-resources">11-resources</a> — ranked lessons, channels, books, tools</li>
+</ol>
+<h2>Master Keys (Part 2)</h2>
+<p>The broadly-applicable math that recurs everywhere — each starts gentle and ramps to "you can build with it." Interactive demos on every page.</p>
+<ol start="12">
+<li><a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a> — state + rule → behaviour; integration (Euler → RK4), stability, phase space</li>
+<li><a class="xref" href="#13-the-ode-zoo">13-the-ode-zoo</a> — the payoff: pendulum, orbits, predator-prey, boids, reaction-diffusion, all from one integrator</li>
+<li><a class="xref" href="#14-fourier-sum-of-sines">14-fourier-sum-of-sines</a> — the frequency domain: any signal is a sum of sines; epicycles, spectra, blur</li>
+<li><a class="xref" href="#15-transforms-and-matrices">15-transforms-and-matrices</a> — the grammar of moving things: 2×2 → affine → the transform stack → perspective</li>
 </ol>
 <hr />
 <h2>How this connects to the rest of your vault</h2>
@@ -133,7 +141,7 @@ arc length ∫√(1+y'²)dx →  distance ALONG the path (even spacing)
 <li><strong>the kit</strong> = a handful of tools (waves, vectors, curves, lerp/remap, springs, noise) you mix per interaction.</li>
 <li><strong>the habit</strong> = expose the parameters as sliders, derive the relationship, stop guessing.</li>
 </ul><div class="pager"><span class="sp"></span><a href="#01-modeling-visuals-as-functions"><span>Next</span>01 — Modeling Visuals as Functions →</a></div></section>
-<section class="page" id="01-modeling-visuals-as-functions" data-title="01 — Modeling Visuals as Functions" data-num="01" data-hasdemo="1" data-group=""><h1>01 — Modeling Visuals as Functions</h1><div class="demo-mount" data-demo="overview"></div>
+<section class="page" id="01-modeling-visuals-as-functions" data-title="01 — Modeling Visuals as Functions" data-num="01" data-hasdemo="1" data-group="Foundations"><h1>01 — Modeling Visuals as Functions</h1><div class="demo-mount" data-demo="overview"></div>
 <h2>Start here — the plain idea</h2>
 <p>A function is just a vending machine: you feed it something (a finger position, a clock, an item number) and it hands back something (a height, a tilt, an opacity). Modeling a visual "as a function" means refusing to think in vague moves — "it kind of slides up" — and instead naming the exact machine: in goes <code>x</code>, out comes <code>y</code>.</p>
 <p>Why bother? Because once it's a machine, calculus is just a set of buttons on the side of it. The derivative button tells you which way the curve is leaning <em>right there</em> — that's your rotation. The integral button adds up tiny steps along the path — that's your distance, for spacing things evenly. You don't compute these by hand; you just need to know what each button <em>gives</em> you geometrically.</p>
@@ -256,7 +264,7 @@ integral         accumulation →  arc length, area, &quot;summed-up&quot; quant
 <li>iOS framing: <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#00-roadmap"><span>Prev</span>← Math for Interaction Design — Roadmap</a><a href="#01a-choosing-the-math"><span>Next</span>01a — Choosing the Math (a Decision Recipe) →</a></div></section>
-<section class="page" id="01a-choosing-the-math" data-title="01a — Choosing the Math (a Decision Recipe)" data-num="01" data-hasdemo="0" data-group=""><h1>01a — Choosing the Math (a Decision Recipe)</h1>
+<section class="page" id="01a-choosing-the-math" data-title="01a — Choosing the Math (a Decision Recipe)" data-num="01" data-hasdemo="0" data-group="Foundations"><h1>01a — Choosing the Math (a Decision Recipe)</h1>
 <h2>Start here — the plain idea</h2>
 <p>This lesson is a sorting hat. You describe your interaction in one plain sentence — "as X happens, Y changes" — and a couple of yes/no questions sort it into the right pile of math. You're not memorizing formulas; you're learning which drawer to open.</p>
 <p>The trick that makes this work: almost every interaction's <em>input</em> is one of a tiny set (time, a gesture, an index, a distance) and its <em>output</em> is one of a tiny set (position, scale, rotation, opacity, color). So really you're matching one small list to another, and the fork "does it map, cycle, or simulate?" decides the rest.</p>
@@ -384,7 +392,7 @@ spring(target)       = let physics settle it
 <li>How to practice it: <a class="xref" href="#10-study-method">10-study-method</a></li>
 <li>Prev: <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a> · Next: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#01-modeling-visuals-as-functions"><span>Prev</span>← 01 — Modeling Visuals as Functions</a><a href="#01b-the-seven-building-blocks"><span>Next</span>01b — The Seven Building Blocks →</a></div></section>
-<section class="page" id="01b-the-seven-building-blocks" data-title="01b — The Seven Building Blocks" data-num="01" data-hasdemo="0" data-group=""><h1>01b — The Seven Building Blocks</h1>
+<section class="page" id="01b-the-seven-building-blocks" data-title="01b — The Seven Building Blocks" data-num="01" data-hasdemo="0" data-group="Foundations"><h1>01b — The Seven Building Blocks</h1>
 <h2>Start here — the plain idea</h2>
 <p>Think of these seven as the LEGO bricks of motion. Almost nothing in UI is built from scratch — it's these few tiny functions snapped together. Most are about <em>blending between two values</em>; a couple are about <em>cycling forever</em>; one is a <em>mini physics toy</em>.</p>
 <p>The one to fall in love with is <code>remap</code>: "as THIS slides from A to B, make THAT slide from C to D." Two rulers taped together — point at the top ruler, read straight down to the bottom. Master that one and you've covered most of what you'll ever wire up.</p>
@@ -548,7 +556,7 @@ x += v·dt                        // critical damping c = 2·√k → fastest, n
 <li>The cyclic family: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></li>
 <li>Prev: <a class="xref" href="#01a-choosing-the-math">01a-choosing-the-math</a> · Next: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#01a-choosing-the-math"><span>Prev</span>← 01a — Choosing the Math (a Decision Recipe)</a><a href="#02-trigonometry-and-the-unit-circle"><span>Next</span>02 — Trigonometry &amp; the Unit Circle →</a></div></section>
-<section class="page" id="02-trigonometry-and-the-unit-circle" data-title="02 — Trigonometry &amp; the Unit Circle" data-num="02" data-hasdemo="1" data-group=""><h1>02 — Trigonometry &amp; the Unit Circle</h1><div class="demo-mount" data-demo="trig"></div>
+<section class="page" id="02-trigonometry-and-the-unit-circle" data-title="02 — Trigonometry &amp; the Unit Circle" data-num="02" data-hasdemo="1" data-group="Foundations"><h1>02 — Trigonometry &amp; the Unit Circle</h1><div class="demo-mount" data-demo="trig"></div>
 <h2>Start here — the plain idea</h2>
 <p>Forget triangles for a second. Picture a dot walking around a circle at steady pace. Watch only its <em>height</em> over time and you get a smooth up-down wiggle — that wiggle is <code>sin</code>. Watch only its <em>sideways</em> position and you get the same wiggle, just shifted — that's <code>cos</code>. So a wave isn't some new thing; it's circular motion seen edge-on.</p>
 <p>That's why one idea unlocks three effects at once. Anything that breathes, pulses, or repeats forever is the height of that walking dot (<code>sin</code>). Anything that goes around — a radial menu, a loading spinner — is the dot's full <code>(cos, sin)</code> position. And rotating something is just nudging where the dot started on the circle.</p>
@@ -611,7 +619,7 @@ for (i, dot) in dots.enumerated() {
 <li>In shaders: <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#01b-the-seven-building-blocks"><span>Prev</span>← 01b — The Seven Building Blocks</a><a href="#03-derivative-as-tangent"><span>Next</span>03 — Calculus: the Derivative as Tangent →</a></div></section>
-<section class="page" id="03-derivative-as-tangent" data-title="03 — Calculus: the Derivative as Tangent" data-num="03" data-hasdemo="1" data-group=""><h1>03 — Calculus: the Derivative as Tangent</h1><div class="demo-mount" data-demo="derivative"></div>
+<section class="page" id="03-derivative-as-tangent" data-title="03 — Calculus: the Derivative as Tangent" data-num="03" data-hasdemo="1" data-group="Foundations"><h1>03 — Calculus: the Derivative as Tangent</h1><div class="demo-mount" data-demo="derivative"></div>
 <h2>Start here — the plain idea</h2>
 <p>The derivative sounds scary; geometrically it's just "the way the curve is leaning right here." Stand at any point on a hill and lay a ruler flat against the slope — the tilt of that ruler is the derivative. And a tilt is a direction, which is exactly what you need to rotate a cell so it sits flush on the curve. That's the whole carousel trick in one sentence.</p>
 <p>Three buttons, three pictures. The first derivative is that leaning ruler — which way it <em>faces</em>. The second derivative is how fast the lean is changing — how hard the curve <em>bends</em> (use it to squash things on tight corners). The integral is the odd one out: instead of breaking things down, it adds tiny pieces back up, like an odometer ticking off distance as you drive — that's how you measure length <em>along</em> a curve so you can space items evenly.</p>
@@ -680,7 +688,7 @@ y''    BENDING    curvature / accel
 <li>Springs are differential equations: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a>, <span class="xref-missing" title="note not in this site">damped-harmonic-oscillator</span></li>
 <li>Prev: <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#02-trigonometry-and-the-unit-circle"><span>Prev</span>← 02 — Trigonometry &amp; the Unit Circle</a><a href="#04-vectors-and-linear-algebra"><span>Next</span>04 — Vectors &amp; Linear Algebra →</a></div></section>
-<section class="page" id="04-vectors-and-linear-algebra" data-title="04 — Vectors &amp; Linear Algebra" data-num="04" data-hasdemo="1" data-group=""><h1>04 — Vectors &amp; Linear Algebra</h1><div class="demo-mount" data-demo="vectors"></div>
+<section class="page" id="04-vectors-and-linear-algebra" data-title="04 — Vectors &amp; Linear Algebra" data-num="04" data-hasdemo="1" data-group="Foundations"><h1>04 — Vectors &amp; Linear Algebra</h1><div class="demo-mount" data-demo="vectors"></div>
 <h2>Start here — the plain idea</h2>
 <p>A vector is just an arrow: it has a direction and a length, and that's it. The moment you stop juggling separate <code>x</code> and <code>y</code> and start thinking "arrow," your code shrinks and the geometry gets obvious. Position, velocity, an offset, the direction a cell faces — all arrows.</p>
 <p>Two little operations do most of the heavy lifting. The dot product answers "how much do these two arrows point the same way?" — big positive means aligned, zero means perpendicular, negative means opposing. Think "is the user dragging <em>toward</em> this thing?" The cross product (in 2D, a single signed number) answers "which way does the turn go — left or right?" — that's how you tell which side of a line you're on.</p>
@@ -747,7 +755,7 @@ let dir = normalize(v)       // unit vector, length 1
 <li>Transforms: <a class="xref" href="coreanimation.html#15-transform-3d">15-transform-3d</a></li>
 <li>Prev: <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#03-derivative-as-tangent"><span>Prev</span>← 03 — Calculus: the Derivative as Tangent</a><a href="#05-parametric-curves-and-splines"><span>Next</span>05 — Parametric Curves &amp; Splines →</a></div></section>
-<section class="page" id="05-parametric-curves-and-splines" data-title="05 — Parametric Curves &amp; Splines" data-num="05" data-hasdemo="1" data-group=""><h1>05 — Parametric Curves &amp; Splines</h1><div class="demo-mount" data-demo="bezier"></div>
+<section class="page" id="05-parametric-curves-and-splines" data-title="05 — Parametric Curves &amp; Splines" data-num="05" data-hasdemo="1" data-group="Foundations"><h1>05 — Parametric Curves &amp; Splines</h1><div class="demo-mount" data-demo="bezier"></div>
 <h2>Start here — the plain idea</h2>
 <p>So far a path was "height as you move right" (<code>y = f(x)</code>). But that can't draw a loop, a circle, or a vertical line — the path would have to be in two places at once. The fix is to stop describing the <em>shape</em> and start describing the <em>trip</em>: let one dial <code>t</code> run from 0 to 1, and at each moment say where the dot is, <code>(x(t), y(t))</code>. Now the dot can loop, cross itself, do anything — like an Etch A Sketch driven by time.</p>
 <p>The bonus is huge: the same derivative trick still works. The dot's <em>velocity</em> — how <code>x</code> and <code>y</code> are changing right now — points straight along the path. That's your tangent, on <em>any</em> curve, for free.</p>
@@ -805,7 +813,7 @@ Spiral:  P(t) = (a·t·cos t, a·t·sin t)
 <li>Bartosz Ciechanowski "Bézier Curves" → <a class="xref" href="#11-resources">11-resources</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#04-vectors-and-linear-algebra"><span>Prev</span>← 04 — Vectors &amp; Linear Algebra</a><a href="#06-interpolation-easing-and-springs"><span>Next</span>06 — Interpolation, Easing &amp; Springs →</a></div></section>
-<section class="page" id="06-interpolation-easing-and-springs" data-title="06 — Interpolation, Easing &amp; Springs" data-num="06" data-hasdemo="1" data-group=""><h1>06 — Interpolation, Easing &amp; Springs</h1><div class="demo-mount" data-demo="easing"></div><div class="demo-mount" data-demo="spring"></div>
+<section class="page" id="06-interpolation-easing-and-springs" data-title="06 — Interpolation, Easing &amp; Springs" data-num="06" data-hasdemo="1" data-group="Foundations"><h1>06 — Interpolation, Easing &amp; Springs</h1><div class="demo-mount" data-demo="easing"></div><div class="demo-mount" data-demo="spring"></div>
 <h2>Start here — the plain idea</h2>
 <p>This is the workhorse lesson — the math behind most everyday UI. The core idea is blending: <code>lerp</code> slides between two values, and <code>t</code> (a 0→1 dial) is how far along you are. Stack a few of these and you get <code>remap</code>: "as the scroll goes from A to B, make the header scale go from C to D." That single sentence is most of interaction design.</p>
 <p><code>smoothstep</code> is <code>remap</code> wearing nicer shoes — instead of a robotic constant pace, it eases away gently, speeds up, and eases to a stop, so transitions don't snap. That gentle S-curve is what "easeInOut" really is.</p>
@@ -885,7 +893,7 @@ x += v * dt
 <li>Timing in CA: <a class="xref" href="coreanimation.html#14-animation-timing">14-animation-timing</a>, <a class="xref" href="coreanimation.html#11-caspringanimation">11-caspringanimation</a></li>
 <li>Prev: <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#05-parametric-curves-and-splines"><span>Prev</span>← 05 — Parametric Curves &amp; Splines</a><a href="#06a-simulations-beyond-the-spring"><span>Next</span>06a — Simulations Beyond the Spring →</a></div></section>
-<section class="page" id="06a-simulations-beyond-the-spring" data-title="06a — Simulations Beyond the Spring" data-num="06" data-hasdemo="0" data-group=""><h1>06a — Simulations Beyond the Spring</h1>
+<section class="page" id="06a-simulations-beyond-the-spring" data-title="06a — Simulations Beyond the Spring" data-num="06" data-hasdemo="0" data-group="Foundations"><h1>06a — Simulations Beyond the Spring</h1>
 <h2>Start here — the plain idea</h2>
 <p>The spring taught you a powerful move: instead of <em>drawing</em> a motion curve, you <strong>give a tiny simulation a rule and let it generate the motion</strong>. The spring is just one member of a whole family that works this way — and once you have a few of them, you can make almost anything <em>feel</em> physical.</p>
 <p>They all share the exact same shape. You keep a little bit of <strong>state</strong> — usually a <code>position</code>, sometimes a <code>velocity</code> too — and every frame you update it from a small formula. Because the value reacts to a rule instead of following a script, the path <em>emerges</em>, and emergent paths are what read as "natural." The spring's <code>a = −k·x − c·v</code> was one such rule; here are the other rules worth owning.</p>
@@ -1019,7 +1027,7 @@ acceleration = -k * (position - target) - c * velocity   // then integrate (see 
 <li>Who runs the per-frame loop on iOS: <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></li>
 <li>Prev: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> · Next: <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#06-interpolation-easing-and-springs"><span>Prev</span>← 06 — Interpolation, Easing &amp; Springs</a><a href="#07-oscillations-noise-and-organic-motion"><span>Next</span>07 — Oscillations, Noise &amp; Organic Motion →</a></div></section>
-<section class="page" id="07-oscillations-noise-and-organic-motion" data-title="07 — Oscillations, Noise &amp; Organic Motion" data-num="07" data-hasdemo="1" data-group=""><h1>07 — Oscillations, Noise &amp; Organic Motion</h1><div class="demo-mount" data-demo="oscillation"></div>
+<section class="page" id="07-oscillations-noise-and-organic-motion" data-title="07 — Oscillations, Noise &amp; Organic Motion" data-num="07" data-hasdemo="1" data-group="Foundations"><h1>07 — Oscillations, Noise &amp; Organic Motion</h1><div class="demo-mount" data-demo="oscillation"></div>
 <h2>Start here — the plain idea</h2>
 <p>A plain <code>sin</code> wave wiggles forever at the same size — fine for a steady pulse, but real things lose energy. Multiply the wave by a fading curtain (<code>e^(−λt)</code>, a shrinking envelope) and the wiggle dies down over time — that's a bounce settling, the natural cousin of a spring.</p>
 <p>Two more tricks make motion feel <em>alive</em> instead of looping. First: stack a few sine waves at speeds that don't line up neatly, and the result never visibly repeats — it just drifts, gently, forever. (Pick "ugly" numbers like 0.6 and 0.43 so they never sync.) Second: noise. Regular <code>random()</code> jitters like static; Perlin/simplex noise is <em>smooth</em> random — ask it about two nearby moments and it gives you two nearby answers. That smoothness is exactly what reads as organic — smoke, a flag, a hand's slight tremor.</p>
@@ -1075,7 +1083,7 @@ acceleration = -k * (position - target) - c * velocity   // then integrate (see 
 <li>Noise in shaders: <a class="xref" href="shaders.html#15-noise-and-patterns">15-noise-and-patterns</a>, <a class="xref" href="shaders.html#05-math-for-shaders">05-math-for-shaders</a></li>
 <li>Prev: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#06a-simulations-beyond-the-spring"><span>Prev</span>← 06a — Simulations Beyond the Spring</a><a href="#08-worked-example-wavy-carousel"><span>Next</span>08 — Worked Example: The Wavy Carousel →</a></div></section>
-<section class="page" id="08-worked-example-wavy-carousel" data-title="08 — Worked Example: The Wavy Carousel" data-num="08" data-hasdemo="1" data-group=""><h1>08 — Worked Example: The Wavy Carousel</h1><div class="demo-mount" data-demo="carousel"></div>
+<section class="page" id="08-worked-example-wavy-carousel" data-title="08 — Worked Example: The Wavy Carousel" data-num="08" data-hasdemo="1" data-group="Foundations"><h1>08 — Worked Example: The Wavy Carousel</h1><div class="demo-mount" data-demo="carousel"></div>
 <h2>Start here — the plain idea</h2>
 <p>This is the victory lap — the one screen that ties the whole course together. Picture a row of cards riding a gentle sine wave, each tilted so it lies flush on the curve like beads on a wire, and when you pinch, the wave grows taller and the tilts adjust themselves. Every tool you've learned shows up here, working as a team.</p>
 <p>The chain is short and satisfying. Put each cell on the wave to get its height (<code>sin</code>). Take the slope at that spot to get its tilt (the derivative). And here's the magic: the slope is <em>proportional to</em> the wave's height, so when you pinch to stretch the wave, the tilts update for free — one knob, coherent result. The fancier touches (spacing cells by true distance along the wave, squashing them slightly on tight bends) are just arc length and curvature making a cameo.</p>
@@ -1139,7 +1147,7 @@ cell.rotation = θ_i            // now it lies flush on the curve
 <li>iOS framing: <a class="xref" href="#09-what-drives-the-value">09-what-drives-the-value</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#07-oscillations-noise-and-organic-motion"><span>Prev</span>← 07 — Oscillations, Noise &amp; Organic Motion</a><a href="#09-what-drives-the-value"><span>Next</span>09 — What Drives the Value (the iOS Bridge) →</a></div></section>
-<section class="page" id="09-what-drives-the-value" data-title="09 — What Drives the Value (the iOS Bridge)" data-num="09" data-hasdemo="0" data-group=""><h1>09 — What Drives the Value (the iOS Bridge)</h1>
+<section class="page" id="09-what-drives-the-value" data-title="09 — What Drives the Value (the iOS Bridge)" data-num="09" data-hasdemo="0" data-group="Foundations"><h1>09 — What Drives the Value (the iOS Bridge)</h1>
 <h2>Start here — the plain idea</h2>
 <p>The rest of the course told you <em>what</em> number you want — the height, the tilt, the opacity. This lesson asks a different question: <em>who keeps recomputing that number, and when?</em> Same effect can be wired three very different ways, and picking the right one is what makes an interaction feel clean instead of janky.</p>
 <p>Three drivers, in plain terms. First, input-driven: the value is just a function of where your finger or scroll <em>is right now</em> — no animation at all, it's literally <code>f(scrollOffset)</code>. The wavy carousel and Stories edge-scaling live here, which is why they feel glued to your finger. Second, a tween: you name a start and end and let the system smoothly blend between them — a button press, a sheet opening. Third, per-frame: you recompute every single frame in a loop, needed for ongoing simulations like particles or physics fields.</p>
@@ -1216,7 +1224,7 @@ cell.rotation = θ_i            // now it lies flush on the curve
 <li>Study loop: <a class="xref" href="#10-study-method">10-study-method</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#08-worked-example-wavy-carousel"><span>Prev</span>← 08 — Worked Example: The Wavy Carousel</a><a href="#10-study-method"><span>Next</span>10 — Study Method →</a></div></section>
-<section class="page" id="10-study-method" data-title="10 — Study Method" data-num="10" data-hasdemo="0" data-group=""><h1>10 — Study Method</h1>
+<section class="page" id="10-study-method" data-title="10 — Study Method" data-num="10" data-hasdemo="0" data-group="Foundations"><h1>10 — Study Method</h1>
 <h2>Start here — the plain idea</h2>
 <p>Math like this doesn't stick from reading — it sticks from <em>fiddling</em>. The single most important habit on this page: before you write a line of code, build the interaction as a function in Desmos and drag the sliders. Watching the tangent swing as you move a point teaches your gut something no paragraph can.</p>
 <p>The loop is simple: spot an interaction you love, guess its function and driver, rebuild it in Desmos with sliders, derive whatever it needs (tangent, normal, curvature), then build it for real and compare. Ten honest reps of that beat any course. Treat your shader playground as a lab — it already speaks <code>smoothstep</code>, vectors, and oscillation, so new concepts have somewhere to land immediately. The anti-pattern to avoid: jumping straight to code and tuning magic numbers, instead of modeling first and deriving the relationship.</p>
@@ -1260,7 +1268,7 @@ cell.rotation = θ_i            // now it lies flush on the curve
 <li>The mindset: <a class="xref" href="#01-modeling-visuals-as-functions">01-modeling-visuals-as-functions</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
 </ul><div class="pager"><a href="#09-what-drives-the-value"><span>Prev</span>← 09 — What Drives the Value (the iOS Bridge)</a><a href="#11-resources"><span>Next</span>11 — Resources →</a></div></section>
-<section class="page" id="11-resources" data-title="11 — Resources" data-num="11" data-hasdemo="0" data-group=""><h1>11 — Resources</h1>
+<section class="page" id="11-resources" data-title="11 — Resources" data-num="11" data-hasdemo="0" data-group="Foundations"><h1>11 — Resources</h1>
 <h2>Start here — the plain idea</h2>
 <p>This is your reading list, but ordered so it actually builds intuition instead of dumping links. Think of it as three rings. The inner ring is pure intuition — 3Blue1Brown and The Nature of Code — watch these first; they make the <em>feel</em> of derivatives, vectors, and oscillation click before any formula. The middle ring is people aimed dead-on at this aesthetic (Freya Holmér, Inigo Quilez, the interactive essays by Ciechanowski) — go here once the basics feel real. The outer ring is Apple-specific and books for when you want depth and the iOS substrate.</p>
 <p>Don't binge it. The point is to feed the study loop from the last lesson: grab one resource, learn one idea, and immediately model it in Desmos or a playground. A single tool matters most — install Desmos and keep it open as your daily instrument.</p>
@@ -1315,7 +1323,600 @@ cell.rotation = θ_i            // now it lies flush on the curve
 <ul>
 <li>How to use these: <a class="xref" href="#10-study-method">10-study-method</a></li>
 <li>Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
-</ul><div class="pager"><a href="#10-study-method"><span>Prev</span>← 10 — Study Method</a><span class="sp"></span></div></section>
+</ul><div class="pager"><a href="#10-study-method"><span>Prev</span>← 10 — Study Method</a><a href="#12-dynamical-systems"><span>Next</span>12 — Dynamical Systems: State, Rule, Evolution →</a></div></section>
+<section class="page" id="12-dynamical-systems" data-title="12 — Dynamical Systems: State, Rule, Evolution" data-num="12" data-hasdemo="1" data-group="Master Keys"><h1>12 — Dynamical Systems: State, Rule, Evolution</h1><div class="demo-mount" data-demo="dyn-integrator"></div>
+<blockquote>
+<p><strong>Interactive demo up top — the integrator playground.</strong> A ball on a spring, three integrators to choose from (Explicit Euler / Semi-implicit / RK4) and a <code>dt</code> slider. Push <code>dt</code> up and watch Explicit Euler gain energy and <em>explode</em> (it turns red, energy runs off to infinity) while Semi-implicit stays bounded and RK4 stays accurate. Click to yank the ball. Everything in Level 2 is made visible right there — keep it in the corner of your eye as you read.</p>
+</blockquote>
+<h2>Start here — the plain idea</h2>
+<p>The spring you already built wasn't a special trick — it was your first taste of a universal pattern. Think of it like this: to describe <em>anything</em> that moves, you only need two things. <strong>State</strong>: a few numbers that capture "how things are right now" (where the ball is, how fast it's going). And a <strong>rule</strong>: a sentence that says "given how things are right now, here's how they're about to change." That rule is a <em>differential equation</em> — a fancy name for "the recipe for the next instant."</p>
+<p>Once you have state + rule, motion is just <em>bookkeeping</em>. You stand at "now," ask the rule "which way and how fast?", take a tiny step in that direction, and repeat. Do that sixty times a second and a whole animation falls out of it — one you never drew. The spring's rule was <code>a = −k·x − c·v</code>; swap in a different rule and you get gravity, orbits, a chasing camera, a flock of birds. <strong>Same machinery, endless behaviours.</strong></p>
+<p>So the mental model for this whole lesson: <em>state + rule → evolution.</em> You keep a little state, you define a local rule, and you "integrate" — step it forward. The art is almost entirely in <strong>how you take that step</strong>, because a sloppy step can turn a gentle wobble into an explosion. That's what we're here to learn.</p>
+<hr />
+<h2>Level 1 — State &amp; rule (the two nouns and one verb)</h2>
+<p>Everything starts with three words: <strong>state</strong>, <strong>rule</strong>, <strong>integrate</strong>.</p>
+<p><strong>State</strong> is the shortest list of numbers you'd need to freeze the system and later resume it exactly. For a ball on a spring, that's <em>position</em> and <em>velocity</em> — two numbers. Not the whole history, not where it's been; just <code>x</code> and <code>v</code>. We bundle them into a <strong>state vector</strong>:</p>
+<pre><code>state = [x, v]        // position, velocity — &quot;everything you need to know right now&quot;
+</code></pre>
+<p><strong>The rule</strong> says how each part of the state changes per second — i.e. its <em>derivative</em> (see <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a> — the derivative is just "rate of change right now"). Position changes at the rate of velocity. Velocity changes at the rate of acceleration. So the rule is:</p>
+<pre><code>dx/dt = v                    // position drifts at the speed of velocity
+dv/dt = a = −k·x − c·v       // velocity changes by the spring force
+</code></pre>
+<p>Read that as a sentence: <em>"x is moving at speed v; v is being pulled back toward 0 and dragged."</em> That pair of lines <strong>is</strong> the dynamical system. Nothing more.</p>
+<p><strong>Integrate</strong> is the verb: take tiny steps forward in time. If you're at <code>x</code> with velocity <code>v</code>, then a sliver of time <code>dt</code> later you're <em>roughly</em> at <code>x + v·dt</code>, moving at <code>v + a·dt</code>. Repeat. "Integrate" literally means "accumulate all these tiny steps into a path."</p>
+<p><strong>First-order vs second-order</strong> — the one distinction to hold onto:</p>
+<ul>
+<li><strong>First-order</strong> systems have <em>one</em> derivative — the rule talks about <code>dx/dt</code> directly, with no acceleration. These <em>ease</em>, they never overshoot. The <code>lerp</code> "chase" from <a class="xref" href="#01b-the-seven-building-blocks">01b-the-seven-building-blocks</a> (<code>current += (target − current) · rate</code>) is exactly this: <code>dx/dt = k·(target − x)</code> → smooth exponential decay toward the target. Camera follow, smoothing a jittery value, a number counter gliding up.</li>
+<li><strong>Second-order</strong> systems have <em>acceleration</em> — the rule sets <code>dv/dt</code>, and position is downstream of velocity. Now you have <em>momentum</em>: the thing can overshoot, wobble, orbit, bounce. Springs, gravity, pendulums. The extra derivative is exactly where "physical feel" comes from.</li>
+</ul>
+<blockquote>
+<p>Rule of thumb: <strong>no velocity in your state → it can only ease. Velocity in your state → it can overshoot and feel alive.</strong> That single choice is most of the difference between "smooth" and "springy."</p>
+</blockquote>
+<hr />
+<h2>Level 2 — Integration done right (the practical core)</h2>
+<p>Here's the uncomfortable truth: <code>x + v·dt</code> is only <em>approximately</em> right, because during that step <code>v</code> was itself changing. The smaller your <code>dt</code>, the smaller the lie — but you can't make <code>dt</code> tiny for free, and <em>how</em> you arrange the two update lines matters more than you'd guess. Three ways to take the step, from naive to excellent. This is the whole ballgame; the demo above lets you feel each one.</p>
+<p><strong><code>dt</code> is your step size</strong> — seconds of simulated time per step, usually one screen frame (~1/60 s). Bigger <code>dt</code> = fewer, cheaper steps but a rougher approximation. "Stability" is the question: <em>does the error stay small, or does it snowball until the numbers blow up?</em> Some methods stay calm at big <code>dt</code>; others detonate.</p>
+<h3>Explicit (forward) Euler — simple, and secretly dangerous</h3>
+<p>Update both using the values you have <em>right now</em>, then commit:</p>
+<pre><code class="language-swift">let a = -k*x - c*v
+x += v  * dt        // uses the OLD v
+v += a  * dt        // uses the OLD a
+</code></pre>
+<p>Dead simple, and fine for gentle first-order easing. But for an oscillator it <strong>gains energy</strong>: because it always steps using the <em>old</em> slope, it consistently overshoots the true curve, and each swing comes back a little bigger. At small <code>dt</code> you barely notice; at large <code>dt</code> the spring <strong>spirals outward and explodes</strong>. That's the red, run-to-infinity behaviour in the demo — crank <code>dt</code> up with Explicit Euler selected and watch it detonate. Energy was supposed to be conserved (or bleed off with damping); Euler quietly manufactures it.</p>
+<h3>Semi-implicit (symplectic) Euler — the one you'll actually use ⭐</h3>
+<p>One tiny change with an outsized payoff: <strong>update velocity first, then move position using the <em>new</em> velocity.</strong></p>
+<pre><code class="language-swift">let a = -k*x - c*v
+v += a  * dt        // velocity FIRST
+x += v  * dt        // then position, using the JUST-UPDATED v
+</code></pre>
+<p>Two lines swapped, and now the method is <em>stable</em> for oscillators — the energy error no longer accumulates in one direction, so instead of spiralling out it stays bounded and orbits honestly. It's still cheap (one force evaluation per step) and it handles a moving target gracefully. <strong>This is what game engines and UI spring solvers actually run.</strong> In the demo, semi-implicit holds its ground even when you shove <code>dt</code> to absurd values — it might get chunky, but it won't explode. When in doubt, this is your integrator.</p>
+<h3>RK4 (Runge–Kutta 4) — when you want accuracy</h3>
+<p>Euler samples the slope <em>once</em>, at the start of the step, and trusts it for the whole interval. RK4 is the "measure twice" upgrade: it samples the slope <strong>four times</strong> across the step — start, two probes at the middle, and the end — then takes a weighted average of those four to make the actual move.</p>
+<pre><code>k1 = slope at the start
+k2 = slope at the midpoint, using k1 to get there
+k3 = slope at the midpoint again, using k2 (a better guess)
+k4 = slope at the end, using k3
+step forward by the weighted average: (k1 + 2·k2 + 2·k3 + k4) / 6
+</code></pre>
+<pre><code class="language-swift">// deriv(s) returns the rule's output for a state s = (x, v)
+func deriv(_ x: Double, _ v: Double) -&gt; (dx: Double, dv: Double) {
+    (v, -k*x - c*v)
+}
+let a1 = deriv(x,                    v)
+let a2 = deriv(x + a1.dx*dt/2,       v + a1.dv*dt/2)
+let a3 = deriv(x + a2.dx*dt/2,       v + a2.dv*dt/2)
+let a4 = deriv(x + a3.dx*dt,         v + a3.dv*dt)
+x += (a1.dx + 2*a2.dx + 2*a3.dx + a4.dx) / 6 * dt
+v += (a1.dv + 2*a2.dv + 2*a3.dv + a4.dv) / 6 * dt
+</code></pre>
+<p>For the <em>same</em> <code>dt</code>, RK4 is dramatically more accurate — it hugs the true curve where Euler drifts. The cost is four force evaluations per step and more code. It shines for orbits, physics you'll trust quantitatively, or big <code>dt</code> where you need precision. In the demo, RK4 tracks the ideal curve almost perfectly as you raise <code>dt</code>.</p>
+<h3>How to choose</h3>
+<ul>
+<li><strong>Gentle first-order easing</strong> (a chase, a smooth-follow) → plain Euler is fine; it can't blow up without momentum.</li>
+<li><strong>UI springs, gestures, most interaction physics</strong> → <strong>semi-implicit Euler</strong>. Stable, cheap, retargetable. Default here.</li>
+<li><strong>You need real accuracy</strong> (orbits, trajectories, coupled particles you're measuring) → <strong>RK4</strong>.</li>
+</ul>
+<blockquote>
+<p>The takeaway to burn in: <em>Explicit Euler adds energy and can explode; semi-implicit stays bounded; RK4 stays accurate.</em> And <strong>the order of the two lines is not cosmetic</strong> — velocity-first is what buys you stability for free.</p>
+</blockquote>
+<hr />
+<h2>Level 3 — Seeing stability (phase space)</h2>
+<p>Watching <code>x</code> bob up and down over time is one view. There's a second view that tells you <em>at a glance</em> whether a system is healthy — and it's the one physicists reach for first.</p>
+<p>Instead of plotting position against <em>time</em>, plot the <strong>whole state as a single point</strong>: <code>x</code> on one axis, <code>v</code> on the other. This 2D picture is <strong>phase space</strong>, and as the system evolves that point traces a path. The shape of the path tells you the fate of the system without any arithmetic:</p>
+<pre><code>   v (velocity)
+   ▲
+   │      ___
+   │    /     \        undamped spring  → a closed CIRCLE (loops forever)
+   │   |   ·   |       damped spring     → a SPIRAL inward (settles to rest)
+   │    \ ___ /        unstable          → a spiral OUTWARD (blows up)
+   │
+   └────────────▶  x (position)
+</code></pre>
+<ul>
+<li><strong>Undamped oscillator (c = 0):</strong> the point goes round and round a fixed loop — a <strong>circle</strong>. Energy is constant; it oscillates forever. Neither settling nor exploding.</li>
+<li><strong>Damped spring (c &gt; 0):</strong> the loop shrinks each lap — a <strong>spiral into the origin</strong>. The origin <code>(x=0, v=0)</code> is the <strong>equilibrium</strong>: at rest, at the target. A spiral inward <em>is</em> "it settles." Bigger damping = tighter, faster spiral. Critical damping = it slides straight in without looping at all.</li>
+<li><strong>Unstable (or a bad integrator):</strong> the point <strong>spirals outward</strong>, each lap bigger than the last. That's the explosion — and crucially, <em>Explicit Euler on a stable spring produces exactly this outward spiral</em>, because it fakes energy. The instability is a property of your <strong>method</strong>, not just your model.</li>
+</ul>
+<p>This is a superpower for judging animations. "Does it settle, oscillate forever, or blow up?" becomes a shape you can <em>see</em>: inward spiral = good, closed loop = perpetual, outward spiral = trouble. When your hand-rolled motion feels twitchy or runaway, picture its phase portrait — you're almost always looking at a loop that should be spiralling in but isn't, because <code>dt</code> is too big or you picked the wrong integrator.</p>
+<hr />
+<h2>Apply it — in your interactions</h2>
+<p>A hand-rolled, retargetable spring using <strong>semi-implicit Euler</strong> inside <code>TimelineView(.animation)</code>. Keep <code>x</code> and <code>v</code> in <code>@State</code>; every frame, read the elapsed <code>dt</code>, step velocity-first, and chase a <code>target</code> you can move mid-flight (tap to retarget — the ball redirects live, no animation restart).</p>
+<pre><code class="language-swift">import SwiftUI
+
+struct HandRolledSpring: View {
+    @State private var x: Double = 0      // position (state)
+    @State private var v: Double = 0      // velocity (state)
+    @State private var target: Double = 0
+    @State private var lastTime: Date? = nil
+
+    let k: Double = 180   // stiffness
+    let c: Double = 18    // damping (c ≈ 2·√k ≈ 26.8 is critical → no overshoot)
+
+    var body: some View {
+        TimelineView(.animation) { tl in
+            // real seconds since last frame → keeps speed identical on 60 &amp; 120 Hz
+            let now = tl.date
+            let dt = min(lastTime.map { now.timeIntervalSince($0) } ?? 0, 1.0/30)
+
+            Circle()
+                .fill(.tint)
+                .frame(width: 44, height: 44)
+                .offset(x: x)
+                .onChange(of: now) { _, _ in step(dt) }
+        }
+        .frame(maxWidth: .infinity, minHeight: 120)
+        .contentShape(Rectangle())
+        .onTapGesture { location in
+            target = location.x - 150      // retarget mid-flight; velocity is preserved
+        }
+    }
+
+    private func step(_ dt: Double) {
+        guard dt &gt; 0 else { lastTime = Date(); return }
+        let a = -k * (x - target) - c * v   // the rule: pull toward target, minus drag
+        v += a * dt                          // SEMI-IMPLICIT: velocity first…
+        x += v * dt                          // …then position with the new velocity
+        lastTime = Date()
+    }
+}
+</code></pre>
+<p>Clamp <code>dt</code> (here to 1/30 s) so a stutter or a backgrounded app can't hand you a giant step that blows the spring up — a big real-world gap is exactly the "large <code>dt</code>" danger from Level 2. Note this is the same <code>a = −k·(x − target) − c·v</code> rule from <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> and <a class="xref" href="#01b-the-seven-building-blocks">01b-the-seven-building-blocks</a>; all we've added is <em>owning the integration loop.</em></p>
+<p><strong>When to hand-roll vs just use <code>.spring()</code>:</strong></p>
+<ul>
+<li><strong>Use <code>.spring(duration:bounce:)</code></strong> for the everyday 95%: a value settling to a target, a sheet snapping, a toggle popping. It's tuned, stable, and one line. Don't reinvent it.</li>
+<li><strong>Hand-roll</strong> (like above) when you need something the built-in animation can't express: <strong>custom forces</strong> (gravity, magnetism, drag past a boundary), <strong>multiple attractors</strong> the target flips between each frame (snap-to-grid, detents), or <strong>coupling many particles</strong> together (a trailing chain, a flock, connected nodes). The moment your rule stops being "one value eases to one target," you want the loop in your own hands — that's the whole <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a> cabinet, and every entry in it is just a different <em>rule</em> fed to this same integrator.</li>
+</ul>
+<hr />
+<h2>The foundation</h2>
+<ul>
+<li><strong>dynamical system</strong> = state + a rule for how state changes → step it forward and behaviour emerges.</li>
+<li><strong>state</strong> = the few numbers that fully describe "now" (for a spring: position and velocity), bundled as a <strong>state vector</strong> <code>[x, v]</code>.</li>
+<li><strong>rule / differential equation</strong> = the derivative of the state: "given now, here's the rate of change right now" (<code>dx/dt = v</code>, <code>dv/dt = a</code>).</li>
+<li><strong>integrate</strong> = accumulate tiny forward steps of size <code>dt</code> into a path.</li>
+<li><strong>first-order</strong> = one derivative, no momentum → eases, never overshoots (the chase). <strong>second-order</strong> = has acceleration → momentum, overshoot, physical feel (springs).</li>
+<li><strong>dt (timestep)</strong> = seconds of sim time per step; bigger = cheaper but rougher and riskier.</li>
+<li><strong>Explicit (forward) Euler</strong> = step using current values (<code>x += v·dt; v += a·dt</code>); simple but <em>gains energy</em> — oscillators spiral out and explode at big <code>dt</code>.</li>
+<li><strong>Semi-implicit (symplectic) Euler</strong> = velocity first, then position with the new velocity (<code>v += a·dt; x += v·dt</code>); stays bounded, the real-world UI/game default. ⭐</li>
+<li><strong>RK4</strong> = sample the slope 4 times across the step and average; much more accurate per <code>dt</code>, four times the cost.</li>
+<li><strong>stability</strong> = whether error stays small or snowballs to infinity.</li>
+<li><strong>phase space</strong> = plot state as a point <code>(x, v)</code>; damped = spiral in, undamped = circle, unstable = spiral out. The at-a-glance "does it settle?" test.</li>
+<li><strong>equilibrium</strong> = the resting state the spiral falls into (<code>x = target, v = 0</code>).</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The spring this generalises, plus <code>.spring()</code> tuning: <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></li>
+<li>The cabinet of rules to feed this integrator: <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a></li>
+<li>The payoff — pendulums, orbits, predator–prey, boids, all from this one loop: <a class="xref" href="#13-the-ode-zoo">13-the-ode-zoo</a></li>
+<li>What a "rate of change right now" even means: <a class="xref" href="#03-derivative-as-tangent">03-derivative-as-tangent</a></li>
+<li>Prev: <a class="xref" href="#11-resources">11-resources</a> · Next: <a class="xref" href="#13-the-ode-zoo">13-the-ode-zoo</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#11-resources"><span>Prev</span>← 11 — Resources</a><a href="#13-the-ode-zoo"><span>Next</span>13 — The ODE Zoo →</a></div></section>
+<section class="page" id="13-the-ode-zoo" data-title="13 — The ODE Zoo" data-num="13" data-hasdemo="1" data-group="Master Keys"><h1>13 — The ODE Zoo</h1><div class="demo-mount" data-demo="boids"></div><div class="demo-mount" data-demo="dpendulum"></div><div class="demo-mount" data-demo="reactdiff"></div>
+<blockquote>
+<p>Three live demos are mounted at the top of this page. Play with them as you read: a <strong>boids</strong> flock (sliders for separation / alignment / cohesion), a <strong>double pendulum</strong> (a "launch twin" button, drag to reset), and a <strong>reaction–diffusion</strong> field (feed / kill sliders, drag to paint). They <em>are</em> the lesson — the text just tells you what you're looking at.</p>
+</blockquote>
+<h2>Start here — the plain idea</h2>
+<p>In <a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a> you built a machine: keep a <strong>state</strong>, ask a <strong>rule</strong> for its derivative (how it's changing right now), and let an <strong>integrator</strong> nudge the state forward one small step. Do that sixty times a second and motion falls out. You already own that machine. It's done. You never have to build it again.</p>
+<p>Here's the payoff — and it's a big one. That machine doesn't care <em>what</em> the rule is. Swap the rule and, from the exact same little loop, out comes a completely different world. Feed it <code>θ'' = −(g/L)·sin θ</code> and you get a swinging pendulum. Feed it an inverse-square pull and you get a planet in orbit. Feed it two coupled population equations and you get predators and prey chasing each other in endless cycles. Same integrator, endless behaviours. The machine is a kitchen; the rule is the recipe.</p>
+<p>So this lesson is a <strong>zoo tour</strong>. Each creature below is just a <code>derivative(state)</code> function — a few lines of "what's changing." We'll meet pendulums, orbits, populations, flocks, and self-organizing chemical patterns, then step back for the two ideas that make the zoo magic: <strong>emergence</strong> (dumb local rules producing breathtaking global behaviour) and <strong>chaos</strong> (perfectly deterministic rules you still can't predict). By the end you'll see where each one earns its keep in a real interface.</p>
+<blockquote>
+<p>Every rule below is meant to sit inside a per-frame loop — the integrator from <a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a>, usually semi-implicit Euler or RK4. <code>dt</code> is the seconds since the last frame. When you see <code>derivative(state)</code>, picture the loop calling it and stepping the state forward.</p>
+</blockquote>
+<hr />
+<h2>Pendulum — the swing</h2>
+<p><strong>Plain idea:</strong> a weight on a rod. Gravity pulls it down, so the farther it leans, the harder it's yanked back toward the bottom — but it overshoots and swings past. State is the angle <code>θ</code> and the angular velocity <code>θ'</code>.</p>
+<pre><code>derivative(θ, ω):          # ω is angular velocity θ'
+    dθ = ω
+    dω = -(g / L) * sin(θ)
+    return (dθ, dω)
+</code></pre>
+<p><strong>Looks like:</strong> a back-and-forth swing that (with a little friction added, <code>-c·ω</code>) slowly settles at the bottom. <strong>Shows up in:</strong> hanging UI elements, a pull-tab that swings, anything that dangles and rocks. It's the physical cousin of the spring you already know — for small angles <code>sin θ ≈ θ</code>, and it <em>becomes</em> a spring.</p>
+<h2>Orbit / gravity — the pull</h2>
+<p><strong>Plain idea:</strong> two bodies attract along the line between them, and the pull weakens with the square of the distance. State is position and velocity; the rule turns the pull into acceleration.</p>
+<pre><code>derivative(pos, vel):
+    r = center - pos                     # vector toward the attractor
+    dist = length(r)
+    accel = (G * mass / dist^2) * normalize(r)
+    return (vel, accel)                  # position changes by vel, vel by accel
+</code></pre>
+<p><strong>Looks like:</strong> a body that falls toward a center but has enough sideways speed to keep missing — so it loops forever. Weaken it and it's a lazy drift; strengthen it and it whips around. <strong>Shows up in:</strong> "magnetic" UI — an element that leans toward the cursor or snaps toward a target with a soft, gravitational feel rather than a hard lerp. (This is the attraction rule from <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a>, written as a derivative.)</p>
+<h2>Predator–prey (Lotka–Volterra) — the cycle</h2>
+<p><strong>Plain idea:</strong> two coupled rules. Prey breed on their own but get eaten; predators starve on their own but grow by eating. Neither settles — they chase each other in a loop: prey boom, predators feast and boom, prey crash, predators starve and crash, prey recover.</p>
+<pre><code>derivative(prey, pred):
+    dPrey =  a*prey       - b*prey*pred      # grow, minus getting eaten
+    dPred = -c*pred       + d*prey*pred      # starve, plus eating
+    return (dPrey, dPred)
+</code></pre>
+<p><strong>Looks like:</strong> two populations oscillating out of phase, forever. <strong>Shows up in:</strong> it's less a literal UI widget than a <em>shape</em> to recognize — any time two quantities feed each other with <strong>growth, decay, and interaction</strong> terms, you get cycles instead of a resting point. Resource meters, mood/energy systems in a game, any two-tank model that pulses.</p>
+<h2>Boids / flocking — the crowd</h2>
+<p><strong>Plain idea:</strong> no leader, no choreography. Each agent looks only at its nearby neighbours and obeys <strong>three local rules</strong>: don't crowd them (separation), match their heading (alignment), and drift toward their center (cohesion). Sum those three into an acceleration.</p>
+<pre><code>derivative(agent, neighbors):
+    sep = steer_away_from_close(neighbors)     # separation
+    ali = match_average_heading(neighbors)     # alignment
+    coh = steer_toward_center(neighbors)       # cohesion
+    accel = wSep*sep + wAli*ali + wCoh*coh
+    return (agent.vel, accel)
+</code></pre>
+<p><strong>Looks like:</strong> a murmuration — a starling flock that swirls, splits, and reforms as one organism, though nobody wrote the swirl. <strong>Shows up in:</strong> ambient particle swarms, cursors that school, notification clusters that settle into a group. Try the <strong>boids demo</strong> at the top: drag the sliders and move your pointer to scatter them. Zero out <strong>cohesion</strong> and watch the flock lose its togetherness and disperse into wandering loners; crank <strong>alignment</strong> and they lock into a marching school; kill <strong>separation</strong> and they collapse into a clump. Three numbers, a whole spectrum of crowd behaviour.</p>
+<h2>Reaction–diffusion (Gray–Scott / Turing) — the pattern</h2>
+<p><strong>Plain idea:</strong> two chemicals share a surface. Both <strong>spread</strong> (diffuse) outward, and where they meet they <strong>react</strong> — one converts into the other. Alan Turing's insight: if they spread at different rates, that competition doesn't average out to grey mush; it self-organizes into spots, stripes, and mazes.</p>
+<pre><code>derivative(A, B) at each cell:      # A, B are concentrations on a grid
+    dA = Da*laplacian(A) - A*B*B + feed*(1 - A)
+    dB = Db*laplacian(B) + A*B*B - (kill + feed)*B
+    return (dA, dB)                 # laplacian = &quot;how I differ from my neighbours&quot;
+</code></pre>
+<p><strong>Looks like:</strong> leopard spots, zebra stripes, fingerprints, coral — patterns that grow and settle on their own. <strong>Shows up in:</strong> organic, ever-shifting backgrounds and textures. Try the <strong>reaction–diffusion demo</strong>: nudge the <strong>feed</strong> and <strong>kill</strong> sliders and <strong>drag to paint</strong> a seed — watch spots bloom or stripes crawl out of the spot you touched. Nobody drew the pattern; the rule grew it.</p>
+<h2>Spring mesh — the cloth</h2>
+<p><strong>Plain idea:</strong> take the spring you know and wire up a <em>grid</em> of them — every point connected to its neighbours by a spring. Each spring pulls its two endpoints toward their rest distance; sum every pull on a point to get its acceleration.</p>
+<pre><code>derivative(point):
+    accel = gravity
+    for each neighbor connected by a spring:
+        accel += spring_force(point, neighbor)   # -k*(dist - rest) along the link
+    return (point.vel, accel)
+</code></pre>
+<p><strong>Looks like:</strong> cloth that drapes and folds, a rope that swings, a jelly that wobbles. <strong>Shows up in:</strong> draggable "fabric" panels, rope/handle physics, a squishy pull-to-refresh. It's just <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a>'s spring, multiplied and coupled.</p>
+<hr />
+<h2>Emergence</h2>
+<p>Look back at boids and reaction–diffusion. In both, the rule is <strong>small and local</strong> — a boid sees only its neighbours; a chemical cell reacts only with the cell next to it. Nowhere in the code is the word "murmuration" or "leopard." Yet the murmuration and the leopard <em>appear</em>. That gap — simple local rules producing complex global order that nobody scripted — is <strong>emergence</strong>, and it's the most useful idea in this whole lesson.</p>
+<p>It matters for interfaces because it's how you get richness for free. You don't animate a hundred particles by hand; you give one particle a three-line rule and run a hundred copies. The complexity you want lives in the <em>interaction between many simple things</em>, not in a giant script. Turn the <strong>cohesion</strong> slider on the boids demo and the flock's whole personality changes — you tuned one local number and a global behaviour reorganized itself. Paint into the reaction–diffusion demo and structure crawls outward from your finger. Nobody is in charge, and that's exactly why it feels alive.</p>
+<h2>Chaos</h2>
+<p>Now the unsettling one. Take a <strong>double pendulum</strong> — just one pendulum with a second one hung off its end. Two rods, two angles. The rule is completely deterministic: no randomness anywhere, same equations as the single pendulum, only coupled. Run it and it thrashes wildly, and here's the kicker — it is <strong>unpredictable in practice even though it's fully determined in theory</strong>.</p>
+<p>Why? <strong>Sensitive dependence on initial conditions.</strong> Start two double pendulums almost identically — offset one by a hundredth of a radian — and for a moment they move as one. Then the tiny difference amplifies, doubling and redoubling, until within seconds the two are doing entirely unrelated things. That's <strong>chaos</strong>: the math is exact, but any imprecision in where you started explodes into total divergence, so you can't forecast it. (This is why weather, which is the same kind of system, resists long-range prediction.)</p>
+<p>See it live in the <strong>double pendulum demo</strong>: let it swing, then hit <strong>launch twin</strong> to start a near-identical copy offset by 0.01 rad. They trace the same path... then peel apart and never reconcile. Drag to reset and try again — the divergence looks different every time. The demo runs <strong>RK4</strong> (the high-accuracy integrator) precisely <em>because</em> chaos punishes sloppy stepping: with a cruder integrator the error itself would swamp the physics.</p>
+<p>The practical lesson for interactions: chaos is a spice, not a staple. A whisper of it — a barely-coupled pendulum, a flock near its unstable settings — reads as "alive and never repeating." Too much and your interface feels broken and uncontrollable. Emergence you want on tap; chaos you want on a leash.</p>
+<hr />
+<h2>Apply it — in your interactions</h2>
+<p>Where these creatures earn their keep in real UI:</p>
+<ul>
+<li><strong>Particle systems</strong> — confetti, sparks, embers: each particle is a tiny gravity-or-drift rule, run in a swarm.</li>
+<li><strong>Springy / cloth pull</strong> — draggable fabric, rope handles, jelly panels: the <strong>spring mesh</strong> rule.</li>
+<li><strong>"Magnetic" snapping</strong> — elements that lean toward the cursor or glide into a detent with a gravitational ease: the <strong>attraction</strong> rule (softer and more organic than a hard lerp).</li>
+<li><strong>Flocking cursors / notification swarms</strong> — badges or dots that school together and settle: <strong>boids</strong>.</li>
+<li><strong>Organic backgrounds</strong> — living gradients and textures that never loop: <strong>reaction–diffusion</strong>, or summed noise from <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a>.</li>
+</ul>
+<p>The unifying move: it's all the <a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a> machine. Keep state, ask the rule for a derivative, step it with the integrator inside a per-frame loop. Here's a handful of particles, each following an <strong>attraction-to-target</strong> rule, stepped with <strong>semi-implicit Euler</strong> inside <code>TimelineView(.animation)</code> — the same integrator from lesson 12:</p>
+<pre><code class="language-swift">import SwiftUI
+
+struct Particle: Identifiable {
+    let id = UUID()
+    var pos: CGSize
+    var vel: CGSize = .zero
+}
+
+struct AttractField: View {
+    @State private var particles: [Particle] =
+        (0..&lt;40).map { _ in
+            Particle(pos: CGSize(width: .random(in: -150...150),
+                                 height: .random(in: -150...150)))
+        }
+    @State private var last = Date()
+    var target = CGSize.zero   // could be the cursor / a tapped point
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            Canvas { ctx, size in
+                for p in particles {
+                    let r = CGRect(x: size.width/2 + p.pos.width - 3,
+                                   y: size.height/2 + p.pos.height - 3,
+                                   width: 6, height: 6)
+                    ctx.fill(Path(ellipseIn: r), with: .color(.accentColor))
+                }
+            }
+            .onChange(of: timeline.date) { _, now in
+                let dt = min(now.timeIntervalSince(last), 1.0/30)   // clamp big gaps
+                last = now
+                step(dt: CGFloat(dt))
+            }
+        }
+    }
+
+    // One integrator step for every particle — the rule is &quot;pull toward target&quot;.
+    private func step(dt: CGFloat) {
+        let k: CGFloat = 6      // attraction strength
+        let damp: CGFloat = 2   // friction, so it settles instead of orbiting forever
+        for i in particles.indices {
+            // rule: derivative → acceleration toward the target
+            let ax = k * (target.width  - particles[i].pos.width)  - damp * particles[i].vel.width
+            let ay = k * (target.height - particles[i].pos.height) - damp * particles[i].vel.height
+            // semi-implicit Euler: update velocity first, then position with the NEW velocity
+            particles[i].vel.width  += ax * dt
+            particles[i].vel.height += ay * dt
+            particles[i].pos.width  += particles[i].vel.width  * dt
+            particles[i].pos.height += particles[i].vel.height * dt
+        }
+    }
+}
+</code></pre>
+<p>Swap the rule inside <code>step</code> and you change the whole feel — an inverse-square pull for orbits, three neighbour rules for boids, gravity plus a floor for a bouncing drop. The loop never changes. That's the zoo.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>the zoo idea</strong> = one integrator + many rules → endless behaviours; you reuse the <a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a> machine and only swap <code>derivative(state)</code>.</li>
+<li><strong>pendulum</strong> = <code>θ'' = −(g/L)·sin θ</code>; a swing that (with friction) settles — a spring for large angles.</li>
+<li><strong>orbit / gravity</strong> = inverse-square attraction; the organic "magnetic" pull for UI that leans toward a target.</li>
+<li><strong>Lotka–Volterra</strong> = two coupled growth/decay/interaction rules → endless population cycles; the shape of any two-quantity feedback.</li>
+<li><strong>boids</strong> = each agent obeys separation + alignment + cohesion on its neighbours → emergent flocking.</li>
+<li><strong>reaction–diffusion</strong> = two chemicals diffuse at different rates and react → self-organizing spots and stripes (Turing patterns).</li>
+<li><strong>spring mesh</strong> = a coupled grid of springs → cloth, rope, jelly.</li>
+<li><strong>emergence</strong> = simple local rules producing complex global order nobody scripted (the murmuration, the leopard).</li>
+<li><strong>chaos</strong> = deterministic yet unpredictable; sensitive dependence on initial conditions (the double pendulum, the weather).</li>
+<li><strong>semi-implicit Euler</strong> = update velocity, then move by the <em>new</em> velocity — the stable default integrator from lesson 12.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The machine this lesson feeds rules to: <a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a></li>
+<li>The single-body version of these rules: <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a></li>
+<li>Organic motion, noise, and summed sines for living backgrounds: <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a></li>
+<li>Vectors and the length/normalize used in every rule above: <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a></li>
+<li>Prev: <a class="xref" href="#12-dynamical-systems">12-dynamical-systems</a> · Next: <a class="xref" href="#14-fourier-sum-of-sines">14-fourier-sum-of-sines</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#12-dynamical-systems"><span>Prev</span>← 12 — Dynamical Systems: State, Rule, Evolution</a><a href="#14-fourier-sum-of-sines"><span>Next</span>14 — Fourier: Everything Is a Sum of Sines →</a></div></section>
+<section class="page" id="14-fourier-sum-of-sines" data-title="14 — Fourier: Everything Is a Sum of Sines" data-num="14" data-hasdemo="1" data-group="Master Keys"><h1>14 — Fourier: Everything Is a Sum of Sines</h1><div class="demo-mount" data-demo="epicycles"></div><div class="demo-mount" data-demo="spectrum"></div>
+<blockquote>
+<p>Two interactive demos are mounted at the top of this note. <strong>Epicycles</strong> stacks spinning circles to trace a wave — raise its <code>harmonics</code> slider and watch a square wave build out of pure sines. <strong>Spectrum</strong> shows a signal two ways at once (waveform on the left, frequency bars on the right) with a low-pass toggle. Play with both as you read; every idea below is one of them made visible.</p>
+</blockquote>
+<h2>Start here — the plain idea</h2>
+<p>You already know a single <code>sin</code> wave as a dot walking around a circle (<a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a>), and you've stacked a few of them to make motion feel alive (<a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a>). Fourier is the giant leap those two lessons were pointing at: <strong>any repeating signal — any wave, any shape, any sound — is secretly a sum of pure sines</strong>, each with its own frequency, amplitude, and phase. Not "can be roughly approximated by." <em>Is.</em> The jagged square wave, the buzz of a sawtooth, the profile of a mountain range, the waveform of your own voice — all of them are a stack of plain sine waves added together. You just have to know the recipe.</p>
+<p>Here's the analogy to hold onto. Press three keys on a piano at once and you hear a chord — but a trained ear (or a tuner) can pick out the individual notes inside it: "that's a C, an E, and a G." A chord is separate notes played together; <strong>Fourier is hearing the individual notes inside <em>any</em> sound</strong>, even ones nobody built out of notes. Hand it a signal and it hands you back the list of pure tones that, added up, reproduce it exactly — how much of each frequency is present, and how it's phased. That ingredient list is called the <strong>spectrum</strong>, and it's the whole point of this lesson.</p>
+<p>The reason this matters — the reason Fourier is one of the most-used ideas in all of computing — is that the spectrum is <em>a second way of looking at the same thing</em>, and it's very often the <strong>easier</strong> way. Questions that are a nightmare in the time domain ("smooth this jittery signal," "remove the hum," "sharpen these edges," "why does this noise look organic") become almost trivial once you switch to thinking in frequencies. Learn to flip between the two views and a huge amount of "hard" signal work turns into "turn the right knob."</p>
+<h2>Level 1 — Stacking sines</h2>
+<p>Start with the humblest thing: one sine wave. <code>sin(t)</code>. A smooth, lonely wiggle. Now add a second sine, but three times as fast and a third as tall: <code>sin(t) + (1/3)·sin(3t)</code>. The result is no longer a pure wiggle — it's starting to flatten on top and bottom, growing little shoulders. Add the next one, five times as fast and a fifth as tall: <code>+ (1/5)·sin(5t)</code>. Flatter still. Keep going with <code>1/7·sin(7t)</code>, <code>1/9·sin(9t)</code>, and something remarkable happens: the smooth curves fight each other into submission and a <strong>square wave</strong> emerges — flat plateaus, near-vertical edges — built entirely out of round, gentle sines.</p>
+<p>That's the classic result, and it's worth memorizing because it's the whole idea in one formula:</p>
+<pre><code>square(t)  =  sin(t) + (1/3)sin(3t) + (1/5)sin(5t) + (1/7)sin(7t) + …
+           =  Σ  (1/n)·sin(n·t)      for odd n = 1, 3, 5, 7, …
+</code></pre>
+<p>Two things to read off it. First, the frequencies aren't arbitrary — they're <strong>harmonics</strong>, integer multiples of one base frequency (the <em>fundamental</em>). A square wave is made of the <em>odd</em> harmonics only (1×, 3×, 5×, …); leave out the evens. Second, each harmonic has a shrinking <strong>amplitude</strong> — the nth one is only <code>1/n</code> as tall, so high harmonics contribute the fine detail (the sharpness of the edge) while the low ones carry the bulk of the shape. Cut the sum short at a few terms and you get a <em>rounded</em> square with ripples; add more terms and the edges get crisper. <strong>The sharp corners live in the high frequencies.</strong> Hold onto that — it's the seed of everything in Level 3.</p>
+<blockquote>
+<p><strong>This is the Epicycles demo.</strong> Each spinning circle is one sine term; its radius is that harmonic's amplitude, its speed is the frequency, its starting angle is the <strong>phase</strong>. Stacked tip-to-tip, the chain of circles traces the wave with its final pen-tip. Drag <code>harmonics</code> from 1 upward and watch the traced curve morph from a lonely wiggle into a crisp square (or flip the toggle to sawtooth, which keeps <em>all</em> the harmonics, not just odd ones). Every wobble you see is pure <code>sin</code> — there is nothing else in there.</p>
+</blockquote>
+<p>So a periodic signal is fully described by three numbers <em>per frequency</em>: <strong>amplitude</strong> (how much of that tone), <strong>phase</strong> (where in its cycle it starts — the sideways slide from lesson 02), and the frequency itself (which harmonic). Give me that table and I can rebuild your signal exactly. That table is the spectrum.</p>
+<h2>Level 2 — The spectrum (a second view)</h2>
+<p>Here is the mental unlock. The <em>same</em> signal has <strong>two equivalent pictures</strong>, and you can flip between them without losing anything:</p>
+<ul>
+<li>The <strong>waveform</strong> — value over <em>time</em>. This is the view you already have: height at each instant, the wiggly line on an oscilloscope. Good for "what is it doing right now."</li>
+<li>The <strong>spectrum</strong> — amount of each <em>frequency</em>. Same signal, re-sorted by tone: a set of bars, one per frequency, each bar's height = how much of that frequency is present (its amplitude), with phase tucked alongside. Good for "what is it <em>made of</em>."</li>
+</ul>
+<p>Neither is more "true" than the other — they're two descriptions of one object, like describing a chord either as "the pressure in the air over these 20 milliseconds" or as "a C, an E, and a G." A pure <code>sin</code> at one frequency is a messy-looking wave but a <em>single spike</em> in the spectrum. A square wave is a clean shape in time but a whole picket-fence of odd-harmonic bars in frequency. <strong>Switching to the frequency view is what makes hard things easy</strong>, because most of the operations we actually want ("remove the hum at 60 Hz," "how bright is the treble") are about <em>specific frequencies</em> — and in the spectrum, each frequency is just its own bar you can point at.</p>
+<blockquote>
+<p><strong>This is the Spectrum demo.</strong> The left panel is the waveform; the right panel is its frequency bars. Raise a bar's slider and you pour more of that one frequency into the signal — watch the wave on the left get wigglier in exactly that way. It's Level 1 run backwards: instead of writing down a sum of sines, you <em>sculpt the spectrum directly</em> and let the waveform follow. The low-pass toggle is Level 3 — hold that thought.</p>
+</blockquote>
+<p>The machine that converts a waveform into its spectrum is the <strong>Fourier transform</strong>. Feed it a signal, it returns the amplitude-and-phase of every frequency (this is <em>analysis</em> — "hear the notes"). There's an <strong>inverse Fourier transform</strong> that goes the other way, rebuilding the waveform from the spectrum (this is <em>synthesis</em> — "play the notes"). The two are a perfect round-trip: transform and inverse-transform and you're exactly back where you started.</p>
+<p>In code you don't work with continuous signals — you have a buffer of samples (say, 1024 audio samples, or the pixels of a row). The version of the transform for a finite list of samples is the <strong>DFT</strong> (Discrete Fourier Transform). Computing a DFT naively is slow (every output bar looks at every input sample — O(N²)). The famous <strong>FFT</strong> (Fast Fourier Transform) is a clever algorithm that computes the <em>exact same</em> DFT in O(N log N) — fast enough to run on live audio, every frame, on a phone. You almost never derive these by hand; you call a library (we'll use Apple's in the Apply section). What you need to carry forward is the <em>shape</em> of it: <strong>signal in → spectrum out, and back again.</strong></p>
+<h2>Level 3 — Filtering = editing the spectrum</h2>
+<p>Now the payoff that ties this whole course together. Once a signal is in its spectrum form — a row of frequency bars — you can <strong>reach in and edit the bars</strong>, then inverse-transform back to a waveform. Editing the spectrum is called <strong>filtering</strong>, and almost every "smooth / sharpen / blur / bass / treble" operation you've ever met is secretly this one move.</p>
+<ul>
+<li><strong>Low-pass filter</strong> = keep the <em>low</em> frequencies, turn <em>down</em> (or zero) the highs. Remember from Level 1 that the sharp detail lives in the high harmonics — so throwing them away <strong>smooths</strong> the signal. A low-pass on audio muffles it (kills the treble, leaves the bass). A low-pass on an image is a <strong>blur</strong> — a blur <em>is</em> a low-pass filter; that's not an analogy, it's literally what a Gaussian blur does to the image's spatial frequencies. Softness = missing high frequencies.</li>
+<li><strong>High-pass filter</strong> = the opposite: drop the lows, keep the highs. You're left with only the fast-changing parts — which in an image are the <strong>edges</strong> (edges are where brightness changes quickly = high spatial frequency). High-pass is the heart of edge-detection and sharpening.</li>
+<li><strong>Bands</strong> = keep a <em>slice</em> of the spectrum. Your stereo's <strong>bass / mid / treble</strong> knobs are three band filters — each scales one region of the frequency axis. An equalizer is just a row of sliders over the spectrum, exactly like the Spectrum demo's bars.</li>
+</ul>
+<blockquote>
+<p><strong>This is the Spectrum demo's low-pass toggle.</strong> Flip it and the high-frequency bars snap to zero; the waveform on the left visibly <em>smooths out</em> in the same instant. You're watching "blur = drop the highs" happen live. Nothing touched the low bars, so the overall shape survives — only the fine wiggle disappears.</p>
+</blockquote>
+<p>This one lens re-explains three things you already met earlier in the course:</p>
+<ul>
+<li><strong>Why <code>smoothstep</code> looks smoother than a straight <code>lerp</code>.</strong> Both go from 0 to 1, but the linear ramp has a <em>hard corner</em> at each end (the slope jumps), and corners mean strong high frequencies. <code>smoothstep</code> (from <a class="xref" href="#01b-the-seven-building-blocks">01b-the-seven-building-blocks</a>) has zero slope at both ends — no corners — so its <strong>spectrum falls off faster</strong>. Less high-frequency content = the eye reads it as smoother. "Smooth" is a statement about the spectrum.</li>
+<li><strong>Why a blur softens everything.</strong> It's a low-pass, as above — it removes the high spatial frequencies that carried the sharp edges.</li>
+<li><strong>Why fBm noise looks organic.</strong> Fractal noise (the layered Perlin/simplex from <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a> and the shader-noise lessons) is built by summing octaves, each doubling in frequency and <em>halving</em> in amplitude. Stack those up and the spectrum comes out sloped: lots of low frequency, steadily less as frequency rises — a <strong>1/f spectrum</strong> ("pink noise"). That particular slope — big slow undulations with progressively finer detail riding on top — is exactly the frequency signature of clouds, terrain, coastlines, and smoke. Nature is full of 1/f, which is why 1/f noise reads as natural. When you designed "gently alive" motion in lesson 07 by summing incommensurate sines, you were, without the vocabulary, <strong>hand-designing a spectrum</strong>.</li>
+</ul>
+<h2>Apply it — in your interactions</h2>
+<p>Three concrete ways this shows up in things you'll actually build.</p>
+<p><strong>1. An audio-reactive visualizer (a real FFT via Accelerate / vDSP).</strong> To make bars, rings, or particles dance to music, you take each incoming buffer of audio samples, run an FFT, and read off the magnitude of each frequency bin — that's the "how much bass / mid / treble right now" that drives your visuals. On Apple platforms you don't hand-roll the FFT; you use <strong>Accelerate's vDSP</strong>. The modern Swift API is <code>vDSP.FFT</code> (or the older <code>vDSP_DFT_zop_CreateSetup</code> / <code>vDSP_fft_zrip</code> family). The <em>shape</em> of the code, without the boilerplate:</p>
+<pre><code class="language-swift">import Accelerate
+
+// Set up once (log2n for a 1024-sample window → count 10).
+let fft = vDSP.FFT(log2n: 10, radix: .radix2, ofType: DSPSplitComplex.self)!
+
+// Per audio buffer:
+// 1. window the samples (a Hann window) to avoid edge artifacts,
+// 2. transform into a split-complex spectrum,
+// 3. take magnitudes → one number per frequency bin.
+fft.forward(input: windowedSamples, output: &amp;freqDomain)   // time → frequency
+vDSP.absolute(freqDomain, result: &amp;magnitudes)             // |bin| per frequency
+
+// `magnitudes[i]` is the energy in frequency bin i.
+// Group them into a few bands and map each to a bar height:
+let bass   = magnitudes[lowRange].reduce(0, +)
+let treble = magnitudes[highRange].reduce(0, +)
+// → drive bar.scale, ring.radius, particle.count, etc.
+</code></pre>
+<p>The takeaway isn't the syntax — it's the pipeline: <strong>samples → FFT → magnitudes → group into bands → map to visuals.</strong> Every music visualizer you've ever seen is that line of dominoes.</p>
+<p><strong>2. Organic motion as a designed spectrum.</strong> The summed-sines idle motion from <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a> — <code>a₁·sin(0.6t) + a₂·sin(0.43t) + …</code> with incommensurate frequencies so it never visibly loops — you can now read for what it is: <strong>you are choosing a spectrum by hand.</strong> A couple of low-frequency, high-amplitude terms give the slow overall drift; a sprinkle of higher-frequency, low-amplitude terms adds fine life. Want it calmer? Pull down the high-frequency amplitudes (a low-pass). Want it twitchier? Push them up. You're EQ-ing motion.</p>
+<p><strong>3. Smoothing input is a low-pass filter.</strong> The exponential "chase" / EMA you use to de-jitter a sensor or a drag — <code>current += (target − current) · rate</code>, the first tool in <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a> and a cousin of the building blocks in <a class="xref" href="#01b-the-seven-building-blocks">01b-the-seven-building-blocks</a> — is a <strong>one-pole low-pass filter</strong>. It lets slow movements through (you follow the finger) but attenuates fast jitter (the high-frequency noise gets smoothed away). <code>rate</code> <em>is</em> the cutoff frequency: bigger <code>rate</code> lets more high-frequency wiggle through (snappier, twitchier); smaller <code>rate</code> cuts more of it (smoother, laggier). Every time you've tuned that number by feel, you were setting a filter cutoff.</p>
+<p><strong>A hand-built spectrum you can paste.</strong> A waveform view driven by a few summed sines whose amplitudes are sliders — the Spectrum demo, in SwiftUI. Move a slider and you're pouring more of one frequency into the wave:</p>
+<pre><code class="language-swift">import SwiftUI
+
+struct SpectrumWave: View {
+    // One amplitude slider per harmonic — this array IS the spectrum.
+    @State private var amps: [Double] = [1.0, 0.0, 0.33, 0.0, 0.2]
+
+    // Synthesis: sum the harmonics to get the value at phase x∈[0,1].
+    func sample(_ x: Double) -&gt; Double {
+        var y = 0.0
+        for (i, a) in amps.enumerated() {
+            let n = Double(i + 1)                     // harmonic number
+            y += a * sin(2 * .pi * n * x)             // amplitude · sin(n·x)
+        }
+        return y
+    }
+
+    var body: some View {
+        VStack {
+            Canvas { ctx, size in
+                var path = Path()
+                let steps = Int(size.width)
+                for px in 0...steps {
+                    let x = Double(px) / Double(steps)         // 0…1 across the view
+                    let y = sample(x)                          // summed sines
+                    let py = size.height/2 - y * size.height/4 // center + scale
+                    let pt = CGPoint(x: Double(px), y: py)
+                    px == 0 ? path.move(to: pt) : path.addLine(to: pt)
+                }
+                ctx.stroke(path, with: .color(.accentColor), lineWidth: 2)
+            }
+            .frame(height: 160)
+
+            // Each slider is one frequency bar. Drag them to sculpt the wave.
+            ForEach(amps.indices, id: \.self) { i in
+                Slider(value: $amps[i], in: 0...1)
+            }
+        }
+        .padding()
+    }
+}
+</code></pre>
+<p>Set <code>amps</code> to <code>[1, 0, 1/3, 0, 1/5, 0, 1/7]</code> (odd harmonics, <code>1/n</code>) and you'll watch the square wave from Level 1 assemble itself. That array is a spectrum; the Canvas is the inverse transform doing synthesis by hand.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Fourier's big idea</strong> = any repeating signal is a sum of pure sines, each with its own frequency, amplitude, and phase.</li>
+<li><strong>spectrum</strong> = the recipe of frequencies — how much of each tone is in the signal (the "notes inside the chord").</li>
+<li><strong>harmonics</strong> = integer multiples of a base frequency; a square wave = the odd harmonics with amplitude <code>1/n</code>.</li>
+<li><strong>amplitude / phase (per frequency)</strong> = how much of a tone, and where in its cycle it starts — three numbers per frequency fully describe a periodic signal.</li>
+<li><strong>two views</strong> = the same signal as a <strong>waveform</strong> (value over time) or a <strong>spectrum</strong> (amount per frequency) — equivalent, and the spectrum is often easier.</li>
+<li><strong>Fourier transform</strong> = the machine that turns a waveform into its spectrum; the <strong>inverse</strong> rebuilds the waveform. A perfect round-trip.</li>
+<li><strong>DFT / FFT</strong> = the transform for a finite list of samples; the FFT computes it fast (O(N log N)) — call a library, don't derive it.</li>
+<li><strong>filtering = editing the spectrum</strong> = change the frequency bars, then transform back.</li>
+<li><strong>low-pass</strong> = drop the highs → smooth / blur (a blur <em>is</em> a low-pass).</li>
+<li><strong>high-pass</strong> = keep the highs → edges / sharpen.</li>
+<li><strong>1/f spectrum</strong> = fBm/pink noise's sloped spectrum (much low, steadily less high) — the frequency signature of natural-looking things.</li>
+<li><strong>EMA / exponential chase</strong> = a one-pole low-pass filter; <code>rate</code> is its cutoff.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Sines as circular motion (the atom): <a class="xref" href="#02-trigonometry-and-the-unit-circle">02-trigonometry-and-the-unit-circle</a></li>
+<li>Summed sines &amp; noise, now understood as spectra: <a class="xref" href="#07-oscillations-noise-and-organic-motion">07-oscillations-noise-and-organic-motion</a></li>
+<li><code>smoothstep</code>, <code>lerp</code>, and the exponential chase: <a class="xref" href="#01b-the-seven-building-blocks">01b-the-seven-building-blocks</a>, <a class="xref" href="#06a-simulations-beyond-the-spring">06a-simulations-beyond-the-spring</a></li>
+<li>Prev: <a class="xref" href="#13-the-ode-zoo">13-the-ode-zoo</a> · Next: <a class="xref" href="#15-transforms-and-matrices">15-transforms-and-matrices</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#13-the-ode-zoo"><span>Prev</span>← 13 — The ODE Zoo</a><a href="#15-transforms-and-matrices"><span>Next</span>15 — Transforms &amp; Matrices: The Grammar of Moving Things →</a></div></section>
+<section class="page" id="15-transforms-and-matrices" data-title="15 — Transforms &amp; Matrices: The Grammar of Moving Things" data-num="15" data-hasdemo="1" data-group="Master Keys"><h1>15 — Transforms &amp; Matrices: The Grammar of Moving Things</h1><div class="demo-mount" data-demo="matrixlab"></div>
+<blockquote>
+<p><strong>Interactive demo (top of page): the matrix playground.</strong> Drag the tips of the two basis arrows — <strong>î (red)</strong> and <strong>ĵ (green)</strong> — and watch the whole grid <em>and</em> a little "house" shape bend to follow. The shaded patch is the <strong>determinant</strong>: how much area got stretched. Hit the preset buttons (identity / rotate / shear / scale / <strong>flip</strong>) to snap to famous matrices. Try <strong>flip</strong> and watch the shaded area go <strong>negative</strong> — that's Level 1 made visible. Keep it open; this whole lesson is just narrating what your hands are already doing there.</p>
+</blockquote>
+<h2>Start here — the plain idea</h2>
+<p>A matrix is a <strong>verb</strong>. It's not a picture or a number — it's an <em>instruction</em> that says "move every point like <em>this</em>," and it applies the exact same instruction to all of them at once. Write the verb down once, and you can conjugate it onto a single dot, a whole path, ten thousand particles, or every pixel in an image. That reusability is the entire reason matrices exist: package "how things move" into a thing you can store, pass around, and combine.</p>
+<p>Here's the mental model that makes the fog lift (thanks, 3Blue1Brown). Your flat plane is built out of two little unit arrows: <strong>î</strong>, one step right, and <strong>ĵ</strong>, one step up. Every point you care about is secretly a recipe written in those two arrows — the point <code>(3, 2)</code> literally <em>means</em> "walk 3 of î, then 2 of ĵ." Now here's the trick: a 2×2 matrix does nothing more than <strong>record where î and ĵ end up</strong> after the move. And because your point was only ever a recipe of î and ĵ, it simply lands at <em>that same recipe of the new arrows</em> — 3 of the new î, plus 2 of the new ĵ. That's it. That's the whole machine.</p>
+<p>So "rotate," "scale," "shear," "flip" aren't four different kinds of math. They're four answers to one question: <strong>where do you want î and ĵ to go?</strong> Rotation swings both arrows around by an angle. Scaling stretches them. Shear pushes one over while the other stays put. Flip sends one to the wrong side. Move the two arrows, and the grid — and the house sitting on it — comes along for the ride. In the demo, you're literally grabbing î and ĵ with your cursor and letting the space follow. Everything below is just learning to <em>read and write</em> those two landing spots as numbers.</p>
+<h2>Level 1 — A 2×2 is where î and ĵ land</h2>
+<p>A 2×2 matrix has two columns. <strong>The first column is where î lands. The second column is where ĵ lands.</strong> Full stop. Read a matrix by reading its columns as two arrows.</p>
+<pre><code>M = [ a  c ]     first column (a, b) = new î
+    [ b  d ]     second column (c, d) = new ĵ
+</code></pre>
+<p>To move a point <code>p = (x, y)</code>, you take <code>x</code> of the new î plus <code>y</code> of the new ĵ:</p>
+<pre><code>M · p = x·(a, b) + y·(c, d) = (a·x + c·y,  b·x + d·y)
+</code></pre>
+<p>That formula <em>is</em> "combine the point out of the two landed arrows." You never have to memorize it — you can rebuild it any time from "columns are where î and ĵ go."</p>
+<p><strong>The identity</strong> leaves the arrows exactly where they started, so it does nothing:</p>
+<pre><code>I = [ 1  0 ]    î stays (1,0), ĵ stays (0,1)
+    [ 0  1 ]
+</code></pre>
+<p>Now the four verbs, each just a choice of landing spots:</p>
+<pre><code>Scale (2× wide, 3× tall)      Rotate by θ                 Shear (push top to the right)   Flip horizontally
+[ 2  0 ]  î→(2,0)             [ cosθ  −sinθ ]  î swings   [ 1  k ]  î stays, ĵ→(k,1)      [ −1  0 ]  î→(−1,0), ĵ stays
+[ 0  3 ]  ĵ→(0,3)            [ sinθ   cosθ ]  ĵ swings   [ 0  1 ]                         [  0  1 ]
+</code></pre>
+<p>Notice rotation is <em>just</em> the sin/cos rotation matrix from <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a> — same trig, now understood as "swing both basis arrows by θ." Nothing new; a costume you can now see through.</p>
+<h3>The determinant — how much area got scaled</h3>
+<p>When î and ĵ start out, they frame a 1×1 unit square (area 1). After the transform they frame a parallelogram. <strong>The determinant is the area of that parallelogram</strong> — the factor by which the transform stretches or shrinks <em>every</em> area.</p>
+<pre><code>det [ a  c ] = a·d − b·c
+    [ b  d ]
+</code></pre>
+<ul>
+<li><code>det = 1</code> → area preserved (pure rotation, or a shear — they don't change area).</li>
+<li><code>det = 6</code> → everything covers 6× the area (the 2×3 scale above).</li>
+<li><code>det = 0</code> → the transform <em>collapses</em> the plane onto a line (both arrows became parallel — you lost a dimension, and it's not invertible).</li>
+<li><code>det &lt; 0</code> → <strong>space got flipped inside-out.</strong> î and ĵ swapped handedness, like the world went through a mirror.</li>
+</ul>
+<p>This is exactly the shaded patch in the demo. Grab î and drag it <em>past</em> ĵ so they cross over — the shaded area flips sign and the house turns into its own mirror image. Press <strong>flip</strong> to jump straight there and see the determinant go negative. Reading a matrix's determinant tells you at a glance whether it grows, shrinks, squashes flat, or mirrors — before you compute anything.</p>
+<h2>Level 2 — Composing transforms</h2>
+<p>You rarely want just one verb. You want "rotate it, <em>then</em> scale it, <em>then</em> nudge it." Doing one transform and then another is a single new transform — and you build it by <strong>multiplying the matrices</strong>. That's the whole reason matrix multiplication is defined the weird way it is: it's "do this transform, then that one."</p>
+<pre><code>Apply A, then B  →  the combined matrix is  (B · A)
+p' = B · (A · p) = (B · A) · p
+</code></pre>
+<p>Read right-to-left, like function composition: the matrix nearest the point acts first. <code>B · A</code> means "A first, then B."</p>
+<p><strong>Order matters — this is the part people get burned by.</strong> Rotate-then-scale is <em>not</em> the same as scale-then-rotate, because the second verb acts on whatever the first one already did.</p>
+<pre><code>Scale-x by 2, THEN rotate 90°:   the already-stretched shape gets turned → a shape that's tall
+Rotate 90°, THEN scale-x by 2:   the turned shape gets stretched sideways → a different shape
+</code></pre>
+<p>Try it in the demo by hand: apply <strong>scale</strong>, then <strong>shear</strong>, versus <strong>shear</strong> then <strong>scale</strong> — the house lands in two different places. Matrix multiply is not commutative, and your eyes can see why: the arrows end up somewhere else.</p>
+<p>This is the secret behind a transform <strong>stack</strong>. Every time you push another transform, you're multiplying it onto the running product. One accumulated matrix carries "everything that's happened so far," and it moves points in a single step no matter how many verbs you stacked. Cheap, composable, exact.</p>
+<h2>Level 3 — Affine &amp; the transform stack</h2>
+<p>There's one move a pure 2×2 <em>cannot</em> do: <strong>translate</strong> (slide everything over). Why? A 2×2 always sends the origin to the origin — <code>M · (0,0)</code> is always <code>(0,0)</code>. Rotation, scale, shear, flip all pin the center in place. But "move 40 points to the right" has to shift the origin too. So we need something more.</p>
+<p>The fix looks like a hack and turns out to be profound: <strong>add a fake third coordinate that's always 1.</strong> A 2D point <code>(x, y)</code> becomes <code>(x, y, 1)</code>. These are <strong>homogeneous coordinates</strong>, and now translation fits into a 3×3 matrix:</p>
+<pre><code>[ a  c  tx ] [ x ]   [ a·x + c·y + tx ]      the tx, ty column is the translation;
+[ b  d  ty ] [ y ] = [ b·x + d·y + ty ]      the top-left 2×2 is still &quot;where î and ĵ land.&quot;
+[ 0  0  1  ] [ 1 ]   [       1        ]
+</code></pre>
+<p>That's an <strong>affine transform</strong>: a linear part (rotate/scale/shear/flip) <em>plus</em> a translation, all in one matrix. The genius is that now translation <strong>composes exactly like everything else</strong> — it's just more matrix multiplication. Slide, then rotate, then scale, then slide again: multiply four 3×3s, get one matrix, done. Affine transforms keep straight lines straight and parallel lines parallel; they just don't stay pinned at the origin.</p>
+<p>And once translation composes, you get <strong>the pipeline every graphics system uses</strong> — the same idea whether it's Core Animation, SwiftUI, or a shader:</p>
+<pre><code>model  →  world  →  view  →  screen
+(shape's   (place it     (where the      (pixels on
+ own units) in the scene)  camera/eye is)  glass)
+</code></pre>
+<p>Each arrow is one matrix. The shape is authored in its own tidy <strong>model</strong> coordinates (a house centered at its own origin). A model matrix drops it into the <strong>world</strong>. A view matrix re-expresses the world from the camera's point of view. A final matrix maps that to <strong>screen</strong> pixels. Multiply them into one and every vertex takes a single hop from "the shape's own idea of itself" to "a pixel." When a shader maps a position to a <strong>uv</strong> texture coordinate, that's this exact story wearing shader clothes — remapping one coordinate space into another <em>is</em> a transform.</p>
+<h2>Level 4 — Perspective (the next power level)</h2>
+<p>Affine keeps parallel lines parallel — great for flat UI, but real depth doesn't look like that. Railroad tracks <em>converge</em> toward a vanishing point. To get that, you promote to a <strong>projective transform</strong> (a <strong>homography</strong>), and the trick is to actually <em>use</em> that third homogeneous coordinate instead of leaving it as a constant 1.</p>
+<p>In a projective transform, the bottom row of the matrix isn't <code>[0 0 1]</code> anymore — it can mix <code>x</code> and <code>y</code> into that third number <code>w</code>. Then you <strong>divide by w</strong> at the end (the "perspective divide"). Because <code>w</code> now depends on where the point is, things farther "back" get divided by a bigger number and shrink — parallel lines bend toward a vanishing point. That single divide is what turns a flat rectangle into a receding, foreshortened card.</p>
+<p>This is the <strong>card-flip / tilt</strong> look. SwiftUI's <code>.rotation3DEffect</code> and Core Animation's perspective (<code>CATransform3D</code> with <code>m34</code> set) are exactly this: a projective transform that fakes a camera looking at a plane in 3D. And "3D graphics" in general is just <em>more matrices of the same kind</em> — the classic <strong>model-view-projection (MVP)</strong> chain is Level 3's pipeline with a projection matrix bolted on the end to do the perspective divide. Same grammar, one more verb.</p>
+<h2>Apply it — in your interactions</h2>
+<p>Everything above cashes out in a few SwiftUI modifiers. The headline: <strong>they compose, in order, top to bottom</strong> — the outer/last modifier acts on the result of the inner ones, exactly like matrix multiply.</p>
+<p><strong>1) Affine transforms compose.</strong> The 2D affine matrix from Level 3 is <code>CGAffineTransform</code>, and it's everywhere in UIKit/SwiftUI. You can build one explicitly, or use the sugar modifiers — same math underneath.</p>
+<pre><code class="language-swift">// Explicit affine: scale, then rotate, then translate — chained = multiplied.
+let t = CGAffineTransform.identity
+    .scaledBy(x: 1.5, y: 1.5)
+    .rotated(by: .pi / 6)
+    .translatedBy(x: 20, y: 0)
+
+MyShape().transformEffect(t)
+
+// The sugar version. Order matters: rotate happens, THEN scale acts on the rotated result.
+MyView()
+    .rotationEffect(.degrees(20))
+    .scaleEffect(1.3)
+// Swap the two lines and you get a different final placement — Level 2, live.
+</code></pre>
+<p><strong>2) A draggable card that tilts in 3D</strong> — a perspective transform driven by the drag. <code>.rotation3DEffect</code> is the projective/homography from Level 4: map how far the finger has moved into an angle, pick an axis, and let the card lean away.</p>
+<pre><code class="language-swift">struct TiltCard: View {
+    @State private var drag: CGSize = .zero
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 20)
+            .fill(.blue.gradient)
+            .frame(width: 220, height: 300)
+            // Horizontal drag → spin around the vertical (y) axis.
+            .rotation3DEffect(.degrees(drag.width / 8), axis: (x: 0, y: 1, z: 0))
+            // Vertical drag → tip around the horizontal (x) axis (note the sign).
+            .rotation3DEffect(.degrees(-drag.height / 8), axis: (x: 1, y: 0, z: 0))
+            .gesture(
+                DragGesture()
+                    .onChanged { drag = $0.translation }
+                    .onEnded { _ in withAnimation(.spring) { drag = .zero } }
+            )
+    }
+}
+</code></pre>
+<p>The <code>drag.width / 8</code> is itself a tiny transform: it <strong>maps the gesture's coordinate space into the effect's space</strong> (points of finger travel → degrees of rotation). That mapping is a design knob — a remap, in the language of <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a> — and choosing it well is most of what makes a tilt feel good.</p>
+<p><strong>3) Gesture space ↔ effect space is a transform too.</strong> A drag reports translation in the view's coordinate system; your effect might want angles, or an offset in a rotated frame, or normalized 0→1. Whenever you convert between those, you're applying a transform — the same grammar as everything else on this page. Naming that consciously ("I'm mapping <em>this</em> space to <em>that</em> space") is what stops the "why is it rotating the wrong way / drifting" class of bugs.</p>
+<p><strong>What Apple does.</strong> Under the hood it's all matrices. <code>CGAffineTransform</code> is the 2D affine (Level 3) used throughout UIKit and SwiftUI. Core Animation's <code>CATransform3D</code> is the full 4×4 (Level 4, including the <code>m34</code> perspective term). SceneKit, RealityKit, and ARKit are entirely matrix-driven — every node has a transform, and the render pipeline is the model-view-projection chain from Level 4. You already know the grammar; these are just its dialects.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>matrix</strong> = a reusable <em>verb</em> that moves every point the same way; stored, passed, reused.</li>
+<li><strong>columns = where î and ĵ land</strong> = the whole meaning of a 2×2; read a matrix as two arrows.</li>
+<li><strong>any point is a recipe of î and ĵ</strong> = so it lands at that same recipe of the <em>new</em> arrows.</li>
+<li><strong>rotate / scale / shear / flip</strong> = four answers to one question: where do the two arrows go?</li>
+<li><strong>determinant</strong> = area scale factor; <code>0</code> = collapsed to a line, <code>&lt; 0</code> = space flipped/mirrored.</li>
+<li><strong>composition = matrix multiply</strong> = "do A, then B" is one matrix <code>B·A</code>; <strong>order matters</strong> (not commutative).</li>
+<li><strong>transform stack</strong> = keep multiplying new verbs onto one running matrix; one hop moves the point.</li>
+<li><strong>affine</strong> = 2×2 linear part <strong>+</strong> translation; keeps lines straight and parallels parallel.</li>
+<li><strong>homogeneous coordinates</strong> = the extra <code>1</code> (a 3×3) so translation composes like everything else.</li>
+<li><strong>model → world → view → screen</strong> = the universal pipeline; each arrow is one matrix.</li>
+<li><strong>projective / homography</strong> = use <code>w</code> and divide by it → parallel lines converge → perspective/tilt.</li>
+<li><strong>MVP (model-view-projection)</strong> = the pipeline with a projection matrix; "3D is just more matrices."</li>
+<li><strong>coordinate mapping is a transform</strong> = gesture space → effect space, position → uv, are all transforms.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Foundation (arrows, the rotation matrix): <a class="xref" href="#04-vectors-and-linear-algebra">04-vectors-and-linear-algebra</a></li>
+<li>Curves that live in these spaces: <a class="xref" href="#05-parametric-curves-and-splines">05-parametric-curves-and-splines</a></li>
+<li>The 3D / perspective payoff in practice: <a class="xref" href="coreanimation.html#15-transform-3d">Core Animation 3D transforms</a></li>
+<li>Mapping one range to another (the gesture→effect knob): <a class="xref" href="#06-interpolation-easing-and-springs">06-interpolation-easing-and-springs</a></li>
+<li>Prev: <a class="xref" href="#14-fourier-sum-of-sines">14-fourier-sum-of-sines</a> · Hub: <a class="xref" href="#00-roadmap">🗺 Roadmap</a></li>
+</ul><div class="pager"><a href="#14-fourier-sum-of-sines"><span>Prev</span>← 14 — Fourier: Everything Is a Sum of Sines</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
