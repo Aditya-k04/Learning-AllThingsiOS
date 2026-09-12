@@ -21,7 +21,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
     <div class="coursehead"><div class="ct">Metal Shaders</div><div class="cs">GPU from zero: MSL, fragments, noise, blur, distortion, real Apple effects.</div></div>
-    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html" selected>Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option></optgroup></select></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html" selected>Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit.html">UIKit Foundations</option><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option></optgroup></select></div>
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
@@ -295,6 +295,54 @@
 <td>35</td>
 <td><code>35-capstone-smoke-sparks-nebula.md</code></td>
 <td>Capstone: combine everything into a living nebula</td>
+</tr>
+</tbody>
+</table>
+<h2>Part 8: Next Steps (out of the fragment shader)</h2>
+<p>Three doors beyond per-pixel work: general GPU compute, real 3D, and modern Metal 4.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>File</th>
+<th>What You'll Learn</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>36</td>
+<td><code>36-compute-beyond-per-pixel.md</code></td>
+<td>Compute shaders: threads, threadgroups, grids — a parallel program over <em>any</em> data</td>
+</tr>
+<tr>
+<td>37</td>
+<td><code>37-shaders-that-remember.md</code></td>
+<td>Persistent GPU state: ping-pong buffers + threadgroup (tile) memory for cooperation</td>
+</tr>
+<tr>
+<td>38</td>
+<td><code>38-simulation-at-scale.md</code></td>
+<td>The ODE zoo on the GPU: particles, boids, fluids, reaction-diffusion at scale</td>
+</tr>
+<tr>
+<td>39</td>
+<td><code>39-beyond-the-quad-3d-pipeline.md</code></td>
+<td>Real 3D: vertex/index buffers, the model→view→projection stack, depth</td>
+</tr>
+<tr>
+<td>40</td>
+<td><code>40-materials-pbr-and-volumetrics.md</code></td>
+<td>Physically-based lighting (BRDF, IBL) + deeper raymarching: shadows, AO, volumetrics</td>
+</tr>
+<tr>
+<td>41</td>
+<td><code>41-ray-tracing-and-metalfx.md</code></td>
+<td>Metal 4 hardware ray tracing, acceleration structures, MetalFX upscaling/denoise/frame-interp</td>
+</tr>
+<tr>
+<td>42</td>
+<td><code>42-modern-gpu-and-performance.md</code></td>
+<td>Mesh shaders, argument buffers/bindless, ML-in-shaders (tensors), TBDR &amp; GPU frame capture</td>
 </tr>
 </tbody>
 </table>
@@ -7244,7 +7292,623 @@ half3 palette(float t){
 <li>Driving it from SwiftUI: <a class="xref" href="#18a-feeding-data-into-shaders">18a-feeding-data-into-shaders</a>, <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a></li>
 <li>The 3D sibling technique: <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a></li>
 <li>Prev: <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></li>
-</ul><div class="pager"><a href="#34-raymarching-3d-sdf"><span>Prev</span>← 34 — Raymarching &amp; 3D SDFs: Shadertoy-Style 3D</a><a href="#01-card-shader-reflections"><span>Next</span>Card Shader Reflections — PBR Metallic Card →</a></div></section>
+</ul><div class="pager"><a href="#34-raymarching-3d-sdf"><span>Prev</span>← 34 — Raymarching &amp; 3D SDFs: Shadertoy-Style 3D</a><a href="#36-compute-beyond-per-pixel"><span>Next</span>36 — Compute Shaders: Beyond Per-Pixel →</a></div></section>
+<section class="page" id="36-compute-beyond-per-pixel" data-title="36 — Compute Shaders: Beyond Per-Pixel" data-num="36" data-hasdemo="0" data-group="Curriculum"><h1>36 — Compute Shaders: Beyond Per-Pixel</h1>
+<h2>Start here — the plain idea</h2>
+<p>Every fragment shader you've written so far has signed the same contract: <strong>one pixel in, one color out</strong>. The GPU hands you a coordinate, you do your fBm or your Voronoi or your raymarch, and you hand back a color. That's a beautiful, powerful cage — but it's a cage. You can only ever talk about <em>the pixel you're on</em>. You can't say "add up this whole array," or "move these ten thousand particles," or "for each row, do something different." The output is always a picture, and the input is always a screen position.</p>
+<p>A <strong>compute shader</strong> tears up that contract. Instead of "paint this pixel," it says: <em>here is a general parallel program — run N cooperating copies of it over whatever data I give you.</em> The data doesn't have to be a screen. It can be an array of floats, a physics grid, a million particle structs. You're no longer a painter assigned to one tile of a mural. You're a foreman who spawns an army of identical workers and tells each one, "you — handle element number 4,197."</p>
+<p>The trick that makes this work is that <em>you</em> decide the shape of the army. You describe the work as a <strong>grid</strong> of threads, chopped into <strong>threadgroups</strong>, and each thread learns its own address in that grid. Once a thread knows "I am element 4,197," it knows which slice of data is its job. That's the whole mental shift: from <em>drawing</em> to <em>dispatching work over data</em>.</p>
+<h2>The kernel function: a program, not a painter</h2>
+<p>A compute function is marked <code>kernel</code> instead of <code>fragment</code>. It returns <code>void</code> — there's no pixel to hand back. Instead it <em>writes into a buffer or texture</em> wherever it wants. The key parameter is its own address in the grid:</p>
+<pre><code class="language-cpp">kernel void add_arrays(device const float *a   [[buffer(0)]],
+                       device const float *b   [[buffer(1)]],
+                       device float       *out [[buffer(2)]],
+                       uint gid [[thread_position_in_grid]])
+{
+    out[gid] = a[gid] + b[gid];   // &quot;I am thread gid — I handle element gid&quot;
+}
+</code></pre>
+<p><code>[[thread_position_in_grid]]</code> is the magic word. It's the thread asking "who am I?" and getting back a unique index. There is no loop here — you don't iterate over the array. You launch one thread <em>per element</em>, and each one runs this tiny body once. Ten thousand additions happen at once, not one after another. The loop moved out of your code and into the hardware.</p>
+<h2>Threads → threadgroups → grid: you choose the shape</h2>
+<p>The GPU doesn't run threads as one giant flat mob. It runs them in <strong>threadgroups</strong> — small squads (say 64 or 256 threads) that get scheduled together and can share fast memory (that's lesson 37). The full army is the <strong>grid</strong>. So there are three nesting levels: the <em>grid</em> is all the work, a <em>threadgroup</em> is one squad, a <em>thread</em> is one worker.</p>
+<figure class="fig">
+<svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Grid divided into threadgroups, each threadgroup divided into threads">
+  <rect x="30" y="30" width="700" height="220" rx="10" fill="none" stroke="#8a8b93" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="40" y="22" fill="#8a8b93" font-family="sans-serif" font-size="13">grid — all the work</text>
+
+  <rect x="55" y="60" width="200" height="160" rx="8" fill="#2a2d38"/>
+  <text x="155" y="80" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">threadgroup</text>
+  <rect x="300" y="60" width="200" height="160" rx="8" fill="#2a2d38"/>
+  <text x="400" y="80" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">threadgroup</text>
+  <rect x="545" y="60" width="160" height="160" rx="8" fill="#3a2740" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="625" y="80" fill="#ec4899" font-family="sans-serif" font-size="12" text-anchor="middle">threadgroup</text>
+
+  <g fill="#1f2129" stroke="#4a4d58" stroke-width="1">
+    <rect x="70" y="95" width="36" height="36" rx="4"/><rect x="112" y="95" width="36" height="36" rx="4"/><rect x="154" y="95" width="36" height="36" rx="4"/><rect x="196" y="95" width="36" height="36" rx="4"/>
+    <rect x="70" y="140" width="36" height="36" rx="4"/><rect x="112" y="140" width="36" height="36" rx="4"/><rect x="154" y="140" width="36" height="36" rx="4"/><rect x="196" y="140" width="36" height="36" rx="4"/>
+  </g>
+  <text x="200" y="205" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">each box = one thread</text>
+
+  <g fill="#1f2129" stroke="#ec4899" stroke-width="1">
+    <rect x="560" y="100" width="30" height="30" rx="4"/><rect x="596" y="100" width="30" height="30" rx="4"/><rect x="632" y="100" width="30" height="30" rx="4"/>
+    <rect x="560" y="140" width="30" height="30" rx="4"/><rect x="596" y="140" width="30" height="30" rx="4"/><rect x="632" y="140" width="30" height="30" rx="4"/>
+  </g>
+  <text x="625" y="205" fill="#ec4899" font-family="sans-serif" font-size="11" text-anchor="middle">a squad that shares memory</text>
+</svg>
+<figcaption>You describe the work as a grid; the GPU runs it as squads of threads, each thread knowing its own address.</figcaption>
+</figure>
+
+<h2>Dispatching the army from Swift</h2>
+<p>On the CPU side you fill a <strong>compute command encoder</strong>: bind the pipeline, bind the buffers, then declare the shape of the grid and the size of each threadgroup. Modern Metal lets you just say "I want this many total threads" and it figures out the squads:</p>
+<pre><code class="language-swift">let encoder = commandBuffer.makeComputeCommandEncoder()!
+encoder.setComputePipelineState(pipeline)
+encoder.setBuffer(a,   offset: 0, index: 0)
+encoder.setBuffer(b,   offset: 0, index: 1)
+encoder.setBuffer(out, offset: 0, index: 2)
+
+let n = 10_000
+let gridSize = MTLSize(width: n, height: 1, depth: 1)
+let w = pipeline.maxTotalThreadsPerThreadgroup          // squad size the HW likes
+let tgSize = MTLSize(width: min(w, n), height: 1, depth: 1)
+
+encoder.dispatchThreads(gridSize, threadsPerThreadgroup: tgSize)
+encoder.endEncoding()
+</code></pre>
+<p><code>dispatchThreads</code> says "spawn exactly <code>n</code> threads" — perfect when your data count isn't a round multiple of the threadgroup size (the runtime handles the ragged edge). Its older sibling <code>dispatchThreadgroups</code> instead asks for a count of <em>squads</em>, and you do the ceiling-division math yourself. For a 2D job (an image, a simulation grid) you just give width <em>and</em> height and each thread gets a 2D <code>[[thread_position_in_grid]]</code>.</p>
+<p>One forward note: in <strong>Metal 4</strong> the old family of separate encoders is unified. A single <code>MTL4ComputeCommandEncoder</code> now drives compute dispatch, blit (memory copies), and acceleration-structure builds for ray tracing — one encoder type for the "do work on data" verbs, instead of juggling three. The mental model is unchanged; there's just less ceremony around it.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>kernel function</strong> = a GPU program that runs once per thread and writes into buffers, instead of returning a pixel color.</li>
+<li><strong>thread</strong> = one worker; the smallest unit that runs your kernel body exactly once.</li>
+<li><strong>threadgroup</strong> = a squad of threads scheduled together that can share fast on-chip memory.</li>
+<li><strong>grid</strong> = the whole army — the total shape of the work you dispatch.</li>
+<li><strong><code>[[thread_position_in_grid]]</code></strong> = a thread asking "who am I?" — its unique index into the data.</li>
+<li><strong>dispatchThreads</strong> = "spawn exactly this many threads," letting Metal handle counts that don't divide evenly.</li>
+<li><strong>MTL4ComputeCommandEncoder</strong> = Metal 4's single encoder that unifies compute, blit, and acceleration-structure work.</li>
+</ul>
+<h2>Related</h2>
+<p>Builds on <a class="xref" href="#08-compute-shaders">08-compute-shaders</a> and <a class="xref" href="#10-buffers-and-uniforms">10-buffers-and-uniforms</a>. See also <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a> for where the encoder lives, and <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a> for the per-pixel work you're now escaping.</p>
+<p>Prev: <a class="xref" href="#35-capstone-smoke-sparks-nebula">35-capstone-smoke-sparks-nebula</a> · Next: <a class="xref" href="#37-shaders-that-remember">37-shaders-that-remember</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#35-capstone-smoke-sparks-nebula"><span>Prev</span>← 35 — Capstone: A Drifting Smoke / Sparks / Nebula</a><a href="#37-shaders-that-remember"><span>Next</span>37 — Shaders That Remember: Ping-Pong &amp; Threadgroup Memory →</a></div></section>
+<section class="page" id="37-shaders-that-remember" data-title="37 — Shaders That Remember: Ping-Pong &amp; Threadgroup Memory" data-num="37" data-hasdemo="0" data-group="Curriculum"><h1>37 — Shaders That Remember: Ping-Pong &amp; Threadgroup Memory</h1>
+<h2>Start here — the plain idea</h2>
+<p>A fragment shader has two cruel limitations, and until now you've just lived with them. First, it's <strong>amnesiac</strong>: every frame it wakes up with a blank mind. Whatever it computed last frame is gone — there's no "yesterday." That's why your fBm looks the same every frame unless you feed it a clock: the shader itself remembers nothing. Second, it's <strong>blind</strong>: a thread painting pixel (100, 100) has no idea what the thread next door at (101, 100) is doing. Each pixel is computed in its own sealed room. Great for embarrassingly-parallel beauty; useless the moment a pixel needs to <em>know about its neighbors</em> or <em>build on its own past</em>.</p>
+<p>Two techniques hand a shader the things it was missing: a <strong>memory</strong> and a <strong>neighborhood</strong>. Memory comes from <strong>ping-pong buffers</strong> — you keep two copies of the state, read from A and write into B this frame, then swap, so state survives across frames like passing a baton. Neighborhood comes from <strong>threadgroup memory</strong> — a tiny, blazing-fast scratchpad that all the threads in one squad can read and write, so they can pool their data and cooperate instead of working in sealed rooms.</p>
+<p>Once a shader can remember its past <em>and</em> see its neighbors, it stops being a pretty static function and becomes something that <em>evolves</em>. That's the doorway to simulation (lesson 38). This lesson is about the two keys that open it.</p>
+<h2>Ping-pong: giving the shader a yesterday</h2>
+<p>You can't read and write the same buffer in one pass — threads finish at different times, so you'd be reading half-updated garbage. The fix is embarrassingly simple: keep <strong>two</strong> buffers. This frame, treat A as the past (read-only) and B as the future (write-only). Next frame, swap their roles. The "current state" bounces between the two like a ping-pong ball.</p>
+<pre><code class="language-swift">var bufferA = device.makeBuffer(length: byteCount)!   // the past
+var bufferB = device.makeBuffer(length: byteCount)!   // the future
+
+func step() {
+    encoder.setBuffer(bufferA, offset: 0, index: 0)   // read from
+    encoder.setBuffer(bufferB, offset: 0, index: 1)   // write to
+    encoder.dispatchThreads(grid, threadsPerThreadgroup: tg)
+    swap(&amp;bufferA, &amp;bufferB)                           // baton pass
+}
+</code></pre>
+<p>The kernel just reads <code>in</code>, computes, writes <code>out</code>:</p>
+<pre><code class="language-cpp">kernel void step(device const State *in  [[buffer(0)]],
+                 device       State *out [[buffer(1)]],
+                 uint gid [[thread_position_in_grid]])
+{
+    out[gid] = advance(in[gid]);   // future = rule applied to past
+}
+</code></pre>
+<p>This is <em>the</em> mechanism that fixes amnesia. The state persists because it lives in a buffer that outlives the frame — and it stays consistent because reads and writes never touch the same memory. Recall from <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a> why we couldn't just do this in a fragment shader: a fragment shader can't write back into an arbitrary buffer, only emit a color. Compute plus ping-pong is how the shader finally gets to keep a diary. (See <a class="xref" href="#10-buffers-and-uniforms">10-buffers-and-uniforms</a> for how these buffers are allocated and bound.)</p>
+<h2>Threadgroup memory: giving the shader a neighborhood</h2>
+<p>Reading from <code>device</code> memory (the big buffer in VRAM) is relatively slow. If every thread in a blur needs to read a 3×3 window, the same pixels get fetched over and over by overlapping neighbors — hugely wasteful. <strong>Threadgroup memory</strong> fixes this: it's a small pool of on-chip memory, marked <code>threadgroup</code>, that <em>all threads in one squad share</em>. The pattern is: each thread loads one value into the shared tile, everyone waits at a <strong>barrier</strong> until the tile is full, then each thread reads freely from the fast shared tile instead of slow global memory.</p>
+<pre><code class="language-cpp">kernel void blur(texture2d&lt;float&gt; src [[texture(0)]],
+                 texture2d&lt;float, access::write&gt; dst [[texture(1)]],
+                 uint2 gid  [[thread_position_in_grid]],
+                 uint2 lid  [[thread_position_in_threadgroup]])
+{
+    threadgroup float tile[18][18];         // shared scratchpad for the squad
+    tile[lid.y][lid.x] = src.read(gid).r;   // each thread loads its cell
+
+    threadgroup_barrier(mem_flags::mem_threadgroup);  // wait: tile now full
+
+    float sum = 0;                          // now read neighbors cheaply
+    for (int dy = -1; dy &lt;= 1; dy++)
+        for (int dx = -1; dx &lt;= 1; dx++)
+            sum += tile[lid.y + dy][lid.x + dx];
+    dst.write(sum / 9.0, gid);
+}
+</code></pre>
+<p>The <code>threadgroup_barrier</code> is the crucial handshake — "nobody reads the tile until everybody has finished filling it." This is exactly how blurs, reductions (summing a million numbers), and stencil ops get fast: threads <em>cooperate</em> through shared memory instead of each re-fetching the same data alone.</p>
+<figure class="fig">
+<svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ping-pong buffers with a swap loop, and a shared threadgroup scratchpad">
+  <rect x="40" y="90" width="130" height="70" rx="8" fill="#2a2d38"/>
+  <text x="105" y="120" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">buffer A</text>
+  <text x="105" y="140" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">(past)</text>
+
+  <rect x="300" y="90" width="150" height="70" rx="8" fill="#3a2740" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="375" y="125" fill="#ec4899" font-family="sans-serif" font-size="13" text-anchor="middle">compute step</text>
+  <text x="375" y="144" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">apply the rule</text>
+
+  <rect x="580" y="90" width="130" height="70" rx="8" fill="#2a2d38"/>
+  <text x="645" y="120" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">buffer B</text>
+  <text x="645" y="140" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">(future)</text>
+
+  <line x1="170" y1="125" x2="292" y2="125" stroke="#9aa0aa" stroke-width="2"/>
+  <path d="M292 125 l-10 -5 v10 z" fill="#9aa0aa"/>
+  <line x1="450" y1="125" x2="572" y2="125" stroke="#9aa0aa" stroke-width="2"/>
+  <path d="M572 125 l-10 -5 v10 z" fill="#9aa0aa"/>
+
+  <path d="M645 160 C645 240, 105 240, 105 160" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="6 4"/>
+  <path d="M105 160 l-5 12 h10 z" fill="#ec4899"/>
+  <text x="375" y="235" fill="#ec4899" font-family="sans-serif" font-size="12" text-anchor="middle">swap A and B — next frame the future becomes the past</text>
+
+  <rect x="300" y="20" width="150" height="46" rx="6" fill="#1f2129" stroke="#4a4d58" stroke-width="1"/>
+  <text x="375" y="40" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">threadgroup tile</text>
+  <text x="375" y="56" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">shared scratchpad — neighbors cooperate</text>
+  <line x1="375" y1="66" x2="375" y2="88" stroke="#9aa0aa" stroke-width="2"/>
+  <path d="M375 88 l-5 -10 h10 z" fill="#9aa0aa"/>
+</svg>
+<figcaption>Ping-pong gives the shader a memory across frames; threadgroup memory gives it a neighborhood within a frame.</figcaption>
+</figure>
+
+<h2>Two different kinds of "remembering"</h2>
+<p>It's worth separating the two, because they answer different questions. Ping-pong is <em>memory across time</em> — "what did the state look like last frame?" Threadgroup memory is <em>sharing across space, within one dispatch</em> — "what are my neighbors computing right now?" A real simulation usually uses both: threadgroup memory to let neighbors cooperate cheaply this frame, and ping-pong to carry the whole result forward to the next. Master these two and you have everything you need for the ODE zoo on the GPU.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>amnesiac</strong> = a fragment shader keeps no state between frames; it starts blank every time.</li>
+<li><strong>blind</strong> = a fragment thread can't see what neighboring pixels are computing.</li>
+<li><strong>ping-pong buffers</strong> = two buffers; read A / write B this frame, then swap — so state persists across frames.</li>
+<li><strong>threadgroup memory</strong> = a small, fast on-chip scratchpad shared by all threads in one squad.</li>
+<li><strong>threadgroup_barrier</strong> = a synchronization handshake so no thread reads shared memory before every thread has written it.</li>
+<li><strong>thread_position_in_threadgroup</strong> = a thread's <em>local</em> address inside its squad (vs. its global grid address).</li>
+<li><strong>cooperation</strong> = neighbors pooling data through shared memory instead of each re-fetching it alone.</li>
+</ul>
+<h2>Related</h2>
+<p>Builds on <a class="xref" href="#36-compute-beyond-per-pixel">36-compute-beyond-per-pixel</a>, <a class="xref" href="#10-buffers-and-uniforms">10-buffers-and-uniforms</a>, and the note in <a class="xref" href="#18-metal-in-swiftui">18-metal-in-swiftui</a> that fragment shaders can't write back.</p>
+<p>Prev: <a class="xref" href="#36-compute-beyond-per-pixel">36-compute-beyond-per-pixel</a> · Next: <a class="xref" href="#38-simulation-at-scale">38-simulation-at-scale</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#36-compute-beyond-per-pixel"><span>Prev</span>← 36 — Compute Shaders: Beyond Per-Pixel</a><a href="#38-simulation-at-scale"><span>Next</span>38 — Simulation at Scale: the ODE Zoo on the GPU →</a></div></section>
+<section class="page" id="38-simulation-at-scale" data-title="38 — Simulation at Scale: the ODE Zoo on the GPU" data-num="38" data-hasdemo="1" data-group="Curriculum"><h1>38 — Simulation at Scale: the ODE Zoo on the GPU</h1><div class="demo-mount" data-demo="boids"></div>
+<h2>Start here — the plain idea</h2>
+<p>In the interaction-math course you learned that a <em>dynamical system</em> is just a rule for change — a derivative — plus a way to step it forward in time. A pendulum, a spring, a predator-prey population: each is a tiny state (a few numbers) and a rule that says "given where you are now, here's how fast you're moving," which you integrate one small step at a time. On the CPU you ran these one at a time, or a few thousand in a loop. Beautiful math, modest scale.</p>
+<p>Now put the last two lessons together. Lesson 36 gave you a way to run one program over a million elements. Lesson 37 gave that program a memory. Stack them and you get the punchline of this whole arc: <strong>you can run the ODE zoo — but for a million elements at once.</strong> Each thread holds one element's state. Each thread applies the <em>same</em> rule. A million pendulums, a million particles, a million cells of a reaction-diffusion soup, all stepping forward together every frame. It is genuinely the <em>same math</em> from <a class="xref" href="interaction-math.html#12-dynamical-systems">dynamical systems</a> and <a class="xref" href="interaction-math.html#13-the-ode-zoo">the ODE zoo</a> — you're just changing the scale from "one" to "massively parallel."</p>
+<p>And the loop is always the same four beats: a <strong>buffer holds the state</strong>, a <strong>kernel applies the rule and integrates one step</strong>, you <strong>ping-pong</strong> to the next buffer, then you <strong>render</strong> it. Learn that loop once and every simulation on this list is a variation on it.</p>
+<blockquote>
+<p>The interactive <strong>boids</strong> demo mounted at the top of this note is exactly the algorithm you'd port to the GPU — one thread per bird. Watch it while you read the pattern below; that CPU loop over birds <em>becomes</em> the kernel.</p>
+</blockquote>
+<h2>The one loop behind every simulation</h2>
+<p>Here's the whole thing in one breath. It never really changes:</p>
+<figure class="fig">
+<svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="State buffer feeds a rule-and-integrate kernel that writes a new state buffer, which loops back and also feeds rendering">
+  <rect x="30" y="100" width="150" height="80" rx="8" fill="#2a2d38"/>
+  <text x="105" y="132" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">state buffer</text>
+  <text x="105" y="152" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">pos, vel …</text>
+
+  <rect x="290" y="90" width="180" height="100" rx="8" fill="#3a2740" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="380" y="126" fill="#ec4899" font-family="sans-serif" font-size="13" text-anchor="middle">kernel</text>
+  <text x="380" y="146" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">rule (derivative)</text>
+  <text x="380" y="164" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">+ integrate one step</text>
+
+  <rect x="580" y="100" width="150" height="80" rx="8" fill="#2a2d38"/>
+  <text x="655" y="132" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">new state</text>
+  <text x="655" y="152" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">buffer</text>
+
+  <line x1="180" y1="140" x2="282" y2="140" stroke="#9aa0aa" stroke-width="2"/>
+  <path d="M282 140 l-10 -5 v10 z" fill="#9aa0aa"/>
+  <line x1="470" y1="140" x2="572" y2="140" stroke="#9aa0aa" stroke-width="2"/>
+  <path d="M572 140 l-10 -5 v10 z" fill="#9aa0aa"/>
+
+  <path d="M655 100 C655 30, 105 30, 105 100" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="6 4"/>
+  <path d="M105 100 l-5 -12 h10 z" fill="#ec4899"/>
+  <text x="380" y="28" fill="#ec4899" font-family="sans-serif" font-size="12" text-anchor="middle">ping-pong: next frame's past is this frame's future</text>
+
+  <line x1="655" y1="180" x2="655" y2="240" stroke="#9aa0aa" stroke-width="2"/>
+  <path d="M655 240 l-5 -10 h10 z" fill="#9aa0aa"/>
+  <rect x="580" y="240" width="150" height="34" rx="6" fill="#1f2129" stroke="#4a4d58" stroke-width="1"/>
+  <text x="655" y="262" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">render the particles</text>
+</svg>
+<figcaption>State in, rule and integrate, state out, loop back — and render. Every simulation below is this diagram.</figcaption>
+</figure>
+
+<h2>A particle system, end to end</h2>
+<p>Here's the kernel for the simplest member of the family: gravity-pulled particles. Notice it's <em>literally</em> semi-implicit Euler — the exact integrator from the math course. Update velocity from the force first, then update position using the <em>new</em> velocity. That "velocity first" ordering is what makes it stable enough to watch for minutes without exploding.</p>
+<pre><code class="language-cpp">struct Particle { float2 pos; float2 vel; };
+
+kernel void step(device const Particle *in  [[buffer(0)]],
+                 device       Particle *out [[buffer(1)]],
+                 constant float        &amp;dt  [[buffer(2)]],
+                 uint gid [[thread_position_in_grid]])
+{
+    Particle p = in[gid];
+
+    float2 force = float2(0, -9.8);     // the rule: the derivative / acceleration
+    p.vel += force * dt;                // semi-implicit Euler: velocity FIRST
+    p.pos += p.vel * dt;                // then move with the new velocity
+
+    out[gid] = p;                       // write forward; caller will swap
+}
+</code></pre>
+<p>The Swift side is exactly the ping-pong loop from lesson 37: bind <code>in</code> and <code>out</code>, <code>dispatchThreads</code> one per particle, <code>swap</code> the buffers, then hand the current buffer to a render pass that draws each particle as a point. Change one line — the <code>force</code> — and you've changed the physics. That single substitution is how you travel the whole zoo.</p>
+<h2>Naming the family</h2>
+<p>Every "big" GPU simulation you've admired is this same loop with a different <code>force</code>:</p>
+<ul>
+<li><strong>particles</strong> — the base case above. Force = gravity, drag, wind, an attractor. One thread per particle.</li>
+<li><strong>boids</strong> — flocking. Each thread is <em>one bird</em>, and the rule is the three classic urges: <strong>separation</strong> (don't crowd neighbors), <strong>alignment</strong> (steer toward the average heading of neighbors), <strong>cohesion</strong> (steer toward the average position of neighbors). The only new ingredient is that a bird must <em>see its neighbors</em> — the neighborhood problem from lesson 37 — so you either read them from the state buffer or bin them into a grid.</li>
+<li><strong>stable-fluids</strong> — Jos Stam's fluid solver. The state is a <em>grid</em> of velocity, and the rule adds advection and diffusion steps; the "integrate" beat becomes a few passes but the state → kernel → ping-pong shape is unchanged.</li>
+<li><strong>reaction-diffusion</strong> — the Gray–Scott soup that made those coral/leopard patterns. It's the GPU version of the CPU demo you've seen: two chemical concentrations per cell, the rule is "react locally + diffuse to neighbors," ping-ponged thousands of times. On the CPU it crawls; on the GPU it blooms in real time.</li>
+</ul>
+<p>The reason they all feel like one idea is that they <em>are</em> one idea: state in a buffer, a local rule applied in parallel, integrated a step, ping-ponged forward. <strong>Same math you already know — now a million at a time.</strong></p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>state buffer</strong> = the array holding every element's numbers (position, velocity, concentration) between frames.</li>
+<li><strong>the rule</strong> = the derivative / force from the ODE — "given where you are, how fast are you changing?"</li>
+<li><strong>integrate</strong> = stepping the state forward by <code>dt</code>; here <strong>semi-implicit Euler</strong> (velocity first, then position), same as the math course.</li>
+<li><strong>ping-pong</strong> = read the old state, write the new one, swap — so the simulation persists across frames.</li>
+<li><strong>boids</strong> = flocking sim where each thread is one bird obeying separation, alignment, cohesion.</li>
+<li><strong>reaction-diffusion</strong> = a per-cell chemistry rule (react + diffuse) ping-ponged into patterns; the GPU version of the CPU demo.</li>
+<li><strong>massively parallel</strong> = the CPU loop over elements becomes "one thread per element," so N runs at once instead of one after another.</li>
+</ul>
+<h2>Related</h2>
+<p>Builds on <a class="xref" href="#36-compute-beyond-per-pixel">36-compute-beyond-per-pixel</a> and <a class="xref" href="#37-shaders-that-remember">37-shaders-that-remember</a>. Same math, now parallel: <a class="xref" href="interaction-math.html#12-dynamical-systems">dynamical systems</a> and <a class="xref" href="interaction-math.html#13-the-ode-zoo">the ODE zoo</a>. Buffers live in <a class="xref" href="#10-buffers-and-uniforms">10-buffers-and-uniforms</a>.</p>
+<p>Prev: <a class="xref" href="#37-shaders-that-remember">37-shaders-that-remember</a> · Next: <a class="xref" href="#39-beyond-the-quad-3d-pipeline">39-beyond-the-quad-3d-pipeline</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#37-shaders-that-remember"><span>Prev</span>← 37 — Shaders That Remember: Ping-Pong &amp; Threadgroup Memory</a><a href="#39-beyond-the-quad-3d-pipeline"><span>Next</span>39 — Beyond the Quad: Geometry, the MVP Stack &amp; Depth →</a></div></section>
+<section class="page" id="39-beyond-the-quad-3d-pipeline" data-title="39 — Beyond the Quad: Geometry, the MVP Stack &amp; Depth" data-num="39" data-hasdemo="0" data-group="Curriculum"><h1>39 — Beyond the Quad: Geometry, the MVP Stack &amp; Depth</h1>
+<h2>Start here — the plain idea</h2>
+<p>Every shader you've written so far has been a lie of convenience. You drew a single flat triangle stretched across the whole screen, and then did <em>all</em> the interesting work — patterns, raymarched worlds, whole 3D scenes — inside the fragment shader, per pixel. The GPU thought it was painting one boring quad. You were secretly running a renderer inside it. That trick is wonderful for learning, and it hits a wall the moment you want <em>actual</em> geometry: a mesh with thousands of triangles, each in its own place in space.</p>
+<p>Real 3D flips the arrangement. Instead of one fixed triangle and a clever fragment shader, you hand the GPU a <strong>bag of vertices</strong> — real points in 3D — and a <strong>vertex shader</strong> whose job is to place each one on screen. Think of it like a theater: the vertices are actors standing at marked positions on a 3D stage, the vertex shader is the camera crew that figures out where each actor lands in the final photograph, and the rasterizer is the printer that fills in every pixel between them. Your fragment shader still runs — but now it runs <em>for the triangles that actually exist</em>, not for a fake full-screen one.</p>
+<p>And the way each vertex travels from "a point on the model" to "a spot on screen" is exactly the transform stack you already built by hand in the math course: <strong>model → view → projection</strong>. It was matrices multiplying vectors on paper. Now it's the same matrices multiplying the same vectors, just running a few million times a frame on silicon. Nothing new to learn — only a new place for old knowledge to live. This lesson is about crossing that bridge: geometry in, MVP in the middle, depth buffer deciding what wins.</p>
+<h2>Geometry: vertices and indices</h2>
+<p>A mesh is two lists. <strong>Vertices</strong> are the raw points (plus whatever data rides along — normals, UVs, color). <strong>Indices</strong> are integers that say "make a triangle from vertex 5, 2, and 9" — so shared corners aren't duplicated. You pack the vertex list into an <code>MTLBuffer</code> and bind it.</p>
+<pre><code class="language-cpp">struct VertexIn {
+    float3 position [[attribute(0)]];
+    float3 normal   [[attribute(1)]];
+};
+</code></pre>
+<pre><code class="language-swift">// A cube's 8 corners, reused by 12 triangles via an index buffer.
+let vertexBuffer = device.makeBuffer(bytes: verts,
+                                     length: verts.count * MemoryLayout&lt;Vertex&gt;.stride)
+let indexBuffer  = device.makeBuffer(bytes: idx,
+                                     length: idx.count * MemoryLayout&lt;UInt16&gt;.stride)
+// ...later, in the encoder:
+encoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+encoder.drawIndexedPrimitives(type: .triangle, indexCount: idx.count,
+                              indexType: .uint16, indexBuffer: indexBuffer,
+                              indexBufferOffset: 0)
+</code></pre>
+<p>Contrast this with <a class="xref" href="#03-your-first-shader">03-your-first-shader</a>, where you never sent a single vertex — you called <code>drawPrimitives</code> for three hard-coded corners and let the fragment shader do everything. Here the vertices are the point.</p>
+<h2>The vertex shader: MVP made real</h2>
+<p>Each vertex flows through one function. Its one required output is <code>clipPos</code>, tagged <code>[[position]]</code> — the vertex in <em>clip space</em>, the coordinate system the rasterizer wants. You get there by multiplying by the combined <strong>Model-View-Projection</strong> matrix:</p>
+<pre><code class="language-cpp">struct VSOut {
+    float4 clipPos [[position]];   // required: where the rasterizer places it
+    float3 worldNormal;            // interpolated across the triangle for us
+};
+
+vertex VSOut vertex_main(VertexIn in [[stage_in]],
+                         constant float4x4 &amp;mvp [[buffer(1)]],
+                         constant float3x3 &amp;normalMat [[buffer(2)]]) {
+    VSOut out;
+    out.clipPos = mvp * float4(in.position, 1.0);
+    out.worldNormal = normalMat * in.normal;
+    return out;
+}
+</code></pre>
+<p>That one line, <code>mvp * float4(position, 1.0)</code>, <em>is</em> the entire lesson from <a class="xref" href="interaction-math.html#15-transforms-and-matrices">the transform stack</a> — model places the mesh in the world, view moves it into the camera's frame, projection squashes the frustum into a cube. You built that chain by hand on paper. The GPU just runs it per vertex. <strong>The MVP stack is your transform stack made real.</strong></p>
+<h2>Rasterizer → fragment hand-off</h2>
+<p>Between the vertex and fragment stages sits fixed-function hardware you don't program: the <strong>rasterizer</strong>. It takes the three clip-space corners of a triangle, figures out which pixels they cover, and — crucially — <strong>interpolates</strong> every non-position field of <code>VSOut</code> across the surface. Your <code>worldNormal</code> was defined only at the three corners; the fragment shader receives a smoothly blended value at every pixel in between, for free.</p>
+<pre><code class="language-cpp">fragment float4 fragment_main(VSOut in [[stage_in]]) {
+    float3 N = normalize(in.worldNormal);        // interpolated per-pixel
+    float  l = max(dot(N, normalize(float3(1))), 0.0);
+    return float4(float3(l), 1.0);
+}
+</code></pre>
+<p>This is the same fragment stage you've always written — but its inputs now come from real geometry, not from <code>uv</code> math. (Lighting with these normals is <a class="xref" href="#22-lighting-and-normals">22-lighting-and-normals</a>.)</p>
+<figure class="fig">
+<svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The 3D pipeline: vertices flow through the vertex shader with MVP, into the rasterizer, then the fragment shader, then a depth test, then the screen.">
+  <!-- stages -->
+  <rect x="20" y="60" width="110" height="64" rx="8" fill="#2a2d38"/>
+  <text x="75" y="88" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Vertices</text>
+  <text x="75" y="106" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">+ indices</text>
+
+  <rect x="165" y="60" width="130" height="64" rx="8" fill="#2a2d38" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="230" y="86" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Vertex shader</text>
+  <text x="230" y="104" fill="#ec4899" font-family="sans-serif" font-size="11" text-anchor="middle">clip = MVP · pos</text>
+
+  <rect x="330" y="60" width="120" height="64" rx="8" fill="#2a2d38"/>
+  <text x="390" y="88" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Rasterizer</text>
+  <text x="390" y="106" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">interpolate</text>
+
+  <rect x="485" y="60" width="130" height="64" rx="8" fill="#2a2d38" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="550" y="88" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Fragment shader</text>
+  <text x="550" y="106" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">per-pixel color</text>
+
+  <rect x="485" y="175" width="130" height="58" rx="8" fill="#2a2d38"/>
+  <text x="550" y="200" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Depth test</text>
+  <text x="550" y="218" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">nearest wins</text>
+
+  <rect x="650" y="175" width="90" height="58" rx="8" fill="#2a2d38"/>
+  <text x="695" y="208" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Screen</text>
+
+  <!-- arrows -->
+  <line x1="130" y1="92" x2="160" y2="92" stroke="#9aa0aa" stroke-width="1.5"/>
+  <polygon points="160,92 152,88 152,96" fill="#9aa0aa"/>
+  <line x1="295" y1="92" x2="325" y2="92" stroke="#9aa0aa" stroke-width="1.5"/>
+  <polygon points="325,92 317,88 317,96" fill="#9aa0aa"/>
+  <line x1="450" y1="92" x2="480" y2="92" stroke="#9aa0aa" stroke-width="1.5"/>
+  <polygon points="480,92 472,88 472,96" fill="#9aa0aa"/>
+  <line x1="550" y1="124" x2="550" y2="172" stroke="#9aa0aa" stroke-width="1.5"/>
+  <polygon points="550,172 546,164 554,164" fill="#9aa0aa"/>
+  <line x1="615" y1="204" x2="646" y2="204" stroke="#9aa0aa" stroke-width="1.5"/>
+  <polygon points="646,204 638,200 638,208" fill="#9aa0aa"/>
+</svg>
+<figcaption>The programmable stages (pink) are yours; the rasterizer and depth test are fixed hardware doing the in-between work.</figcaption>
+</figure>
+
+<h2>Depth: who's in front</h2>
+<p>Draw two overlapping triangles and something has to decide which pixel you see. The <strong>depth buffer</strong> is a hidden image, one float per pixel, holding the distance of the closest thing drawn so far. As each fragment is produced, the GPU compares its depth to what's stored; if it's nearer, it wins and overwrites, otherwise it's discarded. You enable it with a depth attachment and a <code>MTLDepthStencilState</code>:</p>
+<pre><code class="language-swift">let d = MTLDepthStencilDescriptor()
+d.depthCompareFunction = .less     // smaller depth = closer = keep
+d.isDepthWriteEnabled = true
+encoder.setDepthStencilState(device.makeDepthStencilState(descriptor: d)!)
+</code></pre>
+<p>Without this, triangles paint in draw order and far things smear over near things. With it, geometry sorts itself per-pixel, automatically — this is what makes a pile of triangles look like a solid object instead of a stack of decals.</p>
+<h2>One more gear: instancing</h2>
+<p>Want a thousand cubes? You don't send a thousand draw calls. You issue <strong>one</strong> draw with an instance count, and the vertex shader receives an <code>[[instance_id]]</code> telling it which copy it's building — so it can look up a per-instance transform and place each one differently.</p>
+<pre><code class="language-cpp">vertex VSOut instanced_main(VertexIn in [[stage_in]],
+                            constant float4x4 *mvps [[buffer(1)]],
+                            uint iid [[instance_id]]) {
+    VSOut out;
+    out.clipPos = mvps[iid] * float4(in.position, 1.0);
+    return out;
+}
+</code></pre>
+<p><code>encoder.drawIndexedPrimitives(..., instanceCount: 1000)</code> and the GPU stamps out a forest for nearly the price of one. Keep it in your pocket; it's how particle systems and crowds stay cheap.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Vertex buffer</strong> = an <code>MTLBuffer</code> of raw 3D points (and their attributes) fed to the vertex stage.</li>
+<li><strong>Index buffer</strong> = integers that assemble triangles from shared vertices, so corners aren't duplicated.</li>
+<li><strong>Vertex shader</strong> = per-vertex function whose one job is to output <code>clipPos = mvp * position</code>.</li>
+<li><strong>MVP stack</strong> = model → view → projection matrices; literally the transform stack from the math course, now per-vertex on the GPU.</li>
+<li><strong>Rasterizer</strong> = fixed hardware that fills triangles and interpolates every non-position field to each pixel.</li>
+<li><strong>Depth buffer</strong> = per-pixel nearest-distance record; the depth test discards fragments hidden behind closer ones.</li>
+<li><strong>Instancing</strong> = one draw call producing many copies, each distinguished by <code>[[instance_id]]</code>.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#03-your-first-shader">03-your-first-shader</a> · <a class="xref" href="#07-vertex-shaders">07-vertex-shaders</a> · <a class="xref" href="#22-lighting-and-normals">22-lighting-and-normals</a> · <a class="xref" href="interaction-math.html#15-transforms-and-matrices">the transform stack</a> · <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a></p>
+<p>Prev: <a class="xref" href="#07-vertex-shaders">07-vertex-shaders</a> · Next: <a class="xref" href="#40-materials-pbr-and-volumetrics">40-materials-pbr-and-volumetrics</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#38-simulation-at-scale"><span>Prev</span>← 38 — Simulation at Scale: the ODE Zoo on the GPU</a><a href="#40-materials-pbr-and-volumetrics"><span>Next</span>40 — Materials, PBR &amp; Volumetrics →</a></div></section>
+<section class="page" id="40-materials-pbr-and-volumetrics" data-title="40 — Materials, PBR &amp; Volumetrics" data-num="40" data-hasdemo="1" data-group="Curriculum"><h1>40 — Materials, PBR &amp; Volumetrics</h1><div class="demo-mount" data-demo="sh-glsl"></div>
+<blockquote>
+<p>A live GLSL editor is mounted at the top of this page. As you read, try prototyping a soft-shadowed SDF scene in it — a sphere on a plane, one light, and the shadow loop below. Seeing the penumbra soften in real time teaches more than any paragraph.</p>
+</blockquote>
+<h2>Start here — the plain idea</h2>
+<p>The Phong lighting you met in <a class="xref" href="#22-lighting-and-normals">22-lighting-and-normals</a> was a good first lie: pick an ambient blob, add a diffuse term, sprinkle a specular highlight, tune the numbers until it looks okay. It works, but it's <em>guessing</em>. Bump the light and the plastic sheen doesn't quite track; put the object in a new room and it looks pasted in. The problem is that the recipe was invented to look plausible, not to obey how light actually behaves. This lesson is about doing light <em>right</em> — and it comes in two flavors that share one soul.</p>
+<p>The first is <strong>physically-based rendering</strong>. Instead of ad-hoc terms, you model a real surface with a small function — a <strong>BRDF</strong> — that answers one honest question: of the light arriving from this direction, how much bounces toward the eye? The BRDF is bound by <strong>energy conservation</strong>: a surface can't reflect more light than it receives. Feed it a few intuitive material knobs — albedo (base color), roughness (polished vs. frosted), metalness (dielectric vs. metal) — and light it not with a lone point lamp but with the <strong>whole environment</strong> as a light source. The result is a material that looks <em>correct</em> in any room, because it was built from the same rules real rooms obey.</p>
+<p>The second flavor is <strong>light in the open air</strong>. Your raymarcher from <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a> knew how to hit a surface. But real scenes have soft shadows that blur at their edges, corners that darken because they're boxed in, and fog, smoke and clouds that aren't surfaces at all — they're <em>volumes</em> you see <em>through</em>. The beautiful part: it's the same marching loop you already own. Point the ray at the light instead of the camera and you get shadows. Sample the field around a point and you get occlusion. March <em>through</em> a density instead of stopping at a wall and you get clouds. Both flavors — the BRDF and the volume — are the same instinct: stop faking light, start accounting for it.</p>
+<h2>PBR: a BRDF with material knobs</h2>
+<p>A physically-based shader replaces Phong's guesswork with a reflectance function split into two lobes: a soft <strong>diffuse</strong> part (light that scatters into the surface and comes back out) and a sharp <strong>specular</strong> part (light that bounces off the microscopic facets). Roughness controls how tight that specular lobe is; metalness decides whether the surface has diffuse at all (metals don't) and tints the reflection with albedo.</p>
+<pre><code class="language-cpp">// Cook-Torrance specular, trimmed to its three real pieces.
+float3 brdf(float3 N, float3 V, float3 L, float3 albedo,
+            float roughness, float metalness) {
+    float3 H = normalize(V + L);
+    float3 F0 = mix(float3(0.04), albedo, metalness);   // metals reflect their color
+
+    float  D = ggxDistribution(N, H, roughness);        // how many facets face H
+    float  G = geometrySmith(N, V, L, roughness);       // self-shadowing of facets
+    float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);  // more reflective at grazing angles
+
+    float3 spec = (D * G * F) / (4.0 * max(dot(N,V),1e-3) * max(dot(N,L),1e-3));
+    float3 diff = (1.0 - F) * (1.0 - metalness) * albedo / M_PI_F;  // energy left after reflection
+    return (diff + spec) * max(dot(N, L), 0.0);
+}
+</code></pre>
+<p>The three terms — <strong>D</strong> (facet distribution), <strong>G</strong> (facets shadowing each other), <strong>F</strong> (Fresnel, the grazing-angle brightening) — are just the honest bookkeeping Phong skipped. Note <code>diff</code> multiplies by <code>(1.0 - F)</code>: whatever the specular reflects, the diffuse can't also use. That subtraction <em>is</em> energy conservation.</p>
+<h2>Image-based lighting: the room is the lamp</h2>
+<p>A single light direction can't make a chrome ball look like chrome — chrome reflects its <em>surroundings</em>. So the "light" becomes an environment map (a cube texture of the scene), pre-filtered so rough surfaces read a blurry version and mirrors read a sharp one.</p>
+<pre><code class="language-cpp">// The environment supplies both the diffuse ambient and the mirror reflection.
+float3 R = reflect(-V, N);
+float3 irradiance = irradianceMap.sample(s, N).rgb;          // soft, for diffuse
+float3 prefiltered = prefilteredEnv.sample(s, R, level(roughness * 6)).rgb; // sharp→blurry
+float3 ambient = irradiance * albedo + prefiltered * F;
+</code></pre>
+<p>This is why PBR assets drop into any scene and look at home: they're lit by the scene itself, not by numbers you hand-tuned for one shot.</p>
+<h2>Deeper raymarching: soft shadows</h2>
+<p>Now the second flavor. To shadow a point, march a ray <em>from</em> it <em>toward</em> the light. A hard shadow just asks "did I hit anything?" A <strong>soft</strong> shadow is cleverer: as it marches, it tracks the <em>closest</em> the ray ever came to an obstacle, relative to distance. A near-miss darkens the penumbra; a clean path stays lit. One loop, and edges blur exactly like real shadows.</p>
+<pre><code class="language-cpp">float softShadow(float3 ro, float3 rd, float k) {
+    float res = 1.0, t = 0.02;
+    for (int i = 0; i &lt; 64; i++) {
+        float h = sceneSDF(ro + rd * t);
+        if (h &lt; 0.001) return 0.0;          // fully blocked
+        res = min(res, k * h / t);          // closest miss, scaled by distance
+        t += h;
+        if (t &gt; 20.0) break;
+    }
+    return clamp(res, 0.0, 1.0);            // 1 = lit, 0 = shadow, between = penumbra
+}
+</code></pre>
+<p>The same field also gives <strong>ambient occlusion</strong> almost for free: step a few small distances along the normal and compare where the surface <em>is</em> to where the SDF <em>says</em> the nearest wall is — if they disagree, the point is boxed in, so darken it. Corners and creases dim automatically.</p>
+<h2>Volumetrics: marching <em>through</em> the field</h2>
+<p>Surfaces stop the ray. Volumes don't — you march <em>through</em> them, sampling a <strong>density</strong> at each step and accumulating both how much light reaches that point and how much the medium has already blocked behind it. Drive the density with fBm noise from <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a> and you get clouds, smoke, god-rays — true 3D, not a flat sprite.</p>
+<pre><code class="language-cpp">float4 marchVolume(float3 ro, float3 rd, float3 lightDir) {
+    float3 col = 0.0;
+    float  transmittance = 1.0;             // how much still shows through
+    float  t = 0.0;
+    for (int i = 0; i &lt; 96; i++) {
+        float3 p = ro + rd * t;
+        float density = fbm(p) * cloudMask(p);          // fBm shapes the cloud
+        if (density &gt; 0.001) {
+            float lit = softShadow(p, lightDir, 8.0);    // self-shadowing, same loop
+            col += transmittance * density * lit * lightColor;
+            transmittance *= exp(-density * 0.5);        // Beer's law: it gets murkier
+            if (transmittance &lt; 0.01) break;             // fully opaque, stop early
+        }
+        t += 0.1;
+    }
+    return float4(col, 1.0 - transmittance);            // alpha = how solid the fog got
+}
+</code></pre>
+<p>Every line here is an idea you already hold: a march loop from <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a>, fBm from <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a>, and the shadow loop from two sections ago — now aimed <em>inside</em> the cloud so it shadows itself.</p>
+<figure class="fig">
+<svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A view ray hits a surface point; at that point three vectors matter for the BRDF: N the surface normal, L the direction to the light, and V the direction to the viewer.">
+  <!-- surface -->
+  <line x1="60" y1="220" x2="700" y2="180" stroke="#8a8b93" stroke-width="2"/>
+  <text x="90" y="245" fill="#8a8b93" font-family="sans-serif" font-size="12">surface</text>
+
+  <!-- hit point -->
+  <circle cx="380" cy="199" r="5" fill="#ec4899"/>
+  <text x="380" y="228" fill="#ec4899" font-family="sans-serif" font-size="12" text-anchor="middle">hit point</text>
+
+  <!-- Normal N -->
+  <line x1="380" y1="199" x2="380" y2="70" stroke="#cfcfcf" stroke-width="1.8"/>
+  <polygon points="380,70 375,82 385,82" fill="#cfcfcf"/>
+  <text x="392" y="80" fill="#cfcfcf" font-family="sans-serif" font-size="14">N</text>
+
+  <!-- Light L -->
+  <line x1="380" y1="199" x2="200" y2="95" stroke="#9aa0aa" stroke-width="1.8"/>
+  <polygon points="200,95 208,104 212,94" fill="#9aa0aa"/>
+  <text x="185" y="88" fill="#9aa0aa" font-family="sans-serif" font-size="14">L</text>
+  <text x="150" y="70" fill="#8a8b93" font-family="sans-serif" font-size="11">to light</text>
+
+  <!-- View V -->
+  <line x1="380" y1="199" x2="580" y2="100" stroke="#9aa0aa" stroke-width="1.8"/>
+  <polygon points="580,100 568,101 574,110" fill="#9aa0aa"/>
+  <text x="590" y="98" fill="#9aa0aa" font-family="sans-serif" font-size="14">V</text>
+  <text x="588" y="118" fill="#8a8b93" font-family="sans-serif" font-size="11">to viewer</text>
+
+  <!-- incoming view ray -->
+  <line x1="640" y1="60" x2="386" y2="196" stroke="#ec4899" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="640" y="52" fill="#ec4899" font-family="sans-serif" font-size="11" text-anchor="middle">view ray</text>
+</svg>
+<figcaption>The BRDF's whole job: given N, L, and V at a hit point, how much light travels from L to V? Roughness and metalness shape the answer.</figcaption>
+</figure>
+
+<h2>The foundation</h2>
+<ul>
+<li><strong>PBR</strong> = lighting built from physical rules instead of tuned constants, so materials look right in any environment.</li>
+<li><strong>BRDF</strong> = a function returning how much incoming light reflects toward the viewer, driven by N, L, V and material params.</li>
+<li><strong>Energy conservation</strong> = a surface can't emit more than it receives; specular and diffuse split one budget (the <code>1 - F</code> term).</li>
+<li><strong>Material params</strong> = albedo (base color), roughness (specular tightness), metalness (dielectric vs. metal reflection).</li>
+<li><strong>Image-based lighting</strong> = using a pre-filtered environment map as the light source for both ambient diffuse and reflections.</li>
+<li><strong>Soft shadow</strong> = a shadow march that tracks the closest miss, so penumbrae blur instead of hard-edging.</li>
+<li><strong>Volumetrics</strong> = marching <em>through</em> a density field (fBm-driven), accumulating light and applying Beer's-law transmittance.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#22-lighting-and-normals">22-lighting-and-normals</a> · <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a> · <a class="xref" href="#29-sdf-toolkit">29-sdf-toolkit</a> · <a class="xref" href="#26-advanced-noise-fbm">26-advanced-noise-fbm</a> · <a class="xref" href="#39-beyond-the-quad-3d-pipeline">39-beyond-the-quad-3d-pipeline</a></p>
+<p>Prev: <a class="xref" href="#39-beyond-the-quad-3d-pipeline">39-beyond-the-quad-3d-pipeline</a> · Next: <a class="xref" href="#41-ray-tracing-and-metalfx">41-ray-tracing-and-metalfx</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#39-beyond-the-quad-3d-pipeline"><span>Prev</span>← 39 — Beyond the Quad: Geometry, the MVP Stack &amp; Depth</a><a href="#41-ray-tracing-and-metalfx"><span>Next</span>41 — Ray Tracing &amp; MetalFX (Metal 4) →</a></div></section>
+<section class="page" id="41-ray-tracing-and-metalfx" data-title="41 — Ray Tracing &amp; MetalFX (Metal 4)" data-num="41" data-hasdemo="0" data-group="Curriculum"><h1>41 — Ray Tracing &amp; MetalFX (Metal 4)</h1>
+<h2>Start here — the plain idea</h2>
+<p>Back in <a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a> you answered "what does this ray hit?" by hand. You took tiny steps along the ray and asked a distance field "how far to the nearest surface?" over and over until you bumped into something. It's beautiful, but it's <em>you</em> doing the searching, one small step at a time, in the fragment shader. On a real mesh with a million triangles, that hand-marching falls apart.</p>
+<p>Hardware ray tracing flips this. Instead of marching, you ask the GPU a single question — "shoot this ray, tell me the first triangle it hits" — and dedicated silicon answers it fast. The trick is that the geometry is pre-organized into an <strong>acceleration structure</strong>, a tree of nested bounding boxes (a BVH). A ray doesn't test a million triangles; it walks the tree, skipping whole boxes it misses, and only checks the handful of triangles that survive. Think of it as the difference between reading every page of a phone book versus using the alphabetical tabs.</p>
+<p>Once you can cheaply ask "what does this ray hit?", the whole lighting world opens up: mirror <strong>reflections</strong> (bounce a ray off the surface), <strong>real shadows</strong> (shoot a ray toward the light — blocked or not?), and full <strong>path tracing</strong> (let rays bounce around gathering light like real photons). The catch: path tracing with a few rays per pixel is <em>noisy</em> and <em>slow</em>. That's where <strong>MetalFX</strong> comes in — it's the crew that rescues the frame rate after the ray tracer does the physics.</p>
+<h2>Rays and the BVH</h2>
+<p>The mental model has three moving parts. You <strong>build an acceleration structure</strong> once (or rebuild when geometry changes) — Metal walks your vertex/index buffers and produces the BVH. You <strong>trace rays</strong> against it from a shader. And when a ray hits, an <strong>intersection function</strong> decides what "hit" means — an opaque triangle just reports the hit, but a custom one can do alpha-tested foliage, procedural spheres, or "ignore this and keep going."</p>
+<p>Metal 4 sharpens two things here. <strong>Intersection function buffers</strong> let you index into a flexible table of intersection functions, so different objects can run different hit logic without a rigid layout — the groundwork for large, varied scenes. And acceleration-structure <strong>build flags</strong> let you trade off: ask for <em>faster intersection</em> (a fatter, more optimized tree) or <em>smaller size</em> (less memory, slightly slower traces), depending on whether the geometry is static hero content or streaming detail.</p>
+<pre><code class="language-cpp">// shape of the query, not a full program
+metal::raytracing::ray r { origin, direction, tMin, tMax };
+metal::raytracing::intersector&lt;...&gt; hitTester;
+auto result = hitTester.intersect(r, accelStructure);
+if (result.type == intersection_type::triangle) { /* shade the hit */ }
+</code></pre>
+<h2>Where MetalFX slots in</h2>
+<p>Path tracing gives you <em>correct</em> light but a <em>grainy</em> image at real-time ray counts. MetalFX is Metal 4's answer, and it works in three complementary moves. <strong>Denoising</strong> takes the noisy path-traced frame and reconstructs a clean image — this is the piece that makes real-time path tracing actually viable. <strong>Upscaling</strong> (spatial and temporal) renders the scene at a low resolution and intelligently scales it up, so you pay for far fewer pixels. And <strong>Frame Interpolation</strong> generates an in-between frame for every two you render, roughly doubling perceived smoothness.</p>
+<p>The order matters: you ray trace at low resolution, denoise the noisy result, upscale it to display resolution, then let frame interpolation fill the gaps between frames. The ray tracer buys correctness; MetalFX buys the frame rate back.</p>
+<figure class="fig">
+<svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Camera ray traverses a BVH of nested bounding boxes to a hit, is shaded, then passes through a MetalFX denoise and upscale stage before reaching the screen">
+  <rect x="24" y="120" width="80" height="44" rx="8" fill="#2a2d38"/>
+  <text x="64" y="147" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">camera</text>
+  <line x1="104" y1="142" x2="180" y2="142" stroke="#ec4899" stroke-width="2"/>
+  <polygon points="180,142 170,137 170,147" fill="#ec4899"/>
+  <text x="140" y="132" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">ray</text>
+
+  <rect x="184" y="70" width="150" height="140" rx="8" fill="none" stroke="#8a8b93" stroke-width="1.5"/>
+  <rect x="200" y="92" width="60" height="50" rx="5" fill="none" stroke="#8a8b93" stroke-width="1.2"/>
+  <rect x="266" y="120" width="52" height="72" rx="5" fill="none" stroke="#8a8b93" stroke-width="1.2"/>
+  <rect x="276" y="150" width="30" height="30" rx="4" fill="#ec4899" opacity="0.85"/>
+  <text x="259" y="60" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">BVH (nested boxes)</text>
+
+  <line x1="334" y1="165" x2="410" y2="165" stroke="#ec4899" stroke-width="2"/>
+  <polygon points="410,165 400,160 400,170" fill="#ec4899"/>
+  <text x="372" y="156" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">hit</text>
+
+  <rect x="414" y="120" width="86" height="44" rx="8" fill="#2a2d38"/>
+  <text x="457" y="147" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">shade</text>
+
+  <line x1="500" y1="142" x2="558" y2="142" stroke="#8a8b93" stroke-width="2"/>
+  <polygon points="558,142 548,137 548,147" fill="#8a8b93"/>
+
+  <rect x="560" y="108" width="110" height="68" rx="8" fill="#2a2d38" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="615" y="135" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">MetalFX</text>
+  <text x="615" y="155" fill="#8a8b93" font-family="sans-serif" font-size="10.5" text-anchor="middle">denoise · upscale</text>
+
+  <line x1="670" y1="142" x2="712" y2="142" stroke="#8a8b93" stroke-width="2"/>
+  <polygon points="712,142 702,137 702,147" fill="#8a8b93"/>
+  <rect x="714" y="118" width="30" height="48" rx="4" fill="#cfcfcf" opacity="0.85"/>
+  <text x="729" y="186" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">screen</text>
+</svg>
+<figcaption>A ray walks the BVH, skipping boxes it misses, until it hits geometry; the hit is shaded, then MetalFX denoises and upscales before the frame reaches the screen. (Metal 4)</figcaption>
+</figure>
+
+<h2>The foundation</h2>
+<ul>
+<li><strong>Acceleration structure (BVH)</strong> = a prebuilt tree of nested bounding boxes over your geometry so a ray tests a handful of triangles instead of all of them.</li>
+<li><strong>Ray trace query</strong> = ask the GPU "first thing this ray hits?" and get it answered in dedicated hardware — no hand-marching.</li>
+<li><strong>Intersection function</strong> = the per-hit logic (opaque triangle, alpha-tested, procedural); Metal 4 <strong>intersection function buffers</strong> index them flexibly.</li>
+<li><strong>Build flags</strong> = a Metal 4 knob to trade <em>faster intersection</em> (bigger structure) against <em>smaller size</em> (less memory).</li>
+<li><strong>Path tracing</strong> = bouncing rays that gather light physically — correct global illumination, but noisy at real-time ray counts.</li>
+<li><strong>MetalFX denoising</strong> = reconstructs a clean image from the noisy path-traced frame; the piece that makes real-time path tracing viable.</li>
+<li><strong>MetalFX upscaling + frame interpolation</strong> = render low-res and scale up (spatial/temporal), and invent an in-between frame per two rendered — frame rate bought back.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#34-raymarching-3d-sdf">34-raymarching-3d-sdf</a> · <a class="xref" href="#40-materials-pbr-and-volumetrics">40-materials-pbr-and-volumetrics</a> · <a class="xref" href="#39-beyond-the-quad-3d-pipeline">39-beyond-the-quad-3d-pipeline</a> · <a class="xref" href="#24-shader-performance">24-shader-performance</a></p>
+<p>Prev: <a class="xref" href="#40-materials-pbr-and-volumetrics">40-materials-pbr-and-volumetrics</a> · Next: <a class="xref" href="#42-modern-gpu-and-performance">42-modern-gpu-and-performance</a> · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#40-materials-pbr-and-volumetrics"><span>Prev</span>← 40 — Materials, PBR &amp; Volumetrics</a><a href="#42-modern-gpu-and-performance"><span>Next</span>42 — Modern GPU: Mesh Shaders, Bindless, ML &amp; Performance →</a></div></section>
+<section class="page" id="42-modern-gpu-and-performance" data-title="42 — Modern GPU: Mesh Shaders, Bindless, ML &amp; Performance" data-num="42" data-hasdemo="0" data-group="Curriculum"><h1>42 — Modern GPU: Mesh Shaders, Bindless, ML &amp; Performance</h1>
+<h2>Start here — the plain idea</h2>
+<p>For most of this course, the CPU was the boss. It decided what to draw, bound the resources, and issued each draw call; the GPU was a very fast worker waiting for orders. The frontier of modern Metal is about firing the middle manager. Increasingly the GPU generates its own geometry, reaches for its own resources, and even encodes its own draw calls — the CPU just kicks off the whole thing and gets out of the way. That's <strong>GPU-driven rendering</strong>.</p>
+<p>The other half of the frontier is less glamorous but just as important: actually understanding the machine you're running on. Apple GPUs are <strong>tile-based deferred</strong> (TBDR), a fundamentally different shape from a desktop discrete card. The renderer chops the screen into little tiles and keeps each tile's working data in a tiny slab of ultra-fast on-chip memory. If you know that, you can make things fly; if you don't, you leave most of the chip idle.</p>
+<p>This lesson is a survey — a map of where things go next, not a deep dive into any one. Think of it as the capstone: here's the frontier, and here's the thread to pull on for each piece.</p>
+<h2>Letting the GPU drive</h2>
+<p><strong>Mesh shaders</strong> replace the old fixed vertex stage with a two-stage programmable geometry pipeline: an <strong>object stage</strong> decides <em>how much</em> geometry to make and launches an <strong>mesh stage</strong> that actually produces the vertices and primitives. Instead of feeding a fixed vertex buffer through a fixed transform, the GPU <em>generates</em> geometry on the fly — ideal for procedural meshes, fine-grained culling, and level-of-detail that adapts per meshlet. It's the natural successor to the pipeline you met in <a class="xref" href="#39-beyond-the-quad-3d-pipeline">39-beyond-the-quad-3d-pipeline</a>.</p>
+<p><strong>Argument buffers and bindless</strong> let you bundle many resources — textures, buffers, samplers — behind a single argument buffer the shader indexes into, instead of binding each one by hand. Layer on <strong>indirect command buffers (ICB)</strong>, where the GPU <em>encodes its own draw and dispatch calls</em> into a buffer, and the CPU is out of the hot loop entirely. Bundle the resources, hand the GPU a scene, and let it decide what to draw: that's GPU-driven rendering.</p>
+<p><strong>ML in shaders</strong> is new in Metal 4: <strong>tensors are first-class</strong>, both in the API and in the Metal Shading Language. You can declare a tensor variable right in a shader and run inference on it via <strong>Metal Performance Primitives</strong> — no round-trip to a separate ML framework. Neural materials, learned upscalers, and denoisers stop being external passes and become something you invoke <em>inside</em> the shader that needs them.</p>
+<figure class="fig">
+<svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Screen split into a grid of tiles, each feeding a shared on-chip tile memory box, with a row of feature chips below: mesh shaders, bindless, tensors, tile memory">
+  <text x="150" y="34" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">screen → tiles (TBDR)</text>
+  <g stroke="#8a8b93" stroke-width="1.2" fill="#2a2d38">
+    <rect x="40" y="48" width="52" height="42" rx="4"/>
+    <rect x="96" y="48" width="52" height="42" rx="4"/>
+    <rect x="152" y="48" width="52" height="42" rx="4"/>
+    <rect x="40" y="94" width="52" height="42" rx="4"/>
+    <rect x="96" y="94" width="52" height="42" rx="4"/>
+    <rect x="152" y="94" width="52" height="42" rx="4"/>
+  </g>
+  <line x1="122" y1="140" x2="122" y2="168" stroke="#ec4899" stroke-width="2"/>
+  <polygon points="122,168 117,158 127,158" fill="#ec4899"/>
+  <rect x="40" y="170" width="164" height="46" rx="8" fill="#2a2d38" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="122" y="192" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">tile memory ~32 KiB</text>
+  <text x="122" y="208" fill="#8a8b93" font-family="sans-serif" font-size="10.5" text-anchor="middle">shared w/ imageblocks</text>
+
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <rect x="300" y="70" width="150" height="40" rx="20" fill="#2a2d38"/>
+    <text x="375" y="95" fill="#cfcfcf">mesh shaders</text>
+    <rect x="470" y="70" width="150" height="40" rx="20" fill="#2a2d38"/>
+    <text x="545" y="95" fill="#cfcfcf">bindless + ICB</text>
+    <rect x="300" y="130" width="150" height="40" rx="20" fill="#2a2d38"/>
+    <text x="375" y="155" fill="#cfcfcf">tensors in MSL</text>
+    <rect x="470" y="130" width="150" height="40" rx="20" fill="#2a2d38" stroke="#ec4899" stroke-width="1.5"/>
+    <text x="545" y="155" fill="#cfcfcf">tile memory</text>
+  </g>
+  <text x="460" y="200" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">the frontier: GPU-driven + Apple-specific speed</text>
+</svg>
+<figcaption>TBDR shades the screen tile by tile, each tile living in a tiny shared on-chip slab; the feature chips are the levers of modern, GPU-driven Metal 4.</figcaption>
+</figure>
+
+<h2>Mastering TBDR for speed</h2>
+<p>Apple GPUs are <strong>tile-based deferred</strong>, and the whole performance craft flows from one fact: each tile keeps its work in about <strong>32 KiB of on-chip tile memory</strong>, shared with <strong>imageblocks</strong> (your per-pixel attachment data while the tile is in flight). Because that data lives on-chip, some tricks are nearly free. <strong>Memoryless attachments</strong> — like a depth buffer you never need after the pass — never touch system memory at all; they live and die in the tile. <strong>Tile shading</strong> lets a kernel run once per tile and read its neighbors' imageblock values, so you can do things like deferred lighting or custom blends without an extra full-screen pass.</p>
+<p>None of this is guesswork. The real way to make a shader fast is to <strong>capture a GPU frame</strong> in Xcode and read the <strong>counters</strong> — occupancy, bandwidth, ALU vs memory stalls, where the tile spends its time. You measure, you find the bottleneck, you fix that one thing, you measure again. Every intuition above is only worth what the counters confirm. This is the deep end of <a class="xref" href="#24-shader-performance">24-shader-performance</a> and where you go to actually level up.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Mesh shaders</strong> = object stage (how much geometry) + mesh stage (produce it) replacing the fixed vertex stage — the GPU generates geometry.</li>
+<li><strong>Argument buffers / bindless</strong> = bundle many resources behind one indexed buffer instead of binding each by hand.</li>
+<li><strong>Indirect command buffers (ICB)</strong> = the GPU encodes its own draw/dispatch calls → GPU-driven rendering, CPU out of the loop.</li>
+<li><strong>Tensors + Metal Performance Primitives</strong> = Metal 4 makes tensors first-class in MSL so you run ML inference inside a shader.</li>
+<li><strong>Tile memory / imageblocks</strong> = ~32 KiB of on-chip per-tile storage on Apple's TBDR GPUs; the foundation of cheap on-chip tricks.</li>
+<li><strong>Memoryless attachments + tile shading</strong> = attachments that never hit system memory, and per-tile kernels that read neighbor values.</li>
+<li><strong>GPU frame capture + counters</strong> = the measurement loop (capture, read counters, fix the bottleneck) that actually makes shaders fast.</li>
+</ul>
+<h2>Related</h2>
+<p><a class="xref" href="#39-beyond-the-quad-3d-pipeline">39-beyond-the-quad-3d-pipeline</a> · <a class="xref" href="#36-compute-beyond-per-pixel">36-compute-beyond-per-pixel</a> · <a class="xref" href="#24-shader-performance">24-shader-performance</a> · <a class="xref" href="#41-ray-tracing-and-metalfx">41-ray-tracing-and-metalfx</a></p>
+<p>Prev: <a class="xref" href="#41-ray-tracing-and-metalfx">41-ray-tracing-and-metalfx</a> · Next: — · Hub: <a class="xref" href="#00-roadmap">00-roadmap</a></p><div class="pager"><a href="#41-ray-tracing-and-metalfx"><span>Prev</span>← 41 — Ray Tracing &amp; MetalFX (Metal 4)</a><a href="#01-card-shader-reflections"><span>Next</span>Card Shader Reflections — PBR Metallic Card →</a></div></section>
 <section class="page" id="01-card-shader-reflections" data-title="Card Shader Reflections — PBR Metallic Card" data-num="01" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>Card Shader Reflections — PBR Metallic Card</h1>
 <h2>Start here — the plain idea</h2>
 <p>Picture one of those shiny metal credit cards — silver, gold, platinum — and how the light slides across the surface as you tilt it. That's the effect here: a flat rectangle that <em>looks</em> like polished metal, with reflections that move as you scroll.</p>
@@ -7595,7 +8259,7 @@ float3 calcNormal(float2 uv, float strength, float cardType, float2 res) {
 <li><a class="xref" href="swiftui.html#enzomangano-demos-reference">enzomangano-demos-reference</a> — Full repo reference</li>
 </ul>
 <hr />
-<p><em>Source: enzomanuelmangano/demos/card-shader-reflections</em></p><div class="pager"><a href="#35-capstone-smoke-sparks-nebula"><span>Prev</span>← 35 — Capstone: A Drifting Smoke / Sparks / Nebula</a><a href="#02-github-terrain"><span>Next</span>GitHub Terrain — WebGPU 3D Contribution Graph →</a></div></section>
+<p><em>Source: enzomanuelmangano/demos/card-shader-reflections</em></p><div class="pager"><a href="#42-modern-gpu-and-performance"><span>Prev</span>← 42 — Modern GPU: Mesh Shaders, Bindless, ML &amp; Performance</a><a href="#02-github-terrain"><span>Next</span>GitHub Terrain — WebGPU 3D Contribution Graph →</a></div></section>
 <section class="page" id="02-github-terrain" data-title="GitHub Terrain — WebGPU 3D Contribution Graph" data-num="02" data-hasdemo="0" data-group="Practice — Effect Recreations"><h1>GitHub Terrain — WebGPU 3D Contribution Graph</h1>
 <h2>Start here — the plain idea</h2>
 <p>You know the green GitHub contribution grid? This effect takes that flat grid and pushes each square up into a little 3D block — busier days become taller towers — so the whole thing looks like a tiny landscape you can tilt and zoom. Then it can morph smoothly back down to the flat 2D grid.</p>

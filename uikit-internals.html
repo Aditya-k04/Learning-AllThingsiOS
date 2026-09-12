@@ -21,7 +21,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
     <div class="coursehead"><div class="ct">UIKit Internals</div><div class="cs">View controllers, the responder chain, and UIScrollView / UICollectionView internals — the substrate under SwiftUI &amp; Core Animation.</div></div>
-    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit-internals.html" selected>UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option></optgroup></select></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit.html">UIKit Foundations</option><option value="uikit-internals.html" selected>UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option></optgroup></select></div>
     <nav><ol id="navlist"></ol></nav>
   </aside>
   <main class="content"><div class="col">
@@ -42,6 +42,18 @@
 <li><a class="xref" href="#04-compositional-layout">04-compositional-layout</a> — <code>UICollectionViewCompositionalLayout</code>: items, groups, sections, and fractional sizing.</li>
 <li><a class="xref" href="#05-diffable-data-sources">05-diffable-data-sources</a> — snapshot-based updates that animate correctly and end an entire class of crashes.</li>
 <li><a class="xref" href="#06-uikit-swiftui-interop">06-uikit-swiftui-interop</a> — <code>UIViewRepresentable</code>, <code>UIHostingController</code>, and how to drop down to UIKit from SwiftUI when you must.</li>
+</ol>
+<h2>Going deeper — hand-rolled UIKit (how the big apps do it)</h2>
+<p>The techniques Telegram-class apps use when they outgrow the standard components — building their own recognizers, lists, containers, and overlays for total control.</p>
+<ol start="7">
+<li><a class="xref" href="#07-custom-gesture-recognizers">07-custom-gesture-recognizers</a> — the recognizer state machine, <code>touches*</code>, delegate negotiation, <code>require(toFail:)</code>, and competing with a scroll view.</li>
+<li><a class="xref" href="#08-recycling-list-on-uiscrollview">08-recycling-list-on-uiscrollview</a> — a UITableView from scratch on <code>UIScrollView</code>: windowing, manual reuse pools, and prepend-without-jump.</li>
+<li><a class="xref" href="#09-custom-container-view-controllers">09-custom-container-view-controllers</a> — your own navigation stack and interruptible, interactive transitions by hand.</li>
+<li><a class="xref" href="#10-portal-views-layer-reparenting">10-portal-views-layer-reparenting</a> — rendering one view's live content inside another hierarchy (portals) for cross-hierarchy transitions.</li>
+<li><a class="xref" href="#11-uiwindow-window-levels-scenes">11-uiwindow-window-levels-scenes</a> — multiple windows, window levels, and overlay presentation without a view controller.</li>
+<li><a class="xref" href="#12-keyboard-handling">12-keyboard-handling</a> — <code>keyboardLayoutGuide</code>, the notification dance, interactive dismissal, and a composer that rides the keyboard.</li>
+<li><a class="xref" href="#13-context-menus">13-context-menus</a> — <code>UIContextMenuInteraction</code> &amp; <code>UIMenu</code> (modern peek/pop), contrasted with a hand-rolled context UI.</li>
+<li><a class="xref" href="#14-view-allocation-cost">14-view-allocation-cost</a> — why views are expensive, pooling, flattening, and reuse discipline.</li>
 </ol>
 <h2>Why this connects to the rest of your stack</h2>
 <p>The geometry here (<code>bounds</code>, <code>frame</code>, <code>transform</code>) is the same geometry covered in <a class="xref" href="coreanimation.html#03-layer-geometry">Core Animation: Layer Geometry</a> — UIView is just a thin wrapper around a backing <code>CALayer</code>. The gesture math shows up again in <a class="xref" href="interaction-math.html#00-roadmap">Interaction Math</a>, and the scroll-as-a-function-of-offset idea is the same one from <a class="xref" href="stack-decisions.html#04-who-drives-time">Who Drives Time</a>.</p><div class="pager"><span class="sp"></span><a href="#01-view-controller-lifecycle"><span>Next</span>View Controller Lifecycle →</a></div></section>
@@ -310,8 +322,1033 @@ navigationController?.pushViewController(host, animated: true)
 <ul>
 <li>The hosted geometry: <a class="xref" href="coreanimation.html#23-layer-backed-views">Layer-Backed Views</a></li>
 <li>SwiftUI side: <a class="xref" href="swiftui.html#24-uikit-integration">UIKit Integration</a></li>
-<li>Prev: <a class="xref" href="#05-diffable-data-sources">05-diffable-data-sources</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#05-diffable-data-sources"><span>Prev</span>← Diffable Data Sources</a><span class="sp"></span></div></section>
+<li>Prev: <a class="xref" href="#05-diffable-data-sources">05-diffable-data-sources</a> · Next: <a class="xref" href="#07-custom-gesture-recognizers">07-custom-gesture-recognizers</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#05-diffable-data-sources"><span>Prev</span>← Diffable Data Sources</a><a href="#07-custom-gesture-recognizers"><span>Next</span>07 — Custom Gesture Recognizers →</a></div></section>
+<section class="page" id="07-custom-gesture-recognizers" data-title="07 — Custom Gesture Recognizers" data-num="07" data-hasdemo="0" data-group=""><h1>07 — Custom Gesture Recognizers</h1>
+<p>A gesture recognizer is a tiny <strong>state machine</strong> that sits between raw touches and your code, quietly asking one question over and over: "is this MY gesture yet?" It watches fingers land, move, and lift, and at each step it decides whether what it's seeing still could be — or definitely is, or definitely isn't — the gesture it's looking for.</p>
+<p>Think of a bouncer reading a secret handshake. Each move either keeps the handshake alive, completes it, or blows it. The recognizer does the same with touches: it starts hopeful (<code>.possible</code>), commits when the pattern is unmistakable, drives updates as the gesture continues, and resolves to success or failure. UIKit's built-in recognizers (<code>UITapGestureRecognizer</code>, <code>UIPanGestureRecognizer</code>, and friends) are just prebuilt versions of this machine. When none of them fits, you build your own — which is nothing more exotic than a <code>UIGestureRecognizer</code> subclass that drives its own <code>state</code>.</p>
+<h2>The states and their legal transitions</h2>
+<p>The whole thing hinges on the <code>state</code> property, and its transitions aren't freeform — UIKit only accepts certain moves.</p>
+<ul>
+<li><strong>Continuous gestures</strong> (pan, pinch, rotate, your custom drags) walk: <code>.possible → .began → .changed → .changed → … → .ended</code>. Your action method fires on <code>.began</code>, on every <code>.changed</code>, and once on <code>.ended</code>.</li>
+<li><strong>Discrete gestures</strong> (tap, and tap-like custom gestures) jump straight: <code>.possible → .recognized</code>. The action fires once. (<code>.recognized</code> and <code>.ended</code> share the same raw value; "ended" is the continuous name, "recognized" the discrete one.)</li>
+<li><strong>Bailing out</strong> happens two ways: set <code>.failed</code> when the touches prove this <em>can't</em> be your gesture (wrong number of fingers, moved too far, too slow), or <code>.cancelled</code> when the system yanks the gesture away (e.g. an incoming call).</li>
+<li>After <code>.ended</code>, <code>.failed</code>, <code>.cancelled</code>, or <code>.recognized</code>, UIKit calls <code>reset()</code> and the recognizer returns to <code>.possible</code>, ready for the next touch sequence.</li>
+</ul>
+<p>The mental model: you never <em>ask</em> to recognize — you <em>assert</em> state, and UIKit enforces that your assertions are legal and drives your target/action accordingly.</p>
+<figure class="fig">
+<svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gesture recognizer state machine: possible to began to changed to ended, with failed and cancelled branches and reset back to possible">
+  <rect x="40" y="120" width="120" height="60" rx="8" fill="#2a2d38" stroke="#5856d6" stroke-width="1.5"/>
+  <text x="100" y="155" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">.possible</text>
+
+  <rect x="230" y="120" width="120" height="60" rx="8" fill="#2a2d38"/>
+  <text x="290" y="155" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">.began</text>
+
+  <rect x="420" y="120" width="120" height="60" rx="8" fill="#2a2d38"/>
+  <text x="480" y="150" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">.changed</text>
+  <text x="480" y="168" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">(loops)</text>
+
+  <rect x="610" y="120" width="120" height="60" rx="8" fill="#2a2d38"/>
+  <text x="670" y="150" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">.ended /</text>
+  <text x="670" y="168" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">.recognized</text>
+
+  <rect x="325" y="235" width="230" height="45" rx="8" fill="#20262e"/>
+  <text x="440" y="263" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">.failed / .cancelled</text>
+
+  <line x1="160" y1="150" x2="228" y2="150" stroke="#9aa0aa" stroke-width="2"/>
+  <path d="M228 150 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="350" y1="150" x2="418" y2="150" stroke="#9aa0aa" stroke-width="2"/>
+  <path d="M418 150 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="540" y1="150" x2="608" y2="150" stroke="#9aa0aa" stroke-width="2"/>
+  <path d="M608 150 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+
+  <path d="M480 120 C 470 95, 490 95, 480 120" fill="none" stroke="#9aa0aa" stroke-width="2"/>
+  <text x="480" y="88" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">.changed↺</text>
+
+  <line x1="100" y1="180" x2="330" y2="255" stroke="#9aa0aa" stroke-width="2" stroke-dasharray="4 3"/>
+  <path d="M330 255 l-9 0 l4 7 z" fill="#9aa0aa"/>
+  <line x1="290" y1="180" x2="380" y2="235" stroke="#9aa0aa" stroke-width="2" stroke-dasharray="4 3"/>
+
+  <line x1="555" y1="257" x2="100" y2="182" stroke="#5856d6" stroke-width="2"/>
+  <path d="M100 182 l7 5 l1 -9 z" fill="#5856d6"/>
+  <text x="330" y="205" fill="#5856d6" font-family="sans-serif" font-size="10" text-anchor="middle">reset() → .possible</text>
+</svg>
+<figcaption>The state machine: possible → began → changed (loops) → ended for continuous gestures; failed/cancelled branch out, and reset() always returns to possible.</figcaption>
+</figure>
+
+<h2>Turning up the heat 1: driving state from touches</h2>
+<p>To build one, subclass <code>UIGestureRecognizer</code> and override the touch callbacks. The catch: those overrides live in a separate header, so you must import the subclass module.</p>
+<pre><code class="language-swift">import UIKit
+import UIKit.UIGestureRecognizerSubclass   // exposes settable `state` + touch overrides
+
+/// A gesture that recognizes a firm downward swipe of a single finger.
+final class DownSwipeGestureRecognizer: UIGestureRecognizer {
+    private var startPoint: CGPoint = .zero
+    private let threshold: CGFloat = 40
+
+    override func touchesBegan(_ touches: Set&lt;UITouch&gt;, with event: UIEvent) {
+        super.touchesBegan(touches, with: event)
+        guard touches.count == 1, let touch = touches.first else {
+            state = .failed                 // wrong finger count → not our gesture
+            return
+        }
+        startPoint = touch.location(in: view)
+        // stay .possible; we don't commit until we see real downward motion
+    }
+
+    override func touchesMoved(_ touches: Set&lt;UITouch&gt;, with event: UIEvent) {
+        super.touchesMoved(touches, with: event)
+        guard let touch = touches.first else { return }
+        let dy = touch.location(in: view).y - startPoint.y
+        let dx = abs(touch.location(in: view).x - startPoint.x)
+
+        if dx &gt; dy {                        // more sideways than down
+            state = .failed
+        } else if dy &gt; threshold, state == .possible {
+            state = .began                  // commit
+        } else if state == .began || state == .changed {
+            state = .changed                // keep updating
+        }
+    }
+
+    override func touchesEnded(_ touches: Set&lt;UITouch&gt;, with event: UIEvent) {
+        super.touchesEnded(touches, with: event)
+        state = (state == .began || state == .changed) ? .ended : .failed
+    }
+
+    override func touchesCancelled(_ touches: Set&lt;UITouch&gt;, with event: UIEvent) {
+        super.touchesCancelled(touches, with: event)
+        state = .cancelled
+    }
+
+    override func reset() {
+        super.reset()
+        startPoint = .zero                  // wipe per-gesture scratch state
+    }
+}
+</code></pre>
+<p>Read it as narration of the state machine: <code>touchesBegan</code> sizes up the touch and either fails fast or waits; <code>touchesMoved</code> commits with <code>.began</code>, then keeps feeding <code>.changed</code>; <code>touchesEnded</code> resolves to <code>.ended</code> or <code>.failed</code>; <code>reset()</code> clears scratch state for next time. Setting <code>state</code> is what fires your target/action — you don't call the action yourself.</p>
+<h2>Turning up the heat 2: delegate negotiation and competition</h2>
+<p>A view rarely has just one recognizer. A cell might have a tap, a long-press, and be inside a scroll view — three machines watching the same touches. By default only one wins, and the <code>UIGestureRecognizerDelegate</code> is where you referee.</p>
+<ul>
+<li><strong><code>gestureRecognizer(_:shouldRecognizeSimultaneouslyWith:)</code></strong> — return <code>true</code> to let two recognizers both fire from the same touches (e.g. pinch + rotate together).</li>
+<li><strong><code>gestureRecognizer(_:shouldRequireFailureOf:)</code></strong> — dynamically say "I should wait for that other one to fail before I fire."</li>
+<li><strong><code>gestureRecognizer(_:shouldBeRequiredToFailBy:)</code></strong> — the mirror: "that other one should wait for <em>me</em>."</li>
+<li><strong><code>require(toFail:)</code></strong> — the static, direct version, set up once at construction. The classic case: a single-tap must wait for the double-tap to fail, so a double-tap doesn't also trigger the single.</li>
+</ul>
+<pre><code class="language-swift">let singleTap = UITapGestureRecognizer(target: self, action: #selector(handleSingle))
+let doubleTap = UITapGestureRecognizer(target: self, action: #selector(handleDouble))
+doubleTap.numberOfTapsRequired = 2
+
+singleTap.require(toFail: doubleTap)   // single fires only once double has failed
+view.addGestureRecognizer(singleTap)
+view.addGestureRecognizer(doubleTap)
+</code></pre>
+<p>The trade-off to know: <code>require(toFail:)</code> adds latency. The single tap now can't fire until the double-tap's window elapses and it fails — a perceptible delay. Use it only where the ambiguity is real.</p>
+<h2>Turning up the heat 3: competing with a scroll view</h2>
+<p>The hardest arena is a custom pan living <em>inside</em> a <code>UIScrollView</code>, because the scroll view's own <code>panGestureRecognizer</code> is greedy and already watching every touch. You have three levers, roughly from most cooperative to most controlling:</p>
+<ol>
+<li><strong>Recognize simultaneously.</strong> In your delegate, return <code>true</code> from <code>shouldRecognizeSimultaneouslyWith</code> when the other recognizer is the scroll view's pan. Both act — good when your gesture is genuinely orthogonal (e.g. a horizontal swipe on a vertically scrolling list).</li>
+<li><strong>Require the scroll's pan to fail.</strong> Call <code>yourPan.require(toFail: scrollView.panGestureRecognizer)</code> (or wire it via the delegate). Now scrolling wins ties, and your gesture only takes over when the scroll view decides it isn't scrolling. Safer, but yields to scroll.</li>
+<li><strong>Directional locking in the delegate.</strong> Inspect the initial translation/velocity in <code>shouldBegin</code> or <code>shouldRecognizeSimultaneouslyWith</code> and allow your recognizer only when the movement is in <em>your</em> axis — letting vertical drags scroll and horizontal drags hit your gesture.</li>
+</ol>
+<p>Two more knobs matter on the scroll view side: <strong><code>delaysTouchesBegan</code></strong> (hold <code>touchesBegan</code> briefly so the scroll view can decide first — usually leave it off, it feels laggy) and <strong><code>cancelsTouchesInView</code></strong> (when a recognizer fires, does it cancel the touches to the underlying view — leave <code>true</code> unless the view also needs the raw touches).</p>
+<h2>A note on the "hand-rolled recognizer" apps</h2>
+<p>You'll hear that apps like Telegram ship rich custom recognizers — a "ContextGesture" that combines a long-press with a pan so you can press-and-drag into a context menu in one fluid motion. That sounds like insider magic, but there's nothing you can't see here: it's a <code>UIGestureRecognizer</code> subclass driving <code>state</code> from <code>touchesBegan/Moved/Ended</code>, exactly like the example above, just with a richer decision tree (start a long-press timer, and if the finger moves before it fires, transition into pan-tracking). You don't need their source to build the same thing — the state machine <em>is</em> the whole trick, and you already have it.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>gesture recognizer</strong> = a state machine that watches raw touches and decides whether they form its gesture, firing your target/action via <code>state</code>.</li>
+<li><strong>continuous vs discrete</strong> = continuous walks <code>.possible → .began → .changed… → .ended</code>; discrete jumps <code>.possible → .recognized</code>.</li>
+<li><strong><code>.failed</code> / <code>.cancelled</code> / <code>reset()</code></strong> = fail when touches can't be your gesture, cancelled when the system pulls it, then <code>reset()</code> returns to <code>.possible</code>.</li>
+<li><strong><code>UIKit.UIGestureRecognizerSubclass</code></strong> = the import that makes <code>state</code> settable and exposes the <code>touchesBegan/Moved/Ended/Cancelled</code> overrides.</li>
+<li><strong>driving state</strong> = you assert <code>state</code> in the touch callbacks; setting it (not calling the action) is what fires your handler.</li>
+<li><strong>delegate negotiation</strong> = <code>shouldRecognizeSimultaneouslyWith</code>, <code>shouldRequireFailureOf</code>, <code>shouldBeRequiredToFailBy</code> referee competing recognizers.</li>
+<li><strong><code>require(toFail:)</code></strong> = make one recognizer wait for another to fail (single-tap waits on double-tap) — at the cost of latency.</li>
+<li><strong>scroll-view competition</strong> = allow simultaneous recognition, require the scroll's pan to fail, or directional-lock in the delegate; tune <code>delaysTouchesBegan</code> / <code>cancelsTouchesInView</code>.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Where touches come from before recognizers see them: <a class="xref" href="#02-responder-chain">02-responder-chain</a></li>
+<li>The broader gesture and feedback toolkit: <a class="xref" href="gestures-haptics.html#00-overview">Gestures &amp; Haptics</a></li>
+<li>Prev: <a class="xref" href="#06-uikit-swiftui-interop">06-uikit-swiftui-interop</a> · Next: <a class="xref" href="#08-recycling-list-on-uiscrollview">08-recycling-list-on-uiscrollview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#06-uikit-swiftui-interop"><span>Prev</span>← UIKit ↔ SwiftUI Interop</a><a href="#08-recycling-list-on-uiscrollview"><span>Next</span>08 — Building a Recycling List on UIScrollView →</a></div></section>
+<section class="page" id="08-recycling-list-on-uiscrollview" data-title="08 — Building a Recycling List on UIScrollView" data-num="08" data-hasdemo="0" data-group=""><h1>08 — Building a Recycling List on UIScrollView</h1>
+<h2>Start here — the plain idea</h2>
+<p>Open any chat app and scroll through ten thousand messages. It feels like all ten thousand rows exist at once, stacked in a tall column you glide along. They don't. At any instant only a screenful — maybe fifteen views — are actually alive. As a row slides off the top, UITableView quietly grabs it, wipes it clean, refills it with the data for a row about to appear at the bottom, and slots it back in. It is a stage crew of a dozen actors playing a cast of thousands, sprinting behind the curtain to change costumes. That trick is called <em>cell recycling</em>, and it is the single reason a list of ten thousand rows costs the same memory as a list of fifteen.</p>
+<p>UITableView and UICollectionView do this for you. But their recycling machine is welded to their layout, their data source, and their update animations. The moment you want something they don't offer — messages that grow upward from the bottom, a layout that reflows mid-scroll, an insertion above the viewport that must not jolt the content — you are fighting the framework instead of using it. This is exactly why serious chat and feed apps (Telegram's list is the famous example) throw out UITableView and hand-roll the whole thing on a bare <code>UIScrollView</code>.</p>
+<p>This lesson builds that machine from scratch. We start with the windowing math — figuring out which rows are visible from nothing but <code>contentOffset</code> and <code>bounds</code> — then add a reuse pool, then custom snapping, and finally the hard part that makes chat apps possible: inserting content above the visible area without the screen moving a single pixel. By the end you will understand not just <em>how</em> to build it, but <em>why</em> the apps that outgrow UITableView reach for this.</p>
+<h2>The windowing math</h2>
+<p>A <code>UIScrollView</code> gives you two numbers every frame: <code>contentOffset</code> (how far you've scrolled) and <code>bounds.size</code> (the size of the viewport). Everything else is arithmetic. If your rows have known heights, you keep a running array of <code>y</code> positions and binary-search for the first and last index that intersect the visible rectangle.</p>
+<pre><code class="language-swift">struct RowLayout {
+    var frames: [CGRect]          // absolute frame of every item in content space
+    var contentHeight: CGFloat
+
+    // First..last index whose frame intersects the visible window.
+    func visibleRange(in rect: CGRect) -&gt; Range&lt;Int&gt; {
+        guard !frames.isEmpty else { return 0..&lt;0 }
+        // Binary search: first row whose maxY is below the window top.
+        let lower = frames.partitioningIndex { $0.maxY &gt; rect.minY }
+        let upper = frames.partitioningIndex { $0.minY &gt;= rect.maxY }
+        return lower..&lt;upper
+    }
+}
+
+// Swift 6 std-lib helper; equivalent to a hand-rolled binary search.
+extension Array {
+    func partitioningIndex(where belongsInSecondPartition: (Element) -&gt; Bool) -&gt; Int {
+        var low = 0, high = count
+        while low &lt; high {
+            let mid = low + (high - low) / 2
+            if belongsInSecondPartition(self[mid]) { high = mid } else { low = mid + 1 }
+        }
+        return low
+    }
+}
+</code></pre>
+<p>The window is just <code>CGRect(origin: contentOffset, size: bounds.size)</code>. Every time the offset changes you recompute the range, diff it against the range you currently have on screen, remove the views that fell out, and add the views that came in. You observe offset changes through the scroll view's delegate:</p>
+<pre><code class="language-swift">final class RecyclingList: UIView, UIScrollViewDelegate {
+    private let scrollView = UIScrollView()
+    private var layout = RowLayout(frames: [], contentHeight: 0)
+    private var visibleViews: [Int: UIView] = [:]   // index → live view
+
+    func scrollViewDidScroll(_ sv: UIScrollView) {
+        updateVisibleViews()
+    }
+
+    private func updateVisibleViews() {
+        let window = CGRect(origin: scrollView.contentOffset, size: scrollView.bounds.size)
+        let wanted = layout.visibleRange(in: window)
+
+        // 1. Recycle anything no longer in the window.
+        for (index, view) in visibleViews where !wanted.contains(index) {
+            enqueue(view)
+            visibleViews[index] = nil
+        }
+        // 2. Materialize anything newly in the window.
+        for index in wanted where visibleViews[index] == nil {
+            let view = dequeueOrMake(for: index)
+            view.frame = layout.frames[index]
+            configure(view, at: index)
+            scrollView.addSubview(view)
+            visibleViews[index] = view
+        }
+    }
+}
+</code></pre>
+<p>Keep <code>scrollViewDidScroll</code> allocation-free. It fires many times per frame at 120 Hz on ProMotion; a single heap allocation or Auto Layout pass in that path is how you drop frames. The diff above touches only the handful of indices that changed, never the whole list.</p>
+<h2>A manual reuse pool</h2>
+<p>The recycled views have to go <em>somewhere</em> when they leave the screen so the next arrival can grab one instead of allocating. That somewhere is a pool keyed by view type — because a chat has text bubbles, image bubbles, date separators, each a different class you cannot swap for another. You mimic <code>dequeueReusableCell</code> with your own <code>enqueue</code>/<code>dequeue</code> pair, and you call your own <code>prepareForReuse</code> to scrub stale state.</p>
+<pre><code class="language-swift">protocol Recyclable: UIView {
+    static var reuseKey: String { get }
+    func prepareForReuse()
+}
+
+final class ReusePool {
+    private var pools: [String: [any Recyclable]] = [:]
+
+    func enqueue(_ view: any Recyclable) {
+        view.removeFromSuperview()
+        view.prepareForReuse()               // cancel image loads, clear text, reset transform
+        pools[type(of: view).reuseKey, default: []].append(view)
+    }
+
+    func dequeue&lt;T: Recyclable&gt;(_ type: T.Type) -&gt; T? {
+        guard var bucket = pools[type.reuseKey], let view = bucket.popLast() else { return nil }
+        pools[type.reuseKey] = bucket
+        return view as? T
+    }
+}
+</code></pre>
+<p>The discipline that matters is <code>prepareForReuse</code>. A recycled bubble still holds the previous message's text, its in-flight image download, and possibly a running animation. If you forget to cancel the download, a fast scroll leaves you with the wrong photo flashing into the wrong bubble — the classic recycling bug. Cancel async work and reset any mutable visual state there, never at dequeue time, so the view sits inert in the pool.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A tall content area with a small visible window; views scrolling out are recycled into a reuse pool and back in"><rect x="40" y="20" width="150" height="260" rx="8" fill="#20222c" stroke="#3a3d48"/><text x="115" y="14" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">contentSize (all rows)</text><rect x="52" y="40" width="126" height="26" rx="4" fill="#2a2d38"/><rect x="52" y="70" width="126" height="26" rx="4" fill="#2a2d38"/><rect x="40" y="105" width="150" height="90" rx="4" fill="none" stroke="#5856d6" stroke-width="2"/><text x="115" y="100" fill="#5856d6" font-family="sans-serif" font-size="11" text-anchor="middle">visible window (bounds)</text><rect x="52" y="112" width="126" height="24" rx="4" fill="#3a3d5a"/><rect x="52" y="140" width="126" height="24" rx="4" fill="#3a3d5a"/><rect x="52" y="168" width="126" height="24" rx="4" fill="#3a3d5a"/><rect x="52" y="230" width="126" height="26" rx="4" fill="#2a2d38"/><path d="M 200 128 L 300 100" stroke="#8a8b93" stroke-width="1.5" fill="none" marker-end="url(#a)"/><path d="M 200 178 L 300 210" stroke="#8a8b93" stroke-width="1.5" fill="none" marker-end="url(#a)"/><rect x="310" y="60" width="180" height="90" rx="8" fill="#2a2d38" stroke="#3a3d48"/><text x="400" y="52" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Reuse pool (by type)</text><rect x="322" y="78" width="70" height="24" rx="4" fill="#20222c" stroke="#3a3d48"/><text x="357" y="94" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">text</text><rect x="408" y="78" width="70" height="24" rx="4" fill="#20222c" stroke="#3a3d48"/><text x="443" y="94" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">image</text><rect x="322" y="112" width="70" height="24" rx="4" fill="#20222c" stroke="#3a3d48"/><rect x="408" y="112" width="70" height="24" rx="4" fill="#20222c" stroke="#3a3d48"/><path d="M 490 130 C 560 160, 560 190, 400 210" stroke="#5856d6" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#b)"/><text x="560" y="150" fill="#5856d6" font-family="sans-serif" font-size="11" text-anchor="middle">dequeue →</text><text x="560" y="200" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">prepareForReuse</text><defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8a8b93"/></marker><marker id="b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5856d6"/></marker></defs></svg><figcaption>Only the rows inside the visible window are live; rows leaving it are scrubbed and returned to a per-type pool, then dequeued for rows entering at the other edge.</figcaption></figure>
+
+<h2>Custom snapping with targetContentOffset</h2>
+<p>When the finger lifts, the scroll view is about to fling into a decelerating glide toward some resting offset. <code>scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)</code> hands you that resting offset as a <em>mutable pointer</em> — rewrite it and the deceleration curve retargets to your value. This is how you snap to an item boundary or build paging that the built-in <code>isPagingEnabled</code> (which only pages in full-viewport steps) can't express.</p>
+<pre><code class="language-swift">func scrollViewWillEndDragging(
+    _ sv: UIScrollView,
+    withVelocity velocity: CGPoint,
+    targetContentOffset target: UnsafeMutablePointer&lt;CGPoint&gt;
+) {
+    let proposed = target.pointee.y
+    // Find the item whose top the projected offset lands nearest.
+    let idx = layout.frames.partitioningIndex { $0.minY &gt; proposed }
+    let candidate = max(0, idx - 1)
+    // Bias toward the next item when flinging hard, so a flick always advances.
+    let snapIndex = (velocity.y &gt; 0.3 &amp;&amp; candidate + 1 &lt; layout.frames.count)
+        ? candidate + 1 : candidate
+    target.pointee.y = layout.frames[snapIndex].minY
+}
+</code></pre>
+<p>The rewritten target must be reachable — clamp it into <code>0...(contentSize.height - bounds.height + adjustedContentInset)</code> or the scroll view will snap and then rubber-band back, which reads as a stutter. Respect the sign of <code>velocity</code> so a deliberate flick is never overruled into snapping backward.</p>
+<h2>Bidirectional insertion without jumps</h2>
+<p>Here is the problem that forces chat apps off UITableView. You are reading history halfway up a conversation. A network fetch delivers fifty older messages that belong <em>above</em> everything on screen. If you naively insert them, every existing row's <code>y</code> shifts down by the inserted height, and because <code>contentOffset</code> stays fixed, the content lurches — the message you were reading rockets off the bottom of the screen. Unacceptable in a chat.</p>
+<p>The fix is a same-pass compensation. In one layout transaction you (1) grow <code>contentSize</code> by the inserted height, (2) shift every existing frame down by that height, and (3) add the <em>same</em> height to <code>contentOffset.y</code>. Because the offset moves exactly as much as the content grew, the visible rows stay pinned to the same screen pixels. Nothing appears to move; new content simply now exists above.</p>
+<pre><code class="language-swift">func prepend(_ newItems: [Item]) {
+    let insertedHeight = totalHeight(of: newItems)
+
+    // Shift existing layout down and splice the new frames on top.
+    let shifted = layout.frames.map { $0.offsetBy(dx: 0, dy: insertedHeight) }
+    let newFrames = buildFrames(for: newItems, startingAt: 0)      // occupy [0, insertedHeight)
+    layout.frames = newFrames + shifted
+    layout.contentHeight += insertedHeight
+
+    // Re-key the currently-live views to their new indices.
+    visibleViews = Dictionary(uniqueKeysWithValues:
+        visibleViews.map { (idx, view) in (idx + newItems.count, view) })
+
+    // The atomic part: grow content and bump offset in the SAME pass.
+    UIView.performWithoutAnimation {
+        scrollView.contentSize.height = layout.contentHeight
+        scrollView.contentOffset.y += insertedHeight   // cancels the visual shift exactly
+        for (idx, view) in visibleViews { view.frame = layout.frames[idx] }
+    }
+    updateVisibleViews()
+}
+</code></pre>
+<p>The <code>performWithoutAnimation</code> wrapper matters: if <code>contentSize</code> and <code>contentOffset</code> land in separate runloop turns, the scroll view briefly clamps the old offset against the new size and you get a one-frame flash. Set them together.</p>
+<p>A more robust variant tracks a <strong>stable anchor</strong> instead of doing raw arithmetic. Before the mutation, pick a visible item (say the topmost fully-visible one) and record the delta between its frame's <code>minY</code> and the current <code>contentOffset.y</code>. After you rebuild the layout, find that same item's new frame and set <code>contentOffset.y = newFrame.minY - savedDelta</code>. This survives not just prepends but any reflow — a height change from an image finishing decode, a font size bump — because you are re-anchoring to <em>content</em> rather than assuming you know the exact inserted height. The same technique applies to top <code>contentInset</code> changes (a keyboard appearing, a growing compose bar): compensate the offset by the inset delta so the anchored message holds its position.</p>
+<pre><code class="language-swift">struct Anchor { let itemID: Item.ID; let offsetFromTop: CGFloat }
+
+func captureAnchor() -&gt; Anchor? {
+    let top = scrollView.contentOffset.y + scrollView.adjustedContentInset.top
+    guard let (idx, _) = visibleViews.min(by: { abs($0.value.frame.minY - top) &lt; abs($1.value.frame.minY - top) })
+    else { return nil }
+    return Anchor(itemID: items[idx].id, offsetFromTop: layout.frames[idx].minY - top)
+}
+
+func restore(_ anchor: Anchor) {
+    guard let idx = items.firstIndex(where: { $0.id == anchor.itemID }) else { return }
+    let newTop = layout.frames[idx].minY - anchor.offsetFromTop
+    scrollView.contentOffset.y = newTop - scrollView.adjustedContentInset.top
+}
+</code></pre>
+<p>This is precisely the layer of control UITableView won't give you: it owns the offset during its own batch updates, and its "maintain position on prepend" behavior is heuristic, not guaranteed. Owning the scroll view yourself means the anchor is <em>your</em> code, exact and debuggable — which is why apps whose entire product is a scrolling conversation (Telegram is the canonical example, driving its own list from <code>contentOffset</code> rather than UITableView) invest in building this. They hand-roll windowing, reuse, and anchor-based compensation for total control over interruptibility and jump-free updates; the cost is that you now own every edge case UITableView had already solved.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Windowing</strong> = deriving the visible index range each frame from <code>contentOffset</code> + <code>bounds</code>, then adding/removing only the views that crossed the boundary.</li>
+<li><strong>Reuse pool</strong> = a per-type dictionary of dormant views; <code>dequeue</code> reuses one if present, else you allocate, so live-view count stays bounded by a screenful.</li>
+<li><strong>prepareForReuse</strong> = the scrub step that cancels async work and resets visual state when a view returns to the pool, preventing stale content flashing into recycled views.</li>
+<li><strong>targetContentOffset</strong> = the mutable resting-offset pointer from <code>scrollViewWillEndDragging</code>; rewrite it to retarget deceleration for custom snapping or paging.</li>
+<li><strong>Prepend compensation</strong> = growing <code>contentSize</code> and bumping <code>contentOffset</code> by the same inserted height in one non-animated pass so on-screen content never visibly moves.</li>
+<li><strong>Stable anchor</strong> = recording a content item's position before a mutation and restoring <code>contentOffset</code> relative to it afterward, surviving any reflow, not just fixed-height inserts.</li>
+<li><strong>adjustedContentInset</strong> = the system-plus-your inset the scroll view actually uses; anchor math must account for it or content lands offset by the safe area / keyboard height.</li>
+<li><strong>Hand-rolled list</strong> = trading UITableView's solved edge cases for full ownership of layout, reuse, and offset — the path apps like chats and feeds take when the framework's coupling gets in the way.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Built on the offset geometry from <a class="xref" href="#03-uiscrollview-mechanics">03-uiscrollview-mechanics</a></li>
+<li>Snapshot-diffing that pairs with a custom list: <a class="xref" href="#05-diffable-data-sources">05-diffable-data-sources</a></li>
+<li>Why view count matters for this: <a class="xref" href="#14-view-allocation-cost">14-view-allocation-cost</a></li>
+</ul>
+<p>Prev <a class="xref" href="#07-custom-gesture-recognizers">07-custom-gesture-recognizers</a> · Next <a class="xref" href="#09-custom-container-view-controllers">09-custom-container-view-controllers</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#07-custom-gesture-recognizers"><span>Prev</span>← 07 — Custom Gesture Recognizers</a><a href="#09-custom-container-view-controllers"><span>Next</span>09 — Custom Container View Controllers &amp; Interactive Transitions →</a></div></section>
+<section class="page" id="09-custom-container-view-controllers" data-title="09 — Custom Container View Controllers &amp; Interactive Transitions" data-num="09" data-hasdemo="0" data-group=""><h1>09 — Custom Container View Controllers &amp; Interactive Transitions</h1>
+<h2>Start here — the plain idea</h2>
+<p><code>UINavigationController</code> feels like a special, blessed piece of the system — the thing that gives you the back button, the swipe-to-go-back, the sliding push animation. It isn't special. It is an ordinary view controller that happens to keep an array of <em>other</em> view controllers, shows one of their views at a time, and animates the swap when you push or pop. Every capability it has is built from public API you can call yourself. A container view controller is just a manager: it holds children, mounts their views, and choreographs the move from one to the next.</p>
+<p>Think of it like a theater stage. The stage (your container) has one spotlight. Behind the curtain wait several performers (child view controllers), each with their own script and props (their own lifecycle, their own views). The stage director decides who is lit, and when the scene changes, how the outgoing performer exits and the incoming one enters — a hard cut, a slow fade, or a slide where the audience can grab the curtain and drag the change halfway before letting it snap shut. That last one — the audience driving the scene change with their own hand — is an <em>interactive transition</em>, and it is the whole reason apps that care about feel build their own containers.</p>
+<p>This lesson builds a container from the containment contract up, then a hand-rolled navigation stack, then the part that matters most: transitions a pan gesture drives frame by frame, that you can pause, reverse, and hand off to a spring. We finish by contrasting UIKit's standard transitioning API with the fully hand-rolled approach big apps use — and exactly what each buys you.</p>
+<h2>The containment contract</h2>
+<p>Adding a child view controller is not "add its view as a subview." UIKit tracks parent-child relationships so that lifecycle callbacks, trait propagation, safe-area insets, and rotation all flow correctly to the child. You must perform a precise handshake, and it is asymmetric: a specific order to attach, and the reverse to detach.</p>
+<pre><code class="language-swift">// Attach a child.
+func addChild(_ child: UIViewController, to container: UIView) {
+    addChild(child)                              // 1. establishes parent link; fires willMove(toParent:) for you
+    container.addSubview(child.view)             // 2. mount the view
+    child.view.frame = container.bounds
+    child.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    child.didMove(toParent: self)                // 3. YOU must call this — signals containment complete
+}
+
+// Detach a child — exact reverse.
+func removeChild(_ child: UIViewController) {
+    child.willMove(toParent: nil)                // 1. YOU must call this — signals imminent removal
+    child.view.removeFromSuperview()             // 2. unmount the view
+    child.removeFromParent()                     // 3. tears down parent link; fires didMove(toParent: nil)
+}
+</code></pre>
+<p>The rule to memorize: <strong><code>addChild</code> calls <code>willMove(toParent:)</code> for you, so you finish with <code>didMove</code>; <code>removeFromParent</code> calls <code>didMove(toParent: nil)</code> for you, so you begin with <code>willMove</code>.</strong> Get the order wrong and the child's <code>viewWillAppear</code>/<code>viewDidAppear</code> (see <a class="xref" href="#01-view-controller-lifecycle">01-view-controller-lifecycle</a>) fire at the wrong time or not at all, and you get children whose <code>viewDidDisappear</code> never runs — a subtle leak. Prefer constraints over an autoresizing frame when the container reflows; the frame form above is fine for a full-bleed child.</p>
+<h2>Building your own navigation stack</h2>
+<p>With the contract in hand, a navigation controller is barely more than an array plus a push and a pop. The stack owns the children; showing a controller means mounting its view on top; hiding means detaching after the animation completes.</p>
+<pre><code class="language-swift">final class MiniNavController: UIViewController {
+    private(set) var stack: [UIViewController] = []
+
+    func push(_ vc: UIViewController, animated: Bool) {
+        let from = stack.last
+        stack.append(vc)
+        addChild(vc)
+        vc.view.frame = view.bounds
+        view.addSubview(vc.view)
+
+        guard animated, let from else { vc.didMove(toParent: self); return }
+
+        vc.view.transform = CGAffineTransform(translationX: view.bounds.width, y: 0)  // start offscreen right
+        UIView.animate(withDuration: 0.35, delay: 0,
+                       usingSpringWithDamping: 0.9, initialSpringVelocity: 0) {
+            vc.view.transform = .identity
+            from.view.transform = CGAffineTransform(translationX: -self.view.bounds.width * 0.3, y: 0)
+        } completion: { _ in
+            vc.didMove(toParent: self)     // containment completes AFTER the animation settles
+        }
+    }
+
+    func pop(animated: Bool) {
+        guard stack.count &gt; 1 else { return }
+        let outgoing = stack.removeLast()
+        let incoming = stack.last!
+        outgoing.willMove(toParent: nil)   // begin detach before animating out
+
+        UIView.animate(withDuration: 0.35, delay: 0,
+                       usingSpringWithDamping: 0.9, initialSpringVelocity: 0) {
+            outgoing.view.transform = CGAffineTransform(translationX: self.view.bounds.width, y: 0)
+            incoming.view.transform = .identity
+        } completion: { _ in
+            outgoing.view.removeFromSuperview()
+            outgoing.removeFromParent()    // fires didMove(toParent: nil)
+        }
+    }
+}
+</code></pre>
+<p>Notice where the lifecycle calls sit relative to the animation. On push, <code>didMove(toParent:)</code> is deferred to the completion handler because containment isn't truly finished until the new controller is settled and interactive. On pop, <code>willMove(toParent: nil)</code> fires <em>before</em> the animation so the outgoing controller knows it is leaving while it slides away.</p>
+<h2>Interactive, interruptible transitions</h2>
+<p>A non-interactive animation is a closure that runs to completion. An <em>interactive</em> one is a function of progress: a pan recognizer emits a value from 0 to 1, and you set the animation to exactly that fraction complete. The tool that makes this possible is <code>UIViewPropertyAnimator</code>, which — unlike <code>UIView.animate</code> — lets you scrub its <code>fractionComplete</code>, pause, reverse direction, and then release it to finish on a spring.</p>
+<pre><code class="language-swift">final class InteractivePop: NSObject {
+    private var animator: UIViewPropertyAnimator?
+    private weak var nav: MiniNavController?
+
+    @objc func handlePan(_ gr: UIScreenEdgePanGestureRecognizer) {
+        guard let view = gr.view else { return }
+        let translation = gr.translation(in: view).x
+        let progress = min(max(translation / view.bounds.width, 0), 1)
+
+        switch gr.state {
+        case .began:
+            animator = buildPopAnimator()          // configures the from/to transforms
+            animator?.pauseAnimation()             // hold at fraction 0, ready to scrub
+
+        case .changed:
+            animator?.fractionComplete = progress  // drive the frame directly off the finger
+
+        case .ended, .cancelled:
+            let velocity = gr.velocity(in: view).x
+            // Decide the destination from position AND intent.
+            let shouldFinish = progress &gt; 0.5 || velocity &gt; 800
+            animator?.isReversed = !shouldFinish
+            // Hand off to a spring: continue with a timing that carries the remaining distance.
+            let remaining = shouldFinish ? (1 - progress) : progress
+            let params = UISpringTimingParameters(dampingRatio: 0.85,
+                                                  initialVelocity: CGVector(dx: velocity / view.bounds.width, dy: 0))
+            animator?.continueAnimation(withTimingParameters: params, durationFactor: CGFloat(remaining))
+        default:
+            break
+        }
+    }
+}
+</code></pre>
+<p>Three things make this feel native. First, <code>fractionComplete</code> is set directly from the finger — no animation is "playing," the frame simply <em>is</em> wherever the touch is, so it tracks with zero lag. Second, the release decision blends <strong>position and velocity</strong>: past halfway <em>or</em> a hard flick commits, matching how the system's own edge-swipe behaves. Third, the handoff passes the finger's exit velocity into a <code>UISpringTimingParameters</code> so the spring picks up exactly the speed the finger had — no discontinuity between drag and settle. The interruptibility falls out for free: because the animator is paused and scrubbable, a second touch mid-flight can grab it and drag it back. This is where the spring math from <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">springs</a> becomes tangible — the release is a real spring solved from the current position and velocity, not a fixed-duration curve.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A container view controller holding a stack of child view controllers, with a pan-driven progress bar controlling the transition between two of them"><text x="120" y="30" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">Container VC</text><rect x="40" y="40" width="160" height="220" rx="8" fill="#20222c" stroke="#3a3d48"/><rect x="60" y="60" width="120" height="40" rx="6" fill="#2a2d38"/><text x="120" y="85" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">child[0]</text><rect x="66" y="108" width="120" height="40" rx="6" fill="#2a2d38"/><text x="126" y="133" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">child[1]</text><rect x="72" y="156" width="120" height="70" rx="6" fill="#3a3d5a" stroke="#5856d6" stroke-width="2"/><text x="132" y="196" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">child[2] (top)</text><text x="120" y="252" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">stack: [VC]</text><rect x="300" y="60" width="180" height="80" rx="8" fill="#2a2d38" stroke="#3a3d48"/><text x="390" y="52" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Pan recognizer</text><text x="390" y="90" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">translation.x</text><text x="390" y="112" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">velocity.x</text><path d="M 480 100 L 560 100" stroke="#8a8b93" stroke-width="1.5" fill="none" marker-end="url(#c)"/><rect x="300" y="180" width="360" height="26" rx="13" fill="#20222c" stroke="#3a3d48"/><rect x="300" y="180" width="200" height="26" rx="13" fill="#5856d6"/><text x="400" y="198" fill="#ffffff" font-family="sans-serif" font-size="11" text-anchor="middle">fractionComplete = 0.55</text><text x="480" y="230" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">→ release: spring to 0 or 1</text><rect x="570" y="60" width="150" height="80" rx="8" fill="#2a2d38" stroke="#5856d6"/><text x="645" y="52" fill="#5856d6" font-family="sans-serif" font-size="12" text-anchor="middle">PropertyAnimator</text><text x="645" y="95" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">pause · scrub</text><text x="645" y="112" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">reverse · continue</text><path d="M 645 140 L 500 178" stroke="#5856d6" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#d)"/><defs><marker id="c" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8a8b93"/></marker><marker id="d" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5856d6"/></marker></defs></svg><figcaption>The container holds a stack of children; a pan recognizer's translation drives a property animator's fractionComplete, and the finger's release velocity feeds the spring that settles it to 0 or 1.</figcaption></figure>
+
+<h2>Two roads: the standard API vs hand-rolling</h2>
+<p>UIKit ships a formal transitioning API. You set a <code>transitioningDelegate</code> (or a <code>UINavigationControllerDelegate</code>), return a <code>UIViewControllerAnimatedTransitioning</code> object that performs the animation inside a supplied <code>transitionContext</code>, and for interactivity return a <code>UIViewControllerInteractiveTransitioning</code> — usually a <code>UIPercentDrivenInteractiveTransition</code>, which you feed <code>update(_:)</code>, <code>finish()</code>, and <code>cancel()</code> as the gesture moves.</p>
+<pre><code class="language-swift">final class SlideAnimator: NSObject, UIViewControllerAnimatedTransitioning {
+    func transitionDuration(using ctx: UIViewControllerContextTransitioning?) -&gt; TimeInterval { 0.35 }
+    func animateTransition(using ctx: UIViewControllerContextTransitioning) {
+        let container = ctx.containerView
+        guard let to = ctx.view(forKey: .to) else { return }
+        to.frame = ctx.finalFrame(for: ctx.viewController(forKey: .to)!)
+        to.transform = CGAffineTransform(translationX: container.bounds.width, y: 0)
+        container.addSubview(to)
+        UIView.animate(withDuration: 0.35) { to.transform = .identity }
+            completion: { ctx.completeTransition(!ctx.transitionWasCancelled) }
+    }
+}
+</code></pre>
+<p>This is the right tool when you want your transition to plug into the <em>system's</em> navigation controller or modal presentation — you get the framework's plumbing (the container view, the correct lifecycle sequencing, adaptivity) for free, and you write only the animation. Its limit is that the system owns the timeline. <code>UIPercentDrivenInteractiveTransition</code> scrubs a <code>CAAnimation</code>'s <code>timeOffset</code>, which is coarse: mid-flight interruption, retargeting to a different destination, or blending a second gesture into a running transition all fight the abstraction.</p>
+<p>The fully hand-rolled approach — the one apps like Telegram take — skips the transitioning API entirely. They keep their own array of children, run their own layout system, and drive the whole change with a <code>UIViewPropertyAnimator</code> or a raw display-link loop scrubbed directly by a pan, exactly as in the interactive section above. Nothing is delegated to the framework, so nothing has to be fought: the transition is interruptible at any instant, reversible, retargetable, and can be composed with the list-scrolling and layout systems the app already owns. The trade-off is real. The standard API is less code and stays correct as UIKit evolves (adaptivity, new presentation styles, accessibility); the hand-rolled path is more code and you re-implement lifecycle sequencing and edge cases yourself, but you get total, frame-exact control over feel and interruptibility. Choose the standard API when you are extending system navigation; hand-roll when the interaction <em>is</em> the product and the framework's ownership of the timeline is the thing standing in your way.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Containment contract</strong> = the ordered handshake (<code>addChild</code> → add view → <code>didMove(toParent:)</code>, reversed as <code>willMove(toParent: nil)</code> → remove view → <code>removeFromParent</code>) that keeps a child's lifecycle, traits, and insets correct.</li>
+<li><strong>Custom navigation stack</strong> = an array of child VCs plus push/pop that mount/unmount views and animate the swap; a <code>UINavigationController</code> is exactly this and nothing more.</li>
+<li><strong>UIViewPropertyAnimator</strong> = the interruptible animator you can pause, set <code>fractionComplete</code> on, reverse, and <code>continueAnimation(withTimingParameters:)</code> — the engine of interactive transitions.</li>
+<li><strong>Progress-driven transition</strong> = mapping a pan's translation to a 0→1 fraction and setting the animator to it directly, so the change tracks the finger with no lag.</li>
+<li><strong>Velocity handoff</strong> = passing the gesture's exit velocity into <code>UISpringTimingParameters</code> so the settling spring continues at the finger's speed with no visible seam.</li>
+<li><strong>Standard transitioning API</strong> = <code>UIViewControllerAnimatedTransitioning</code> + <code>UIViewControllerInteractiveTransitioning</code> / <code>UIPercentDrivenInteractiveTransition</code>, which plug into system navigation but hand the timeline to the framework.</li>
+<li><strong>Hand-rolled transition</strong> = owning the children, layout, and animator yourself, bypassing the transitioning API for frame-exact interruptibility at the cost of re-implementing the framework's plumbing.</li>
+<li><strong>Commit decision</strong> = choosing finish vs cancel on release from both position (past halfway) and velocity (a hard flick), matching the system's own gesture behavior.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The lifecycle the contract drives: <a class="xref" href="#01-view-controller-lifecycle">01-view-controller-lifecycle</a></li>
+<li>The base class you are subclassing: <a class="xref" href="uikit.html#12-uiviewcontroller">UIViewController</a></li>
+<li>Moving views across containers mid-transition: <a class="xref" href="#10-portal-views-layer-reparenting">10-portal-views-layer-reparenting</a></li>
+</ul>
+<p>Prev <a class="xref" href="#08-recycling-list-on-uiscrollview">08-recycling-list-on-uiscrollview</a> · Next <a class="xref" href="#10-portal-views-layer-reparenting">10-portal-views-layer-reparenting</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#08-recycling-list-on-uiscrollview"><span>Prev</span>← 08 — Building a Recycling List on UIScrollView</a><a href="#10-portal-views-layer-reparenting"><span>Next</span>10 — Layer Reparenting: Portal Views →</a></div></section>
+<section class="page" id="10-portal-views-layer-reparenting" data-title="10 — Layer Reparenting: Portal Views" data-num="10" data-hasdemo="0" data-group=""><h1>10 — Layer Reparenting: Portal Views</h1>
+<h2>Start here — the plain idea</h2>
+<p>Imagine a security desk with a wall of monitors. One monitor shows a live feed of the lobby camera. The lobby is still the lobby — nobody moved it, nobody photographed it — but its pixels now appear somewhere completely different, updating in real time. That live feed is exactly what a <strong>portal</strong> is for a view: a window into another view's rendered content, shown at a new location, staying live.</p>
+<p>You reach for this when one view's pixels need to appear somewhere else in the hierarchy without physically moving the original. Think of a tiny avatar inside a table view cell that appears to "fly up" and expand into a full-screen header during a push transition. The cell still owns that avatar. Detaching it, animating it, and re-inserting it is fiddly and error-prone — the cell might recycle, the layout might shift, the original might blink. A portal lets a second view <em>mirror</em> the avatar's live content while the real one stays exactly where it belongs.</p>
+<p>Contrast this with a <strong>snapshot</strong>, which is a photograph: a frozen copy of how the view looked at one instant. Snapshots are cheap, safe, and perfect when the source won't change during the animation. Portals are the live feed — more powerful, but with a catch we'll get to. Most of the time you want the photograph; occasionally you genuinely need the live feed, and knowing which is which is the whole skill here.</p>
+<h2>The concept: mirror, don't move</h2>
+<p>A portal mirrors a <strong>source</strong> layer's rendered content at another point in the tree. Three properties define it:</p>
+<ul>
+<li>The source view is <strong>not reparented</strong> — it keeps its place, its constraints, its owner.</li>
+<li>The content is <strong>not a static copy</strong> — it re-renders as the source changes.</li>
+<li>The portal has its <strong>own</strong> frame, transform, and position in a <em>different</em> branch of the hierarchy, so it can be animated independently.</li>
+</ul>
+<p>The rendered output flows one way: source → portal. You animate the portal; the source is untouched.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A source view in hierarchy A mirrored live by a portal view in hierarchy B"><text x="40" y="28" fill="#8a8b93" font-family="sans-serif" font-size="12">Hierarchy A (cell)</text><text x="470" y="28" fill="#8a8b93" font-family="sans-serif" font-size="12">Hierarchy B (transition container)</text><rect x="40" y="40" width="300" height="220" rx="10" fill="none" stroke="#3a3d48" stroke-width="1"/><rect x="470" y="40" width="250" height="220" rx="10" fill="none" stroke="#3a3d48" stroke-width="1"/><rect x="70" y="150" width="120" height="70" rx="8" fill="#2a2d38"/><text x="130" y="190" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">source view</text><rect x="520" y="70" width="150" height="90" rx="8" fill="#2a2d38" stroke="#5856d6" stroke-width="2"/><text x="595" y="118" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">portal view</text><line x1="190" y1="175" x2="520" y2="115" stroke="#5856d6" stroke-width="2" stroke-dasharray="5 4"/><text x="360" y="135" fill="#5856d6" font-family="sans-serif" font-size="12" text-anchor="middle">live pixels →</text></svg><figcaption>The source stays put in hierarchy A; the portal in hierarchy B shows its live content and can be animated freely.</figcaption></figure>
+
+<h2>How Apple does it internally (private API — do not ship)</h2>
+<p>Under the hood UIKit has a private class, <strong><code>_UIPortalView</code></strong>, backed by a <strong><code>CAPortalLayer</code></strong>. A <code>CAPortalLayer</code> holds a reference to a <code>sourceLayer</code> and draws that layer's tree wherever the portal layer sits. This is the machinery behind several system transitions, and third-party apps like Telegram have used it for cross-hierarchy morphs and glass-style live overlays.</p>
+<p>Conceptually it looks like this — shown only so you understand the mechanism:</p>
+<pre><code class="language-swift">// PRIVATE API. This will get your app rejected. Illustration only.
+// _UIPortalView is not declared in any public header.
+
+let portalClass: AnyClass = NSClassFromString(&quot;_UIPortalView&quot;)!
+
+// Instances are created via a source view; the initializer takes the
+// view whose content should be mirrored.
+let sel = NSSelectorFromString(&quot;initWithSourceView:&quot;)
+let portal = (portalClass.alloc() as AnyObject)
+    .perform(sel, with: sourceAvatarView)?
+    .takeUnretainedValue() as? UIView
+
+portal?.frame = fullScreenTargetFrame
+transitionContainer.addSubview(portal!)
+// The portal now shows the avatar's live pixels; animate portal.frame.
+</code></pre>
+<p>The <code>CAPortalLayer</code> side (also private in its useful form) exposes properties like <code>sourceLayer</code> and flags controlling whether hidden/matched source content is drawn. Because none of this is in a public header, you are relying on symbol names and behavior that Apple can change or that static analysis will flag.</p>
+<blockquote>
+<p>Warning — App Store risk. <code>_UIPortalView</code>, <code>CAPortalLayer.sourceLayer</code>, and friends are <strong>private API</strong>. Shipping them risks automated rejection and runtime breakage across OS updates. Treat this section as "how the system works," never as a recommendation. The next section is what you should actually ship.</p>
+</blockquote>
+<h2>Public, App-Store-safe alternatives (use these)</h2>
+<p>Pick by whether you need <em>live</em> content or a <em>frozen frame</em>.</p>
+<p><strong>1. Static snapshot — the default, covers most transitions.</strong> If the source won't visibly change during the animation, a snapshot is the right tool. It's a real, public view you can animate anywhere.</p>
+<pre><code class="language-swift">// Frozen copy — cheapest, safest. afterScreenUpdates: false uses the
+// currently-rendered content; true forces a layout pass first.
+guard let snap = sourceAvatarView.snapshotView(afterScreenUpdates: false) else { return }
+snap.frame = transitionContainer.convert(sourceAvatarView.bounds, from: sourceAvatarView)
+transitionContainer.addSubview(snap)
+
+sourceAvatarView.isHidden = true            // hide original during the move
+UIView.animate(withDuration: 0.35) {
+    snap.frame = fullScreenTargetFrame
+} completion: { _ in
+    snap.removeFromSuperview()
+    sourceAvatarView.isHidden = false
+}
+</code></pre>
+<p><code>resizableSnapshotView(from:afterScreenUpdates:withCapInsets:)</code> gives you a stretchable variant when the target size differs a lot from the source.</p>
+<p><strong>2. Temporarily reparent the real view.</strong> When you truly need live content (a video, a spinner, an animating chart) and a snapshot would look dead, move the <em>actual</em> view into a transition/window-level container for the duration, then put it back. This is the honest, supported version of what a portal fakes.</p>
+<pre><code class="language-swift">let originalSuperview = liveView.superview
+let originalFrame = liveView.frame
+let start = container.convert(liveView.bounds, from: liveView)
+
+container.addSubview(liveView)              // reparent up
+liveView.frame = start
+UIView.animate(withDuration: 0.35) {
+    liveView.frame = fullScreenTargetFrame
+} completion: { _ in
+    originalSuperview?.addSubview(liveView) // reparent back
+    liveView.frame = originalFrame          // (or re-apply constraints)
+}
+</code></pre>
+<p>The tradeoff: if the source is under Auto Layout you must restore its constraints, and if it's inside a recycling cell you must guard against the cell being reused mid-flight.</p>
+<p><strong>3. <code>CAReplicatorLayer</code>.</strong> When you want <em>many</em> mirrored copies of one sublayer tree (repeating chrome, reflections, particle-like effects), a replicator layer draws N transformed instances of its sublayers for free.</p>
+<p><strong>4. Render to an image.</strong> <code>layer.render(in:)</code> or <code>drawHierarchy(in:afterScreenUpdates:)</code> into a <code>UIGraphicsImageRenderer</code> context gives you a bitmap you can place anywhere. Heavier than <code>snapshotView</code> and also static; useful when you need the pixels as an actual <code>UIImage</code> (sharing, blurring, masking).</p>
+<pre><code class="language-swift">let renderer = UIGraphicsImageRenderer(bounds: sourceAvatarView.bounds)
+let image = renderer.image { ctx in
+    sourceAvatarView.drawHierarchy(in: sourceAvatarView.bounds, afterScreenUpdates: true)
+}
+</code></pre>
+<p><strong>5. SwiftUI cousins.</strong> If you're in SwiftUI, <code>matchedGeometryEffect(id:in:)</code> and the zoom navigation transition (<code>.navigationTransition(.zoom(...))</code>) give you portal-like "one element morphs across screens" behavior with zero private API — the framework owns the live handoff for you.</p>
+<h2>Choosing the right tool</h2>
+<ul>
+<li>Source is static during the move, or a one-frame flash is acceptable → <strong>snapshotView</strong> (default).</li>
+<li>Source is genuinely live and must keep animating → <strong>temporarily reparent the real view</strong>.</li>
+<li>You need N mirrored copies → <strong>CAReplicatorLayer</strong>.</li>
+<li>You need the pixels as a <code>UIImage</code> → <strong>render(in:) / drawHierarchy</strong>.</li>
+<li>You're in SwiftUI → <strong>matchedGeometryEffect</strong> or <strong>zoom transition</strong>.</li>
+<li>You need a live mirror <em>without</em> moving the source and can't reparent → this is the only case portals uniquely solve, and there is <strong>no public API</strong> for it. Redesign so one of the above works, rather than shipping <code>_UIPortalView</code>.</li>
+</ul>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Portal</strong> = a live, one-way mirror of a source layer's rendered content shown at another location; source is neither moved nor copied.</li>
+<li><strong><code>_UIPortalView</code> / <code>CAPortalLayer</code></strong> = Apple's private classes implementing portals; <code>CAPortalLayer.sourceLayer</code> names the mirrored layer. Private API — rejection and breakage risk.</li>
+<li><strong>Snapshot</strong> = a frozen, public copy of a view's pixels (<code>snapshotView(afterScreenUpdates:)</code>, <code>resizableSnapshotView</code>); ideal when the source won't change mid-animation.</li>
+<li><strong>Reparenting</strong> = physically moving the real view to another superview (often a window-level container) for the transition, then restoring it — the supported way to animate <em>live</em> content across hierarchies.</li>
+<li><strong><code>CAReplicatorLayer</code></strong> = draws multiple transformed instances of its sublayers; use for repeated/mirrored copies, not single morphs.</li>
+<li><strong><code>layer.render(in:)</code> / <code>drawHierarchy(in:afterScreenUpdates:)</code></strong> = rasterize a view/layer into a bitmap context; static, heavier, produces a real image.</li>
+<li><strong><code>matchedGeometryEffect</code></strong> = SwiftUI's declarative element handoff across views; framework-managed, no private API.</li>
+<li><strong>Live vs. frozen</strong> = the core decision: need continuously updating pixels → portal/reparent; a single captured frame is enough → snapshot.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="coreanimation.html#23-layer-backed-views">layer-backed views</a> — why every UIView has a CALayer, the substrate portals mirror</li>
+<li><a class="xref" href="#09-custom-container-view-controllers">09-custom-container-view-controllers</a> — where cross-hierarchy transitions actually run</li>
+<li><a class="xref" href="swiftui.html#22a-matched-geometry-and-anchors">matched geometry</a> — the declarative equivalent</li>
+<li>Prev <a class="xref" href="#09-custom-container-view-controllers">09-custom-container-view-controllers</a> · Next <a class="xref" href="#11-uiwindow-window-levels-scenes">11-uiwindow-window-levels-scenes</a> · Hub <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#09-custom-container-view-controllers"><span>Prev</span>← 09 — Custom Container View Controllers &amp; Interactive Transitions</a><a href="#11-uiwindow-window-levels-scenes"><span>Next</span>11 — UIWindow, Window Levels &amp; Scene Lifecycle →</a></div></section>
+<section class="page" id="11-uiwindow-window-levels-scenes" data-title="11 — UIWindow, Window Levels &amp; Scene Lifecycle" data-num="11" data-hasdemo="0" data-group=""><h1>11 — UIWindow, Window Levels &amp; Scene Lifecycle</h1>
+<h2>Start here — the plain idea</h2>
+<p>Think of your app's screen as a stack of transparent sheets on an overhead projector. The bottom sheet holds everything your users normally see — your whole view-controller hierarchy sits on it. That bottom sheet is your <code>UIWindow</code>. Almost every app you've ever written uses exactly one and never thinks about it again.</p>
+<p>But you can lay <em>more</em> sheets on top. Slide a fresh transparent sheet above the stack, draw a small toast on it, and it floats over your entire app — above navigation bars, above modals, above everything — without disturbing a single view controller underneath. When the toast fades, you lift that sheet off and the app below never knew it was there. That's the mental model for an <strong>overlay window</strong>: a second <code>UIWindow</code>, stacked higher, that you own for a moment and then throw away.</p>
+<p>The trick that makes it feel magical is that the extra sheet is mostly <em>see-through to touch</em> — taps pass straight through the empty areas to the app below, and only the toast itself is interactive. Get that hit-testing right and you have a global HUD, tooltip, or loading spinner that lives completely independently of whatever screen the user is on.</p>
+<h2>UIWindow basics</h2>
+<p>A <code>UIWindow</code> <strong>is a <code>UIView</code> subclass</strong> — the root of a view hierarchy rather than a leaf in one. Its <code>rootViewController</code> supplies the view that fills it. In the modern lifecycle a window doesn't attach to the screen directly; it attaches to a <strong><code>UIWindowScene</code></strong>.</p>
+<pre><code class="language-swift">// The window your app already has, created for a scene:
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        let window = UIWindow(windowScene: windowScene)   // bind to the scene
+        window.rootViewController = RootViewController()
+        window.makeKeyAndVisible()                          // key = receives events
+        self.window = window
+    }
+}
+</code></pre>
+<p><code>makeKeyAndVisible()</code> does two things: makes the window visible and makes it the <strong>key window</strong> (the one that receives keyboard and other non-touch events). Touch events go to whatever window is topmost at the touch point, regardless of which is key.</p>
+<h2>windowLevel — controlling the stack</h2>
+<p>Every window has a <code>windowLevel</code>, a <code>CGFloat</code>-backed value that decides stacking order. Higher levels sit above lower ones. UIKit ships a few named constants:</p>
+<ul>
+<li><code>.normal</code> (0) — your app's root window.</li>
+<li><code>.statusBar</code> — around the status bar region.</li>
+<li><code>.alert</code> — where system alerts float.</li>
+</ul>
+<p>You can also use arbitrary values, including offsets from the named ones, to slot an overlay exactly where you want it.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A stack of windows over one window scene: app root window at normal level and an overlay window at a higher level"><text x="40" y="28" fill="#8a8b93" font-family="sans-serif" font-size="12">UIWindowScene</text><rect x="30" y="40" width="700" height="240" rx="12" fill="none" stroke="#3a3d48" stroke-width="1"/><rect x="70" y="180" width="620" height="70" rx="8" fill="#2a2d38"/><text x="380" y="220" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">app root window — windowLevel .normal</text><rect x="120" y="90" width="520" height="70" rx="8" fill="#2a2d38" stroke="#5856d6" stroke-width="2"/><text x="380" y="130" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">overlay window — higher windowLevel (HUD / toast)</text><line x1="380" y1="180" x2="380" y2="160" stroke="#5856d6" stroke-width="2" marker-end="url(#a)"/><defs><marker id="a" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5856d6"/></marker></defs><text x="470" y="175" fill="#8a8b93" font-family="sans-serif" font-size="11">stacked above</text></svg><figcaption>One scene, two windows: the overlay floats above the app root because its windowLevel is higher — no change to the app's view-controller hierarchy.</figcaption></figure>
+
+<h2>Overlay presentation without a view controller</h2>
+<p>Here's the payoff: a global HUD that needs no place in your VC hierarchy. Create a lightweight window on the active scene, give it a <strong>passthrough</strong> root so touches fall through except on the HUD itself, show your content, then tear it down.</p>
+<p>First, a window whose hit-testing ignores empty space:</p>
+<pre><code class="language-swift">final class PassthroughWindow: UIWindow {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -&gt; UIView? {
+        let hit = super.hitTest(point, with: event)
+        // If the hit is the window's own root view (empty area), let the
+        // touch fall through to windows below by returning nil.
+        return hit === rootViewController?.view ? nil : hit
+    }
+}
+</code></pre>
+<p>Then a tiny controller to own the overlay, and code to present it on the current scene:</p>
+<pre><code class="language-swift">@MainActor
+final class HUDPresenter {
+    private var window: PassthroughWindow?
+
+    func show(_ overlay: UIView, on scene: UIWindowScene) {
+        let window = PassthroughWindow(windowScene: scene)
+        window.windowLevel = .alert + 1            // above alerts
+        window.backgroundColor = .clear
+        let host = UIViewController()
+        host.view.backgroundColor = .clear
+        window.rootViewController = host
+        window.isHidden = false                    // show without becoming key
+
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        host.view.addSubview(overlay)
+        NSLayoutConstraint.activate([
+            overlay.centerXAnchor.constraint(equalTo: host.view.centerXAnchor),
+            overlay.bottomAnchor.constraint(equalTo: host.view.safeAreaLayoutGuide.bottomAnchor,
+                                            constant: -24)
+        ])
+        self.window = window
+    }
+
+    func dismiss() {
+        window?.isHidden = true
+        window = nil                               // release → deallocated
+    }
+}
+</code></pre>
+<p>Note <code>isHidden = false</code> rather than <code>makeKeyAndVisible()</code>: a passive overlay shouldn't steal key status (and keyboard focus) from your app. Setting the window to <code>nil</code> is how you tear it down — once nothing retains it, it deallocates and leaves the screen.</p>
+<h2>Getting the active scene in a multi-scene world</h2>
+<p>On iPad (and increasingly on iPhone via Stage Manager and external displays) an app can have several scenes alive at once. There is no single "the window" anymore — you must find the scene that's currently in the <strong>foreground and active</strong>.</p>
+<pre><code class="language-swift">extension UIApplication {
+    var activeWindowScene: UIWindowScene? {
+        connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+    }
+}
+</code></pre>
+<p>Prefer this over the deprecated <code>UIApplication.shared.keyWindow</code> / <code>windows</code>, which are meaningless when multiple scenes exist.</p>
+<h2>Scene lifecycle</h2>
+<p><code>UISceneDelegate</code> (and its <code>UIWindowSceneDelegate</code> specialization) is where per-scene lifecycle lands. The states you'll handle most:</p>
+<pre><code class="language-swift">func sceneDidBecomeActive(_ scene: UIScene) {
+    // Foreground + interactive: resume timers, refresh, restart animations.
+}
+func sceneWillResignActive(_ scene: UIScene) {
+    // About to become inactive (call, control center, app switcher): pause.
+}
+func sceneDidEnterBackground(_ scene: UIScene) {
+    // Not visible: save state, release scarce resources.
+}
+</code></pre>
+<p>Each scene transitions through <em>unattached → foreground-inactive → foreground-active → background</em> independently, so two windows of your app can be in different states simultaneously. Scene-scoped work (which window to update, which overlay to present) belongs on the scene delegate, not on the app delegate, precisely because of this independence.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>UIWindow</code></strong> = a <code>UIView</code> subclass that roots a view hierarchy; hosts a <code>rootViewController</code> and attaches to a <code>UIWindowScene</code>.</li>
+<li><strong>Key window</strong> = the window receiving keyboard/non-touch events; set via <code>makeKeyAndVisible()</code>. Touch events instead go to the topmost window at the touch point.</li>
+<li><strong><code>windowLevel</code></strong> = the <code>CGFloat</code> stacking order (<code>.normal</code>, <code>.statusBar</code>, <code>.alert</code>, or custom); higher floats above lower.</li>
+<li><strong>Overlay window</strong> = a second, higher-level <code>UIWindow</code> you create for transient UI (toast, HUD, spinner) and tear down by releasing it — no VC-hierarchy changes.</li>
+<li><strong>Passthrough hit-testing</strong> = overriding <code>hitTest(_:with:)</code> to return <code>nil</code> for empty areas so touches fall through to windows below, keeping only the overlay interactive.</li>
+<li><strong><code>UIWindowScene</code></strong> = the modern attachment point between a window and the display; one app can own several.</li>
+<li><strong><code>UISceneDelegate</code> / <code>UIWindowSceneDelegate</code></strong> = per-scene lifecycle callbacks (<code>willConnectTo</code>, <code>sceneDidBecomeActive</code>, <code>sceneWillResignActive</code>, <code>sceneDidEnterBackground</code>).</li>
+<li><strong>Active scene lookup</strong> = <code>connectedScenes</code> filtered to a <code>UIWindowScene</code> whose <code>activationState == .foregroundActive</code>; the multi-scene-correct replacement for <code>keyWindow</code>.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="#01-view-controller-lifecycle">01-view-controller-lifecycle</a> — how a rootViewController's own lifecycle nests inside the scene's</li>
+<li><a class="xref" href="uikit.html#14-presenting-sheets-alerts">presenting</a> — when a modal is the right tool instead of a whole window</li>
+<li>Prev <a class="xref" href="#10-portal-views-layer-reparenting">10-portal-views-layer-reparenting</a> · Next <a class="xref" href="#12-keyboard-handling">12-keyboard-handling</a> · Hub <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#10-portal-views-layer-reparenting"><span>Prev</span>← 10 — Layer Reparenting: Portal Views</a><a href="#12-keyboard-handling"><span>Next</span>12 — Keyboard Handling →</a></div></section>
+<section class="page" id="12-keyboard-handling" data-title="12 — Keyboard Handling" data-num="12" data-hasdemo="0" data-group=""><h1>12 — Keyboard Handling</h1>
+<h2>Start here — the plain idea</h2>
+<p>Picture yourself typing in a chat app. You tap the text field, and the keyboard slides up from the bottom of the screen. But the keyboard is opaque and it's tall — if your composer bar were still glued to the bottom of the window, it would now be hidden <em>behind</em> the keyboard, and you'd be typing blind. So the composer has to lift up and ride exactly on top of the keyboard, matching its height, its slide-up timing, and its easing curve so precisely that the two feel welded together.</p>
+<p>Now make it harder: the user scrolls the message list and drags <em>down</em> to dismiss the keyboard. The keyboard doesn't snap away — it follows the finger, sliding down interactively. Your composer has to follow it down in lockstep, tracking the keyboard's live position frame by frame as the finger moves. Get any of this even slightly wrong and the composer visibly stutters, lags a frame behind, or briefly reveals a strip of empty background between itself and the keyboard.</p>
+<p>This is one of the most famously fiddly corners of UIKit, and Apple has shipped three generations of tooling for it: the old-school notification dance you had to hand-wire for years, the modern <code>keyboardLayoutGuide</code> that tracks the keyboard for you with almost no code, and the interactive-dismiss machinery that ties it all together. Here's the whole toolkit, oldest to newest.</p>
+<h2>The classic notification dance</h2>
+<p>Before iOS 15 there was exactly one way to do this, and every serious app hand-rolled it. UIKit posts notifications as the keyboard changes frame, and you read the geometry and animation parameters out of the <code>userInfo</code> dictionary.</p>
+<p>The key notification is <code>keyboardWillChangeFrameNotification</code> — it fires for show, hide, <em>and</em> height changes (like switching to an emoji keyboard or a taller autocorrect bar), so observing just this one covers every case. The <code>userInfo</code> keys you care about:</p>
+<pre><code class="language-swift">final class ComposerViewController: UIViewController {
+    @IBOutlet private var bottomConstraint: NSLayoutConstraint!  // composer bottom → view bottom
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillChangeFrame(_:)),
+            name: UIResponder.keyboardWillChangeFrameNotification,
+            object: nil
+        )
+    }
+
+    @objc private func keyboardWillChangeFrame(_ note: Notification) {
+        guard let info = note.userInfo,
+              let endFrameValue = info[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue,
+              let duration = info[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+              let curveRaw = info[UIResponder.keyboardAnimationCurveUserInfoKey] as? Int
+        else { return }
+
+        // The end frame is in SCREEN coordinates — convert into our view.
+        let endFrameInWindow = endFrameValue.cgRectValue
+        let endFrameInView = view.convert(endFrameInWindow, from: view.window)
+
+        // How much of the keyboard actually overlaps our view (0 when hidden below).
+        let overlap = max(0, view.bounds.maxY - endFrameInView.minY)
+        let inset = overlap - view.safeAreaInsets.bottom
+
+        bottomConstraint.constant = max(0, inset)
+
+        // The system's own curve arrives as a *raw* value (7) outside the public
+        // UIView.AnimationCurve enum. Shift it into the options bitfield to match exactly.
+        let options = UIView.AnimationOptions(rawValue: UInt(curveRaw &lt;&lt; 16))
+        UIView.animate(withDuration: duration, delay: 0, options: options) {
+            self.view.layoutIfNeeded()
+        }
+    }
+}
+</code></pre>
+<p>Three details trip everyone up. First, <strong>the frame is in screen coordinates</strong> — you must <code>convert</code> it into your view before comparing, or split-view and Stage Manager layouts will be wrong. Second, <strong>subtract the safe-area inset</strong> or you'll double-count the home-indicator gap and leave a dead strip. Third, <strong>the animation curve is a private raw value</strong> (<code>7</code>) that doesn't map to any public <code>UIView.AnimationCurve</code> case; the <code>&lt;&lt; 16</code> shift into the <code>AnimationOptions</code> bitfield is the well-worn trick to reproduce Apple's exact easing rather than a stock <code>.easeInOut</code>.</p>
+<h2>The modern way — <code>keyboardLayoutGuide</code></h2>
+<p>iOS 15 introduced <code>UIView.keyboardLayoutGuide</code>, and it makes almost all of the above obsolete. It's a layout guide living on your view whose frame automatically tracks the keyboard. You pin your composer to its <code>topAnchor</code> and UIKit keeps them glued together — through show, hide, height changes, and animation curves — with no notifications, no coordinate conversion, no curve-decoding hack.</p>
+<pre><code class="language-swift">composer.translatesAutoresizingMaskIntoConstraints = false
+view.addSubview(composer)
+
+NSLayoutConstraint.activate([
+    composer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+    composer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+    // Sit right on top of the keyboard. When the keyboard is down, the guide
+    // collapses to the bottom safe area, so the composer rests above the home indicator.
+    composer.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)
+])
+</code></pre>
+<p>That's the whole thing. When the keyboard is dismissed, the guide automatically falls back to tracking the bottom safe-area edge, so the composer sits above the home indicator exactly as you'd want — no separate "keyboard hidden" branch to write.</p>
+<p>One property worth knowing: <code>keyboardLayoutGuide.followsUndockedKeyboard</code>. By default the guide only tracks the <em>docked</em> keyboard (pinned to the screen bottom). On iPad the user can undock or float the keyboard; setting <code>followsUndockedKeyboard = true</code> makes the guide chase it around the screen too. Leave it <code>false</code> (the default) if you want the composer to stay put when the keyboard floats free.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A phone screen with a composer bar pinned to the top of the keyboardLayoutGuide as the keyboard slides up from the bottom"><rect x="0" y="0" width="760" height="300" fill="#1c1e26"/><rect x="280" y="20" width="200" height="260" rx="18" fill="#2a2d38" stroke="#3a3d48"/><rect x="296" y="40" width="168" height="120" rx="6" fill="#22242e"/><text x="380" y="104" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">message list</text><rect x="296" y="168" width="168" height="30" rx="8" fill="#5856d6"/><text x="380" y="187" fill="#ffffff" font-family="sans-serif" font-size="12" text-anchor="middle">composer</text><rect x="296" y="204" width="168" height="72" rx="6" fill="#33353f"/><text x="380" y="244" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">keyboard ▲</text><line x1="296" y1="166" x2="464" y2="166" stroke="#5856d6" stroke-width="2" stroke-dasharray="4 3"/><text x="540" y="170" fill="#5856d6" font-family="sans-serif" font-size="12">keyboardLayoutGuide.topAnchor</text><text x="540" y="188" fill="#8a8b93" font-family="sans-serif" font-size="11">composer.bottomAnchor pins here</text><path d="M380 300 L380 280" stroke="#8a8b93" stroke-width="2" marker-end="url(#a)"/><defs><marker id="a" markerWidth="8" markerHeight="8" refX="4" refY="1" orient="auto"><path d="M0 6 L4 0 L8 6 Z" fill="#8a8b93"/></marker></defs><text x="120" y="150" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">keyboard slides up,</text><text x="120" y="170" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">composer rides on top</text></svg><figcaption>The composer's bottom is pinned to <code>keyboardLayoutGuide.topAnchor</code>; UIKit tracks the keyboard and the composer follows automatically.</figcaption></figure>
+
+<h2>Interactive dismissal</h2>
+<p>Set <code>scrollView.keyboardDismissMode = .interactive</code> and the user can drag down through your message list to slide the keyboard away with their finger — the keyboard tracks the touch position live instead of snapping shut when the drag <em>ends</em> (which is what <code>.onDrag</code> does).</p>
+<pre><code class="language-swift">tableView.keyboardDismissMode = .interactive
+</code></pre>
+<p>Here's the caveat that bites people who are still on the classic notification approach: <strong>during an interactive drag, the <code>willChangeFrame</code> notifications do not fire continuously.</strong> They fire once at the start and once when the gesture resolves, but not for every intermediate position as the finger moves. So a composer wired purely to notifications will sit frozen at the top while the keyboard slides down under the finger, then jump to catch up at the end — visibly broken.</p>
+<p>This is the strongest single argument for <code>keyboardLayoutGuide</code>: it <em>does</em> track the keyboard continuously through an interactive drag, because it's driven by the same internal mechanism moving the keyboard, not by the coarse notification stream. If you want interactive dismissal to look right with minimal effort, pin to the layout guide and let it handle the live tracking.</p>
+<h2>Building a composer that grows and rides the keyboard</h2>
+<p>Putting it together: a real chat composer both <strong>grows vertically as the user types</strong> (a multi-line text view that expands up to some cap) and <strong>rides on top of the keyboard</strong>. The two concerns compose cleanly because they're independent — one drives the composer's own height, the other drives its bottom position.</p>
+<pre><code class="language-swift">final class ChatComposer: UIView {
+    let textView = UITextView()
+    private var heightConstraint: NSLayoutConstraint!
+    private let maxHeight: CGFloat = 120
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        textView.isScrollEnabled = false            // let it grow instead of scrolling
+        textView.font = .preferredFont(forTextStyle: .body)
+        textView.delegate = self
+        addSubview(textView)
+
+        heightConstraint = textView.heightAnchor.constraint(equalToConstant: 40)
+        NSLayoutConstraint.activate([
+            textView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            textView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            textView.topAnchor.constraint(equalTo: topAnchor, constant: 8),
+            textView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
+            heightConstraint
+        ])
+    }
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+extension ChatComposer: UITextViewDelegate {
+    func textViewDidChange(_ textView: UITextView) {
+        // Recompute the fitting height and clamp it.
+        let fitting = textView.sizeThatFits(
+            CGSize(width: textView.bounds.width, height: .greatestFiniteMagnitude)
+        ).height
+        let clamped = min(fitting, maxHeight)
+        textView.isScrollEnabled = fitting &gt; maxHeight   // scroll only past the cap
+        if heightConstraint.constant != clamped {
+            heightConstraint.constant = clamped
+            UIView.animate(withDuration: 0.15) { self.superview?.layoutIfNeeded() }
+        }
+    }
+}
+</code></pre>
+<p>The composer's <em>height</em> comes from <code>sizeThatFits</code> on the text view, clamped and switched to scrolling past the cap. Its <em>position</em> comes from pinning <code>composer.bottomAnchor</code> to <code>keyboardLayoutGuide.topAnchor</code> as shown earlier. Neither knows about the other. For the full narrative on this design, watch WWDC21 "Your guide to keyboard layout" (which introduced <code>keyboardLayoutGuide</code>) and WWDC23 "Keep up with the keyboard" (which covers interactive tracking and the newer keyboard-scene APIs).</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>keyboardWillChangeFrameNotification</code></strong> = the single notification covering show, hide, and height changes; read geometry and animation params from its <code>userInfo</code>.</li>
+<li><strong><code>keyboardFrameEndUserInfoKey</code></strong> = the keyboard's final frame, in <em>screen</em> coordinates — always <code>convert</code> it into your view before use.</li>
+<li><strong><code>keyboardAnimationCurveUserInfoKey</code></strong> = a raw curve value (often <code>7</code>) with no public enum case; shift it <code>&lt;&lt; 16</code> into <code>AnimationOptions</code> to match Apple's easing exactly.</li>
+<li><strong><code>keyboardLayoutGuide</code></strong> = a per-view layout guide (iOS 15+) whose frame tracks the keyboard automatically; pin to its <code>topAnchor</code> and skip the notification dance entirely.</li>
+<li><strong><code>followsUndockedKeyboard</code></strong> = property making the guide chase floating/undocked iPad keyboards too; default <code>false</code> keeps your UI still when the keyboard floats.</li>
+<li><strong><code>keyboardDismissMode = .interactive</code></strong> = drag-to-dismiss where the keyboard tracks the finger live; note that classic notifications go silent mid-drag, so the layout guide handles this far better.</li>
+<li><strong><code>sizeThatFits</code></strong> = the call that gives a text view its natural content height, letting a composer grow with typed text up to a cap before it starts scrolling.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="uikit.html#09-text-input">Text Input</a> — first responders, <code>UITextView</code>, and input accessory views.</li>
+<li><a class="xref" href="#02-responder-chain">02-responder-chain</a> — how the keyboard knows <em>which</em> field to serve and where events go.</li>
+</ul>
+<p>Prev <a class="xref" href="#11-uiwindow-window-levels-scenes">11-uiwindow-window-levels-scenes</a> · Next <a class="xref" href="#13-context-menus">13-context-menus</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#11-uiwindow-window-levels-scenes"><span>Prev</span>← 11 — UIWindow, Window Levels &amp; Scene Lifecycle</a><a href="#13-context-menus"><span>Next</span>13 — Context Menus: UIContextMenuInteraction &amp; UIMenu →</a></div></section>
+<section class="page" id="13-context-menus" data-title="13 — Context Menus: UIContextMenuInteraction &amp; UIMenu" data-num="13" data-hasdemo="0" data-group=""><h1>13 — Context Menus: UIContextMenuInteraction &amp; UIMenu</h1>
+<h2>Start here — the plain idea</h2>
+<p>Long-press a photo in Messages, a link in Safari, or an app icon on the Home Screen. The thing you pressed lifts off the surface, the background behind it blurs and dims, and a tidy menu of actions unfurls beside it — Copy, Share, Delete. This is the modern descendant of the old "peek &amp; pop" 3D Touch feature: a <em>preview</em> of the content plus a <em>menu</em> of things you can do to it, presented with a little physical flourish where the item appears to float above everything else.</p>
+<p>The nice thing is that UIKit gives you almost all of that polish for free. You attach one interaction object to a view, hand back a description of the preview and the menu, and the framework handles the long-press recognition, the blur, the lift animation, the springy menu reveal, and the dismissal. You describe <em>what</em>; UIKit performs the <em>how</em>.</p>
+<p>The menu itself — <code>UIMenu</code> filled with <code>UIAction</code>s — turns out to be a reusable currency across UIKit. The same menu type powers button pull-downs, the text selection edit menu, and navigation-bar overflow menus. Learn it once here and you've learned it everywhere.</p>
+<h2>Attaching a context menu</h2>
+<p>You add a <code>UIContextMenuInteraction</code> to any view and become its delegate. The delegate's job is to return a <code>UIContextMenuConfiguration</code> describing two things: an optional <code>previewProvider</code> (a view controller shown as the lifted "peek") and an <code>actionProvider</code> that builds the menu.</p>
+<pre><code class="language-swift">final class PhotoCell: UICollectionViewCell {
+    func installContextMenu() {
+        let interaction = UIContextMenuInteraction(delegate: self)
+        addInteraction(interaction)
+    }
+}
+
+extension PhotoCell: UIContextMenuInteractionDelegate {
+    func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        configurationForMenuAtLocation location: CGPoint
+    ) -&gt; UIContextMenuConfiguration? {
+        UIContextMenuConfiguration(
+            identifier: nil,
+            previewProvider: { PhotoPreviewController(image: self.image) },
+            actionProvider: { _ in
+                let share = UIAction(title: &quot;Share&quot;, image: UIImage(systemName: &quot;square.and.arrow.up&quot;)) { _ in
+                    // present share sheet
+                }
+                let favorite = UIAction(title: &quot;Favorite&quot;, image: UIImage(systemName: &quot;star&quot;)) { _ in }
+                let delete = UIAction(title: &quot;Delete&quot;,
+                                      image: UIImage(systemName: &quot;trash&quot;),
+                                      attributes: .destructive) { _ in }
+                return UIMenu(title: &quot;&quot;, children: [share, favorite, delete])
+            }
+        )
+    }
+}
+</code></pre>
+<p>The <code>previewProvider</code> is lazy — the closure only runs if the interaction actually commits to showing a preview, so you don't pay to build a view controller on every touch. The <code>actionProvider</code> receives any <em>suggested</em> system actions and returns the final <code>UIMenu</code>. Returning <code>nil</code> from the top-level configuration method means "no menu here," which is how you conditionally suppress the menu on certain items.</p>
+<h2>Nested menus and deferred elements</h2>
+<p>A <code>UIMenu</code>'s <code>children</code> array can contain other <code>UIMenu</code>s, which render as inline groups or as submenus you drill into. And when part of a menu is expensive to build — say the list of albums to move a photo into — you can drop in a <code>UIDeferredMenuElement</code> that shows a spinner and fills itself in asynchronously, so the menu appears instantly instead of blocking on the slow work.</p>
+<pre><code class="language-swift">let moveSubmenu = UIMenu(title: &quot;Move to Album&quot;, image: UIImage(systemName: &quot;folder&quot;),
+                         children: [
+    UIDeferredMenuElement { completion in
+        AlbumStore.shared.fetchAlbums { albums in
+            let actions = albums.map { album in
+                UIAction(title: album.name) { _ in album.add(self.photo) }
+            }
+            completion(actions)   // menu fills in when this fires
+        }
+    }
+])
+
+let root = UIMenu(children: [share, moveSubmenu, delete])
+</code></pre>
+<p><code>UIDeferredMenuElement</code> has an <code>.uncached</code> variant that re-runs the provider each time the menu opens, which matters when the underlying data changes between presentations.</p>
+<h2>Targeted previews</h2>
+<p>By default UIKit computes the lifted preview from the view you attached the interaction to, giving it a sensible rounded rectangle. When that default looks wrong — the view is an odd shape, or you want a different corner radius, or you want to preview a <em>different</em> region than the whole cell — you supply a <code>UITargetedPreview</code>. It pairs a view (the thing that lifts) with parameters describing its visible path and background.</p>
+<pre><code class="language-swift">extension PhotoCell: UIContextMenuInteractionDelegate {
+    func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        previewForHighlightingMenuWithConfiguration configuration: UIContextMenuConfiguration
+    ) -&gt; UITargetedPreview? {
+        let params = UIPreviewParameters()
+        params.backgroundColor = .clear
+        // Lift only the rounded image, not the whole cell's bounds.
+        params.visiblePath = UIBezierPath(roundedRect: imageView.frame, cornerRadius: 16)
+        return UITargetedPreview(view: imageView, parameters: params)
+    }
+
+    func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        willPerformPreviewActionForMenuWith configuration: UIContextMenuConfiguration,
+        animator: UIContextMenuInteractionCommitAnimating
+    ) {
+        // User tapped the preview itself — navigate to the full detail screen.
+        animator.addCompletion {
+            self.delegate?.openDetail(for: self.photo)
+        }
+    }
+}
+</code></pre>
+<p>The <code>willPerformPreviewAction</code> delegate method is the "tap-through" hook: when the user taps the floating preview (rather than a menu row), you commit to the full navigation. Adding it to the <code>animator</code>'s completion lets your push ride the same dismissal animation smoothly.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A long-press produces a blurred dimmed background with a lifted content preview above a vertical menu list of actions"><rect x="0" y="0" width="760" height="300" fill="#1c1e26"/><rect x="40" y="40" width="150" height="220" rx="10" fill="#2a2d38"/><text x="115" y="150" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">normal view</text><text x="115" y="168" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">(pre-press)</text><path d="M210 150 L270 150" stroke="#5856d6" stroke-width="2" marker-end="url(#arw)"/><defs><marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#5856d6"/></marker></defs><text x="240" y="140" fill="#5856d6" font-family="sans-serif" font-size="11" text-anchor="middle">long-press</text><rect x="300" y="30" width="420" height="240" rx="10" fill="#15161c" opacity="0.9"/><text x="510" y="52" fill="#55565e" font-family="sans-serif" font-size="11" text-anchor="middle">blurred + dimmed background</text><rect x="360" y="70" width="300" height="90" rx="14" fill="#33353f" stroke="#5856d6" stroke-width="1.5"/><text x="510" y="120" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">lifted preview (UITargetedPreview)</text><rect x="440" y="178" width="140" height="80" rx="10" fill="#2a2d38"/><text x="510" y="200" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Share</text><line x1="452" y1="210" x2="568" y2="210" stroke="#3a3d48"/><text x="510" y="227" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Favorite</text><line x1="452" y1="237" x2="568" y2="237" stroke="#3a3d48"/><text x="510" y="252" fill="#ff6b6b" font-family="sans-serif" font-size="12" text-anchor="middle">Delete</text></svg><figcaption>Long-press → blurred, dimmed background with the content lifted as a targeted preview above a vertical <code>UIMenu</code> of actions.</figcaption></figure>
+
+<h2>UIMenu everywhere</h2>
+<p>The <code>UIMenu</code> you built for the context menu isn't special to context menus. The same object drives:</p>
+<pre><code class="language-swift">// A button that shows a pull-down menu instead of firing an action.
+button.menu = UIMenu(children: [sortByName, sortByDate, sortBySize])
+button.showsMenuAsPrimaryAction = true
+
+// The text selection edit menu (iOS 16+) — customize Copy/Look Up/etc.
+let editInteraction = UIEditMenuInteraction(delegate: self)
+textView.addInteraction(editInteraction)
+</code></pre>
+<p><code>UIEditMenuInteraction</code> replaced the old <code>UIMenuController</code> for text selection menus and speaks the same <code>UIMenu</code>/<code>UIAction</code> vocabulary. Once you're fluent in building menus, buttons, edit menus, and context menus all become the same job.</p>
+<h2>When apps hand-roll it instead</h2>
+<p>Here's the trade-off worth understanding. The system context-menu API gives you Apple's exact blur, lift physics, and dismissal for free — but you're locked into <em>its</em> choreography. You can't reorder items with a drag inside the open menu, you can't overlay a row of reaction emoji above the preview, and you can't fully retime the peek animation.</p>
+<p>So some apps deliberately hand-roll the whole thing. Messaging apps that show a reaction bar floating above the pressed bubble, with the menu below and a springy custom preview, typically build their own long-press-plus-pan gesture, render their own blurred snapshot of the background, and lay out their own preview and menu views. (This is an observation about what such interfaces do on screen — not a claim about any specific app's source code.) The payoff is total control over the peek animation, live reordering, and reactions. The cost is that you give up all the free system polish and now own the accessibility, the reduce-motion handling, the dark-mode blur, and every edge case yourself. Reach for the system API unless you specifically need something it structurally cannot express.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong><code>UIContextMenuInteraction</code></strong> = the interaction you add to any view to give it a long-press context menu; you become its delegate.</li>
+<li><strong><code>UIContextMenuConfiguration</code></strong> = the object your delegate returns describing the menu; return <code>nil</code> to suppress the menu for that item.</li>
+<li><strong><code>previewProvider</code></strong> = a lazy closure returning the view controller shown as the lifted peek; runs only if a preview is actually committed.</li>
+<li><strong><code>actionProvider</code></strong> = a closure that receives suggested actions and returns the final <code>UIMenu</code>.</li>
+<li><strong><code>UIMenu</code> / <code>UIAction</code></strong> = the reusable menu vocabulary; <code>UIMenu.children</code> can nest submenus, and <code>UIDeferredMenuElement</code> fills part of a menu in asynchronously.</li>
+<li><strong><code>UITargetedPreview</code> / <code>UIPreviewParameters</code></strong> = control the lifted preview's shape, corner radius, <code>visiblePath</code>, and background when the default is wrong.</li>
+<li><strong><code>willPerformPreviewAction</code></strong> = the tap-through hook fired when the user taps the preview itself; commit navigation via the animator's completion.</li>
+<li><strong><code>UIEditMenuInteraction</code></strong> = the modern text-selection edit menu (iOS 16+), built from the same <code>UIMenu</code>/<code>UIAction</code> types.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="#07-custom-gesture-recognizers">07-custom-gesture-recognizers</a> — the long-press-plus-pan machinery you'd build if you hand-roll the interaction yourself.</li>
+<li><a class="xref" href="uikit.html#10-uivisualeffectview-and-liquid-glass">Blur &amp; Glass</a> — the <code>UIVisualEffectView</code> blur behind the system preview, and how to reproduce it.</li>
+</ul>
+<p>Prev <a class="xref" href="#12-keyboard-handling">12-keyboard-handling</a> · Next <a class="xref" href="#14-view-allocation-cost">14-view-allocation-cost</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#12-keyboard-handling"><span>Prev</span>← 12 — Keyboard Handling</a><a href="#14-view-allocation-cost"><span>Next</span>14 — View Allocation Cost &amp; Reuse Discipline →</a></div></section>
+<section class="page" id="14-view-allocation-cost" data-title="14 — View Allocation Cost &amp; Reuse Discipline" data-num="14" data-hasdemo="0" data-group=""><h1>14 — View Allocation Cost &amp; Reuse Discipline</h1>
+<h2>Start here — the plain idea</h2>
+<p><code>UIView()</code> reads like it costs nothing. It's one line, it returns instantly, and in a demo with a dozen views you'll never notice a thing. So it's tempting to treat views like free scratch paper — wrap this in a container, nest that in a stack, add a decorative subview here and there. And for a dozen, sure. But a view is not a lightweight value type. Every single one drags a small entourage behind it.</p>
+<p>Each view is a heap-allocated Objective-C object. It creates and owns a backing <code>CALayer</code>. It registers a pile of Auto Layout constraints that the engine has to solve. And it claims a permanent seat in the render tree, meaning every layout pass, every hit test, and every compositing pass has to walk past it. One view: negligible. A thousand of them in a scrolling feed, rebuilt as you fling: now you can feel it — dropped frames, laggy scrolling, a warm phone.</p>
+<p>So the discipline that separates a smooth app from a janky one is treating views as the <em>expensive, pooled resource</em> they actually are: create as few as you can, reuse the ones you have, and draw instead of stacking whenever a view is just decoration. This lesson is about <em>why</em> views cost what they cost and the three habits that keep the cost down.</p>
+<h2>Why a view is expensive</h2>
+<p>Break down what happens when you instantiate and add one view:</p>
+<ul>
+<li><strong>Object allocation.</strong> A <code>UIView</code> is a real object on the heap with dozens of ivars — gesture recognizers array, subviews array, layout metadata, appearance state. Allocating and later deallocating thousands of these churns memory.</li>
+<li><strong><code>CALayer</code> creation.</strong> Every view is backed by a <code>CALayer</code> it creates in <code>init</code>. That layer has its own properties, its own backing store when it draws, and its own node in the layer tree Core Animation composites.</li>
+<li><strong>Constraint setup.</strong> If you use Auto Layout, each view's constraints become variables and equations in the layout engine's solver. The solver's cost grows worse-than-linearly with constraint count, so deep constraint webs get expensive fast.</li>
+<li><strong>Tree participation.</strong> Layout, hit-testing, and compositing all traverse the view/layer hierarchy. A deep hierarchy means more nodes to walk on <em>every</em> pass, plus a higher chance of triggering offscreen compositing for effects like masks and shadows.</li>
+</ul>
+<p>None of these is catastrophic alone. The problem is multiplication: cost-per-view times view-count times passes-per-second.</p>
+<h2>Reuse discipline</h2>
+<p>The single biggest win is to stop <em>re-creating</em> views and start <em>recycling</em> them. This is exactly what <code>UITableView</code> and <code>UICollectionView</code> do under the hood — they keep a small pool of cells sized to what's on screen and hand the same objects back as you scroll, resetting their content instead of allocating fresh ones. When you build any list-like surface yourself (see <a class="xref" href="#08-recycling-list-on-uiscrollview">08-recycling-list-on-uiscrollview</a>), you owe it the same treatment.</p>
+<pre><code class="language-swift">final class TilePool {
+    private var available: [TileView] = []
+
+    func dequeue() -&gt; TileView {
+        if let reused = available.popLast() {
+            reused.prepareForReuse()   // wipe old content, cancel image loads
+            return reused
+        }
+        return TileView()              // allocate only when the pool is dry
+    }
+
+    func recycle(_ tile: TileView) {
+        tile.removeFromSuperview()
+        available.append(tile)
+    }
+}
+
+final class TileView: UIView {
+    func prepareForReuse() {
+        imageView.image = nil
+        imageTask?.cancel()
+        titleLabel.text = nil
+    }
+}
+</code></pre>
+<p>The rule of thumb: the number of view objects you allocate should track the number visible <em>at once</em>, not the total number of items in your data. A 10,000-row feed should still only own a few dozen live views.</p>
+<h2>Flattening — draw instead of stack</h2>
+<p>The second habit is reducing the view <em>count</em> itself. A lot of hierarchies are deeper than they need to be: a container holding a background view, holding an icon view, holding two labels and a separator line — five views where a single view drawing five elements would do.</p>
+<pre><code class="language-swift">final class BadgeView: UIView {
+    var title = &quot;&quot; { didSet { setNeedsDisplay() } }
+    var count = 0  { didSet { setNeedsDisplay() } }
+
+    override func draw(_ rect: CGRect) {
+        // One view, one backing store — draw the pill, text, and dot directly.
+        let pill = UIBezierPath(roundedRect: rect.insetBy(dx: 1, dy: 1), cornerRadius: rect.height / 2)
+        UIColor.secondarySystemFill.setFill()
+        pill.fill()
+
+        (title as NSString).draw(at: CGPoint(x: 12, y: 6),
+            withAttributes: [.font: UIFont.preferredFont(forTextStyle: .caption1),
+                             .foregroundColor: UIColor.label])
+
+        if count &gt; 0 {
+            UIColor.systemRed.setFill()
+            UIBezierPath(ovalIn: CGRect(x: rect.maxX - 16, y: 6, width: 8, height: 8)).fill()
+        }
+    }
+}
+</code></pre>
+<p>Two flattening moves worth internalizing. First, <strong>draw composite content in one <code>draw(_:)</code></strong> (or one custom <code>CALayer</code>) instead of assembling it from subviews, as above. Second, <strong>use plain <code>CALayer</code>s for non-interactive decoration</strong> — a hairline separator, a gradient, a border, a static shape don't need to be <code>UIView</code>s at all. A <code>CALayer</code> skips the responder/gesture/Auto Layout machinery entirely:</p>
+<pre><code class="language-swift">let separator = CALayer()
+separator.backgroundColor = UIColor.separator.cgColor
+separator.frame = CGRect(x: 0, y: bounds.maxY - 0.5, width: bounds.width, height: 0.5)
+layer.addSublayer(separator)   // no UIView needed for a static line
+</code></pre>
+<p>And simply <strong>delete unnecessary container views</strong> — a <code>UIStackView</code> wrapping a single arranged subview, or a "content view" that adds nothing but a level of nesting. Every level you remove is one fewer node on every traversal.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A deep nested view hierarchy of many boxes on the left versus a single flat drawing view on the right"><rect x="0" y="0" width="760" height="300" fill="#1c1e26"/><text x="180" y="30" fill="#8a8b93" font-family="sans-serif" font-size="13" text-anchor="middle">deep hierarchy — 6 views</text><rect x="60" y="45" width="240" height="230" rx="8" fill="#2a2d38"/><rect x="80" y="70" width="200" height="185" rx="8" fill="#33353f"/><rect x="100" y="95" width="160" height="140" rx="8" fill="#3d3f4a"/><rect x="120" y="120" width="120" height="95" rx="8" fill="#474954"/><rect x="140" y="145" width="80" height="50" rx="8" fill="#5856d6"/><text x="180" y="175" fill="#ffffff" font-family="sans-serif" font-size="11" text-anchor="middle">label</text><text x="180" y="260" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">walked on every layout/hit/composite pass</text><path d="M330 160 L400 160" stroke="#5856d6" stroke-width="2" marker-end="url(#f)"/><defs><marker id="f" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#5856d6"/></marker></defs><text x="365" y="150" fill="#5856d6" font-family="sans-serif" font-size="11" text-anchor="middle">flatten</text><text x="575" y="30" fill="#8a8b93" font-family="sans-serif" font-size="13" text-anchor="middle">flat — 1 drawing view</text><rect x="455" y="45" width="240" height="230" rx="8" fill="#2a2d38"/><text x="575" y="150" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">draw(_:) renders</text><text x="575" y="170" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">pill + text + dot</text><text x="575" y="260" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">one node, one backing store</text></svg><figcaption>Six nested views (each an object, layer, and tree node walked every pass) collapse into one view that draws the same result.</figcaption></figure>
+
+<h2>Costs to watch, and how to measure them</h2>
+<p>Beyond raw view count, a few specific things quietly force expensive <strong>offscreen rendering</strong> — the GPU has to render into a separate buffer and composite it back, which is far pricier than a straight draw:</p>
+<ul>
+<li><strong>Shadows without a <code>shadowPath</code>.</strong> <code>layer.shadowOpacity</code> with no explicit <code>shadowPath</code> makes Core Animation render the view offscreen to compute the shadow's shape from its alpha. Always set <code>layer.shadowPath</code> to a known path — it's the single most common offscreen-rendering culprit.</li>
+<li><strong><code>cornerRadius</code> + <code>masksToBounds</code> on many views.</strong> Rounding that clips content forces an offscreen pass per view; a screenful of rounded, clipping cells adds up. Prefer a pre-rounded image or a <code>shadowPath</code>-style known shape where you can.</li>
+<li><strong>Masks (<code>layer.mask</code>).</strong> Any <code>layer.mask</code> forces offscreen compositing by definition.</li>
+<li><strong><code>shouldRasterize</code>.</strong> A double-edged tool: it caches a layer's rendered output so static, complex content composites cheaply — but if the content changes every frame, you pay to re-rasterize <em>plus</em> the cache overhead, making it slower. Only rasterize genuinely static subtrees.</li>
+<li><strong>Blending and overdraw.</strong> Translucent views stacked over each other force per-pixel blending; large areas of overdraw (many layers painting the same pixels) waste fill-rate.</li>
+</ul>
+<p>To find these, don't guess — measure. In Instruments, the <strong>Core Animation</strong> template flags offscreen passes and shows frame rate under load, and <strong>Time Profiler</strong> shows where layout and drawing time actually goes. On device, the debugger's rendering options light up the problems visually: <strong>Color Blended Layers</strong> paints overdraw/blending red, and <strong>Color Offscreen-Rendered</strong> paints offscreen passes yellow. Turn them on, scroll your worst screen, and fix whatever glows.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>View cost</strong> = object allocation + <code>CALayer</code> creation + constraint solving + a permanent node in the layout/hit-test/composite tree; negligible once, expensive at scale.</li>
+<li><strong>Reuse discipline</strong> = pool and recycle views via <code>prepareForReuse</code> so live view count tracks what's <em>visible</em>, not total item count (as <code>UITableView</code>/<code>UICollectionView</code> do).</li>
+<li><strong>Flattening</strong> = collapse deep hierarchies by drawing composite content in one <code>draw(_:)</code> and deleting needless container views.</li>
+<li><strong><code>CALayer</code> for decoration</strong> = use plain layers for static, non-interactive visuals (separators, gradients, borders) to skip the full <code>UIView</code> machinery.</li>
+<li><strong>Offscreen rendering</strong> = an extra GPU buffer-and-composite pass triggered by shadows-without-<code>shadowPath</code>, masks, and <code>cornerRadius</code>+<code>masksToBounds</code>; far pricier than a direct draw.</li>
+<li><strong><code>shadowPath</code></strong> = an explicit shadow shape that avoids the offscreen pass a shadow otherwise forces; the highest-value single fix.</li>
+<li><strong><code>shouldRasterize</code></strong> = caches a subtree's render for cheap reuse when static, but costs <em>more</em> if the content changes each frame.</li>
+<li><strong>Measuring tools</strong> = Instruments (Core Animation, Time Profiler) plus the debugger's Color Blended Layers and Color Offscreen-Rendered overlays.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="#08-recycling-list-on-uiscrollview">08-recycling-list-on-uiscrollview</a> — building a recycling list by hand, the reuse discipline in action.</li>
+<li><a class="xref" href="coreanimation.html#01-how-rendering-works">How Rendering Works</a> — the layer tree and compositing pipeline these costs come from.</li>
+<li><a class="xref" href="shaders.html#24-shader-performance">Perf Mindset</a> — the same measure-don't-guess, watch-the-fill-rate discipline applied to shaders.</li>
+</ul>
+<p>Prev <a class="xref" href="#13-context-menus">13-context-menus</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#13-context-menus"><span>Prev</span>← 13 — Context Menus: UIContextMenuInteraction &amp; UIMenu</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
