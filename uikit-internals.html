@@ -36,9 +36,12 @@
 <p>Master those three and almost every UIKit mystery dissolves.</p>
 <h2>What you'll learn</h2>
 <ol>
-<li><a class="xref" href="#01-view-controller-lifecycle">01-view-controller-lifecycle</a> — the exact order of <code>viewDidLoad</code> → <code>viewWillAppear</code> → layout → <code>viewDidAppear</code>, and why putting work in the wrong one causes bugs.</li>
-<li><a class="xref" href="#02-responder-chain">02-responder-chain</a> — how touches and actions travel from a view up through controllers, and how <code>target/action</code> and <code>first responder</code> really resolve.</li>
-<li><a class="xref" href="#03-uiscrollview-mechanics">03-uiscrollview-mechanics</a> — <code>contentOffset</code>, <code>contentInset</code>, paging, deceleration, and the delegate callbacks that drive scroll-linked effects.</li>
+<li><a class="xref" href="#01-view-controller-lifecycle">01-view-controller-lifecycle</a> — the exact order of <code>viewDidLoad</code> → <code>viewWillAppear</code> → layout → <code>viewDidAppear</code>, and why putting work in the wrong one causes bugs.
+   - <a class="xref" href="#01a-run-loop-and-main-thread">01a-run-loop-and-main-thread</a> <em>(prereq)</em> — the main run loop, why UIKit is main-thread-only, and the once-per-turn commit.</li>
+<li><a class="xref" href="#02-responder-chain">02-responder-chain</a> — how touches and actions travel from a view up through controllers, and how <code>target/action</code> and <code>first responder</code> really resolve.
+   - <a class="xref" href="#02a-hit-testing">02a-hit-testing</a> <em>(prereq)</em> — <code>hitTest</code>/<code>point(inside:)</code>: how the system finds the touched view <em>before</em> the responder chain.</li>
+<li><a class="xref" href="#03-uiscrollview-mechanics">03-uiscrollview-mechanics</a> — <code>contentOffset</code>, <code>contentInset</code>, paging, deceleration, and the delegate callbacks that drive scroll-linked effects.
+   - <a class="xref" href="#03a-layout-and-display-cycle">03a-layout-and-display-cycle</a> <em>(prereq)</em> — <code>setNeedsLayout</code>/<code>layoutSubviews</code> and <code>setNeedsDisplay</code>/<code>draw(_:)</code>, flushed at the commit.</li>
 <li><a class="xref" href="#04-compositional-layout">04-compositional-layout</a> — <code>UICollectionViewCompositionalLayout</code>: items, groups, sections, and fractional sizing.</li>
 <li><a class="xref" href="#05-diffable-data-sources">05-diffable-data-sources</a> — snapshot-based updates that animate correctly and end an entire class of crashes.</li>
 <li><a class="xref" href="#06-uikit-swiftui-interop">06-uikit-swiftui-interop</a> — <code>UIViewRepresentable</code>, <code>UIHostingController</code>, and how to drop down to UIKit from SwiftUI when you must.</li>
@@ -54,6 +57,7 @@
 <li><a class="xref" href="#12-keyboard-handling">12-keyboard-handling</a> — <code>keyboardLayoutGuide</code>, the notification dance, interactive dismissal, and a composer that rides the keyboard.</li>
 <li><a class="xref" href="#13-context-menus">13-context-menus</a> — <code>UIContextMenuInteraction</code> &amp; <code>UIMenu</code> (modern peek/pop), contrasted with a hand-rolled context UI.</li>
 <li><a class="xref" href="#14-view-allocation-cost">14-view-allocation-cost</a> — why views are expensive, pooling, flattening, and reuse discipline.</li>
+<li><a class="xref" href="#15-threading-the-ui-layer">15-threading-the-ui-layer</a> — the AsyncDisplayKit mechanism: stage mutations off-main, flush on main, and why the render commit is immovable.</li>
 </ol>
 <h2>Why this connects to the rest of your stack</h2>
 <p>The geometry here (<code>bounds</code>, <code>frame</code>, <code>transform</code>) is the same geometry covered in <a class="xref" href="coreanimation.html#03-layer-geometry">Core Animation: Layer Geometry</a> — UIView is just a thin wrapper around a backing <code>CALayer</code>. The gesture math shows up again in <a class="xref" href="interaction-math.html#00-roadmap">Interaction Math</a>, and the scroll-as-a-function-of-offset idea is the same one from <a class="xref" href="stack-decisions.html#04-who-drives-time">Who Drives Time</a>.</p><div class="pager"><span class="sp"></span><a href="#01-view-controller-lifecycle"><span>Next</span>View Controller Lifecycle →</a></div></section>
@@ -102,8 +106,114 @@ child.didMove(toParent: self)
 <h2>Related</h2>
 <ul>
 <li>The view's geometry: <a class="xref" href="coreanimation.html#03-layer-geometry">Layer Geometry</a></li>
-<li>Next: <a class="xref" href="#02-responder-chain">02-responder-chain</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← UIKit Internals — Overview</a><a href="#02-responder-chain"><span>Next</span>The Responder Chain →</a></div></section>
+<li>Next: <a class="xref" href="#01a-run-loop-and-main-thread">01a-run-loop-and-main-thread</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← UIKit Internals — Overview</a><a href="#01a-run-loop-and-main-thread"><span>Next</span>01a — The Run Loop &amp; the Main Thread →</a></div></section>
+<section class="page" id="01a-run-loop-and-main-thread" data-title="01a — The Run Loop &amp; the Main Thread" data-num="01" data-hasdemo="0" data-group=""><h1>01a — The Run Loop &amp; the Main Thread</h1>
+<h2>Start here — the plain idea</h2>
+<p>Picture a single person working a ticket window all day. They do exactly one thing at a time: wait for a customer, serve them, tidy the counter, then go quiet until the next person walks up. They never serve two customers at once and they never wander off — the moment they leave the window, the line stops moving. Your app's main thread is that clerk, and the endless "wait, serve, tidy, wait" cycle it runs is the <strong>run loop</strong>. It wakes when something happens — a finger touches the glass, a timer fires, the display is about to refresh — runs your code in response, tidies up the screen, and then falls asleep until the next event.</p>
+<p>UIKit lives entirely inside that one loop, on that one thread. Every view you create, every label you update, every animation you start is handled by the clerk at the window. There is no second clerk quietly helping in the back — and that is deliberate, not a limitation someone forgot to fix. Because only one thread ever touches UIKit, UIKit never has to lock anything or check whether someone else is mid-edit. It trades the ability to work in parallel for the guarantee that its state is never half-changed.</p>
+<p>The catch is the same as the ticket window: if the clerk gets stuck on one slow customer, the whole line freezes. Spend too long inside a single turn of the run loop and the screen stops updating, touches pile up unanswered, and the user feels the app "hang." Almost every jank problem in UIKit is really a story about the clerk being too busy to get back to the window in time. This lesson is about understanding that loop precisely, so the later advanced lessons — and especially <a class="xref" href="#15-threading-the-ui-layer">15-threading-the-ui-layer</a> — have solid ground to stand on.</p>
+<h2>The loop itself: CFRunLoop and its sources</h2>
+<p>The main thread's loop is a real object, <code>CFRunLoop</code>, retrievable as <code>CFRunLoopGetMain()</code> (or <code>RunLoop.main</code> in Foundation terms). When <code>UIApplicationMain</code> starts your app, it never returns — it hands the main thread to this loop and lets it spin forever. Each spin of the loop is a <strong>turn</strong>: it checks its input sources, dispatches any that are ready, and if nothing is pending it puts the thread to sleep (a real kernel-level sleep, burning zero CPU) until the system wakes it.</p>
+<p>What can wake it? The loop watches a set of <strong>sources</strong>:</p>
+<ul>
+<li><strong>Touch and event delivery</strong> — the window server posts events into a port the run loop listens on.</li>
+<li><strong>Timers</strong> — <code>Timer</code>/<code>CFRunLoopTimer</code> fire on their scheduled turn (never earlier, sometimes a hair later, because the loop only checks between turns).</li>
+<li><strong><code>CADisplayLink</code></strong> — a special source tied to the display's refresh, firing right before each frame so you can drive animations in step with the screen (60 Hz, or 120 Hz on ProMotion).</li>
+<li><strong>Ports and custom sources</strong> — inter-process messages, <code>perform(_:on:)</code> deliveries, and framework plumbing.</li>
+</ul>
+<p>The loop also runs in <strong>modes</strong>. The default mode is <code>.default</code>; while you drag a scroll view, it switches to <code>.tracking</code> so unrelated timers don't fire mid-scroll and cost you frames. <code>.common</code> is a pseudo-mode you register with when you want a source to survive both. This is why a plain <code>Timer</code> scheduled on <code>.default</code> mysteriously stops while the user is scrolling — it wasn't added to the tracking mode.</p>
+<pre><code class="language-swift">// A timer that keeps firing even while a scroll view is being dragged.
+let timer = Timer(timeInterval: 1.0, repeats: true) { _ in
+    print(&quot;tick&quot;)
+}
+RunLoop.main.add(timer, forMode: .common)   // .common == default + tracking + …
+</code></pre>
+<h2>Why UIKit is main-thread-only</h2>
+<p>UIKit classes have <strong>thread affinity</strong>: they expect to be created, read, and mutated from the main thread, and nowhere else. There is no mutex guarding a <code>UIView</code>'s properties. When you set <code>view.backgroundColor</code>, UIKit assumes it is the only writer, so it skips all the locking that would otherwise be needed — that is a large part of why the framework is fast.</p>
+<p>Touch a view off the main thread and you are not guaranteed a crash; you are guaranteed <em>undefined behavior</em>. Sometimes it works, sometimes you corrupt internal layout state, sometimes you get a delayed crash three frames later that points at innocent code. Under Swift 6's strict concurrency this is finally encoded in the type system: <code>UIView</code>, <code>UIViewController</code>, and most of UIKit are annotated <code>@MainActor</code>, so the compiler refuses to let you call them from a non-isolated context.</p>
+<pre><code class="language-swift">@MainActor
+final class ProfileView: UIView {
+    func refresh(_ name: String) {
+        // Compiler-guaranteed to run on the main thread.
+        nameLabel.text = name
+    }
+}
+
+// From a background context, the compiler forces the hop:
+func loaded(_ name: String) async {
+    await MainActor.run {   // or: await view.refresh(name) if `view` is @MainActor
+        someView.nameLabel.text = name
+    }
+}
+</code></pre>
+<p><code>@MainActor</code> and "runs on the main thread" are two views of the same fact: the main actor's executor <em>is</em> the main run loop. Awaiting the main actor is, under the hood, enqueuing work for the clerk at the window.</p>
+<h2>Getting off the window — and back on</h2>
+<p>Long work — decoding a large image, parsing JSON, hitting the network — must not happen on the clerk's counter, or the line freezes. Grand Central Dispatch gives you other threads through queues. <code>DispatchQueue.main</code> is the main thread's queue; anything you submit to it runs inside a run-loop turn. <code>DispatchQueue.global()</code> is a pool of background threads with no run loop and no UIKit rights.</p>
+<p>The bread-and-butter pattern is the off-main → on-main handoff: do the heavy lifting on a background queue, then hop back to apply the result to the UI.</p>
+<pre><code class="language-swift">DispatchQueue.global(qos: .userInitiated).async {
+    let data = try? Data(contentsOf: url)          // slow — safe off-main
+    let image = data.flatMap(UIImage.init(data:))  // decode — also off-main
+
+    DispatchQueue.main.async {
+        imageView.image = image                    // UI touch — MUST be on main
+    }
+}
+</code></pre>
+<p>In modern Swift 6 code you express the same shape with structured concurrency, and the actor annotations enforce the hop for you rather than relying on discipline:</p>
+<pre><code class="language-swift">func loadThumbnail(from url: URL) async {
+    // Runs on a background executor because it isn't main-actor isolated.
+    let image = await Task.detached(priority: .userInitiated) {
+        let data = try? Data(contentsOf: url)
+        return data.flatMap(UIImage.init(data:))
+    }.value
+
+    imageView.image = image   // this line is @MainActor-isolated; the await already hopped us home
+}
+</code></pre>
+<p>Either way the rule is unchanged: compute anywhere, but <em>touch UIKit only on main</em>.</p>
+<h2>The commit: one flush per turn</h2>
+<p>Here is the piece that ties everything together and that the later lessons lean on. When you call <code>setNeedsLayout()</code>, <code>setNeedsDisplay()</code>, change a <code>frame</code>, or start an animation, UIKit does <strong>not</strong> act immediately. It marks the view dirty and returns instantly. All those marks accumulate during the current run-loop turn. Then, near the end of the turn — after your event handling is done but before the thread sleeps — UIKit performs a single <strong>commit</strong>: it runs the layout pass, the display pass, and packages all your Core Animation changes into one implicit <code>CATransaction</code>, which it commits to the render server in one shot.</p>
+<p>This is why changing a view's frame ten times in a row costs one layout, not ten, and why you almost never see intermediate states. Everything you did this turn is coalesced and flushed together. It also explains the classic surprise: read a view's frame right after setting <code>setNeedsLayout()</code> and you get the <em>old</em> value, because the layout pass hasn't run yet — call <code>layoutIfNeeded()</code> to force it now.</p>
+<pre><code class="language-swift">box.frame.origin.x += 10
+box.frame.origin.y += 10
+box.alpha = 0.5
+box.setNeedsLayout()
+// Nothing has visibly happened yet. All of this is queued.
+// The implicit CATransaction commits it once, at end of turn.
+</code></pre>
+<p>The mechanics of that transaction — nesting, disabling actions, timing — are their own topic; see <a class="xref" href="coreanimation.html#08-catransaction">CATransaction</a> and, for what happens after the commit reaches the render server, <a class="xref" href="coreanimation.html#01-how-rendering-works">how rendering works</a>.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The main run-loop cycle: events flow into your code, then layout, then display, then a commit, then sleep; a background lane feeds a result back into the loop"><defs><marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa0aa"/></marker><marker id="ac" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5856d6"/></marker></defs><text x="30" y="26" fill="#8a8b93" font-family="sans-serif" font-size="12">Main thread — one run-loop turn</text><rect x="30" y="45" width="110" height="60" rx="8" fill="#2a2d38"/><text x="85" y="72" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Events in</text><text x="85" y="90" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">touch · timer</text><rect x="170" y="45" width="110" height="60" rx="8" fill="#2a2d38"/><text x="225" y="72" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Your code</text><text x="225" y="90" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">handlers</text><rect x="310" y="45" width="110" height="60" rx="8" fill="#2a2d38"/><text x="365" y="72" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Layout</text><text x="365" y="90" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">layoutSubviews</text><rect x="450" y="45" width="110" height="60" rx="8" fill="#2a2d38"/><text x="505" y="72" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Display</text><text x="505" y="90" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">draw(_:)</text><rect x="590" y="45" width="140" height="60" rx="8" fill="#20222c" stroke="#5856d6" stroke-width="2"/><text x="660" y="72" fill="#5856d6" font-family="sans-serif" font-size="12" text-anchor="middle">Commit</text><text x="660" y="90" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">CATransaction</text><path d="M140 75 L168 75" stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#ar)"/><path d="M280 75 L308 75" stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#ar)"/><path d="M420 75 L448 75" stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#ar)"/><path d="M560 75 L588 75" stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#ar)"/><rect x="310" y="150" width="110" height="50" rx="8" fill="#20222c" stroke="#3a3d48"/><text x="365" y="180" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">Sleep</text><path d="M660 105 C 660 200, 420 200, 422 178" stroke="#9aa0aa" stroke-width="1.5" fill="none" marker-end="url(#ar)"/><path d="M308 175 C 120 200, 85 160, 85 108" stroke="#9aa0aa" stroke-width="1.5" fill="none" marker-end="url(#ar)"/><text x="200" y="150" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">next event wakes it</text><rect x="30" y="235" width="250" height="50" rx="8" fill="#2a2d38" stroke="#3a3d48"/><text x="155" y="258" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Background lane (global queue)</text><text x="155" y="275" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">decode · parse · network</text><path d="M280 250 C 340 250, 250 130, 225 108" stroke="#5856d6" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#ac)"/><text x="360" y="245" fill="#5856d6" font-family="sans-serif" font-size="10" text-anchor="middle">DispatchQueue.main.async</text><text x="360" y="260" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">result back to main</text></svg><figcaption>One turn of the main run loop: events → your handlers → layout → display → a single commit, then sleep until the next event. Heavy work runs on a background lane and hands its result back to main to be applied.</figcaption></figure>
+
+<h2>Frames, budgets, and the main-thread checker</h2>
+<p>Because the display refreshes on a fixed cadence, each turn of the loop has a <strong>frame budget</strong>: roughly 16.7 ms at 60 Hz, and about 8.3 ms at 120 Hz on ProMotion. Everything for a frame — event handling, layout, display, commit — has to finish inside that window. Overrun it and the render server has no new frame to show, so it repeats the previous one: a dropped frame, felt as a stutter. Block the main thread for 300 ms and you drop ~18 frames in a row — a visible freeze. This is the concrete reason "don't block main" is not style advice but a hard timing constraint, and it is the through-line of <a class="xref" href="#15-threading-the-ui-layer">15-threading-the-ui-layer</a>.</p>
+<p>Apple ships tooling to catch violations. The <strong>Main Thread Checker</strong> (a run-scheme diagnostic) flags UIKit calls made off the main thread at runtime. <code>dispatchPrecondition(condition: .onQueue(.main))</code> lets you assert it yourself in hot paths, and Swift 6's <code>@MainActor</code> moves most of these catches to compile time. Treat any of them firing as a real bug, never as noise to silence.</p>
+<pre><code class="language-swift">func applyResult(_ model: Model) {
+    dispatchPrecondition(condition: .onQueue(.main))  // fail fast if someone calls us off-main
+    titleLabel.text = model.title
+}
+</code></pre>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Run loop</strong> = <code>CFRunLoop</code>, the endless wait-serve-tidy-sleep cycle the main thread runs; UIKit lives entirely inside it, on one thread.</li>
+<li><strong>Turn</strong> = one spin of the loop: check sources, run ready handlers, do layout/display/commit, then sleep until woken.</li>
+<li><strong>Run-loop source</strong> = something that can wake the loop — touch/event ports, timers, <code>CADisplayLink</code>, custom ports.</li>
+<li><strong>Run-loop mode</strong> = the active source set (<code>.default</code>, <code>.tracking</code>, <code>.common</code>); the wrong mode is why a timer stalls during scrolling.</li>
+<li><strong>Thread affinity</strong> = UIKit's expectation that a view is only ever touched from the main thread, which lets it skip all internal locking.</li>
+<li><strong><code>@MainActor</code></strong> = Swift 6's compile-time encoding of that affinity; the main actor's executor is the main run loop.</li>
+<li><strong>Off-main → on-main handoff</strong> = compute on <code>DispatchQueue.global()</code> / a detached task, then hop to <code>DispatchQueue.main</code> (or <code>await MainActor</code>) to touch UI.</li>
+<li><strong>The commit</strong> = the once-per-turn flush where coalesced <code>setNeedsLayout</code>/<code>setNeedsDisplay</code>/animation changes run and pack into one implicit <code>CATransaction</code>.</li>
+<li><strong>Frame budget</strong> = ~16.7 ms at 60 Hz / ~8.3 ms at 120 Hz for the whole turn; overrunning it drops a frame, which is why blocking main causes jank.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The event source that feeds the loop, and where touches go next: <a class="xref" href="#02a-hit-testing">02a-hit-testing</a></li>
+<li>What the commit actually flushes: <a class="xref" href="#03a-layout-and-display-cycle">03a-layout-and-display-cycle</a></li>
+<li>The transaction the commit builds: <a class="xref" href="coreanimation.html#08-catransaction">CATransaction</a></li>
+<li>After the commit reaches the render server: <a class="xref" href="coreanimation.html#01-how-rendering-works">how rendering works</a></li>
+<li>The lesson this is a prerequisite for: <a class="xref" href="#15-threading-the-ui-layer">15-threading-the-ui-layer</a></li>
+</ul>
+<p>Prev <a class="xref" href="#01-view-controller-lifecycle">01-view-controller-lifecycle</a> · Next <a class="xref" href="#02-responder-chain">02-responder-chain</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#01-view-controller-lifecycle"><span>Prev</span>← View Controller Lifecycle</a><a href="#02-responder-chain"><span>Next</span>The Responder Chain →</a></div></section>
 <section class="page" id="02-responder-chain" data-title="The Responder Chain" data-num="02" data-hasdemo="0" data-group=""><h1>The Responder Chain</h1>
 <p>Every interactive object in UIKit — views, view controllers, the app itself — is a <code>UIResponder</code>. Events (touches, presses, motion, remote-control) travel along a <strong>chain</strong> of responders until something handles them. Understanding the chain explains hit-testing, <code>becomeFirstResponder</code>, <code>target/action</code> with <code>nil</code>, and the keyboard.</p>
 <h2>Two phases: find, then bubble</h2>
@@ -135,8 +245,94 @@ view.endEditing(true)              // resign whoever is first responder
 <h2>Related</h2>
 <ul>
 <li>Touches feed gestures: <a class="xref" href="#03-uiscrollview-mechanics">03-uiscrollview-mechanics</a></li>
-<li>Prev: <a class="xref" href="#01-view-controller-lifecycle">01-view-controller-lifecycle</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#01-view-controller-lifecycle"><span>Prev</span>← View Controller Lifecycle</a><a href="#03-uiscrollview-mechanics"><span>Next</span>UIScrollView Mechanics →</a></div></section>
+<li>Prev: <a class="xref" href="#01a-run-loop-and-main-thread">01a-run-loop-and-main-thread</a> · Next: <a class="xref" href="#02a-hit-testing">02a-hit-testing</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01a-run-loop-and-main-thread"><span>Prev</span>← 01a — The Run Loop &amp; the Main Thread</a><a href="#02a-hit-testing"><span>Next</span>02a — Hit-Testing: Finding the Touched View →</a></div></section>
+<section class="page" id="02a-hit-testing" data-title="02a — Hit-Testing: Finding the Touched View" data-num="02" data-hasdemo="0" data-group=""><h1>02a — Hit-Testing: Finding the Touched View</h1>
+<h2>Start here — the plain idea</h2>
+<p>When you tap a screen, your finger covers a blob of dozens of pixels, and under those pixels sit layers of views stacked on top of one another — a button inside a card inside a scroll view inside the root view. Before iOS can do anything useful with that tap, it has to answer one deceptively simple question: <em>which single view did you mean?</em> Not the card, not the scroll view — the button. That search is called <strong>hit-testing</strong>, and it happens first, before any handler runs, before any gesture fires, before the event travels anywhere.</p>
+<p>Think of it like a receptionist directing a visitor. Someone walks in and says "I need to talk to whoever handles this." The receptionist doesn't answer the question — they figure out <em>who</em> the question is for, then point the visitor at that person. Hit-testing is the receptionist finding the right person; the <a class="xref" href="#02-responder-chain">02-responder-chain</a> is what happens after, when the visitor's request travels up the org chart until someone actually deals with it. Two distinct jobs: find the view, then route the event. This lesson is about the first job.</p>
+<p>The reason this matters beyond trivia is that hit-testing is where most "why won't my button tap?" and "why is this view eating my touches?" bugs are born — and where their fixes live. An invisible overlay that swallows taps, a small control you want to be forgiving to fat fingers, a floating panel that should let touches pass through to the map behind it: every one of these is solved by understanding, and sometimes overriding, the hit-test search. Get this and the advanced lessons on gestures, portals, and windows have a foundation to build on.</p>
+<h2>The recursion: how the search actually runs</h2>
+<p>Hit-testing starts at the window and drills downward. The heart of it is <code>hitTest(_:with:)</code>, which every <code>UIView</code> implements. Its job: return the deepest descendant that contains the point, or <code>nil</code> if the point isn't inside this view at all. It works by recursion — a view asks each of its subviews, and the answer bubbles back up as the deepest match.</p>
+<p>The default implementation is essentially this:</p>
+<pre><code class="language-swift">override func hitTest(_ point: CGPoint, with event: UIEvent?) -&gt; UIView? {
+    // 1. Am I even eligible and does the point fall inside me?
+    guard isUserInteractionEnabled,
+          !isHidden,
+          alpha &gt;= 0.01,
+          point(inside: point, with: event) else {
+        return nil
+    }
+    // 2. Ask subviews front-to-back (last subview is drawn on top → tested first).
+    for subview in subviews.reversed() {
+        let converted = subview.convert(point, from: self)
+        if let hit = subview.hitTest(converted, with: event) {
+            return hit          // deepest match wins
+        }
+    }
+    // 3. No subview claimed it, but the point is inside me — I'm the hit.
+    return self
+}
+</code></pre>
+<p>Two things are worth pinning down. First, subviews are tested <strong>back-to-front</strong> — <code>subviews.reversed()</code> — because the last view in the array is drawn on top, so a tap that visually lands on it should belong to it. Second, <code>point(inside:with:)</code> is the geometry test: "is this point within my <code>bounds</code>?" It's a separate, overridable method, and it's the cleaner hook when all you care about is <em>shape</em>, not the recursion.</p>
+<p>The result of the whole search is a single view — the deepest, frontmost, eligible view under the finger. That view becomes the starting point for everything that follows.</p>
+<h2>What disqualifies a view</h2>
+<p>A view is invisible to hit-testing — the receptionist skips right past it — if any of these hold:</p>
+<ul>
+<li><strong><code>isUserInteractionEnabled == false</code></strong> — the view opts out entirely. (Note <code>UIImageView</code> and <code>UILabel</code> default this to <code>false</code>.)</li>
+<li><strong><code>isHidden == true</code></strong> — not on screen, not testable.</li>
+<li><strong><code>alpha &lt; 0.01</code></strong> — effectively transparent counts as absent. This is the trap behind the "invisible overlay" bug: a view at <code>alpha = 0</code> with interaction still enabled is <em>skipped</em>, but one at <code>alpha = 0.02</code> with interaction enabled silently swallows every touch beneath it.</li>
+<li><strong>The point is outside <code>bounds</code></strong> — <code>point(inside:)</code> returns false. Crucially, this is about <code>bounds</code>, not about <code>clipsToBounds</code>. A subview drawn <em>outside</em> its parent's bounds is untappable even when <code>clipsToBounds</code> is <code>false</code> and you can plainly see it, because the parent's <code>point(inside:)</code> returns false for that region and the recursion never reaches the child.</li>
+</ul>
+<p>That last point surprises people constantly: a badge nudged past the edge of its container looks fine but refuses taps. The pixels are visible; the hit-test region is not. The container reports the point as outside itself, so it never even asks the badge.</p>
+<h2>Overriding hitTest for real problems</h2>
+<p>Once you understand the search, you can bend it. Three patterns cover almost every real case.</p>
+<p><strong>Expanded tap targets.</strong> A 24×24 icon button is a nightmare to tap, but you don't want to inflate its visible size. Override <code>point(inside:)</code> to accept touches in a larger region than the bounds:</p>
+<pre><code class="language-swift">final class TapForgivingButton: UIButton {
+    var hitInset = UIEdgeInsets(top: -12, left: -12, bottom: -12, right: -12)
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -&gt; Bool {
+        bounds.inset(by: hitInset).contains(point)   // negative insets grow the area
+    }
+}
+</code></pre>
+<p>Negative insets grow the rectangle outward, so a finger landing 10 pt outside the visible button still counts as a hit — a bigger touch target with the same look. Apple's own Human Interface Guidelines ask for ~44×44 pt of touchable area; this is how you honor that without redrawing.</p>
+<p><strong>Passthrough views / overlay windows.</strong> Sometimes you have a full-screen container that should be <em>transparent to touch</em> except for its actual controls — a HUD over a map, a coach-mark overlay, a floating toolbar in its own window. Return <code>nil</code> from <code>hitTest</code> for empty regions so touches fall through to whatever is behind:</p>
+<pre><code class="language-swift">final class PassthroughView: UIView {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -&gt; UIView? {
+        let hit = super.hitTest(point, with: event)
+        // If the deepest hit is the container itself (empty space), let it pass through.
+        return hit == self ? nil : hit
+    }
+}
+</code></pre>
+<p>Now taps on the toolbar's buttons work, but taps on the empty area around it reach the map underneath. This is the exact mechanism overlay windows use to sit above your UI without stealing all its input — a direct prerequisite for <a class="xref" href="#11-uiwindow-window-levels-scenes">11-uiwindow-window-levels-scenes</a> and for the reparenting tricks in <a class="xref" href="#10-portal-views-layer-reparenting">10-portal-views-layer-reparenting</a>.</p>
+<p><strong>Redirecting touches.</strong> You can also return a <em>different</em> view than the natural hit — e.g. forwarding touches from a decorative wrapper to the real interactive child, or enlarging a slider's thumb grab region by returning the thumb even when the finger lands slightly off it. The return value of <code>hitTest</code> is a free choice; the framework trusts whatever view you hand back.</p>
+<h2>From hit view to responder chain</h2>
+<p>The view that hit-testing returns doesn't just receive the touch — it becomes the <strong>first link in the responder chain</strong>. UIKit sets it as the <code>UITouch</code>'s view and delivers <code>touchesBegan(_:with:)</code> to it; if it doesn't handle the touch, the event walks up its <code>next</code> responders (superview → view controller → window → application). So hit-testing and the responder chain are two halves of one delivery pipeline: the search picks the entry point, the chain decides who ultimately acts. The full routing story is <a class="xref" href="#02-responder-chain">02-responder-chain</a>.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hit-test recursion drilling from the window down through nested views to the deepest eligible view under the touch point"><defs><marker id="dn" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa0aa"/></marker><marker id="up" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5856d6"/></marker></defs><rect x="40" y="30" width="440" height="240" rx="8" fill="#20222c" stroke="#3a3d48"/><text x="60" y="52" fill="#8a8b93" font-family="sans-serif" font-size="12">UIWindow</text><rect x="70" y="70" width="380" height="180" rx="8" fill="#252833" stroke="#3a3d48"/><text x="90" y="92" fill="#8a8b93" font-family="sans-serif" font-size="12">Root view</text><rect x="100" y="110" width="320" height="120" rx="8" fill="#2a2d38" stroke="#3a3d48"/><text x="120" y="132" fill="#8a8b93" font-family="sans-serif" font-size="12">Card</text><rect x="130" y="150" width="150" height="60" rx="8" fill="#2f3444" stroke="#5856d6" stroke-width="2"/><text x="205" y="185" fill="#5856d6" font-family="sans-serif" font-size="13" text-anchor="middle">Button (hit)</text><rect x="300" y="150" width="100" height="60" rx="8" fill="#2a2d38" stroke="#3a3d48"/><text x="350" y="185" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">sibling</text><circle cx="205" cy="180" r="7" fill="#5856d6" opacity="0.9"/><path d="M60 60 L92 88" stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#dn)"/><path d="M100 100 L118 126" stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#dn)"/><path d="M135 138 L150 156" stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#dn)"/><text x="520" y="70" fill="#cfcfcf" font-family="sans-serif" font-size="12">Search order</text><text x="520" y="98" fill="#8a8b93" font-family="sans-serif" font-size="11">1. window · point inside?</text><text x="520" y="120" fill="#8a8b93" font-family="sans-serif" font-size="11">2. root · point inside?</text><text x="520" y="142" fill="#8a8b93" font-family="sans-serif" font-size="11">3. card · point inside?</text><text x="520" y="164" fill="#8a8b93" font-family="sans-serif" font-size="11">4. subviews back-to-front</text><text x="520" y="186" fill="#5856d6" font-family="sans-serif" font-size="11">5. deepest match → button</text><path d="M205 150 C 205 40, 640 40, 640 205" stroke="#5856d6" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#up)"/><text x="600" y="230" fill="#5856d6" font-family="sans-serif" font-size="11" text-anchor="middle">returns up</text><text x="600" y="248" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">→ responder chain start</text></svg><figcaption>Hit-testing drills down from the window, testing point-inside at each level and asking subviews back-to-front, until it returns the deepest eligible view — which then becomes the first link of the responder chain.</figcaption></figure>
+
+<h2>The foundation</h2>
+<ul>
+<li><strong>Hit-testing</strong> = the pre-event search that finds which single view is under a touch point; it runs before the responder chain and before gestures.</li>
+<li><strong><code>hitTest(_:with:)</code></strong> = the recursive entry point; returns the deepest eligible descendant containing the point, or <code>nil</code>.</li>
+<li><strong><code>point(inside:with:)</code></strong> = the geometry test ("is this point in my <code>bounds</code>?"); the clean override when you only care about the touchable <em>shape</em>.</li>
+<li><strong>Back-to-front testing</strong> = subviews are checked in reverse order so the frontmost (last-drawn) view wins a tap it visually overlaps.</li>
+<li><strong>Disqualifiers</strong> = <code>isHidden</code>, <code>alpha &lt; 0.01</code>, <code>isUserInteractionEnabled == false</code>, or point outside <code>bounds</code> — any one makes a view invisible to the search.</li>
+<li><strong>bounds, not clipsToBounds</strong> = a subview drawn outside its parent's bounds is untappable even when visible, because the parent's <code>point(inside:)</code> rejects the point first.</li>
+<li><strong>Expanded tap target</strong> = overriding <code>point(inside:)</code> with negative insets to accept touches beyond the visible bounds (honoring the ~44 pt HIG minimum).</li>
+<li><strong>Passthrough view</strong> = returning <code>nil</code> from <code>hitTest</code> for empty regions so touches fall through to views/windows behind — the basis of overlay windows.</li>
+<li><strong>Hit view → chain start</strong> = the returned view becomes the <code>UITouch</code>'s view and the first responder-chain link, joining the two halves of event delivery.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The other half of delivery — routing the event once the view is found: <a class="xref" href="#02-responder-chain">02-responder-chain</a></li>
+<li>The loop that delivers the touch event in the first place: <a class="xref" href="#01a-run-loop-and-main-thread">01a-run-loop-and-main-thread</a></li>
+<li>Prerequisite for gesture disambiguation: <a class="xref" href="#07-custom-gesture-recognizers">07-custom-gesture-recognizers</a></li>
+<li>Prerequisite for reparenting and touch forwarding: <a class="xref" href="#10-portal-views-layer-reparenting">10-portal-views-layer-reparenting</a></li>
+<li>Prerequisite for overlay windows and passthrough: <a class="xref" href="#11-uiwindow-window-levels-scenes">11-uiwindow-window-levels-scenes</a></li>
+</ul>
+<p>Prev <a class="xref" href="#02-responder-chain">02-responder-chain</a> · Next <a class="xref" href="#03-uiscrollview-mechanics">03-uiscrollview-mechanics</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#02-responder-chain"><span>Prev</span>← The Responder Chain</a><a href="#03-uiscrollview-mechanics"><span>Next</span>UIScrollView Mechanics →</a></div></section>
 <section class="page" id="03-uiscrollview-mechanics" data-title="UIScrollView Mechanics" data-num="03" data-hasdemo="1" data-group=""><h1>UIScrollView Mechanics</h1><div class="demo-mount" data-demo="su-scroll"></div>
 <p><code>UIScrollView</code> is the most important view in UIKit. <code>UITableView</code>, <code>UICollectionView</code>, <code>UITextView</code>, and SwiftUI's <code>ScrollView</code> are all built on it. Scroll-linked animations — parallax, sticky headers, the stretchy hero image, the wavy carousel — are all just <em>functions of <code>contentOffset</code></em>.</p>
 <h2>The core geometry</h2>
@@ -182,8 +378,104 @@ scrollViewDidEndDecelerating
 <h2>Related</h2>
 <ul>
 <li>The math of scroll-driven scaling: <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">Interpolation &amp; Easing</a></li>
-<li>Next: <a class="xref" href="#04-compositional-layout">04-compositional-layout</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#02-responder-chain"><span>Prev</span>← The Responder Chain</a><a href="#04-compositional-layout"><span>Next</span>Compositional Layout →</a></div></section>
+<li>Prev: <a class="xref" href="#02a-hit-testing">02a-hit-testing</a> · Next: <a class="xref" href="#03a-layout-and-display-cycle">03a-layout-and-display-cycle</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02a-hit-testing"><span>Prev</span>← 02a — Hit-Testing: Finding the Touched View</a><a href="#03a-layout-and-display-cycle"><span>Next</span>03a — The Layout &amp; Display Cycle →</a></div></section>
+<section class="page" id="03a-layout-and-display-cycle" data-title="03a — The Layout &amp; Display Cycle" data-num="03" data-hasdemo="0" data-group=""><h1>03a — The Layout &amp; Display Cycle</h1>
+<h2>Start here — the plain idea</h2>
+<p>Imagine you're editing a document and you change the font, then the margins, then insert a paragraph, then change the font again. A naive word processor would re-flow the entire page four times, once per keystroke. A smart one does nothing visible while you type — it just remembers "the layout is stale" — and re-flows exactly once, right before it needs to show you the result. UIKit is the smart one. When you change something about a view, it doesn't lay out or redraw on the spot. It marks the view <strong>dirty</strong>, returns immediately, and defers the real work to a single well-chosen moment later in the run loop.</p>
+<p>There are two independent versions of this laziness, and keeping them separate is the whole game. One is about <strong>position and size</strong> — where subviews go, how big they are. That's the <em>layout</em> cycle. The other is about <strong>pixels</strong> — what a view actually paints into its own rectangle. That's the <em>display</em> cycle. A view can need re-layout without needing redraw (its children moved, but nothing about its own drawing changed), or need redraw without re-layout (same frame, new content to paint). UIKit tracks the two with separate dirty flags and flushes them in separate passes.</p>
+<p>Why defer at all? Because changes come in bursts. In a single event handler you might set five constraints, change three frames, and swap two colors. If each change triggered an immediate layout, you'd pay for the same work over and over and possibly render half-finished intermediate states. By marking dirty and coalescing, UIKit collapses that burst into one layout pass and one display pass, run at the run-loop commit — the exact moment established in <a class="xref" href="#01a-run-loop-and-main-thread">01a-run-loop-and-main-thread</a>. This lesson makes that machinery precise, because nearly every performance and correctness question in the advanced lessons routes through it.</p>
+<h2>The layout cycle</h2>
+<p>Layout answers "where does everything go and how big is it?" Three methods anchor it, and confusing them is the most common UIKit mistake.</p>
+<ul>
+<li><strong><code>setNeedsLayout()</code></strong> — marks the view's layout dirty and returns instantly. Cheap. Call it as often as you like; the flag is idempotent. The actual layout happens later.</li>
+<li><strong><code>layoutIfNeeded()</code></strong> — forces the layout pass to run <em>right now</em>, synchronously, if the view (or an ancestor) is dirty. Use it when you need up-to-date frames immediately, or to make a constraint change animate (change constraints, then call <code>layoutIfNeeded()</code> inside a <code>UIView.animate</code> block).</li>
+<li><strong><code>layoutSubviews()</code></strong> — where the work happens. The system calls this for you during the layout pass; you <strong>override</strong> it to position your subviews, and you <strong>never call it directly</strong>. Calling it yourself skips the dirty-flag bookkeeping and does the work at the wrong time.</li>
+</ul>
+<p>The mental model: <code>setNeedsLayout</code> schedules, <code>layoutIfNeeded</code> forces, <code>layoutSubviews</code> performs.</p>
+<pre><code class="language-swift">final class BadgeView: UIView {
+    let icon = UIImageView()
+    let count = UILabel()
+
+    override func layoutSubviews() {
+        super.layoutSubviews()                 // let the system / Auto Layout do its part first
+        icon.frame = CGRect(x: 0, y: 0, width: 24, height: 24)
+        count.frame = CGRect(x: 28, y: 0, width: bounds.width - 28, height: 24)
+    }
+}
+
+// Elsewhere: schedule, don't force, when you can.
+badge.someProperty = newValue
+badge.setNeedsLayout()   // coalesced into the next layout pass — cheap
+</code></pre>
+<p>For self-sizing views, layout also flows through <strong><code>intrinsicContentSize</code></strong> — the size a view "wants" to be based on its content (a label's text, an image's dimensions). When that content changes, you call <strong><code>invalidateIntrinsicContentSize()</code></strong> so Auto Layout knows to re-ask. Under Auto Layout, the sequence each pass is: the constraint <strong>engine solves</strong> the system of constraints (using intrinsic sizes as inputs), sets the resulting frames, and <em>then</em> <code>layoutSubviews()</code> runs so you can do any manual positioning on top of the solved frames.</p>
+<pre><code class="language-swift">final class TagView: UIControl {
+    var title: String = &quot;&quot; {
+        didSet {
+            titleLabel.text = title
+            invalidateIntrinsicContentSize()   // content changed → my wanted size changed
+        }
+    }
+    override var intrinsicContentSize: CGSize {
+        let w = titleLabel.intrinsicContentSize.width + 24   // padding
+        return CGSize(width: w, height: 32)
+    }
+}
+</code></pre>
+<h2>The display cycle</h2>
+<p>Display answers "what pixels go inside this view's own rectangle?" It's a completely separate flag from layout.</p>
+<ul>
+<li><strong><code>setNeedsDisplay()</code></strong> — marks the view's <em>contents</em> dirty. Deferred, coalesced, cheap.</li>
+<li><strong><code>draw(_:)</code></strong> — where you paint into the view's backing store (a bitmap the layer holds) using Core Graphics. The system calls it during the display pass when the view is display-dirty; you override it, never call it.</li>
+</ul>
+<p>The critical judgment call is <strong>when to override <code>draw(_:)</code> at all</strong>. Overriding it gives a view a backing store — a bitmap sized to the view, times the screen scale — which costs memory and CPU every time it's repainted. Most UI shouldn't override <code>draw(_:)</code>; it should <strong>compose subviews and layers</strong> instead, letting the GPU composite ready-made pieces (shadows via <code>layer.shadowPath</code>, corners via <code>layer.cornerRadius</code>, gradients via <code>CAGradientLayer</code>, images via <code>UIImageView</code>). Reach for <code>draw(_:)</code> only when you genuinely need custom vector drawing that can't be expressed as composed layers — a chart, a signature pad, a custom progress arc. When in doubt, compose; a screen full of <code>draw(_:)</code>-backed views is a classic source of memory pressure and scroll jank, which is exactly why <a class="xref" href="#14-view-allocation-cost">14-view-allocation-cost</a> cares about this.</p>
+<pre><code class="language-swift">final class RingView: UIView {
+    var progress: CGFloat = 0 {
+        didSet { setNeedsDisplay() }           // contents changed → repaint, no re-layout needed
+    }
+
+    override func draw(_ rect: CGRect) {
+        let ctx = UIGraphicsGetCurrentContext()!
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2 - 4
+        ctx.setLineWidth(8)
+        ctx.setStrokeColor(UIColor.systemBlue.cgColor)
+        ctx.addArc(center: center, radius: radius,
+                   startAngle: -.pi / 2,
+                   endAngle: -.pi / 2 + 2 * .pi * progress,
+                   clockwise: false)
+        ctx.strokePath()
+    }
+}
+</code></pre>
+<p>Notice <code>progress</code> sets <code>setNeedsDisplay()</code> but not <code>setNeedsLayout()</code> — the ring's frame didn't change, only its pixels. That's the two cycles being genuinely independent.</p>
+<h2>Both flush at the commit</h2>
+<p>Here is the unifying fact. Neither pass runs the instant you mark something dirty. Both are <strong>flushed at the run-loop commit</strong> — the once-per-turn moment described in <a class="xref" href="#01a-run-loop-and-main-thread">01a-run-loop-and-main-thread</a>, right before the thread sleeps. During that commit UIKit runs the layout pass (Auto Layout solve + everyone's <code>layoutSubviews</code>), then the display pass (everyone's dirty <code>draw(_:)</code>), and packages the results into the implicit <code>CATransaction</code> it commits to the render server — see <a class="xref" href="coreanimation.html#08-catransaction">CATransaction</a>.</p>
+<p>The practical payoff: batching is free. Setting fifty properties across ten views in one event handler still costs exactly one layout pass and one display pass, because all the dirty flags set during the turn are drained together at the single commit. You don't need to hand-optimize the order or count of your <code>setNeeds…</code> calls — the coalescing does it. What you <em>do</em> need to avoid is forcing the work early with a stray <code>layoutIfNeeded()</code> in the middle of a batch, which runs a full pass then and there and defeats the coalescing.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Many dirty-marking calls during a run-loop turn are coalesced and drained at the commit into one layout pass and one display pass"><defs><marker id="a3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa0aa"/></marker><marker id="c3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5856d6"/></marker></defs><text x="30" y="24" fill="#8a8b93" font-family="sans-serif" font-size="12">During the turn — mark dirty (cheap, deferred)</text><rect x="30" y="38" width="150" height="30" rx="6" fill="#2a2d38"/><text x="105" y="58" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">setNeedsLayout ×3</text><rect x="30" y="76" width="150" height="30" rx="6" fill="#2a2d38"/><text x="105" y="96" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">frame changes ×5</text><rect x="30" y="114" width="150" height="30" rx="6" fill="#2a2d38"/><text x="105" y="134" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">setNeedsDisplay ×2</text><rect x="250" y="60" width="150" height="70" rx="8" fill="#20222c" stroke="#3a3d48"/><text x="325" y="90" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">Coalesce</text><text x="325" y="110" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">dirty flags</text><path d="M180 53 C 215 60, 215 80, 248 82" stroke="#9aa0aa" stroke-width="1.5" fill="none" marker-end="url(#a3)"/><path d="M180 91 L248 95" stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#a3)"/><path d="M180 129 C 215 122, 215 108, 248 106" stroke="#9aa0aa" stroke-width="1.5" fill="none" marker-end="url(#a3)"/><rect x="450" y="30" width="280" height="140" rx="8" fill="#20222c" stroke="#5856d6" stroke-width="2"/><text x="590" y="52" fill="#5856d6" font-family="sans-serif" font-size="12" text-anchor="middle">Run-loop commit</text><rect x="470" y="66" width="240" height="40" rx="6" fill="#2a2d38"/><text x="590" y="84" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">Layout pass — solve + layoutSubviews</text><text x="590" y="100" fill="#8a8b93" font-family="sans-serif" font-size="9" text-anchor="middle">runs once</text><rect x="470" y="116" width="240" height="40" rx="6" fill="#2a2d38"/><text x="590" y="134" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">Display pass — dirty draw(_:)</text><text x="590" y="150" fill="#8a8b93" font-family="sans-serif" font-size="9" text-anchor="middle">runs once</text><path d="M400 95 L448 95" stroke="#5856d6" stroke-width="1.5" marker-end="url(#c3)"/><text x="590" y="200" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">→ packed into implicit CATransaction → render server</text><path d="M590 170 L590 188" stroke="#9aa0aa" stroke-width="1.5" marker-end="url(#a3)"/></svg><figcaption>Every dirty-mark during the turn is coalesced; at the commit UIKit drains them into exactly one layout pass and one display pass, then packages both into the implicit CATransaction — so batching many changes still costs one of each.</figcaption></figure>
+
+<h2>The foundation</h2>
+<ul>
+<li><strong>Two cycles</strong> = layout (position/size) and display (pixels) are tracked with separate dirty flags and flushed in separate passes; a view can need one without the other.</li>
+<li><strong><code>setNeedsLayout()</code></strong> = mark layout dirty and return; deferred and coalesced, so calling it repeatedly is cheap.</li>
+<li><strong><code>layoutIfNeeded()</code></strong> = force the layout pass to run synchronously now; used for up-to-date frames or to animate a constraint change.</li>
+<li><strong><code>layoutSubviews()</code></strong> = where you position subviews; the system calls it during the pass — override it, never invoke it directly.</li>
+<li><strong><code>intrinsicContentSize</code> / <code>invalidateIntrinsicContentSize()</code></strong> = a view's content-driven wanted size, and the call that tells Auto Layout to re-ask when content changes.</li>
+<li><strong>Auto Layout order</strong> = the engine solves constraints and sets frames first, then <code>layoutSubviews()</code> runs on top of the solved result.</li>
+<li><strong><code>setNeedsDisplay()</code> / <code>draw(_:)</code></strong> = mark contents dirty, then paint into the layer's backing store during the display pass; both deferred and coalesced.</li>
+<li><strong>draw vs compose</strong> = override <code>draw(_:)</code> only for genuine custom drawing; otherwise compose subviews/layers so the GPU composites, avoiding backing-store cost.</li>
+<li><strong>Commit flush</strong> = both passes run once per turn at the run-loop commit and pack into the implicit <code>CATransaction</code>, which is why batching many changes costs one layout + one display.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The commit these passes flush at, and the frame budget they must fit in: <a class="xref" href="#01a-run-loop-and-main-thread">01a-run-loop-and-main-thread</a></li>
+<li>The transaction the passes are packaged into: <a class="xref" href="coreanimation.html#08-catransaction">CATransaction</a></li>
+<li>Prerequisite for the windowing/reuse layout math: <a class="xref" href="#08-recycling-list-on-uiscrollview">08-recycling-list-on-uiscrollview</a></li>
+<li>Prerequisite for laying out child controllers: <a class="xref" href="#09-custom-container-view-controllers">09-custom-container-view-controllers</a></li>
+<li>Prerequisite for backing-store and view-count cost: <a class="xref" href="#14-view-allocation-cost">14-view-allocation-cost</a></li>
+<li>Prerequisite for keeping the passes on the main thread: <a class="xref" href="#15-threading-the-ui-layer">15-threading-the-ui-layer</a></li>
+</ul>
+<p>Prev <a class="xref" href="#03-uiscrollview-mechanics">03-uiscrollview-mechanics</a> · Next <a class="xref" href="#04-compositional-layout">04-compositional-layout</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#03-uiscrollview-mechanics"><span>Prev</span>← UIScrollView Mechanics</a><a href="#04-compositional-layout"><span>Next</span>Compositional Layout →</a></div></section>
 <section class="page" id="04-compositional-layout" data-title="Compositional Layout" data-num="04" data-hasdemo="1" data-group=""><h1>Compositional Layout</h1><div class="demo-mount" data-demo="ui-compositional"></div>
 <p><code>UICollectionViewCompositionalLayout</code> (iOS 13+) replaced the pain of custom <code>UICollectionViewLayout</code> subclasses for 90% of cases. It is built from a strict, composable hierarchy — once you internalize it, almost any grid, list, carousel, or magazine layout becomes a few lines.</p>
 <h2>The hierarchy: Item → Group → Section</h2>
@@ -234,8 +526,8 @@ let layout = UICollectionViewCompositionalLayout(section: section)
 <ul>
 <li>Feeding it data without crashes: <a class="xref" href="#05-diffable-data-sources">05-diffable-data-sources</a></li>
 <li>The geometry underneath: <a class="xref" href="coreanimation.html#03-layer-geometry">Layer Geometry</a></li>
-<li>Prev: <a class="xref" href="#03-uiscrollview-mechanics">03-uiscrollview-mechanics</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#03-uiscrollview-mechanics"><span>Prev</span>← UIScrollView Mechanics</a><a href="#05-diffable-data-sources"><span>Next</span>Diffable Data Sources →</a></div></section>
+<li>Prev: <a class="xref" href="#03a-layout-and-display-cycle">03a-layout-and-display-cycle</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03a-layout-and-display-cycle"><span>Prev</span>← 03a — The Layout &amp; Display Cycle</a><a href="#05-diffable-data-sources"><span>Next</span>Diffable Data Sources →</a></div></section>
 <section class="page" id="05-diffable-data-sources" data-title="Diffable Data Sources" data-num="05" data-hasdemo="0" data-group=""><h1>Diffable Data Sources</h1>
 <p>The classic <code>UICollectionViewDataSource</code> / <code>UITableViewDataSource</code> API made <em>you</em> responsible for keeping your model and the view in sync via <code>performBatchUpdates</code>. Get the counts wrong and you crash: <em>"invalid number of items."</em> Diffable data sources (iOS 13+) flip the model: you describe the desired <strong>state</strong> as a snapshot, and UIKit computes the diff and animates it.</p>
 <h2>Snapshots describe state, not changes</h2>
@@ -1348,7 +1640,180 @@ layer.addSublayer(separator)   // no UIView needed for a static line
 <li><a class="xref" href="coreanimation.html#01-how-rendering-works">How Rendering Works</a> — the layer tree and compositing pipeline these costs come from.</li>
 <li><a class="xref" href="shaders.html#24-shader-performance">Perf Mindset</a> — the same measure-don't-guess, watch-the-fill-rate discipline applied to shaders.</li>
 </ul>
-<p>Prev <a class="xref" href="#13-context-menus">13-context-menus</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#13-context-menus"><span>Prev</span>← 13 — Context Menus: UIContextMenuInteraction &amp; UIMenu</a><span class="sp"></span></div></section>
+<p>Prev <a class="xref" href="#13-context-menus">13-context-menus</a> · Next <a class="xref" href="#15-threading-the-ui-layer">15-threading-the-ui-layer</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#13-context-menus"><span>Prev</span>← 13 — Context Menus: UIContextMenuInteraction &amp; UIMenu</a><a href="#15-threading-the-ui-layer"><span>Next</span>15 — Threading the UI Layer →</a></div></section>
+<section class="page" id="15-threading-the-ui-layer" data-title="15 — Threading the UI Layer" data-num="15" data-hasdemo="0" data-group=""><h1>15 — Threading the UI Layer</h1>
+<h2>Start here — the plain idea</h2>
+<p>Imagine a theatre. The stage is the main thread: it's where the audience actually sees things, and only one crew is allowed to walk on it, in strict order, one turn at a time. If you tried to build the set, sew the costumes, and light the scene <em>on</em> the stage while the show was running, the audience would sit there staring at a half-built set. So nobody does that. The set is built in the workshop backstage — measured, cut, painted, assembled — and then, at a precise cue, the finished piece is wheeled onto the stage in one quick move. The audience only ever sees the polished result sliding into place.</p>
+<p>That is the entire trick to keeping a UI smooth. Most of the <em>work</em> behind a frame — measuring how tall a paragraph of text will be, computing where every subview lands, decoding a JPEG into pixels, drawing a rounded card into a bitmap — is workshop work. It's pure computation. It doesn't need a live <code>UIView</code> on stage; it just needs to be <em>finished</em> before the pixels are committed. The only thing that genuinely has to happen on stage, in front of the audience, is the final handoff: touching the real views and telling the render server "show this now."</p>
+<p>AsyncDisplayKit (open-sourced by Facebook as <strong>Texture</strong>, and the intellectual template for a lot of modern UI-threading thinking) took that idea and made it the whole architecture. Instead of working directly with main-thread-only <code>UIView</code>s, you work with <strong>nodes</strong> — thread-safe stand-ins that can be created and configured on any thread. All the expensive workshop work runs off-main on the nodes. Then, at the last possible moment, the finished results are flushed onto real views on the main thread, and the frame commits. Same result the naive code would produce, but the main thread barely broke a sweat. This lesson is about <em>why</em> that split is possible, exactly where the line between "off-main" and "on-main" sits, and how to apply the principle in your own 2026 code even if you never touch Texture.</p>
+<h2>What can and cannot leave the main thread</h2>
+<p>Before any clever architecture, you need the hard boundary memorized, because the entire technique lives on the correct side of it. UIKit and Core Animation are not thread-safe in the way that matters here: the view tree and the commit handshake are main-thread property.</p>
+<p><strong>Cannot leave the main thread:</strong></p>
+<ul>
+<li><strong>Creating or mutating a <code>UIView</code> or <code>CALayer</code>.</strong> Any change to the live view/layer tree — allocating a view, setting a real view's <code>frame</code>, adding a subview, changing a real layer's <code>backgroundColor</code> — must happen on main. Touching these off-main is undefined behavior: it may work, may corrupt state, may crash later somewhere unrelated.</li>
+<li><strong>Creating gesture recognizers</strong> and attaching them. They're part of the responder/UIKit machinery and expect the main thread.</li>
+<li><strong>The <code>CATransaction</code> commit to the render server.</strong> This is the one that surprises people. At the end of each run-loop turn, Core Animation packages up every layer-tree change made during that turn and ships it across to the render server (<code>backboardd</code>) in a single synchronous handshake. That commit is <strong>main-thread and synchronous</strong>, and it happens once per run-loop turn (see <a class="xref" href="#01a-run-loop-and-main-thread">01a-run-loop-and-main-thread</a>, <a class="xref" href="coreanimation.html#01-how-rendering-works">how rendering works</a>, and <a class="xref" href="coreanimation.html#08-catransaction">CATransaction</a>). You cannot move it, batch it onto a background queue, or make it asynchronous. It is the immovable object at the center of this whole story.</li>
+</ul>
+<p><strong>Can leave the main thread:</strong></p>
+<ul>
+<li><strong>Layout math</strong> — solving where subviews go, running a flexbox-style pass, computing sizes.</li>
+<li><strong>Text sizing</strong> — <code>NSAttributedString</code> / TextKit measurement is the classic expensive-and-parallelizable cost.</li>
+<li><strong>Image decode and resize</strong> — turning compressed bytes into a bitmap, downsampling to the display size.</li>
+<li><strong>Drawing content into a bitmap</strong> — rendering your custom <code>draw</code>-style content into a <code>CGContext</code>/image off-main (this is "async display").</li>
+<li><strong>Building your data and model</strong> — everything upstream of the UI.</li>
+</ul>
+<p>The shape of the whole technique falls right out of this list: everything expensive is on the "can" side; only the cheap-but-mandatory final steps are on the "cannot" side. So you push all the heavy work off-main and reserve the main thread for the tiny handoff.</p>
+<h2>The pending-state pattern — the core mechanism</h2>
+<p>Here's the problem that makes the naive version of this hard. Say you want to configure a view off-main — set its background color, its corner radius, its frame — so that when it finally appears it's ready to go. But you <em>can't</em> touch a real <code>UIView</code> off-main. So what do you set those properties <em>on</em>?</p>
+<p>Texture's answer is the <strong>node</strong>. An <code>ASDisplayNode</code> is a thread-safe object that acts as an abstraction over a <code>UIView</code>/<code>CALayer</code> pair. Crucially, a node can exist for a while <em>without</em> having created its underlying view yet — this is the "layer-backed or view-backed, but not yet loaded" state. And here's the mechanism: while the node is unloaded, every property you set on it — <code>backgroundColor</code>, <code>cornerRadius</code>, <code>frame</code>, <code>borderWidth</code>, and so on — isn't going to a real view (there isn't one). It's <strong>staged on a thread-safe pending-state object</strong>, off-main, safely. This is the idea the Texture codebase implements as <code>_ASPendingState</code> (I'm describing the technique and its role, not quoting the source).</p>
+<p>Then, at the moment the node is "loaded" — which happens on the <strong>main thread</strong>, because that's when the real <code>UIView</code>/<code>CALayer</code> is actually created — the accumulated pending state is <strong>flushed onto the real view/layer in one shot</strong>. All those property sets that you made safely off-main get replayed onto the genuine object, on main, in a single burst. After that point the node is loaded, and further property sets pass straight through to the real view (on main, as they must).</p>
+<p>Put simply:</p>
+<blockquote>
+<p><strong>Nodes are thread-safe; views are not.</strong> A node lets you <em>stage</em> view configuration anywhere, then <em>flush</em> it onto the real view on main at load time.</p>
+</blockquote>
+<pre><code class="language-swift">// Conceptual sketch of the pending-state pattern (not Texture's actual API).
+// A thread-safe box that records intended view configuration off-main.
+
+final class PendingState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var backgroundColor: UIColor?
+    private var cornerRadius: CGFloat?
+    private var frame: CGRect?
+
+    func setBackgroundColor(_ c: UIColor) { lock.withLock { backgroundColor = c } }
+    func setCornerRadius(_ r: CGFloat)    { lock.withLock { cornerRadius = r } }
+    func setFrame(_ f: CGRect)            { lock.withLock { frame = f } }
+
+    // Called ON MAIN, once the real view exists: replay everything at once.
+    @MainActor
+    func flush(onto view: UIView) {
+        lock.withLock {
+            if let backgroundColor { view.backgroundColor = backgroundColor }
+            if let cornerRadius { view.layer.cornerRadius = cornerRadius }
+            if let frame { view.frame = frame }
+        }
+    }
+}
+</code></pre>
+<pre><code class="language-swift">// A node stages config off-main while unloaded, flushes on load (main).
+final class DisplayNode: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _view: UIView?              // nil until loaded on main
+    private let pending = PendingState()
+
+    // Safe to call from ANY thread while unloaded.
+    func setBackgroundColor(_ c: UIColor) {
+        lock.withLock {
+            if let v = _view {
+                // Already loaded — must be on main; pass straight through.
+                MainActor.assumeIsolated { v.backgroundColor = c }
+            } else {
+                pending.setBackgroundColor(c)   // stage it, off-main, thread-safe
+            }
+        }
+    }
+
+    @MainActor
+    func loadViewIfNeeded() -&gt; UIView {
+        if let v = lock.withLock({ _view }) { return v }
+        let v = UIView()                 // real view created ON MAIN
+        pending.flush(onto: v)           // replay staged config in one shot
+        lock.withLock { _view = v }
+        return v
+    }
+}
+</code></pre>
+<p>The payoff: a <code>UICollectionView</code>-style surface can allocate and <em>fully configure</em> thousands of nodes on a background queue while the user scrolls, and the main thread only pays for the cheap flush of the handful of nodes that are actually about to appear. Compare this with the raw cost of view allocation in <a class="xref" href="#14-view-allocation-cost">14-view-allocation-cost</a> — the pending-state pattern doesn't make a view cheaper, it moves as much of that cost as possible off the stage.</p>
+<h2>Main-thread assertions — catching the bug early</h2>
+<p>A pattern this dependent on "this runs off-main, that runs on-main" needs guardrails, or a single mis-threaded property set becomes a heisenbug that crashes a week later in someone else's code. Texture's guardrail is aggressive main-thread assertions. Any code path that touches genuinely main-thread-only machinery — reading <code>.view</code> or <code>.layer</code> (which forces a load), creating a gesture recognizer, and so on — is fronted by an assertion in the spirit of <code>ASDisplayNodeAssertMainThread()</code>. If you hit that path off-main, you get a loud, immediate failure pointing at the exact call, instead of silent corruption.</p>
+<pre><code class="language-swift">// The shape of the guard Texture puts in front of main-thread-only work.
+@inline(__always)
+func assertMainThread(_ message: @autoclosure () -&gt; String = &quot;&quot;, 
+                      file: StaticString = #fileID, line: UInt = #line) {
+    assert(Thread.isMainThread, &quot;Must be on main thread: \(message())&quot;, file: file, line: line)
+}
+
+extension DisplayNode {
+    var view: UIView {
+        assertMainThread(&quot;touching .view loads the real UIView&quot;)
+        return loadViewIfNeeded()
+    }
+}
+</code></pre>
+<p>This is the runtime-assertion cousin of what Swift 6 gives you at <em>compile</em> time with <code>@MainActor</code>. Where Texture (a largely Objective-C++ codebase) has to check "am I on main?" dynamically and trap if not, <code>@MainActor</code> lets the compiler <em>prove</em> that main-thread-only API is only ever reached from the main actor, turning a class of these bugs into build errors instead of runtime traps (see <a class="xref" href="concurrency.html#04-mainactor-discipline">@MainActor discipline</a>). The two approaches encode the same law — "views are main-thread-only" — at different stages of the pipeline.</p>
+<h2>Async display — moving the drawing off-main</h2>
+<p>The pending-state pattern handles <em>configuration</em>. <strong>Async display</strong> handles <em>drawing</em>. When a node has custom content to render — text, a rounded card, a composited badge — it doesn't draw on the main thread. It schedules the render onto a background <strong>display queue</strong>: the node draws its content into a bitmap off-main, producing a finished <code>CGImage</code>. Then, on the main thread, it does the one cheap main-thread step — assigning that image to <code>layer.contents</code>.</p>
+<pre><code class="language-swift">// Async display: draw off-main, assign on-main.
+func displayAsync(node: DisplayNode, bounds: CGRect) {
+    DispatchQueue.global(qos: .userInitiated).async {
+        // OFF-MAIN: rasterize into a bitmap. No UIView touched here.
+        let format = UIGraphicsImageRendererFormat.preferred()
+        let image = UIGraphicsImageRenderer(bounds: bounds, format: format).image { ctx in
+            node.drawContents(in: ctx.cgContext, bounds: bounds)   // pure drawing
+        }
+
+        Task { @MainActor in
+            // ON-MAIN: the only main-thread step — hand the finished pixels over.
+            node.loadViewIfNeeded().layer.contents = image.cgImage
+            // The COMMIT of this change still rides the next run-loop turn.
+        }
+    }
+}
+</code></pre>
+<p>Notice what moved and what didn't. The <code>draw</code> work — often the single most expensive per-frame cost in a rich cell — is now off the main thread entirely. What stays on main is trivial: one property assignment. And even that assignment doesn't paint anything itself; it just stages a layer change that the <em>commit</em> will ship to the render server on the next turn.</p>
+<h2>Why the render commit is immovable</h2>
+<p>It's worth being precise about the one thing you can never move, because it defines the ceiling of the whole approach. You can push configuration, layout, text sizing, image decode, and drawing all the way off-main. But the <code>CATransaction</code> commit — the synchronous handoff of the accumulated layer-tree changes to the render server — <strong>must run on the main thread, synchronously, once per run-loop turn.</strong> That's not a Texture limitation; it's how Core Animation talks to the render server. The render server is a separate process, and the commit is the app's side of a per-turn synchronous IPC handshake that the main run loop drives.</p>
+<p>So the mental model is a funnel. A wide background lane does all the heavy lifting in parallel and ahead of time; it all narrows into a single main-thread gate — flush pending state, set <code>layer.contents</code>, then commit. Get the funnel right and the main thread's per-frame bill shrinks to just the flush and the commit, which is exactly what leaves headroom for 120 Hz ProMotion. Get it wrong — do the drawing or text sizing on main — and the commit is stuck waiting behind that work, and you drop frames.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A wide background lane doing node init, layout, text sizing, image decode, and drawing into a bitmap, feeding into a narrow main-thread lane that flushes pending state, sets layer contents, and runs the immovable commit"><rect x="0" y="0" width="760" height="320" fill="#1c1e26"/><text x="235" y="28" fill="#8a8b93" font-family="sans-serif" font-size="13" text-anchor="middle">BACKGROUND lane — parallel, ahead of time</text><rect x="30" y="45" width="410" height="235" rx="10" fill="#23252f"/><rect x="50" y="65" width="170" height="40" rx="7" fill="#2a2d38"/><text x="135" y="90" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">init / config node</text><rect x="250" y="65" width="170" height="40" rx="7" fill="#2a2d38"/><text x="335" y="90" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">layout math</text><rect x="50" y="120" width="170" height="40" rx="7" fill="#2a2d38"/><text x="135" y="145" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">text sizing</text><rect x="250" y="120" width="170" height="40" rx="7" fill="#2a2d38"/><text x="335" y="145" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">image decode</text><rect x="50" y="175" width="370" height="40" rx="7" fill="#2a2d38"/><text x="235" y="200" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">draw content into bitmap (async display)</text><text x="235" y="252" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">staged in thread-safe pending state</text><path d="M445 160 L505 160" stroke="#5856d6" stroke-width="2.5" marker-end="url(#a)"/><defs><marker id="a" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6 Z" fill="#5856d6"/></marker></defs><text x="475" y="150" fill="#5856d6" font-family="sans-serif" font-size="11" text-anchor="middle">handoff</text><text x="620" y="28" fill="#8a8b93" font-family="sans-serif" font-size="13" text-anchor="middle">MAIN lane — one gate/turn</text><rect x="520" y="45" width="210" height="235" rx="10" fill="#23252f"/><rect x="540" y="70" width="170" height="45" rx="7" fill="#2a2d38"/><text x="625" y="97" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">flush pending state</text><rect x="540" y="130" width="170" height="45" rx="7" fill="#2a2d38"/><text x="625" y="157" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">set layer.contents</text><rect x="540" y="190" width="170" height="55" rx="7" fill="#5856d6"/><text x="625" y="213" fill="#ffffff" font-family="sans-serif" font-size="12" text-anchor="middle">COMMIT</text><text x="625" y="231" fill="#e6e6f5" font-family="sans-serif" font-size="10" text-anchor="middle">(immovable, sync)</text><text x="625" y="266" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">once per run-loop turn</text></svg><figcaption>Everything up to the commit is pushed into the wide background lane; the main lane pays only for the flush, the contents assignment, and the one immovable commit per run-loop turn.</figcaption></figure>
+
+<h2>How to apply the principle in your own code (2026)</h2>
+<p>You almost certainly won't adopt Texture wholesale in a new 2026 app — but the principle it crystallized is more relevant than ever, and the platform now hands you most of the pieces. The one-line rule to tattoo on your brain:</p>
+<blockquote>
+<p><strong>Compute off-main, mutate &amp; commit on-main.</strong></p>
+</blockquote>
+<p>Concretely:</p>
+<ul>
+<li><strong>Decode and downsample images off-main, deliberately.</strong> Use <code>UIImage.byPreparingForDisplay()</code> (async) or <code>preparingForDisplay()</code> to force the decode off the main thread before the image is ever assigned, and <code>preparingThumbnail(of:)</code> / <code>UIImage.prepareThumbnail(of:completionHandler:)</code> to downsample to the display size. Assigning a not-yet-decoded image to a visible <code>UIImageView</code> triggers a <em>synchronous</em> decode on main at display time — the classic scroll hitch. Prepare first, assign second.</li>
+</ul>
+<pre><code class="language-swift">func loadThumbnail(from data: Data, target: CGSize) async -&gt; UIImage? {
+    // OFF-MAIN: decode + downsample.
+    guard let raw = UIImage(data: data) else { return nil }
+    return await raw.byPreparingThumbnail(ofSize: target)
+}
+
+@MainActor
+func show(_ data: Data, in imageView: UIImageView, size: CGSize) async {
+    let ready = await loadThumbnail(from: data, target: size)
+    imageView.image = ready   // ON-MAIN: cheap assign of pre-decoded pixels
+}
+</code></pre>
+<ul>
+<li><strong>Do heavy layout and text sizing off-main.</strong> <code>NSAttributedString.boundingRect</code> / TextKit measurement and any custom layout solving are pure computation — run them on a background task, cache the results (heights, frames), and let the main thread just apply cached numbers.</li>
+<li><strong>Keep <code>@MainActor</code> for the apply step.</strong> Isolate the functions that touch views/layers to <code>@MainActor</code> so the compiler enforces the boundary for you. Your background work returns plain value types (sizes, <code>CGImage</code>s, layout structs); the <code>@MainActor</code> apply step consumes them. This is the compile-time version of Texture's runtime <code>assertMainThread</code>.</li>
+<li><strong>Lean on what the frameworks already do.</strong> SwiftUI and modern UIKit already push work off-main where they safely can — image decoding via <code>AsyncImage</code>/<code>prepareForDisplay</code>, background diffing, prefetching (<code>UICollectionViewDataSourcePrefetching</code>). Don't fight them; feed them prepared data and let them handle the commit.</li>
+</ul>
+<p>The commit stays exactly where it always was — on main, synchronous, once per turn. Your job is just to make sure that when the commit arrives, everything it needs is already computed, decoded, and drawn, so all main has to do is hand it over.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Node</strong> = a thread-safe abstraction over a <code>UIView</code>/<code>CALayer</code> pair that can exist and be configured before its real view is created; the unit you work with off-main instead of a view.</li>
+<li><strong>Pending state</strong> = a thread-safe object that stages property sets made on an unloaded node off-main, then flushes them onto the real view/layer in one shot when the node loads on main (Texture's <code>_ASPendingState</code> idea).</li>
+<li><strong>Loading</strong> = the main-thread moment a node's real <code>UIView</code>/<code>CALayer</code> is actually created and the pending state is flushed onto it; "nodes are thread-safe, views are not."</li>
+<li><strong>Async display</strong> = rendering a node's <code>contents</code> into a bitmap on a background display queue, then assigning the finished image to <code>layer.contents</code> on main — drawing off-main, handoff on-main.</li>
+<li><strong>Main-thread assertion</strong> = a runtime guard (<code>ASDisplayNodeAssertMainThread</code>) in front of main-thread-only work that traps immediately when it's reached off-main; the runtime cousin of Swift's compile-time <code>@MainActor</code>.</li>
+<li><strong>CATransaction commit</strong> = the synchronous, main-thread handoff of accumulated layer-tree changes to the render server, once per run-loop turn — the immovable step that caps how much you can parallelize.</li>
+<li><strong>The boundary</strong> = view/layer creation and mutation, gesture-recognizer creation, and the commit stay on main; layout math, text sizing, image decode/resize, drawing, and model-building can all leave it.</li>
+<li><strong>The rule</strong> = compute off-main, mutate &amp; commit on-main — the portable principle that outlives any single framework.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="#01a-run-loop-and-main-thread">01a-run-loop-and-main-thread</a> — the run-loop turn that drives the one-per-turn commit.</li>
+<li><a class="xref" href="#03a-layout-and-display-cycle">03a-layout-and-display-cycle</a> — where layout and display sit in the frame's timeline, and what can be moved off it.</li>
+<li><a class="xref" href="#14-view-allocation-cost">14-view-allocation-cost</a> — the raw cost of views that this technique moves off the main thread rather than eliminates.</li>
+<li><a class="xref" href="#08-recycling-list-on-uiscrollview">08-recycling-list-on-uiscrollview</a> — recycling by hand; the same "keep live work proportional to what's visible" instinct.</li>
+<li><a class="xref" href="coreanimation.html#01-how-rendering-works">How Rendering Works</a> — the layer tree, render server, and commit these threading rules protect.</li>
+<li><a class="xref" href="concurrency.html#00-overview">Concurrency</a> — the actor and structured-concurrency toolkit for enforcing the off-main / on-main split in 2026.</li>
+</ul>
+<p>Prev <a class="xref" href="#14-view-allocation-cost">14-view-allocation-cost</a> · Hub <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#14-view-allocation-cost"><span>Prev</span>← 14 — View Allocation Cost &amp; Reuse Discipline</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
