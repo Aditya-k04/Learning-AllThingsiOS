@@ -1,0 +1,1905 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UIKit Workshop · Learning All things Apple</title>
+<meta name="description" content="Hands-on, build-along labs: type out real multi-file UIKit code — subclassing, custom cells &amp; controls, effects, gestures, async — and watch the pieces click together, beginner → intermediate.">
+<meta property="og:title" content="UIKit Workshop · Learning All things Apple">
+<meta property="og:description" content="Hands-on, build-along labs: type out real multi-file UIKit code — subclassing, custom cells &amp; controls, effects, gestures, async — and watch the pieces click together, beginner → intermediate.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-sidebar',localStorage.getItem('lar-sidebar')||'shown');}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">UIKit Workshop</div><div class="cs">Hands-on, build-along labs: type out real multi-file UIKit code — subclassing, custom cells &amp; controls, effects, gestures, async — and watch the pieces click together, beginner → intermediate.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option></optgroup><optgroup label="Additional Topics"><option value="uikit.html">UIKit Foundations</option><option value="uikit-workshop.html" selected>UIKit Workshop</option><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="UIKit Workshop" data-num="·" data-hasdemo="0" data-group=""><h1>UIKit Workshop</h1>
+<p>You already know Swift. Now let's <em>build</em> something with UIKit — the framework that still powers most of the apps on your phone.</p>
+<p>This is a hands-on course. Instead of long theory chapters, you get <strong>9 independent, runnable labs</strong>. Each one is a focused mini-project: you spin up a fresh Xcode app, type out real multi-file code, hit Run, and watch the pieces click together on the simulator. Everything is <strong>programmatic UIKit</strong> — no storyboards, no drag-and-drop, no hidden magic. You'll see exactly where every view comes from.</p>
+<p>Every lab stands on its own. You can do them in order (recommended) or jump to the one you need today.</p>
+<h2>How to use these labs</h2>
+<p>Each lab is fully self-contained — its own tiny Xcode project.</p>
+<ol>
+<li>In Xcode, choose <strong>File ▸ New ▸ Project… ▸ iOS ▸ App</strong>.</li>
+<li>Pick <strong>Swift</strong> as the language and <strong>Storyboard</strong> as the interface (we'll delete it — it's just the least-fiddly starting template).</li>
+<li>Set it up programmatically: <strong>delete <code>Main.storyboard</code></strong>, and <strong>clear the storyboard name</strong> from the scene manifest so UIKit doesn't try to load a storyboard that no longer exists. <strong>Lab 01 walks through every click of this</strong> — do that one first and you'll never have to think about it again.</li>
+<li>Type out the files for the lab, then <strong>⌘R</strong> to run.</li>
+</ol>
+<p>Target for the whole course: <strong>iOS 26 / 27, Swift 6.x, Xcode 26</strong>.</p>
+<p>Type the code — don't paste it. Muscle memory is the point.</p>
+<h2>The labs</h2>
+<p><strong>Beginner — the building blocks</strong></p>
+<ol>
+<li><a class="xref" href="#01-programmatic-screen">A Screen From Scratch (No Storyboard)</a> — wire up a window and a view controller entirely in code, with a button that bumps a counter.</li>
+<li><a class="xref" href="#02-subclassing-a-uiview">Subclassing UIView: a Reusable Component</a> — build your own <code>AvatarView</code> component with a clean public API and reuse it twice.</li>
+<li><a class="xref" href="#03-table-list-custom-cell">A List With a Custom Cell</a> — put real data on screen with <code>UITableView</code> and a hand-built cell.</li>
+</ol>
+<p><strong>Intermediate — real app moves</strong></p>
+<ol start="4">
+<li><a class="xref" href="#04-navigation-and-passing-data">Navigation &amp; Passing Data</a> — push a detail screen and hand it data with <code>UINavigationController</code>.</li>
+<li><a class="xref" href="#05-applying-visual-effects">Visual Effects: Blur, Shadow, Corner Radius</a> — make things look good with layers, blur, and shadows.</li>
+<li><a class="xref" href="#06-gestures-and-dragging">Gestures: Tap, Pan, Pinch</a> — make a view respond to fingers with gesture recognizers.</li>
+<li><a class="xref" href="#07-custom-uicontrol">Rolling Your Own UIControl</a> — build a reusable rating control that sends <code>.valueChanged</code> like a real control.</li>
+</ol>
+<p><strong>Putting it together</strong></p>
+<ol start="8">
+<li><a class="xref" href="#08-mvvm-and-async-load">MVVM-lite + async/await</a> — structure a screen with a view model and load data with <code>async</code>/<code>await</code>.</li>
+<li><a class="xref" href="#09-swiftui-island-capstone">A SwiftUI Island Inside UIKit</a> — embed a SwiftUI view in a UIKit app with <code>UIHostingController</code>.</li>
+</ol>
+<h2>Pairs with the theory</h2>
+<p>These labs are the <em>build</em> side of the story. When you want the <em>why</em> behind what you just typed, read alongside:</p>
+<ul>
+<li><a class="xref" href="uikit.html#00-overview">UIKit Foundations</a> — the concepts (views, layout, controllers, the run loop) explained.</li>
+<li><a class="xref" href="uikit-internals.html#00-overview">UIKit Internals</a> — what's happening under the hood.</li>
+</ul>
+<p>Build first, then go deep. Let's start — <a class="xref" href="#01-programmatic-screen">Lab 01 ▸</a>.</p><div class="pager"><span class="sp"></span><a href="#01-programmatic-screen"><span>Next</span>01 — A Screen From Scratch (No Storyboard) →</a></div></section>
+<section class="page" id="01-programmatic-screen" data-title="01 — A Screen From Scratch (No Storyboard)" data-num="01" data-hasdemo="0" data-group=""><h1>01 — A Screen From Scratch (No Storyboard)</h1>
+<p><em>by the end you'll have built a working screen — a title, a button, and a live counter — with zero storyboard, all in code.</em></p>
+<p><strong>⏱ ~20 min · Beginner</strong></p>
+<h2>What you'll build</h2>
+<p>A single screen that shows a title label and a "Tap me" button; every tap bumps a counter label. Along the way you'll learn how a UIKit app actually <em>starts</em> — how a <code>UIWindow</code> gets a root view controller — without any storyboard doing it invisibly for you.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mockup of the counter screen: a title, a count, and a Tap me button"><rect x="270" y="20" width="220" height="280" rx="24" fill="#20232b" stroke="#3a3d47"/><text x="380" y="90" fill="#cfcfcf" font-family="sans-serif" font-size="16" text-anchor="middle" font-weight="bold">Tap Counter</text><text x="380" y="160" fill="#cfcfcf" font-family="sans-serif" font-size="40" text-anchor="middle">3</text><rect x="305" y="210" width="150" height="44" rx="10" fill="#2ea043"/><text x="380" y="238" fill="#ffffff" font-family="sans-serif" font-size="15" text-anchor="middle">Tap me</text><text x="380" y="285" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">taps update the number above</text></svg><figcaption>The finished screen: tap the button, the count goes up.</figcaption></figure>
+
+<h2>Files in play</h2>
+<pre><code>TapCounter/
+├── AppDelegate.swift          // app lifecycle (minimal)
+├── SceneDelegate.swift        // builds the window + root VC in code
+└── CounterViewController.swift // the screen: labels, button, counting logic
+</code></pre>
+<p>You start from Xcode's <strong>iOS ▸ App</strong> template (Storyboard interface), then delete the storyboard. The two delegate files already exist — you'll trim them.</p>
+<h2>Build it, file by file</h2>
+<h3>AppDelegate.swift</h3>
+<p>The app's top-level lifecycle object. For a scene-based app it barely does anything — it just tells UIKit "use the default scene configuration." Leave it minimal.</p>
+<pre><code class="language-swift">import UIKit
+
+@main
+final class AppDelegate: UIResponder, UIApplicationDelegate {
+
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -&gt; Bool {
+        return true
+    }
+
+    // Tells UIKit which scene configuration to use. The name here
+    // (&quot;Default Configuration&quot;) must match the one in Info.plist.
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -&gt; UISceneConfiguration {
+        UISceneConfiguration(name: &quot;Default Configuration&quot;, sessionRole: connectingSceneSession.role)
+    }
+}
+</code></pre>
+<p><code>@main</code> marks this as the app's entry point. Notice there's no window here — in a scene-based app, the <em>scene</em> owns the window. That's the next file.</p>
+<h3>SceneDelegate.swift</h3>
+<p>This is where the magic normally hidden by a storyboard becomes visible. A scene connects, and <strong>you</strong> create the window and decide what's inside it.</p>
+<pre><code class="language-swift">import UIKit
+
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+
+    var window: UIWindow?
+
+    func scene(
+        _ scene: UIScene,
+        willConnectTo session: UISceneSession,
+        options connectionOptions: UIScene.ConnectionOptions
+    ) {
+        // A UIScene arrives as a plain UIScene — cast to the window scene type.
+        guard let windowScene = scene as? UIWindowScene else { return }
+
+        // Create the window tied to THIS scene (not the old UIWindow() initializer).
+        let window = UIWindow(windowScene: windowScene)
+
+        // Pick what shows first. No storyboard = we say it explicitly.
+        window.rootViewController = CounterViewController()
+
+        // Show the window and make it the one receiving events.
+        window.makeKeyAndVisible()
+
+        // Keep a strong reference or the window deallocates and you get a black screen.
+        self.window = window
+    }
+}
+</code></pre>
+<p>The three load-bearing lines: <code>UIWindow(windowScene:)</code> creates the window, <code>rootViewController</code> chooses the first screen, and <code>makeKeyAndVisible()</code> puts it on screen. A storyboard would have done all three for you — now you own them.</p>
+<blockquote>
+<p><strong>Deleting the storyboard.</strong> In the Project navigator, delete <code>Main.storyboard</code> (Move to Trash). Then open <code>Info.plist</code>, drill into <strong>Application Scene Manifest ▸ Scene Configuration ▸ Application Session Role ▸ Item 0</strong>, and <strong>delete the <code>Storyboard Name</code> row</strong>. If you skip this, the app crashes at launch trying to load a storyboard that's gone. (Some Xcode 26 templates also list a <code>UIMainStoryboardFile</code> key at the top level — delete that too if present.)</p>
+</blockquote>
+<h3>CounterViewController.swift</h3>
+<p>The actual screen. It creates its subviews in code, lays them out with Auto Layout inside a <code>UIStackView</code>, and increments a counter using a <code>UIAction</code> — the modern, closure-based way to handle a button tap.</p>
+<pre><code class="language-swift">import UIKit
+
+final class CounterViewController: UIViewController {
+
+    // State: how many taps so far.
+    private var count = 0 {
+        didSet { countLabel.text = &quot;\(count)&quot; }   // update the label whenever count changes
+    }
+
+    // MARK: - Subviews (created lazily, configured once)
+
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = &quot;Tap Counter&quot;
+        label.font = .preferredFont(forTextStyle: .largeTitle)
+        label.textAlignment = .center
+        return label
+    }()
+
+    private let countLabel: UILabel = {
+        let label = UILabel()
+        label.text = &quot;0&quot;
+        label.font = .systemFont(ofSize: 56, weight: .semibold)
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var tapButton: UIButton = {
+        // UIButton.Configuration is the modern way to style a button.
+        var config = UIButton.Configuration.filled()
+        config.title = &quot;Tap me&quot;
+        config.baseBackgroundColor = .systemGreen
+        config.cornerStyle = .medium
+
+        // UIAction attaches the tap handler right here — no @objc selector needed.
+        let action = UIAction { [weak self] _ in
+            self?.count += 1
+        }
+        return UIButton(configuration: config, primaryAction: action)
+    }()
+
+    // MARK: - Lifecycle
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        layoutUI()
+    }
+
+    // MARK: - Layout
+
+    private func layoutUI() {
+        // A vertical stack keeps the three views centered and spaced with almost no code.
+        let stack = UIStackView(arrangedSubviews: [titleLabel, countLabel, tapButton])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 24
+
+        // The one line every programmatic-layout beginner forgets:
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stack)
+
+        // Pin the stack to the safe-area center.
+        NSLayoutConstraint.activate([
+            stack.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
+        ])
+    }
+}
+</code></pre>
+<p>The pieces worth staring at: the <code>didSet</code> on <code>count</code> means the label always mirrors the number — you never set the text manually. <code>UIButton.Configuration.filled()</code> gives you a modern styled button in three lines. And <code>UIAction { ... }</code> is the closure-based replacement for the old <code>addTarget(_:action:for:)</code> + <code>@objc</code> dance.</p>
+<h2>Wire it up</h2>
+<p>The chain of ownership, top to bottom:</p>
+<ul>
+<li><code>AppDelegate</code> (<code>@main</code>) boots the app and hands scene setup to UIKit.</li>
+<li>UIKit connects a scene → calls <code>SceneDelegate.scene(_:willConnectTo:)</code>.</li>
+<li><code>SceneDelegate</code> builds a <code>UIWindow</code> and sets <code>CounterViewController</code> as its <code>rootViewController</code>.</li>
+<li><code>CounterViewController.viewDidLoad()</code> builds and lays out the UI; the button's <code>UIAction</code> mutates <code>count</code>, whose <code>didSet</code> refreshes <code>countLabel</code>.</li>
+</ul>
+<p>No file imports another by name — they connect through UIKit's lifecycle and one direct reference (<code>SceneDelegate → CounterViewController</code>).</p>
+<h2>Run it — you should see</h2>
+<p>A clean screen with <strong>Tap Counter</strong> at the top, a big <strong>0</strong> in the middle, and a green <strong>Tap me</strong> button below. Each tap increments the number: 1, 2, 3… If you get a black screen, you almost certainly forgot <code>self.window = window</code> or <code>makeKeyAndVisible()</code>. If it crashes at launch, the storyboard name is still in <code>Info.plist</code>.</p>
+<h2>Extend it (your turn)</h2>
+<ol>
+<li>Add a second button, "Reset", that sets <code>count</code> back to <code>0</code>. (Hint: another <code>UIAction</code>.)</li>
+<li>Make the count label turn <code>.systemRed</code> once <code>count</code> passes 10, and back to default below it — all inside the <code>didSet</code>.</li>
+</ol>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Black screen at launch.</strong> You forgot <code>self.window = window</code> (the window deallocates) or <code>window.makeKeyAndVisible()</code>. Both are required.</li>
+<li><strong>Crash: "Could not find a storyboard named 'Main'".</strong> You deleted <code>Main.storyboard</code> but left <code>Storyboard Name</code> in the scene manifest (and/or <code>UIMainStoryboardFile</code> in Info.plist). Remove those entries.</li>
+<li><strong>Views pile up in the top-left corner.</strong> You forgot <code>translatesAutoresizingMaskIntoConstraints = false</code>. Without it, UIKit ignores your constraints and uses the old autoresizing frame instead.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Concept: <a class="xref" href="uikit.html#01-what-uikit-is">01-what-uikit-is</a> — how a UIKit app boots and what the window/scene actually are.</li>
+<li>Concept: <a class="xref" href="uikit.html#04-auto-layout-and-constraints">04-auto-layout-and-constraints</a> — the anchor-based layout you used here, in depth.</li>
+</ul>
+<p>Prev: <a class="xref" href="#00-overview">00-overview</a> · Next: <a class="xref" href="#02-subclassing-a-uiview">02-subclassing-a-uiview</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#00-overview"><span>Prev</span>← UIKit Workshop</a><a href="#02-subclassing-a-uiview"><span>Next</span>02 — Subclassing UIView: a Reusable Component →</a></div></section>
+<section class="page" id="02-subclassing-a-uiview" data-title="02 — Subclassing UIView: a Reusable Component" data-num="02" data-hasdemo="0" data-group=""><h1>02 — Subclassing UIView: a Reusable Component</h1>
+<p><em>by the end you'll have built your own <code>AvatarView</code> component — a ringed circular image with a name label — and reused it twice on one screen.</em></p>
+<p><strong>⏱ ~25 min · Beginner</strong></p>
+<h2>What you'll build</h2>
+<p>A custom <code>UIView</code> subclass called <code>AvatarView</code>: a circular image with a colored ring around it and a name label underneath. It exposes a clean public method — <code>configure(name:image:)</code> — so the rest of your app never touches its internals. Then you'll drop two of them side by side in a view controller to prove the "build once, reuse everywhere" payoff.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two AvatarView components side by side, each a ringed circle with a name below"><circle cx="250" cy="120" r="55" fill="none" stroke="#2ea043" stroke-width="5"/><circle cx="250" cy="120" r="47" fill="#2a2d38"/><text x="250" y="205" fill="#cfcfcf" font-family="sans-serif" font-size="15" text-anchor="middle">Ada</text><circle cx="510" cy="120" r="55" fill="none" stroke="#2ea043" stroke-width="5"/><circle cx="510" cy="120" r="47" fill="#2a2d38"/><text x="510" y="205" fill="#cfcfcf" font-family="sans-serif" font-size="15" text-anchor="middle">Alan</text><text x="380" y="270" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">one AvatarView class, configured twice</text></svg><figcaption>One component, two instances — each configured with its own name and image.</figcaption></figure>
+
+<h2>Files in play</h2>
+<pre><code>AvatarDemo/
+├── AppDelegate.swift          // unchanged from Lab 01
+├── SceneDelegate.swift        // unchanged from Lab 01 (roots ViewController)
+├── AvatarView.swift           // the reusable component (the star of this lab)
+└── ViewController.swift       // uses two AvatarViews in a stack
+</code></pre>
+<p>Reuse the <code>SceneDelegate</code> from Lab 01 — just point its <code>rootViewController</code> at <code>ViewController()</code> instead of <code>CounterViewController()</code>.</p>
+<h2>Build it, file by file</h2>
+<h3>AvatarView.swift</h3>
+<p>A <code>UIView</code> subclass that owns its own subviews and layout. The key pattern: both initializers funnel into one shared <code>commonInit()</code>, so the view sets itself up correctly whether it's created in code <em>or</em> (hypothetically) from a nib.</p>
+<pre><code class="language-swift">import UIKit
+
+final class AvatarView: UIView {
+
+    // MARK: - Subviews (private — the outside world never touches these)
+
+    private let imageView = UIImageView()
+    private let nameLabel = UILabel()
+
+    // MARK: - Init: both paths lead to commonInit()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        commonInit()
+    }
+
+    // Required even though we never load from a storyboard — the compiler insists.
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    private func commonInit() {
+        setupImageView()
+        setupNameLabel()
+        layoutSubviewsInStack()
+    }
+
+    // MARK: - Setup
+
+    private func setupImageView() {
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true                 // clip the image to the circle
+        imageView.backgroundColor = .secondarySystemBackground
+        imageView.layer.borderColor = UIColor.systemGreen.cgColor
+        imageView.layer.borderWidth = 4                // the colored ring
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    private func setupNameLabel() {
+        nameLabel.font = .preferredFont(forTextStyle: .headline)
+        nameLabel.textAlignment = .center
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    private func layoutSubviewsInStack() {
+        let stack = UIStackView(arrangedSubviews: [imageView, nameLabel])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            // Fill our own bounds with the stack.
+            stack.topAnchor.constraint(equalTo: topAnchor),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
+
+            // Fixed-size square image, so we can make it a perfect circle.
+            imageView.widthAnchor.constraint(equalToConstant: 96),
+            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor)
+        ])
+    }
+
+    // cornerRadius must be half the final size, so set it once we know our size.
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        imageView.layer.cornerRadius = imageView.bounds.width / 2
+    }
+
+    // MARK: - Public API (the ONLY way callers interact with this view)
+
+    func configure(name: String, image: UIImage?) {
+        nameLabel.text = name
+        imageView.image = image
+    }
+}
+</code></pre>
+<p>Three things make this a <em>good</em> component. <strong>Encapsulation:</strong> <code>imageView</code> and <code>nameLabel</code> are <code>private</code>, so no caller can reach in and break assumptions. <strong>The <code>commonInit()</code> pattern:</strong> both <code>init(frame:)</code> and <code>init?(coder:)</code> route through it, so setup happens exactly once regardless of how the view is born. <strong>A tiny public surface:</strong> callers only ever call <code>configure(name:image:)</code> — one clear entry point. Note the <code>cornerRadius</code> lives in <code>layoutSubviews()</code> because the view's real size isn't known until layout runs.</p>
+<h3>ViewController.swift</h3>
+<p>The consumer. It creates two <code>AvatarView</code> instances, configures each differently, and stacks them horizontally. Notice how little it knows about <code>AvatarView</code>'s internals — that's the whole point.</p>
+<pre><code class="language-swift">import UIKit
+
+final class ViewController: UIViewController {
+
+    private let leftAvatar = AvatarView()
+    private let rightAvatar = AvatarView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+
+        // Same class, different data — reuse in action.
+        leftAvatar.configure(name: &quot;Ada&quot;, image: UIImage(systemName: &quot;person.fill&quot;))
+        rightAvatar.configure(name: &quot;Alan&quot;, image: UIImage(systemName: &quot;person.fill&quot;))
+
+        let row = UIStackView(arrangedSubviews: [leftAvatar, rightAvatar])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.distribution = .equalSpacing
+        row.spacing = 40
+        row.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(row)
+
+        NSLayoutConstraint.activate([
+            row.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            row.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
+        ])
+    }
+}
+</code></pre>
+<p>The view controller never sets a corner radius, never touches an image view, never lays out a label. It calls <code>configure(...)</code> and drops the view in a stack. That separation is what makes <code>AvatarView</code> reusable in the next screen, or the screen after that.</p>
+<h2>Wire it up</h2>
+<ul>
+<li><code>SceneDelegate</code> (reused from Lab 01) sets <code>rootViewController = ViewController()</code>.</li>
+<li><code>ViewController</code> owns two <code>AvatarView</code> instances and arranges them in a horizontal <code>UIStackView</code>.</li>
+<li>Each <code>AvatarView</code> is a self-contained <code>UIView</code>: it builds its own image view + label in <code>commonInit()</code>, sizes itself, and only accepts data through <code>configure(name:image:)</code>.</li>
+</ul>
+<p>The connection between the two files is deliberately thin — <code>ViewController</code> depends on <code>AvatarView</code>'s <em>public API</em>, not its guts.</p>
+<h2>Run it — you should see</h2>
+<p>Two identical circular avatars centered on screen, each with a green ring, a person silhouette inside, and a name ("Ada" and "Alan") below. Rotate the simulator or change to a larger device — the circles stay perfectly round because <code>cornerRadius</code> is recomputed in <code>layoutSubviews()</code>.</p>
+<h2>Extend it (your turn)</h2>
+<ol>
+<li>Add a <code>ringColor</code> parameter to <code>configure</code> (e.g. <code>configure(name:image:ringColor:)</code>) so each avatar can have a different ring color.</li>
+<li>Add a third avatar and switch <code>ViewController</code>'s outer stack to <code>.vertical</code> to see the component adapt to a new layout with no changes inside <code>AvatarView</code>.</li>
+</ol>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>The circle looks like a rounded square (or a full square).</strong> You set <code>cornerRadius</code> in <code>commonInit()</code> before the view had a real size. Set it in <code>layoutSubviews()</code> using <code>bounds.width / 2</code>, and make sure <code>clipsToBounds = true</code>.</li>
+<li><strong>Compiler error: "required initializer 'init(coder:)' must be provided".</strong> Every <code>UIView</code> subclass that overrides <code>init(frame:)</code> must also implement <code>required init?(coder:)</code>. Add it and route it through <code>commonInit()</code>.</li>
+<li><strong>The image spills outside the ring.</strong> <code>clipsToBounds</code> is false, or <code>contentMode</code> isn't <code>.scaleAspectFill</code>. Set both on the image view so the image is clipped to the circle.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Concept: <a class="xref" href="uikit.html#02-uiview">02-uiview</a> — the <code>UIView</code> lifecycle, <code>layoutSubviews</code>, and the layer beneath every view.</li>
+<li>Concept: <a class="xref" href="uikit.html#20-custom-composite-views">20-custom-composite-views</a> — designing reusable components with clean public APIs.</li>
+</ul>
+<p>Prev: <a class="xref" href="#01-programmatic-screen">01-programmatic-screen</a> · Next: <a class="xref" href="#03-table-list-custom-cell">03-table-list-custom-cell</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#01-programmatic-screen"><span>Prev</span>← 01 — A Screen From Scratch (No Storyboard)</a><a href="#03-table-list-custom-cell"><span>Next</span>03 — A List with a Custom Cell →</a></div></section>
+<section class="page" id="03-table-list-custom-cell" data-title="03 — A List with a Custom Cell" data-num="03" data-hasdemo="0" data-group=""><h1>03 — A List with a Custom Cell</h1>
+<p><em>by the end of this lab you'll have a smooth, scrolling list of people where every row is your own hand-built cell — an avatar circle, a name, and a subtitle — and you'll understand exactly why table views recycle cells.</em></p>
+<p><strong>⏱ ~30 min · Beginner → Intermediate</strong></p>
+<h2>What you'll build</h2>
+<p>A single-screen app: a <code>UITableView</code> full of people, where each row is a <strong>custom <code>UITableViewCell</code> subclass</strong> laying out an avatar circle, a name, and a role subtitle with Auto Layout anchors. You'll learn the three moving parts every list depends on — reuse identifiers, dequeuing, and cell subclassing.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A table view on the left feeding a reuse queue that recycles a custom cell into rows"><rect x="40" y="30" width="200" height="260" rx="10" fill="#2a2d38"/><text x="140" y="22" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">UITableView</text><circle cx="70" cy="70" r="14" fill="#2ea043"/><rect x="94" y="58" width="120" height="10" rx="5" fill="#cfcfcf"/><rect x="94" y="76" width="80" height="8" rx="4" fill="#8a8b93"/><circle cx="70" cy="130" r="14" fill="#2ea043"/><rect x="94" y="118" width="120" height="10" rx="5" fill="#cfcfcf"/><rect x="94" y="136" width="80" height="8" rx="4" fill="#8a8b93"/><circle cx="70" cy="190" r="14" fill="#2ea043"/><rect x="94" y="178" width="120" height="10" rx="5" fill="#cfcfcf"/><rect x="94" y="196" width="80" height="8" rx="4" fill="#8a8b93"/><path d="M260 160 L340 160" stroke="#8a8b93" stroke-width="2" marker-end="url(#a)"/><defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 z" fill="#8a8b93"/></marker></defs><rect x="360" y="110" width="180" height="100" rx="10" fill="#22252e" stroke="#2ea043" stroke-width="1.5"/><text x="450" y="102" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">reuse queue</text><circle cx="392" cy="150" r="16" fill="#2ea043"/><rect x="418" y="138" width="104" height="11" rx="5" fill="#cfcfcf"/><rect x="418" y="158" width="70" height="9" rx="4" fill="#8a8b93"/><text x="450" y="196" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">PersonCell (recycled)</text><path d="M560 160 L640 160" stroke="#8a8b93" stroke-width="2" marker-end="url(#a)"/><rect x="660" y="120" width="70" height="80" rx="8" fill="#2a2d38"/><text x="695" y="165" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">row</text></svg><figcaption>The table asks the reuse queue for a cell, you configure it, and it scrolls into a row — the same handful of cells serve hundreds of rows.</figcaption></figure>
+
+<h2>Files in play</h2>
+<pre><code class="language-text">UIKitWorkshop/
+├─ SceneDelegate.swift          # reused from Lab 01 — sets root VC
+├─ Person.swift                 # the model + sample data
+├─ PersonCell.swift             # custom UITableViewCell subclass
+└─ PeopleListViewController.swift  # owns the table, feeds it rows
+</code></pre>
+<h2>Build it, file by file</h2>
+<h3>Person.swift</h3>
+<p>A tiny value type for the data each row shows, plus a handful of sample people so the list has something to render.</p>
+<pre><code class="language-swift">import Foundation
+
+struct Person {
+    let name: String
+    let role: String
+
+    // Initials used for the avatar circle (e.g. &quot;Ada Lovelace&quot; -&gt; &quot;AL&quot;).
+    var initials: String {
+        let parts = name.split(separator: &quot; &quot;)
+        let letters = parts.prefix(2).compactMap { $0.first }
+        return String(letters).uppercased()
+    }
+}
+
+extension Person {
+    static let samplePeople: [Person] = [
+        Person(name: &quot;Ada Lovelace&quot;,     role: &quot;Computing pioneer&quot;),
+        Person(name: &quot;Grace Hopper&quot;,     role: &quot;Compiler inventor&quot;),
+        Person(name: &quot;Alan Turing&quot;,      role: &quot;Mathematician&quot;),
+        Person(name: &quot;Katherine Johnson&quot;, role: &quot;NASA mathematician&quot;),
+        Person(name: &quot;Dennis Ritchie&quot;,   role: &quot;Created C&quot;),
+        Person(name: &quot;Margaret Hamilton&quot;, role: &quot;Apollo software lead&quot;),
+        Person(name: &quot;Linus Torvalds&quot;,   role: &quot;Kernel maintainer&quot;),
+        Person(name: &quot;Barbara Liskov&quot;,   role: &quot;Language designer&quot;)
+    ]
+}
+</code></pre>
+<h3>PersonCell.swift</h3>
+<p>The star of this lab: your own cell subclass. It owns a static reuse identifier, builds its subviews once in <code>init(style:reuseIdentifier:)</code>, pins them with anchors, and exposes a <code>configure(with:)</code> method to fill in a specific person.</p>
+<pre><code class="language-swift">import UIKit
+
+final class PersonCell: UITableViewCell {
+
+    // A cell owns its own reuse identifier — register and dequeue with this.
+    static let reuseID = &quot;PersonCell&quot;
+
+    private let avatarView: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 16, weight: .semibold)
+        label.backgroundColor = .systemGreen
+        label.layer.cornerRadius = 22
+        label.clipsToBounds = true
+        return label
+    }()
+
+    private let nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = .preferredFont(forTextStyle: .headline)
+        label.adjustsFontForContentSizeCategory = true
+        return label
+    }()
+
+    private let roleLabel: UILabel = {
+        let label = UILabel()
+        label.font = .preferredFont(forTextStyle: .subheadline)
+        label.textColor = .secondaryLabel
+        label.adjustsFontForContentSizeCategory = true
+        return label
+    }()
+
+    // Designated initializer — this is where table cells get set up.
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        accessoryType = .disclosureIndicator
+        setupLayout()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError(&quot;init(coder:) has not been implemented&quot;)
+    }
+
+    private func setupLayout() {
+        let textStack = UIStackView(arrangedSubviews: [nameLabel, roleLabel])
+        textStack.axis = .vertical
+        textStack.spacing = 2
+
+        // The golden rule of programmatic Auto Layout.
+        avatarView.translatesAutoresizingMaskIntoConstraints = false
+        textStack.translatesAutoresizingMaskIntoConstraints = false
+
+        contentView.addSubview(avatarView)
+        contentView.addSubview(textStack)
+
+        NSLayoutConstraint.activate([
+            avatarView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            avatarView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            avatarView.widthAnchor.constraint(equalToConstant: 44),
+            avatarView.heightAnchor.constraint(equalToConstant: 44),
+
+            textStack.leadingAnchor.constraint(equalTo: avatarView.trailingAnchor, constant: 12),
+            textStack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+            textStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+
+            // Give the cell enough height and let it breathe top/bottom.
+            contentView.topAnchor.constraint(lessThanOrEqualTo: avatarView.topAnchor, constant: -8),
+            contentView.bottomAnchor.constraint(greaterThanOrEqualTo: avatarView.bottomAnchor, constant: 8)
+        ])
+    }
+
+    // Fill the recycled cell with one person's data.
+    func configure(with person: Person) {
+        avatarView.text = person.initials
+        nameLabel.text = person.name
+        roleLabel.text = person.role
+    }
+}
+</code></pre>
+<h3>PeopleListViewController.swift</h3>
+<p>A view controller that owns a <code>UITableView</code>, registers the custom cell class against its reuse identifier, and answers the two required data-source questions: how many rows, and what goes in each one.</p>
+<pre><code class="language-swift">import UIKit
+
+final class PeopleListViewController: UIViewController {
+
+    private let tableView = UITableView(frame: .zero, style: .plain)
+    private let people = Person.samplePeople
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = &quot;People&quot;
+        view.backgroundColor = .systemBackground
+        setupTableView()
+    }
+
+    private func setupTableView() {
+        // Registering the class ties reuseID to PersonCell — dequeue can't fail.
+        tableView.register(PersonCell.self, forCellReuseIdentifier: PersonCell.reuseID)
+        tableView.dataSource = self
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 64
+
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tableView)
+
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+}
+
+extension PeopleListViewController: UITableViewDataSource {
+
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -&gt; Int {
+        people.count
+    }
+
+    func tableView(_ tableView: UITableView,
+                   cellForRowAt indexPath: IndexPath) -&gt; UITableViewCell {
+        // Dequeue pulls a recycled cell off the queue (or makes one on demand).
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: PersonCell.reuseID,
+            for: indexPath
+        ) as! PersonCell
+        cell.configure(with: people[indexPath.row])
+        return cell
+    }
+}
+</code></pre>
+<h2>Wire it up</h2>
+<p>Reuse the <code>SceneDelegate</code> from <strong>Lab 01</strong> and set this list as the window's root. If you're starting fresh, the essential lines are:</p>
+<pre><code class="language-swift">func scene(_ scene: UIScene,
+           willConnectTo session: UISceneSession,
+           options connectionOptions: UIScene.ConnectionOptions) {
+    guard let windowScene = (scene as? UIWindowScene) else { return }
+    let window = UIWindow(windowScene: windowScene)
+    window.rootViewController = PeopleListViewController()
+    self.window = window
+    window.makeKeyAndVisible()
+}
+</code></pre>
+<p>Delete <code>Main.storyboard</code>, and remove the <code>UISceneStoryboardFile</code> / <code>Main</code> storyboard keys from <code>Info.plist</code> (or the scene manifest) so UIKit doesn't try to load a storyboard on launch.</p>
+<h2>Run it — you should see</h2>
+<p>A full-screen list of eight people. Each row shows a <strong>green circle with the person's initials</strong>, their name in headline weight, and their role in muted gray underneath, with a chevron on the right. Scroll up and down — it stays buttery smooth because the same few <code>PersonCell</code> instances are recycled as rows leave and enter the screen. Add a breakpoint or <code>print</code> inside <code>init(style:reuseIdentifier:)</code> and you'll see it fire only a handful of times, not once per row.</p>
+<h2>Extend it (your turn)</h2>
+<ul>
+<li>Give the avatar a <strong>deterministic color</strong> derived from the name (hash the string into a hue) so each person gets a consistent tint.</li>
+<li>Add a <strong>section header</strong> by adopting <code>titleForHeaderInSection</code>, or split people into "Pioneers" and "Modern" sections.</li>
+<li>Load a real <strong>image</strong> into the avatar instead of initials, keeping the circular mask with <code>contentMode = .scaleAspectFill</code> and <code>clipsToBounds = true</code>.</li>
+</ul>
+<h2>Common mistakes</h2>
+<ol>
+<li><strong>Forgetting <code>translatesAutoresizingMaskIntoConstraints = false</code>.</strong> Add subviews to <code>contentView</code>, set this to <code>false</code> on each, and your constraints will silently conflict with the autoresizing mask if you skip it — you'll get "Unable to simultaneously satisfy constraints" spam and a broken layout.</li>
+<li><strong>Registering one identifier and dequeuing another.</strong> The string in <code>register(_:forCellReuseIdentifier:)</code> must match the one in <code>dequeueReusableCell</code>. Using the shared <code>static let reuseID</code> on both sides removes the typo risk entirely.</li>
+<li><strong>Configuring in <code>init</code> instead of <code>configure(with:)</code>.</strong> Cells are recycled, so any data you set once in the initializer will show stale content on the wrong row. Always reset every visible property inside <code>configure(with:)</code> (or <code>prepareForReuse</code>).</li>
+</ol>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="uikit.html#11-tableview-and-collectionview">11-tableview-and-collectionview</a></li>
+<li><a class="xref" href="uikit-internals.html#03a-layout-and-display-cycle">03a-layout-and-display-cycle</a></li>
+</ul>
+<p>Prev <a class="xref" href="#02-subclassing-a-uiview">02-subclassing-a-uiview</a> · Next <a class="xref" href="#04-navigation-and-passing-data">04-navigation-and-passing-data</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#02-subclassing-a-uiview"><span>Prev</span>← 02 — Subclassing UIView: a Reusable Component</a><a href="#04-navigation-and-passing-data"><span>Next</span>04 — Navigation &amp; Passing Data →</a></div></section>
+<section class="page" id="04-navigation-and-passing-data" data-title="04 — Navigation &amp; Passing Data" data-num="04" data-hasdemo="0" data-group=""><h1>04 — Navigation &amp; Passing Data</h1>
+<p><em>by the end of this lab your list becomes a two-screen app: tap a person and a detail screen slides in showing exactly that person — data handed over cleanly through the initializer, not a storyboard segue.</em></p>
+<p><strong>⏱ ~30 min · Intermediate</strong></p>
+<h2>What you'll build</h2>
+<p>You'll wrap the people list from <strong>Lab 03</strong> in a <code>UINavigationController</code>, respond to taps with <code>didSelectRowAt</code>, and <strong>push</strong> a <code>ProfileDetailViewController</code> that receives its person through a custom <code>init(person:)</code>. The big idea: pass data forward with <strong>init injection</strong> — the detail screen literally cannot exist without the person it needs.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A navigation stack pushing from a list screen to a detail screen, carrying a Person via init"><rect x="40" y="60" width="200" height="200" rx="12" fill="#2a2d38"/><text x="140" y="50" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">PeopleList (root)</text><rect x="60" y="90" width="160" height="34" rx="6" fill="#22252e" stroke="#2ea043" stroke-width="1.5"/><text x="140" y="112" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Ada Lovelace ›</text><rect x="60" y="134" width="160" height="34" rx="6" fill="#22252e"/><text x="140" y="156" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">Grace Hopper ›</text><path d="M260 160 L360 160" stroke="#2ea043" stroke-width="2.5" marker-end="url(#b)"/><defs><marker id="b" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto"><path d="M0 0 L10 4 L0 8 z" fill="#2ea043"/></marker></defs><text x="310" y="145" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">push</text><text x="310" y="185" fill="#2ea043" font-family="sans-serif" font-size="11" text-anchor="middle">init(person:)</text><rect x="380" y="40" width="220" height="240" rx="12" fill="#2a2d38"/><text x="490" y="30" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">ProfileDetail (pushed)</text><circle cx="490" cy="100" r="30" fill="#2ea043"/><text x="490" y="107" fill="#ffffff" font-family="sans-serif" font-size="18" text-anchor="middle">AL</text><rect x="420" y="150" width="140" height="12" rx="6" fill="#cfcfcf"/><rect x="440" y="174" width="100" height="10" rx="5" fill="#8a8b93"/><path d="M620 160 L700 160" stroke="#8a8b93" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#c)"/><defs><marker id="c" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 z" fill="#8a8b93"/></marker></defs><text x="720" y="150" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">back</text><text x="720" y="166" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">pops</text></svg><figcaption>The nav controller keeps a stack: tap pushes a detail screen built with the tapped person; the back button pops it off.</figcaption></figure>
+
+<h2>Files in play</h2>
+<pre><code class="language-text">UIKitWorkshop/
+├─ SceneDelegate.swift               # wrap the list in a UINavigationController
+├─ Person.swift                      # reused from Lab 03 (unchanged)
+├─ PersonCell.swift                  # reused from Lab 03 (unchanged)
+├─ PeopleListViewController.swift    # add didSelectRowAt -&gt; push detail
+└─ ProfileDetailViewController.swift # new — receives a Person via init
+</code></pre>
+<h2>Build it, file by file</h2>
+<h3>SceneDelegate.swift</h3>
+<p>The root of the window is now a <code>UINavigationController</code> whose first screen is the people list. That nav controller is what gives us the top bar, the back button, and the push/pop stack for free.</p>
+<pre><code class="language-swift">import UIKit
+
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+        let window = UIWindow(windowScene: windowScene)
+
+        let list = PeopleListViewController()
+        // The nav controller owns the stack; the list is its root screen.
+        let nav = UINavigationController(rootViewController: list)
+        nav.navigationBar.prefersLargeTitles = true
+
+        window.rootViewController = nav
+        self.window = window
+        window.makeKeyAndVisible()
+    }
+}
+</code></pre>
+<h3>PeopleListViewController.swift</h3>
+<p>Same list as Lab 03 — the only new work is becoming the table's <strong>delegate</strong> and pushing a detail screen when a row is tapped. Notice how the person is handed straight into the detail's initializer.</p>
+<pre><code class="language-swift">import UIKit
+
+final class PeopleListViewController: UIViewController {
+
+    private let tableView = UITableView(frame: .zero, style: .plain)
+    private let people = Person.samplePeople
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = &quot;People&quot;
+        view.backgroundColor = .systemBackground
+        setupTableView()
+    }
+
+    private func setupTableView() {
+        tableView.register(PersonCell.self, forCellReuseIdentifier: PersonCell.reuseID)
+        tableView.dataSource = self
+        tableView.delegate = self          // &lt;- new: we want tap callbacks
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 64
+
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tableView)
+
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+}
+
+extension PeopleListViewController: UITableViewDataSource {
+
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -&gt; Int {
+        people.count
+    }
+
+    func tableView(_ tableView: UITableView,
+                   cellForRowAt indexPath: IndexPath) -&gt; UITableViewCell {
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: PersonCell.reuseID,
+            for: indexPath
+        ) as! PersonCell
+        cell.configure(with: people[indexPath.row])
+        return cell
+    }
+}
+
+extension PeopleListViewController: UITableViewDelegate {
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+
+        let person = people[indexPath.row]
+        // Init injection: the detail screen is built *with* its data.
+        let detail = ProfileDetailViewController(person: person)
+        navigationController?.pushViewController(detail, animated: true)
+    }
+}
+</code></pre>
+<h3>ProfileDetailViewController.swift</h3>
+<p>The detail screen takes its <code>Person</code> through a <strong>custom designated initializer</strong>. Because the property is a non-optional <code>let</code>, there's no "what if it's nil?" to worry about — the screen is impossible to construct without its data.</p>
+<pre><code class="language-swift">import UIKit
+
+final class ProfileDetailViewController: UIViewController {
+
+    private let person: Person
+
+    // The whole point of this lab: data arrives through init, not later.
+    init(person: Person) {
+        self.person = person
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError(&quot;Use init(person:)&quot;)
+    }
+
+    private let avatarView: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 32, weight: .bold)
+        label.backgroundColor = .systemGreen
+        label.layer.cornerRadius = 48
+        label.clipsToBounds = true
+        return label
+    }()
+
+    private let nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = .preferredFont(forTextStyle: .largeTitle)
+        label.textAlignment = .center
+        label.adjustsFontForContentSizeCategory = true
+        return label
+    }()
+
+    private let roleLabel: UILabel = {
+        let label = UILabel()
+        label.font = .preferredFont(forTextStyle: .title3)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.adjustsFontForContentSizeCategory = true
+        return label
+    }()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        // The nav bar shows the person's name as the screen title.
+        navigationItem.title = person.name
+        navigationItem.largeTitleDisplayMode = .never
+
+        buildLayout()
+        fillIn()
+    }
+
+    private func buildLayout() {
+        let stack = UIStackView(arrangedSubviews: [avatarView, nameLabel, roleLabel])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 16
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 48),
+            stack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+
+            avatarView.widthAnchor.constraint(equalToConstant: 96),
+            avatarView.heightAnchor.constraint(equalToConstant: 96)
+        ])
+    }
+
+    private func fillIn() {
+        avatarView.text = person.initials
+        nameLabel.text = person.name
+        roleLabel.text = person.role
+    }
+}
+</code></pre>
+<h2>Wire it up</h2>
+<p>Nothing to register or connect beyond the code above. The chain is: <code>SceneDelegate</code> builds the <code>UINavigationController</code> → the list is its root → tapping a row calls <code>didSelectRowAt</code> → that builds <code>ProfileDetailViewController(person:)</code> and pushes it. <code>Person.swift</code> and <code>PersonCell.swift</code> come straight from Lab 03 unchanged, so copy them in if this is a fresh project. Make sure the storyboard keys are still removed from <code>Info.plist</code> so the scene loads programmatically.</p>
+<h2>Run it — you should see</h2>
+<p>The people list now sits under a large "People" title bar. <strong>Tap any row</strong> and a detail screen slides in from the right: a big green avatar with the person's initials, their name as a large title, and their role beneath it — with the person's name in the nav bar and a back button (labeled "People") in the top-left. Tap <strong>back</strong> and it slides away, returning you to the list with the selected row briefly highlighted then deselected.</p>
+<h2>Extend it (your turn)</h2>
+<ul>
+<li>Add a <strong>bar button item</strong> (e.g. a share icon) to the detail screen's <code>navigationItem.rightBarButtonItem</code> and print the person when tapped.</li>
+<li>Give <code>Person</code> a <code>bio: String</code> field and show it in a multiline <code>UILabel</code> under the role.</li>
+<li>Swap the push for a <strong>modal</strong> presentation (<code>present(_:animated:)</code>) wrapped in its own nav controller with a "Done" button, and feel the difference between the two navigation styles.</li>
+</ul>
+<h2>Common mistakes</h2>
+<ol>
+<li><strong>Pushing without a navigation controller.</strong> <code>navigationController?.pushViewController(...)</code> silently does nothing if the list isn't inside a <code>UINavigationController</code>. If taps seem dead, check that <code>SceneDelegate</code> wraps the list in <code>nav</code>, not the list directly.</li>
+<li><strong>Forgetting to set <code>tableView.delegate = self</code>.</strong> <code>didSelectRowAt</code> lives on <code>UITableViewDelegate</code>, not the data source. Set the delegate or your taps will never fire.</li>
+<li><strong>Reaching for storyboard segues / <code>prepare(for:sender:)</code>.</strong> This app has no storyboard, so there are no segues to prepare. Pass data by constructing the destination with <code>init(person:)</code> — it's clearer, testable, and makes missing data a compile error instead of a crash.</li>
+</ol>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="uikit.html#13-navigation-and-bars">13-navigation-and-bars</a></li>
+<li><a class="xref" href="uikit.html#12-uiviewcontroller">12-uiviewcontroller</a></li>
+</ul>
+<p>Prev <a class="xref" href="#03-table-list-custom-cell">03-table-list-custom-cell</a> · Next <a class="xref" href="#05-applying-visual-effects">05-applying-visual-effects</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#03-table-list-custom-cell"><span>Prev</span>← 03 — A List with a Custom Cell</a><a href="#05-applying-visual-effects"><span>Next</span>05 — Applying Visual Effects →</a></div></section>
+<section class="page" id="05-applying-visual-effects" data-title="05 — Applying Visual Effects" data-num="05" data-hasdemo="0" data-group=""><h1>05 — Applying Visual Effects</h1>
+<p><em>by the end you'll have a profile card that looks like it belongs in a real app: rounded corners, a soft real shadow, a gradient background, a frosted-glass header, and a satisfying spring when you tap it.</em></p>
+<p><strong>⏱ ~30 min · Intermediate</strong></p>
+<h2>What you'll build</h2>
+<p>A polished "profile card" that stacks four classic effects — a <code>CAGradientLayer</code> fill, rounded corners with a proper <code>shadowPath</code> shadow, a <code>UIVisualEffectView</code> blur strip across the top, and a spring "pop" animation on tap.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A profile card with a blurred header strip sitting on a gradient body, casting a soft shadow"><rect x="0" y="0" width="760" height="320" fill="#1b1d24"/><rect x="252" y="66" width="256" height="196" rx="20" fill="#000000" opacity="0.35"/><rect x="248" y="58" width="256" height="196" rx="20" fill="#2a2d38"/><rect x="248" y="58" width="256" height="52" rx="20" fill="#3a3f4d"/><rect x="248" y="94" width="256" height="16" fill="#3a3f4d"/><text x="376" y="90" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">blur header (contentView)</text><circle cx="376" cy="150" r="26" fill="#2ea043"/><text x="376" y="205" fill="#cfcfcf" font-family="sans-serif" font-size="14" text-anchor="middle">Ada Lovelace</text><text x="376" y="228" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">tap to pop</text><text x="120" y="150" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">CAGradientLayer</text><text x="120" y="170" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">+ shadowPath</text><text x="648" y="150" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">UIView.animate</text><text x="648" y="170" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">spring scale</text></svg><figcaption>One card, four effects: gradient body, path-backed shadow, frosted header, spring on tap.</figcaption></figure>
+
+<h2>Files in play</h2>
+<pre><code class="language-text">VisualEffectsLab/
+├── AppDelegate.swift          // standard app entry (unchanged from Lab 01)
+├── SceneDelegate.swift        // builds the window, sets rootViewController
+├── GradientCardView.swift     // the reusable card: gradient + corners + shadow
+└── EffectsViewController.swift// hosts the card, blur header, tap-to-pop
+</code></pre>
+<h2>Build it, file by file</h2>
+<h3>GradientCardView.swift</h3>
+<p>The whole point of this view is that <strong>effects live on the layer</strong>, not the view. A <code>UIView</code> is a thin wrapper around a <code>CALayer</code> (<code>view.layer</code>), and that layer is where corner radius, shadows, and sublayers like gradients actually render. We add a <code>CAGradientLayer</code> as a sublayer and then keep both it and the shadow path in sync inside <code>layoutSubviews</code> — because Auto Layout gives us our real <code>bounds</code> <em>after</em> init, and layers don't participate in Auto Layout.</p>
+<pre><code class="language-swift">import UIKit
+
+/// A rounded card with a gradient fill and a soft, performant shadow.
+final class GradientCardView: UIView {
+
+    // The gradient is a sublayer we own and resize ourselves.
+    private let gradientLayer = CAGradientLayer()
+
+    /// Colors of the gradient, top-to-bottom. Set this to reskin the card.
+    var colors: [UIColor] = [
+        UIColor(red: 0.16, green: 0.63, blue: 0.26, alpha: 1),   // #2ea043-ish
+        UIColor(red: 0.10, green: 0.35, blue: 0.55, alpha: 1)
+    ] {
+        didSet { applyColors() }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        commonInit()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    private func commonInit() {
+        // --- Gradient: insert it at the very back so content sits on top. ---
+        gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        gradientLayer.endPoint   = CGPoint(x: 0.5, y: 1)
+        layer.insertSublayer(gradientLayer, at: 0)
+        applyColors()
+
+        // --- Corners: cornerRadius clips the view's own layer content. ---
+        layer.cornerRadius = 20
+        layer.cornerCurve  = .continuous   // the smooth &quot;squircle&quot; curve
+
+        // --- Shadow: NOTE these are on `layer`, and masksToBounds must stay
+        //     false or the shadow (which draws OUTSIDE bounds) gets clipped. ---
+        layer.masksToBounds = false
+        layer.shadowColor   = UIColor.black.cgColor
+        layer.shadowOpacity = 0.35
+        layer.shadowRadius  = 16
+        layer.shadowOffset  = CGSize(width: 0, height: 8)
+    }
+
+    private func applyColors() {
+        gradientLayer.colors = colors.map(\.cgColor)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        // Layers don't autolayout — we match the gradient to our bounds here,
+        // every time the size changes (rotation, size class, etc.).
+        gradientLayer.frame = bounds
+        gradientLayer.cornerRadius = layer.cornerRadius   // clip gradient to corners
+
+        // WHY shadowPath: without it, Core Animation renders the shadow by
+        // reading every pixel of the layer's alpha channel on each frame —
+        // expensive, and it stutters during animation. Handing it an explicit
+        // path lets it skip that work entirely. Match the rounded rect.
+        layer.shadowPath = UIBezierPath(
+            roundedRect: bounds,
+            cornerRadius: layer.cornerRadius
+        ).cgPath
+    }
+}
+</code></pre>
+<h3>EffectsViewController.swift</h3>
+<p>This controller places the card, drops a <code>UIVisualEffectView</code> blur strip across its top, and wires a tap that springs the card. The one rule with <code>UIVisualEffectView</code> that trips everyone up: <strong>you add your content to its <code>contentView</code>, not to the effect view directly</strong> — subviews added straight to the blur view won't render correctly.</p>
+<pre><code class="language-swift">import UIKit
+
+final class EffectsViewController: UIViewController {
+
+    private let card = GradientCardView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = UIColor(white: 0.10, alpha: 1)
+
+        // --- The card, centered, fixed size. ---
+        card.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(card)
+        NSLayoutConstraint.activate([
+            card.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            card.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            card.widthAnchor.constraint(equalToConstant: 260),
+            card.heightAnchor.constraint(equalToConstant: 200)
+        ])
+
+        // --- Blur header strip, pinned to the top of the card. ---
+        let blur = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
+        blur.translatesAutoresizingMaskIntoConstraints = false
+        // Match the card's top corners so the strip doesn't overflow them.
+        blur.layer.cornerRadius = 20
+        blur.layer.cornerCurve  = .continuous
+        blur.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        blur.clipsToBounds = true
+        card.addSubview(blur)
+        NSLayoutConstraint.activate([
+            blur.topAnchor.constraint(equalTo: card.topAnchor),
+            blur.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            blur.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            blur.heightAnchor.constraint(equalToConstant: 52)
+        ])
+
+        // A title label — added to the blur's CONTENT VIEW, not the blur itself.
+        let title = UILabel()
+        title.translatesAutoresizingMaskIntoConstraints = false
+        title.text = &quot;Profile&quot;
+        title.font = .preferredFont(forTextStyle: .headline)
+        title.textColor = .white
+        blur.contentView.addSubview(title)
+        NSLayoutConstraint.activate([
+            title.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor, constant: 16),
+            title.centerYAnchor.constraint(equalTo: blur.contentView.centerYAnchor)
+        ])
+
+        // A name label lower down on the card body.
+        let name = UILabel()
+        name.translatesAutoresizingMaskIntoConstraints = false
+        name.text = &quot;Ada Lovelace\nTap the card&quot;
+        name.numberOfLines = 0
+        name.textAlignment = .center
+        name.textColor = .white
+        name.font = .preferredFont(forTextStyle: .body)
+        card.addSubview(name)
+        NSLayoutConstraint.activate([
+            name.centerXAnchor.constraint(equalTo: card.centerXAnchor),
+            name.topAnchor.constraint(equalTo: blur.bottomAnchor, constant: 24)
+        ])
+
+        // --- Tap to pop. ---
+        let tap = UITapGestureRecognizer(target: self, action: #selector(cardTapped))
+        card.addGestureRecognizer(tap)
+        card.isUserInteractionEnabled = true
+    }
+
+    @objc private func cardTapped() {
+        // Squash-then-spring: shrink instantly, spring back to identity.
+        card.transform = CGAffineTransform(scaleX: 0.94, y: 0.94)
+        UIView.animate(
+            withDuration: 0.5,
+            delay: 0,
+            usingSpringWithDamping: 0.45,   // lower = bouncier
+            initialSpringVelocity: 0.8,
+            options: [.allowUserInteraction]
+        ) {
+            // Animating `transform` is cheap — it's a GPU-side matrix, and it
+            // doesn't invalidate layout, so shadowPath keeps working.
+            self.card.transform = .identity
+        }
+    }
+}
+</code></pre>
+<h2>Wire it up</h2>
+<p>No storyboard — the <code>SceneDelegate</code> builds the window and installs the controller directly. If you did Lab 01, this is the same pattern; delete <code>Main.storyboard</code> and clear the storyboard name in the Info tab's scene manifest.</p>
+<pre><code class="language-swift">// SceneDelegate.swift
+import UIKit
+
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = EffectsViewController()
+        window.makeKeyAndVisible()
+        self.window = window
+    }
+}
+</code></pre>
+<p>Leave <code>AppDelegate.swift</code> as the default template generates it.</p>
+<h2>Run it — you should see</h2>
+<ul>
+<li>A centered card with a <strong>green-to-blue vertical gradient</strong>, smoothly rounded corners, and a soft shadow floating below and slightly behind it.</li>
+<li>A <strong>frosted-glass strip</strong> across the top with the word "Profile" showing the body dimly through it.</li>
+<li>Tapping the card makes it <strong>quickly shrink then bounce back</strong> with a springy overshoot.</li>
+<li>Rotate the simulator (⌘→) — the gradient and shadow resize cleanly because <code>layoutSubviews</code> re-runs.</li>
+</ul>
+<h2>Extend it (your turn)</h2>
+<ul>
+<li>Add a diagonal gradient by setting <code>startPoint</code>/<code>endPoint</code> to corners, and expose it as a property.</li>
+<li>Give the tap a two-stage feel: animate to <code>0.94</code> <em>with</em> a spring too, chained, instead of setting it instantly.</li>
+<li>Swap the blur style live with a segmented control (<code>.systemUltraThinMaterialDark</code> vs <code>.systemChromeMaterialDark</code>) and watch the header change.</li>
+</ul>
+<h2>Common mistakes</h2>
+<ol>
+<li><strong>Setting the shadow while <code>masksToBounds</code> (or <code>clipsToBounds</code>) is <code>true</code>.</strong> The shadow draws <em>outside</em> the layer's bounds, so clipping erases it. Keep the card's own layer un-clipped; clip the blur strip separately instead.</li>
+<li><strong>Forgetting <code>shadowPath</code>.</strong> It still "works" without it, but Core Animation falls back to reading the alpha channel every frame — your spring animation will stutter on device. Always set the path in <code>layoutSubviews</code>.</li>
+<li><strong>Adding subviews to the <code>UIVisualEffectView</code> instead of its <code>contentView</code>.</strong> They'll appear un-blurred-through or fail to lay out. Everything that should sit <em>on</em> the glass goes in <code>blur.contentView</code>.</li>
+</ol>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="uikit.html#10-uivisualeffectview-and-liquid-glass">10-uivisualeffectview-and-liquid-glass</a> — the deep dive on blur, materials, and Liquid Glass.</li>
+<li><a class="xref" href="uikit.html#16-uiview-animation">16-uiview-animation</a> — springs, keyframes, and the animation block in full.</li>
+<li><a class="xref" href="uikit-internals.html#14-view-allocation-cost">14-view-allocation-cost</a> — why layers are cheap and views less so.</li>
+</ul>
+<p>Prev <a class="xref" href="#04-navigation-and-passing-data">04-navigation-and-passing-data</a> · Next <a class="xref" href="#06-gestures-and-dragging">06-gestures-and-dragging</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#04-navigation-and-passing-data"><span>Prev</span>← 04 — Navigation &amp; Passing Data</a><a href="#06-gestures-and-dragging"><span>Next</span>06 — Gestures: Drag a Card →</a></div></section>
+<section class="page" id="06-gestures-and-dragging" data-title="06 — Gestures: Drag a Card" data-num="06" data-hasdemo="0" data-group=""><h1>06 — Gestures: Drag a Card</h1>
+<p><em>by the end you'll have a card you can grab, drag anywhere, and fling — it springs back to center — and a tap that toggles a "liked" heart with a little animation.</em></p>
+<p><strong>⏱ ~30 min · Intermediate</strong></p>
+<h2>What you'll build</h2>
+<p>A single draggable card in the middle of the screen. Pan it around with one finger; let go and it springs home, carrying the momentum of your fling. Tap it and a heart fills in (or empties) with a pop.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A card dragged away from the center dashed outline, with a velocity arrow showing it will spring back"><rect x="0" y="0" width="760" height="320" fill="#1b1d24"/><rect x="300" y="120" width="160" height="80" rx="14" fill="none" stroke="#8a8b93" stroke-width="2" stroke-dasharray="6 6"/><text x="380" y="165" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">home (center)</text><rect x="470" y="60" width="160" height="80" rx="14" fill="#2a2d38"/><text x="550" y="96" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Drag me</text><text x="550" y="118" fill="#2ea043" font-family="sans-serif" font-size="15" text-anchor="middle">&#9829;</text><path d="M 470 130 C 420 150, 400 150, 375 155" stroke="#2ea043" stroke-width="2.5" fill="none" marker-end="url(#a)"/><defs><marker id="a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2ea043"/></marker></defs><text x="640" y="200" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">velocity feeds</text><text x="640" y="218" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">the spring back</text></svg><figcaption>Pan updates the card's center live; on release, the pan velocity seeds a spring back home.</figcaption></figure>
+
+<h2>Files in play</h2>
+<pre><code class="language-text">GestureLab/
+├── AppDelegate.swift        // standard app entry (unchanged from Lab 01)
+├── SceneDelegate.swift      // builds the window, sets rootViewController
+├── DraggableCardView.swift  // the card: pan + tap recognizers, all self-contained
+└── ViewController.swift      // hosts one card, centered
+</code></pre>
+<h2>Build it, file by file</h2>
+<h3>DraggableCardView.swift</h3>
+<p>Everything gesture-related lives inside the card itself, so the host controller stays dumb. We add two recognizers in <code>commonInit</code> and use <strong>target-action</strong> — each recognizer calls a method on us and we read its <code>state</code>.</p>
+<p>The pan handler is the heart of it. During <code>.changed</code> we read <code>translation(in:)</code> (how far the finger has moved <em>since the gesture began</em>) and offset our center by it, then immediately call <code>setTranslation(.zero, in:)</code> so the next callback's translation is relative to now, not the start. On <code>.ended</code> we read <code>velocity(in:)</code> and feed it into a spring so a hard fling bounces harder.</p>
+<pre><code class="language-swift">import UIKit
+
+final class DraggableCardView: UIView {
+
+    /// Where the card lives when it's not being dragged. Set by the host.
+    var homeCenter: CGPoint = .zero
+
+    private var isLiked = false
+    private let heart = UILabel()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        commonInit()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    private func commonInit() {
+        backgroundColor = UIColor(white: 0.17, alpha: 1)
+        layer.cornerRadius = 16
+        layer.cornerCurve  = .continuous
+
+        // A label so the card isn't blank.
+        let title = UILabel()
+        title.text = &quot;Drag me&quot;
+        title.textColor = .white
+        title.font = .preferredFont(forTextStyle: .headline)
+        title.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(title)
+        NSLayoutConstraint.activate([
+            title.centerXAnchor.constraint(equalTo: centerXAnchor),
+            title.topAnchor.constraint(equalTo: topAnchor, constant: 20)
+        ])
+
+        // The heart we toggle on tap.
+        heart.text = &quot;♡&quot;
+        heart.textColor = UIColor(red: 0.16, green: 0.63, blue: 0.26, alpha: 1)
+        heart.font = .systemFont(ofSize: 28)
+        heart.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(heart)
+        NSLayoutConstraint.activate([
+            heart.centerXAnchor.constraint(equalTo: centerXAnchor),
+            heart.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16)
+        ])
+
+        // --- Recognizers: target-action back to us. ---
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan))
+        addGestureRecognizer(pan)
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        addGestureRecognizer(tap)
+    }
+
+    @objc private func handlePan(_ gr: UIPanGestureRecognizer) {
+        switch gr.state {
+        case .began, .changed:
+            // How far the finger moved since we last reset. Apply, then reset.
+            let t = gr.translation(in: superview)
+            center = CGPoint(x: center.x + t.x, y: center.y + t.y)
+            gr.setTranslation(.zero, in: superview)
+
+        case .ended, .cancelled:
+            // Velocity is in points/second — convert to the spring's
+            // &quot;initial velocity&quot; (fraction of remaining distance per second).
+            let v = gr.velocity(in: superview)
+            let dx = homeCenter.x - center.x
+            let dy = homeCenter.y - center.y
+            let distance = max(1, hypot(dx, dy))
+            let initialVelocity = hypot(v.x, v.y) / distance
+
+            UIView.animate(
+                withDuration: 0.6,
+                delay: 0,
+                usingSpringWithDamping: 0.55,
+                initialSpringVelocity: initialVelocity,
+                options: [.allowUserInteraction]
+            ) {
+                self.center = self.homeCenter
+            }
+
+        default:
+            break
+        }
+    }
+
+    @objc private func handleTap() {
+        isLiked.toggle()
+        heart.text = isLiked ? &quot;♥&quot; : &quot;♡&quot;
+
+        // A quick pop so the toggle feels alive.
+        heart.transform = CGAffineTransform(scaleX: 1.6, y: 1.6)
+        UIView.animate(
+            withDuration: 0.4,
+            delay: 0,
+            usingSpringWithDamping: 0.4,
+            initialSpringVelocity: 0.8
+        ) {
+            self.heart.transform = .identity
+        }
+    }
+}
+</code></pre>
+<h3>ViewController.swift</h3>
+<p>The host just creates one card, sizes it, and tells it where "home" is. We set <code>homeCenter</code> in <code>viewDidLayoutSubviews</code> because that's the first point where the view's bounds are final.</p>
+<pre><code class="language-swift">import UIKit
+
+final class ViewController: UIViewController {
+
+    private let card = DraggableCardView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = UIColor(white: 0.10, alpha: 1)
+
+        // We set the frame manually (not Auto Layout) because we're going to
+        // move the card by mutating `center` during the pan.
+        card.frame = CGRect(x: 0, y: 0, width: 200, height: 120)
+        view.addSubview(card)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // Only set home once, and only if the card isn't mid-fling.
+        if card.homeCenter == .zero {
+            card.homeCenter = view.center
+            card.center = view.center
+        }
+    }
+}
+</code></pre>
+<h2>Wire it up</h2>
+<p>Programmatic setup, same as the rest of the course — delete <code>Main.storyboard</code> and clear the storyboard name in the scene manifest, then install the controller from <code>SceneDelegate</code>.</p>
+<pre><code class="language-swift">// SceneDelegate.swift
+import UIKit
+
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = ViewController()
+        window.makeKeyAndVisible()
+        self.window = window
+    }
+}
+</code></pre>
+<h2>Run it — you should see</h2>
+<ul>
+<li>A card in the center saying "Drag me" with an empty heart.</li>
+<li><strong>Drag it</strong> anywhere with one finger — it tracks your finger exactly.</li>
+<li><strong>Let go</strong> and it springs back to center; a hard, fast fling makes the return bouncier than a gentle release.</li>
+<li><strong>Tap it</strong> (a quick tap, not a drag) and the heart fills green with a pop; tap again to empty it.</li>
+</ul>
+<h2>Extend it (your turn)</h2>
+<ul>
+<li>Add a <code>UIPinchGestureRecognizer</code> that scales the card via <code>transform</code> while you pinch, springing back to <code>.identity</code> on <code>.ended</code>.</li>
+<li>Rotate the card slightly toward the drag direction using the pan velocity, for a "thrown card" feel.</li>
+<li>Add a second card and make sure each keeps its own <code>homeCenter</code> — proof that the state really lives in the view.</li>
+</ul>
+<h2>Common mistakes</h2>
+<ol>
+<li><strong>Never resetting the translation.</strong> If you skip <code>gr.setTranslation(.zero, in:)</code>, every <code>.changed</code> reports the <em>cumulative</em> distance from the start, so you add it again and again and the card rockets off screen. Reset it every frame, or (the alternative) store the start center once in <code>.began</code> and always offset from that.</li>
+<li><strong>Reading <code>translation</code>/<code>velocity</code> in the wrong coordinate space.</strong> Pass the <code>superview</code> (or <code>view</code>) you're actually moving within — passing <code>self</code> gives you values in the card's own moving frame and the motion feels wrong.</li>
+<li><strong>Tap and pan fighting, or <code>isUserInteractionEnabled</code> off.</strong> A view built in code has interaction on by default, but if you disable it (or add the recognizers to the wrong view) nothing responds. Both recognizers can live on the same view; UIKit sorts a tap from a drag by whether the finger moves.</li>
+</ol>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="uikit.html#15-touch-gestures-and-controls">15-touch-gestures-and-controls</a> — the full tour of recognizers and the responder chain.</li>
+<li><a class="xref" href="uikit-internals.html#07-custom-gesture-recognizers">07-custom-gesture-recognizers</a> — writing your own recognizer subclass.</li>
+<li><a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">springs</a> — the math behind damping, velocity, and overshoot.</li>
+</ul>
+<p>Prev <a class="xref" href="#05-applying-visual-effects">05-applying-visual-effects</a> · Next <a class="xref" href="#07-custom-uicontrol">07-custom-uicontrol</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#05-applying-visual-effects"><span>Prev</span>← 05 — Applying Visual Effects</a><a href="#07-custom-uicontrol"><span>Next</span>07 — Build a Custom UIControl →</a></div></section>
+<section class="page" id="07-custom-uicontrol" data-title="07 — Build a Custom UIControl" data-num="07" data-hasdemo="0" data-group=""><h1>07 — Build a Custom UIControl</h1>
+<p><em>by the end you'll have a five-star rating control you built from scratch — it emits <code>.valueChanged</code> and plugs into <code>addAction</code> exactly like a <code>UISwitch</code> or <code>UISlider</code> does.</em></p>
+<p><strong>⏱ ~30 min · Intermediate</strong></p>
+<h2>What you'll build</h2>
+<p>A <code>RatingControl</code> — a horizontal row of five star buttons. Tap a star to set the rating; the control fills stars up to your tap and fires <code>.valueChanged</code> so the outside world can react with target-action, no delegate required.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A row of five stars, three filled, sending a valueChanged action to a label reading Rating 3 of 5"><rect x="0" y="0" width="760" height="320" fill="#1b1d24"/><g font-family="sans-serif" font-size="34" text-anchor="middle"><text x="120" y="130" fill="#2ea043">&#9733;</text><text x="180" y="130" fill="#2ea043">&#9733;</text><text x="240" y="130" fill="#2ea043">&#9733;</text><text x="300" y="130" fill="#8a8b93">&#9734;</text><text x="360" y="130" fill="#8a8b93">&#9734;</text></g><rect x="90" y="90" width="300" height="56" rx="10" fill="none" stroke="#3a3f4d" stroke-width="1.5"/><text x="240" y="180" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">RatingControl (a UIControl)</text><path d="M 400 118 C 470 118, 500 118, 545 118" stroke="#2ea043" stroke-width="2.5" fill="none" marker-end="url(#b)"/><defs><marker id="b" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2ea043"/></marker></defs><text x="475" y="102" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">.valueChanged</text><rect x="550" y="96" width="150" height="44" rx="8" fill="#2a2d38"/><text x="625" y="123" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Rating: 3 of 5</text></svg><figcaption>Tapping a star sets the rating and fires .valueChanged; a label reads control.rating and updates.</figcaption></figure>
+
+<h2>Files in play</h2>
+<pre><code class="language-text">UIControlLab/
+├── AppDelegate.swift      // standard app entry (unchanged from Lab 01)
+├── SceneDelegate.swift    // builds the window, sets rootViewController
+├── RatingControl.swift    // the custom control: subclass of UIControl
+└── ViewController.swift    // adds the control, listens for .valueChanged
+</code></pre>
+<h2>Build it, file by file</h2>
+<h3>RatingControl.swift</h3>
+<p>Why subclass <code>UIControl</code> instead of gluing a <code>UITapGestureRecognizer</code> onto a plain view? Because <code>UIControl</code> <em>is</em> the target-action machine. It already knows how to hold a list of registered actions and fire them by event type — we just call <code>sendActions(for: .valueChanged)</code> and every <code>addTarget</code>/<code>addAction</code> observer runs. That's the same contract <code>UISlider</code> and <code>UISwitch</code> honor, so our control drops into existing code with zero surprises.</p>
+<p>State lives in one property, <code>rating</code>, with a <code>didSet</code> that re-skins the stars and fires the event in one place. And we override <code>intrinsicContentSize</code> so Auto Layout knows how big the row wants to be without us hand-coding width/height constraints.</p>
+<pre><code class="language-swift">import UIKit
+
+final class RatingControl: UIControl {
+
+    private let starCount = 5
+    private var buttons: [UIButton] = []
+    private let stack = UIStackView()
+
+    /// The current rating (0...starCount). Setting it updates the stars and,
+    /// crucially, tells everyone who's listening.
+    var rating: Int = 0 {
+        didSet {
+            rating = min(max(rating, 0), starCount)   // clamp
+            updateStars()
+            sendActions(for: .valueChanged)           // &lt;-- the whole point
+        }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        commonInit()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    private func commonInit() {
+        stack.axis = .horizontal
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.isUserInteractionEnabled = true
+        addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
+            stack.topAnchor.constraint(equalTo: topAnchor),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+
+        for index in 0..&lt;starCount {
+            let button = UIButton(type: .system)
+            button.setTitle(&quot;☆&quot;, for: .normal)
+            button.titleLabel?.font = .systemFont(ofSize: 32)
+            button.tintColor = UIColor(red: 0.16, green: 0.63, blue: 0.26, alpha: 1)
+            // Each star knows its 1-based value via `tag`.
+            button.tag = index + 1
+            button.addAction(
+                UIAction { [weak self] _ in
+                    self?.rating = button.tag
+                },
+                for: .touchUpInside
+            )
+            buttons.append(button)
+            stack.addArrangedSubview(button)
+        }
+
+        updateStars()
+    }
+
+    private func updateStars() {
+        for button in buttons {
+            let filled = button.tag &lt;= rating
+            button.setTitle(filled ? &quot;★&quot; : &quot;☆&quot;, for: .normal)
+        }
+    }
+
+    // Auto Layout asks the control how big it wants to be. Answer with the
+    // stack's natural size so the host never needs width/height constraints.
+    override var intrinsicContentSize: CGSize {
+        stack.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+    }
+}
+</code></pre>
+<h3>ViewController.swift</h3>
+<p>The host treats <code>RatingControl</code> like any stock control: add it, register an action for <code>.valueChanged</code>, and read <code>control.rating</code> inside the handler. Notice there's no delegate protocol and no knowledge of stars — just the control's public API.</p>
+<pre><code class="language-swift">import UIKit
+
+final class ViewController: UIViewController {
+
+    private let ratingControl = RatingControl()
+    private let label = UILabel()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = UIColor(white: 0.10, alpha: 1)
+
+        label.text = &quot;Rating: 0 of 5&quot;
+        label.textColor = .white
+        label.font = .preferredFont(forTextStyle: .title3)
+        label.textAlignment = .center
+
+        let column = UIStackView(arrangedSubviews: [ratingControl, label])
+        column.axis = .vertical
+        column.spacing = 24
+        column.alignment = .center
+        column.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(column)
+        NSLayoutConstraint.activate([
+            column.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            column.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+
+        // The payoff: our control behaves like UISwitch/UISlider here.
+        ratingControl.addAction(
+            UIAction { [weak self] _ in
+                guard let self else { return }
+                self.label.text = &quot;Rating: \(self.ratingControl.rating) of 5&quot;
+            },
+            for: .valueChanged
+        )
+    }
+}
+</code></pre>
+<h2>Wire it up</h2>
+<p>Same programmatic bootstrap as the rest of the course — delete <code>Main.storyboard</code>, clear the storyboard name in the scene manifest, and install the controller in <code>SceneDelegate</code>.</p>
+<pre><code class="language-swift">// SceneDelegate.swift
+import UIKit
+
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = ViewController()
+        window.makeKeyAndVisible()
+        self.window = window
+    }
+}
+</code></pre>
+<h2>Run it — you should see</h2>
+<ul>
+<li>A row of five hollow stars centered above a "Rating: 0 of 5" label.</li>
+<li><strong>Tap the third star</strong> — stars one through three fill green and the label reads "Rating: 3 of 5".</li>
+<li><strong>Tap the first star</strong> — only the first fills; tap it again and it stays at 1 (the label re-fires each time).</li>
+<li>The row sizes itself; you never wrote a width or height constraint for the control.</li>
+</ul>
+<h2>Extend it (your turn)</h2>
+<ul>
+<li>Add "tap the same star again to clear to zero" by comparing the tapped value with the current <code>rating</code>.</li>
+<li>Support half-stars by tracking touch location within a star (<code>beginTracking(_:with:)</code>) instead of per-button taps.</li>
+<li>Add a <code>maximumRating</code> init parameter and rebuild the stack, so the control isn't hard-wired to five.</li>
+</ul>
+<h2>Common mistakes</h2>
+<ol>
+<li><strong>Firing <code>.valueChanged</code> from the wrong place.</strong> Put <code>sendActions(for: .valueChanged)</code> inside the <code>rating</code> <code>didSet</code>, not in the button handler. Then <em>every</em> path that changes the value — taps, programmatic sets, tests — notifies listeners, and you can never forget it.</li>
+<li><strong>Skipping <code>intrinsicContentSize</code>.</strong> Without it a code-built control reports a zero content size, so Auto Layout may collapse it and the stars vanish. Report the stack's fitting size (or set explicit constraints).</li>
+<li><strong>Reaching for a delegate protocol.</strong> For a value-emitting control, target-action <em>is</em> the idiomatic API — it's what <code>addAction</code>/<code>addTarget</code> expect. A custom delegate here just reinvents what <code>UIControl</code> already gives you for free.</li>
+</ol>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="uikit.html#08-uibutton">08-uibutton</a> — buttons, <code>UIAction</code>, and configuration.</li>
+<li><a class="xref" href="uikit.html#15-touch-gestures-and-controls">15-touch-gestures-and-controls</a> — where controls sit relative to gesture recognizers.</li>
+<li><a class="xref" href="uikit.html#20-custom-composite-views">20-custom-composite-views</a> — assembling reusable views from stacks and subviews.</li>
+</ul>
+<p>Prev <a class="xref" href="#06-gestures-and-dragging">06-gestures-and-dragging</a> · Next <a class="xref" href="#08-mvvm-and-async-load">08-mvvm-and-async-load</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#06-gestures-and-dragging"><span>Prev</span>← 06 — Gestures: Drag a Card</a><a href="#08-mvvm-and-async-load"><span>Next</span>08 — Structure It: MVVM-lite + Async Load →</a></div></section>
+<section class="page" id="08-mvvm-and-async-load" data-title="08 — Structure It: MVVM-lite + Async Load" data-num="08" data-hasdemo="0" data-group=""><h1>08 — Structure It: MVVM-lite + Async Load</h1>
+<p><em>by the end, you'll have a list screen that shows a spinner, fetches its rows off the main thread with <code>async</code>/<code>await</code>, and swaps in the results — all split into clean, single-responsibility files.</em></p>
+<p><strong>⏱ 35 min · Intermediate</strong></p>
+<h2>What you'll build</h2>
+<p>A single-screen app that loads a list of people asynchronously: you'll see a spinner, wait about a second, and then the table fills with rows — with the model, the fetching, the state, and the view each living in its own file.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Data flows from a service through a view model into a view controller, with state changes driving the UI">
+<rect x="30" y="130" width="150" height="70" rx="8" fill="#2a2d38"/>
+<text x="105" y="160" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">PeopleService</text>
+<text x="105" y="180" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">async fetch</text>
+<rect x="230" y="130" width="150" height="70" rx="8" fill="#2a2d38"/>
+<text x="305" y="160" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">PeopleViewModel</text>
+<text x="305" y="180" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">@MainActor state</text>
+<rect x="430" y="130" width="160" height="70" rx="8" fill="#2a2d38"/>
+<text x="510" y="160" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">ViewController</text>
+<text x="510" y="180" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">table + spinner</text>
+<rect x="640" y="130" width="90" height="70" rx="8" fill="#1f2229" stroke="#2ea043" stroke-width="2"/>
+<text x="685" y="168" fill="#2ea043" font-family="sans-serif" font-size="13" text-anchor="middle">Screen</text>
+<text x="185" y="170" fill="#2ea043" font-family="sans-serif" font-size="20" text-anchor="middle">&#8594;</text>
+<text x="405" y="170" fill="#2ea043" font-family="sans-serif" font-size="20" text-anchor="middle">&#8594;</text>
+<text x="615" y="170" fill="#2ea043" font-family="sans-serif" font-size="20" text-anchor="middle">&#8594;</text>
+<text x="305" y="70" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">.loading &#8594; .loaded([Person]) &#8594; .failed</text>
+<text x="305" y="95" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">onChange fires &#8594; view re-renders</text>
+</svg><figcaption>Model → Service → ViewModel → View: each state change on the main actor re-renders the screen.</figcaption></figure>
+
+<h2>Files in play</h2>
+<pre><code class="language-text">MVVMAsyncLab/
+├─ AppDelegate.swift          // untouched from the template
+├─ SceneDelegate.swift        // sets the root view controller in code
+├─ Person.swift               // the model
+├─ PeopleService.swift        // async data source (simulated network)
+├─ PeopleViewModel.swift      // @MainActor state machine
+└─ PeopleViewController.swift // table + spinner, owns the view model
+</code></pre>
+<h2>Build it, file by file</h2>
+<h3>Person.swift</h3>
+<p>A plain value type. No UIKit, no logic — just the data the screen needs. Keeping the model in its own file (and <code>import</code>-free of UIKit) is the first act of structure: the model doesn't know a screen exists.</p>
+<pre><code class="language-swift">import Foundation
+
+struct Person: Identifiable, Hashable, Sendable {
+    let id: UUID
+    let name: String
+    let role: String
+
+    init(id: UUID = UUID(), name: String, role: String) {
+        self.id = id
+        self.name = name
+        self.role = role
+    }
+}
+</code></pre>
+<p><code>Sendable</code> matters here: this value is going to cross an actor boundary (it's produced off the main actor and consumed on it), and marking it <code>Sendable</code> is your promise to the compiler that it's safe to hand across threads. A struct of value types earns that for free.</p>
+<h3>PeopleService.swift</h3>
+<p>The service is the <em>only</em> thing that knows how data arrives. Today it fakes a network call with <code>Task.sleep</code>; tomorrow you could swap in a real <code>URLSession</code> and nothing else in the app would change. That's the whole point of giving it a seam.</p>
+<pre><code class="language-swift">import Foundation
+
+struct PeopleService: Sendable {
+    /// Simulates a network fetch: waits ~1s, then returns sample data.
+    func fetchPeople() async throws -&gt; [Person] {
+        // Pretend we're waiting on the network. `Task.sleep` suspends
+        // without blocking a thread — the CPU is free to do other work.
+        try await Task.sleep(for: .seconds(1))
+
+        return [
+            Person(name: &quot;Ada Lovelace&quot;,     role: &quot;Mathematician&quot;),
+            Person(name: &quot;Alan Turing&quot;,      role: &quot;Computer Scientist&quot;),
+            Person(name: &quot;Grace Hopper&quot;,     role: &quot;Rear Admiral&quot;),
+            Person(name: &quot;Katherine Johnson&quot;, role: &quot;Aerospace Engineer&quot;),
+            Person(name: &quot;Margaret Hamilton&quot;, role: &quot;Software Engineer&quot;),
+            Person(name: &quot;Dennis Ritchie&quot;,   role: &quot;Language Designer&quot;)
+        ]
+    }
+}
+</code></pre>
+<p>Note the <code>throws</code>: real fetches fail, so the signature says so. <code>Task.sleep</code> can throw <code>CancellationError</code> if the surrounding task is cancelled — the <code>try</code> covers that, and it flows straight up to the caller.</p>
+<h3>PeopleViewModel.swift</h3>
+<p>The view model holds the screen's <em>state</em> and knows how to move between states. It never touches a <code>UITableView</code> or a <code>UILabel</code> — it just publishes "here's what should be on screen right now" and lets the view figure out the pixels.</p>
+<p>It's marked <code>@MainActor</code> so every property and method runs on the main thread. That's a deliberate choice: the view model is read by the view (which must be on main), so pinning it to the main actor removes a whole category of data races. The slow work still happens off-main — it's tucked inside <code>service.fetchPeople()</code>, which suspends at the <code>await</code>.</p>
+<pre><code class="language-swift">import Foundation
+
+@MainActor
+final class PeopleViewModel {
+    enum State {
+        case loading
+        case loaded([Person])
+        case failed(String)
+    }
+
+    private(set) var state: State = .loading {
+        didSet { onChange?() }
+    }
+
+    /// The view sets this to learn when it should re-render.
+    var onChange: (() -&gt; Void)?
+
+    private let service: PeopleService
+
+    init(service: PeopleService = PeopleService()) {
+        self.service = service
+    }
+
+    func load() async {
+        state = .loading
+        do {
+            // `await` suspends here. We're on the main actor, but the
+            // main thread is released while the service does its work —
+            // the UI stays responsive.
+            let people = try await service.fetchPeople()
+            state = .loaded(people)
+        } catch {
+            state = .failed(error.localizedDescription)
+        }
+    }
+}
+</code></pre>
+<p>The <code>didSet</code> on <code>state</code> is the "MVVM-lite" glue: any assignment to <code>state</code> automatically fires <code>onChange</code>, so the view only has to register one callback and re-render whenever it's called. (Reach for <code>@Observable</code> once you're on the SwiftUI side of the fence; for a UIKit view a plain closure is smaller and just as clear.)</p>
+<p>Why is this correct even though <code>service.fetchPeople()</code> runs elsewhere? Because assigning to <code>state</code> happens <em>after</em> the <code>await</code> resumes — and a <code>@MainActor</code> method always resumes back on the main actor. So the <code>didSet</code>, the <code>onChange</code>, and everything the view does in response are guaranteed to be on the main thread. See <a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">the main thread</a> for why UIKit insists on that, and <a class="xref" href="concurrency.html#00-overview">Concurrency</a> for how <code>await</code> hands the thread back.</p>
+<h3>PeopleViewController.swift</h3>
+<p>The view. It owns the table and the spinner, owns the view model, kicks off the load, and renders whatever state the view model reports. It does <em>not</em> know that data comes from a sleep, or a socket, or a file — it just draws states.</p>
+<pre><code class="language-swift">import UIKit
+
+final class PeopleViewController: UIViewController {
+
+    private let viewModel = PeopleViewModel()
+
+    private let tableView = UITableView(frame: .zero, style: .plain)
+    private let spinner = UIActivityIndicatorView(style: .large)
+    private let messageLabel = UILabel()
+
+    private var people: [Person] = []
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = &quot;People&quot;
+        view.backgroundColor = .systemBackground
+
+        setUpTable()
+        setUpSpinner()
+        setUpMessageLabel()
+        bindViewModel()
+
+        // Fire the load. The Task inherits the main actor from the VC,
+        // so `await viewModel.load()` runs the view model on main —
+        // exactly where its state lives.
+        Task { await viewModel.load() }
+    }
+
+    private func setUpTable() {
+        tableView.dataSource = self
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: &quot;cell&quot;)
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tableView)
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+
+    private func setUpSpinner() {
+        spinner.hidesWhenStopped = true
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(spinner)
+        NSLayoutConstraint.activate([
+            spinner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            spinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+
+    private func setUpMessageLabel() {
+        messageLabel.textColor = .secondaryLabel
+        messageLabel.textAlignment = .center
+        messageLabel.numberOfLines = 0
+        messageLabel.isHidden = true
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(messageLabel)
+        NSLayoutConstraint.activate([
+            messageLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            messageLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
+            messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32)
+        ])
+    }
+
+    private func bindViewModel() {
+        // Called on the main actor whenever state changes — safe to touch UIKit.
+        viewModel.onChange = { [weak self] in
+            self?.render()
+        }
+    }
+
+    private func render() {
+        switch viewModel.state {
+        case .loading:
+            people = []
+            messageLabel.isHidden = true
+            tableView.isHidden = true
+            spinner.startAnimating()
+
+        case .loaded(let loaded):
+            people = loaded
+            spinner.stopAnimating()
+            messageLabel.isHidden = true
+            tableView.isHidden = false
+            tableView.reloadData()
+
+        case .failed(let message):
+            people = []
+            spinner.stopAnimating()
+            tableView.isHidden = true
+            messageLabel.text = &quot;Couldn't load people.\n\(message)&quot;
+            messageLabel.isHidden = false
+        }
+    }
+}
+
+extension PeopleViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -&gt; Int {
+        people.count
+    }
+
+    func tableView(_ tableView: UITableView,
+                   cellForRowAt indexPath: IndexPath) -&gt; UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: &quot;cell&quot;, for: indexPath)
+        let person = people[indexPath.row]
+        var config = cell.defaultContentConfiguration()
+        config.text = person.name
+        config.secondaryText = person.role
+        cell.contentConfiguration = config
+        return cell
+    }
+}
+</code></pre>
+<h2>Wire it up</h2>
+<p>No storyboard, so set the root view controller in <code>SceneDelegate.swift</code>. Wrap it in a nav controller so the title bar shows.</p>
+<pre><code class="language-swift">import UIKit
+
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = UINavigationController(
+            rootViewController: PeopleViewController()
+        )
+        self.window = window
+        window.makeKeyAndVisible()
+    }
+}
+</code></pre>
+<p>Then do the one-time programmatic-app cleanup from Lab 01 if you haven't: <strong>delete <code>Main.storyboard</code></strong> and <strong>clear the storyboard name</strong> in the app's scene manifest (Info ▸ Application Scene Manifest ▸ … ▸ Storyboard Name) so UIKit doesn't try to load a file that's gone.</p>
+<h2>Run it — you should see</h2>
+<ol>
+<li>The screen opens with a large spinner dead-center, table hidden.</li>
+<li>After about a second, the spinner disappears and six rows fade in — name on top, role beneath.</li>
+<li>Scroll: the rows are a normal table.</li>
+</ol>
+<p>To watch the error path, change <code>PeopleService.fetchPeople()</code> to <code>throw</code> after the sleep (e.g. <code>throw URLError(.timedOut)</code>), run again, and you'll get the centered failure message instead of rows.</p>
+<h2>Extend it (your turn)</h2>
+<ul>
+<li><strong>Pull to refresh.</strong> Add a <code>UIRefreshControl</code> to the table; on <code>.valueChanged</code>, start a new <code>Task { await viewModel.load() }</code> and call <code>endRefreshing()</code> when <code>.loaded</code>/<code>.failed</code> arrives.</li>
+<li><strong>Retry button.</strong> In the <code>.failed</code> branch, show a "Try Again" button that re-runs <code>load()</code>.</li>
+<li><strong>Real data.</strong> Swap the sleep-and-array in <code>PeopleService</code> for a <code>URLSession</code> call that decodes JSON into <code>[Person]</code>. Notice nothing above the service needs to change.</li>
+<li><strong>Cancel on disappear.</strong> Store the <code>Task</code> and call <code>.cancel()</code> in <code>viewDidDisappear</code> — then watch <code>Task.sleep</code> throw <code>CancellationError</code> into your <code>.failed</code> branch.</li>
+</ul>
+<h2>Common mistakes</h2>
+<ol>
+<li><strong>Updating UIKit from a background context.</strong> If you move the fetch to a detached task or a non-<code>@MainActor</code> type, remember the view still must be touched on main. Here the view model is <code>@MainActor</code>, so resumption lands back on main automatically — don't "optimize" that away by dropping the annotation.</li>
+<li><strong>Forgetting <code>[weak self]</code> in <code>onChange</code>.</strong> The view controller owns the view model, and the closure captures the view controller. Capture <code>self</code> strongly and you get a retain cycle that leaks the whole screen. Use <code>[weak self]</code>.</li>
+<li><strong>Blocking the main thread instead of awaiting.</strong> <code>Thread.sleep(forTimeInterval:)</code> or a synchronous network call freezes the spinner (it can't even animate). The point of <code>await</code>/<code>Task.sleep</code> is that the main thread stays free to render.</li>
+</ol>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="uikit.html#11-tableview-and-collectionview">11-tableview-and-collectionview</a> — the deeper dive on <code>UITableView</code> and diffable data sources.</li>
+<li><a class="xref" href="architecture.html#00-overview">App Architecture</a> — where MVVM sits among the patterns, and when to reach for more.</li>
+<li><a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">The main thread</a> · <a class="xref" href="concurrency.html#00-overview">Concurrency</a> — the why behind <code>@MainActor</code> and <code>await</code>.</li>
+</ul>
+<p>Prev · <a class="xref" href="#07-custom-uicontrol">07-custom-uicontrol</a> · Next · <a class="xref" href="#09-swiftui-island-capstone">09-swiftui-island-capstone</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#07-custom-uicontrol"><span>Prev</span>← 07 — Build a Custom UIControl</a><a href="#09-swiftui-island-capstone"><span>Next</span>09 — Capstone: Drop In a SwiftUI Island →</a></div></section>
+<section class="page" id="09-swiftui-island-capstone" data-title="09 — Capstone: Drop In a SwiftUI Island" data-num="09" data-hasdemo="0" data-group=""><h1>09 — Capstone: Drop In a SwiftUI Island</h1>
+<p><em>by the end, you'll have a UIKit profile screen with a live SwiftUI "stats card" embedded inside it — data flowing in, a tap flowing back out, and the card sizing itself to its content.</em></p>
+<p><strong>⏱ 30 min · Intermediate</strong></p>
+<h2>What you'll build</h2>
+<p>A programmatic UIKit profile screen that hosts a SwiftUI <code>StatsCard</code> via <code>UIHostingController</code>: you pass the stats in as a value, hand it a closure so a tap inside SwiftUI runs UIKit code, and let it size itself. This is the capstone — the bridge that lets you adopt SwiftUI one island at a time inside a UIKit app.</p>
+<figure class="fig"><svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A UIKit view controller contains a hosting controller which contains a SwiftUI stats card; data flows in and a tap flows out">
+<rect x="30" y="40" width="700" height="240" rx="10" fill="#1f2229" stroke="#3a3d47" stroke-width="1.5"/>
+<text x="55" y="70" fill="#8a8b93" font-family="sans-serif" font-size="12">ProfileViewController (UIKit)</text>
+<rect x="70" y="90" width="620" height="150" rx="8" fill="#242730" stroke="#3a3d47" stroke-width="1.5"/>
+<text x="95" y="115" fill="#8a8b93" font-family="sans-serif" font-size="12">UIHostingController</text>
+<rect x="120" y="130" width="520" height="90" rx="8" fill="#2a2d38" stroke="#2ea043" stroke-width="2"/>
+<text x="380" y="170" fill="#2ea043" font-family="sans-serif" font-size="14" text-anchor="middle">StatsCard (SwiftUI View)</text>
+<text x="380" y="195" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Posts &#183; Followers &#183; Following</text>
+<text x="380" y="270" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">value in &#8595;&#160;&#160;&#160;&#160;&#160;&#160;&#8593; onTap out</text>
+</svg><figcaption>A SwiftUI island living inside a UIKit view controller: data in, tap out.</figcaption></figure>
+
+<h2>Files in play</h2>
+<pre><code class="language-text">SwiftUIIslandLab/
+├─ AppDelegate.swift          // untouched from the template
+├─ SceneDelegate.swift        // sets the root view controller in code
+├─ StatsCard.swift            // the SwiftUI island + its model
+└─ ProfileViewController.swift // UIKit screen that embeds the island
+</code></pre>
+<h2>Build it, file by file</h2>
+<h3>StatsCard.swift</h3>
+<p>The island. It's an ordinary SwiftUI <code>View</code> — it has no idea it's living inside UIKit. It takes a value (<code>Stats</code>) to display and a closure (<code>onTap</code>) to call when the button is pressed. That's the entire contract: data in, event out. Keeping the model right next to the view makes the file self-contained.</p>
+<pre><code class="language-swift">import SwiftUI
+
+struct Stats: Hashable, Sendable {
+    let posts: Int
+    let followers: Int
+    let following: Int
+}
+
+struct StatsCard: View {
+    let stats: Stats
+    let onTap: () -&gt; Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                stat(&quot;Posts&quot;, stats.posts)
+                Divider().frame(height: 40)
+                stat(&quot;Followers&quot;, stats.followers)
+                Divider().frame(height: 40)
+                stat(&quot;Following&quot;, stats.following)
+            }
+
+            Button(action: onTap) {
+                Text(&quot;Say hello&quot;)
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding(20)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func stat(_ title: String, _ value: Int) -&gt; some View {
+        VStack(spacing: 4) {
+            Text(value.formatted())
+                .font(.title2.bold())
+                .monospacedDigit()
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+</code></pre>
+<p>Two things to notice. The card is driven entirely by its inputs — pass a different <code>Stats</code> and it redraws. And <code>onTap</code> is how SwiftUI talks <em>back</em> to UIKit: the button just calls the closure, and it's the UIKit side's job to decide what that means.</p>
+<h3>ProfileViewController.swift</h3>
+<p>The UIKit host. This is where the bridge actually happens, in three moves you'll use every time you embed SwiftUI: <strong>make the hosting controller</strong>, <strong>run the containment dance</strong> (<code>addChild</code> → add its <code>view</code> + constraints → <code>didMove(toParent:)</code>), and <strong>set the sizing option</strong> so the card reports its natural height back to Auto Layout.</p>
+<pre><code class="language-swift">import UIKit
+import SwiftUI
+
+final class ProfileViewController: UIViewController {
+
+    private let nameLabel = UILabel()
+
+    private let stats = Stats(posts: 128, followers: 4_820, following: 312)
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = &quot;Profile&quot;
+        view.backgroundColor = .systemBackground
+
+        setUpHeader()
+        embedStatsCard()
+    }
+
+    private func setUpHeader() {
+        nameLabel.text = &quot;Ada Lovelace&quot;
+        nameLabel.font = .preferredFont(forTextStyle: .largeTitle)
+        nameLabel.adjustsFontForContentSizeCategory = true
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(nameLabel)
+        NSLayoutConstraint.activate([
+            nameLabel.topAnchor.constraint(
+                equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
+            nameLabel.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor, constant: 20)
+        ])
+    }
+
+    private func embedStatsCard() {
+        // 1. Build the SwiftUI view, passing data IN and a closure OUT.
+        let card = StatsCard(stats: stats) { [weak self] in
+            self?.sayHelloTapped()
+        }
+
+        // 2. Wrap it in a hosting controller — a UIViewController whose
+        //    view IS the SwiftUI content.
+        let host = UIHostingController(rootView: card)
+
+        // 3. Ask the host to size itself to the SwiftUI view's ideal size.
+        //    Without this, Auto Layout has no idea how tall the card is.
+        host.sizingOptions = .intrinsicContentSize
+        host.view.backgroundColor = .clear
+
+        // 4. Containment: adopt the child controller.
+        addChild(host)
+        host.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(host.view)
+        NSLayoutConstraint.activate([
+            host.view.topAnchor.constraint(
+                equalTo: nameLabel.bottomAnchor, constant: 24),
+            host.view.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor, constant: 20),
+            host.view.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor, constant: -20)
+        ])
+        // 5. Tell the child it now has a parent.
+        host.didMove(toParent: self)
+    }
+
+    private func sayHelloTapped() {
+        // This runs when the SwiftUI button is pressed — pure UIKit.
+        let alert = UIAlertController(
+            title: &quot;Hello from UIKit 👋&quot;,
+            message: &quot;The tap came out of the SwiftUI island.&quot;,
+            preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: &quot;Nice&quot;, style: .default))
+        present(alert, animated: true)
+    }
+}
+</code></pre>
+<p>The <strong>containment dance</strong> (<code>addChild</code> … <code>didMove(toParent:)</code>) is not optional decoration — it's how UIKit's view-controller hierarchy stays in sync with the view hierarchy. Skip <code>addChild</code> and the hosting controller never receives lifecycle events (appearance callbacks, trait changes, size-class updates), so its SwiftUI content can misbehave. Skip <code>didMove(toParent:)</code> and you've told UIKit "I'll finish adopting this child later" and never did.</p>
+<p>The <strong>sizing note</strong> is the other classic gotcha. A <code>UIHostingController</code>'s view doesn't automatically hand its intrinsic size to Auto Layout. Setting <code>sizingOptions = .intrinsicContentSize</code> makes it publish its SwiftUI ideal size as its intrinsic content size — so pinning three edges (top/leading/trailing) is enough and the card takes exactly the height its content needs. That's why there's no bottom or height constraint above.</p>
+<h2>Wire it up</h2>
+<p>No storyboard — set the root view controller in <code>SceneDelegate.swift</code>, wrapped in a nav controller for the title.</p>
+<pre><code class="language-swift">import UIKit
+
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = UINavigationController(
+            rootViewController: ProfileViewController()
+        )
+        self.window = window
+        window.makeKeyAndVisible()
+    }
+}
+</code></pre>
+<p>If you haven't already done the one-time programmatic-app cleanup from Lab 01: <strong>delete <code>Main.storyboard</code></strong> and <strong>clear the storyboard name</strong> in the app's scene manifest so UIKit doesn't try to load a file that's gone.</p>
+<h2>Run it — you should see</h2>
+<ol>
+<li>A UIKit navigation bar titled <strong>Profile</strong> with a large "Ada Lovelace" heading.</li>
+<li>Below it, a rounded material card — three stat columns (Posts / Followers / Following) with a divider between each — sized snugly to its content, not stretched to fill the screen.</li>
+<li>Tap <strong>Say hello</strong> and a UIKit <code>UIAlertController</code> pops up. That alert is proof the tap crossed the bridge: SwiftUI button → closure → UIKit code.</li>
+</ol>
+<h2>Extend it (your turn)</h2>
+<ul>
+<li><strong>Live updates.</strong> Store the <code>UIHostingController</code> and, on a UIKit button, set <code>host.rootView = StatsCard(stats: newStats, onTap: …)</code> to push fresh data into the island.</li>
+<li><strong>Two-way state.</strong> Give the card an <code>@State</code> counter and report changes out through a second closure — watch UIKit and SwiftUI stay in sync.</li>
+<li><strong>Go the other direction too.</strong> Recall Lab 08's approach: this containment pattern is the same one you'd use to embed any child view controller, SwiftUI or not.</li>
+<li><strong>Dynamic Type.</strong> Crank the text size in Settings and confirm the card grows — because <code>sizingOptions</code> re-reports the new intrinsic height.</li>
+</ul>
+<h2>Common mistakes</h2>
+<ol>
+<li><strong>Forgetting <code>didMove(toParent:)</code>.</strong> <code>addChild</code> alone leaves the containment half-finished. Always pair them: <code>addChild(host)</code> before you add the view, <code>host.didMove(toParent: self)</code> after. (When <em>removing</em>, the order flips: <code>willMove(toParent: nil)</code> → remove view → <code>removeFromParent()</code>.)</li>
+<li><strong>Skipping <code>sizingOptions</code>.</strong> Without <code>.intrinsicContentSize</code>, the hosting view has no intrinsic size, so a three-edge constraint set collapses it to zero height and the card vanishes. Set the option, or pin a fourth edge / explicit height yourself.</li>
+<li><strong>A retain cycle in the <code>onTap</code> closure.</strong> The controller owns the card (via the host), and the card's closure captures the controller. Capture <code>self</code> strongly and the whole screen leaks — use <code>[weak self]</code>.</li>
+</ol>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="uikit.html#19-bridging-swiftui-into-uikit">19-bridging-swiftui-into-uikit</a> — the fuller treatment of <code>UIHostingController</code>, sizing modes, and gotchas.</li>
+<li><a class="xref" href="uikit-internals.html#06-uikit-swiftui-interop">06-uikit-swiftui-interop</a> — what actually happens under the hood when the two frameworks share a hierarchy.</li>
+</ul>
+<p>Prev · <a class="xref" href="#08-mvvm-and-async-load">08-mvvm-and-async-load</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#08-mvvm-and-async-load"><span>Prev</span>← 08 — Structure It: MVVM-lite + Async Load</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>
