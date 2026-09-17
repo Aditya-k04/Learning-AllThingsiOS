@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extras · Learning All things Apple</title>
+<meta name="description" content="Standalone deep dives that don&#x27;t fit one course — hand-rolled engines, cross-cutting techniques, the stuff behind the polish.">
+<meta property="og:title" content="Extras · Learning All things Apple">
+<meta property="og:description" content="Standalone deep dives that don&#x27;t fit one course — hand-rolled engines, cross-cutting techniques, the stuff behind the polish.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-sidebar',localStorage.getItem('lar-sidebar')||'shown');}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Extras</div><div class="cs">Standalone deep dives that don&#x27;t fit one course — hand-rolled engines, cross-cutting techniques, the stuff behind the polish.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option><option value="extras.html" selected>Extras</option></optgroup><optgroup label="Additional Topics"><option value="uikit.html">UIKit Foundations</option><option value="uikit-workshop.html">UIKit Workshop</option><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="Extras" data-num="·" data-hasdemo="0" data-group=""><h1>Extras</h1>
+<p>A shelf for standalone deep dives — pieces that cut across courses or go one level below the polished API. When something is worth building <em>by hand</em> to really understand it, it lands here.</p>
+<h2>The pieces</h2>
+<ol>
+<li><a class="xref" href="#01-hand-rolled-spring-driver">01-hand-rolled-spring-driver</a> — build a real, interruptible spring engine from scratch: the display-link loop, a semi-implicit Euler solver, mid-flight retargeting, and piping the value straight into a Metal uniform.</li>
+</ol>
+<p>More will accrete here over time.</p>
+<h2>Where it connects</h2>
+<p>These build on the math from <a class="xref" href="interaction-math.html#00-roadmap">Math for Interactions</a> (springs, integration, dynamical systems), the render machinery in <a class="xref" href="coreanimation.html#00-roadmap">Core Animation</a>, and the shader-feeding patterns in <a class="xref" href="shaders.html#18a-feeding-data-into-shaders">Metal Shaders</a>.</p><div class="pager"><span class="sp"></span><a href="#01-hand-rolled-spring-driver"><span>Next</span>01 — A Hand-Rolled Spring Engine →</a></div></section>
+<section class="page" id="01-hand-rolled-spring-driver" data-title="01 — A Hand-Rolled Spring Engine" data-num="01" data-hasdemo="0" data-group=""><h1>01 — A Hand-Rolled Spring Engine</h1>
+<p><em>By the end you'll have the actual machine — a display-link loop, a spring solver, mid-flight retargeting, and the value wired into a Metal uniform.</em></p>
+<p>This is the thing Wave is, with the lid off. You're writing tier-3 by hand, so let me give you the actual machine, not a sketch.</p>
+<p>There are <strong>four parts: the loop, the solver, the retarget, and the sink</strong> (your shader). The loop and the solver are boilerplate you write once. The retarget and the sink are where <em>"you own the state"</em> actually pays off.</p>
+<figure class="fig">
+<svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The four decoupled parts: loop, solver, sink, with retarget feeding the solver's target">
+  <rect x="30" y="95" width="150" height="66" rx="8" fill="#2a2d38"/>
+  <text x="105" y="123" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Loop</text>
+  <text x="105" y="142" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">CADisplayLink · dt</text>
+
+  <rect x="245" y="85" width="180" height="86" rx="8" fill="#3a3420" stroke="#c99a3a" stroke-width="1.5"/>
+  <text x="335" y="112" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle" font-weight="600">Solver</text>
+  <text x="335" y="132" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">value · velocity</text>
+  <text x="335" y="150" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">step(dt)</text>
+
+  <rect x="500" y="95" width="150" height="66" rx="8" fill="#2a2d38"/>
+  <text x="575" y="123" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">Sink</text>
+  <text x="575" y="142" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">Metal uniform</text>
+
+  <rect x="245" y="20" width="180" height="40" rx="8" fill="#2a2d38"/>
+  <text x="335" y="45" fill="#c99a3a" font-family="sans-serif" font-size="12" text-anchor="middle">Retarget → target</text>
+
+  <line x1="180" y1="128" x2="243" y2="128" stroke="#9aa0aa" stroke-width="2"/><path d="M243 128 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="425" y1="128" x2="498" y2="128" stroke="#9aa0aa" stroke-width="2"/><path d="M498 128 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="335" y1="60" x2="335" y2="83" stroke="#c99a3a" stroke-width="2"/><path d="M335 83 l-4 -8 l8 0 z" fill="#c99a3a"/>
+</svg>
+<figcaption>Three decoupled parts on one clock: the loop ticks, the solver steps <code>(value, velocity, target, dt)</code>, the sink receives the number. Retargeting just writes a new <code>target</code>.</figcaption>
+</figure>
+
+<h2>1. The loop — <code>CADisplayLink</code></h2>
+<p>The display link calls you once per frame, synced to the display's refresh. Your only jobs are: compute <code>dt</code>, step the solver, push the value, and stop when settled.</p>
+<pre><code class="language-swift">final class SpringDriver {
+    private var link: CADisplayLink?
+    private var lastStamp: CFTimeInterval = 0
+    let spring = SpringValue()          // defined below
+    var onFrame: ((Double) -&gt; Void)?    // the sink — where the value goes
+
+    func start() {
+        guard link == nil else { return }   // already running
+        lastStamp = 0
+        let l = CADisplayLink(target: self, selector: #selector(tick))
+        l.preferredFrameRateRange = CAFrameRateRange(minimum: 80, maximum: 120, preferred: 120)
+        l.add(to: .main, forMode: .common)  // .common so it survives scroll tracking
+        link = l
+    }
+
+    @objc private func tick(_ link: CADisplayLink) {
+        // dt = real elapsed time, not link.duration (which is nominal)
+        if lastStamp == 0 { lastStamp = link.timestamp; return }
+        var dt = link.timestamp - lastStamp
+        lastStamp = link.timestamp
+        dt = min(dt, 1.0 / 60.0)            // clamp — see gotchas
+
+        let settled = spring.step(dt)
+        onFrame?(spring.value)
+
+        if settled { stop() }
+    }
+
+    func stop() { link?.invalidate(); link = nil }
+}
+</code></pre>
+<p>Two non-obvious bits: <code>.common</code> run-loop mode so the animation doesn't freeze while a <code>UIScrollView</code> is tracking, and computing <code>dt</code> from <code>link.timestamp</code> deltas rather than trusting <code>link.duration</code> (that's the nominal frame time, wrong the moment a frame drops).</p>
+<h2>2. The solver — a damped spring, mass = 1</h2>
+<p>State is exactly the two numbers the whole conversation has been about: <code>value</code> and <code>velocity</code>. The target is separate, mutable, and that separateness <em>is</em> interruptibility.</p>
+<pre><code class="language-swift">final class SpringValue {
+    // Physics coefficients (per unit mass)
+    private var stiffness: Double = 0
+    private var damping: Double = 0
+
+    // Live state — the thing you own
+    var value: Double = 0
+    var velocity: Double = 0
+    var target: Double = 0
+
+    // Designer-facing params → physics. This is the SwiftUI/Wave knob set.
+    func configure(dampingRatio: Double, response: Double) {
+        let omega = 2 * .pi / response      // natural frequency ω₀
+        stiffness = omega * omega           // k = ω₀²
+        damping   = 2 * dampingRatio * omega // c = 2ζω₀
+    }
+
+    // One frame. Returns true when settled.
+    func step(_ dt: Double) -&gt; Bool {
+        let displacement = value - target
+        let acceleration = -stiffness * displacement - damping * velocity
+
+        velocity += acceleration * dt       // update v FIRST...
+        value    += velocity * dt           // ...then x, using the new v
+
+        // Settling test: both nearly still
+        if abs(displacement) &lt; 0.001 &amp;&amp; abs(velocity) &lt; 0.001 {
+            value = target; velocity = 0
+            return true
+        }
+        return false
+    }
+}
+</code></pre>
+<p>That <code>velocity</code> before <code>value</code> ordering is <strong>semi-implicit (symplectic) Euler</strong>, not a typo. Plain Euler (update value from the <em>old</em> velocity) leaks energy and gets wobbly on stiff springs; swapping the order costs nothing and is dramatically more stable. It's the single highest-leverage line in the file.</p>
+<p>The param conversion is the important conceptual bridge: <code>dampingRatio</code> and <code>response</code> are what designers (and SwiftUI's <code>.spring(response:dampingFraction:)</code>, and Wave's <code>Spring(dampingRatio:response:)</code>) speak. Underneath they're just <code>ω₀</code> and <code>2ζω₀</code>. Same physics, friendlier dials.</p>
+<h2>3. The retarget — the whole point, and it's one line</h2>
+<p>Because you hold <code>value</code> and <code>velocity</code> in your own process, redirecting mid-flight is <strong>not</strong> a cancel-and-restart. It's an assignment:</p>
+<pre><code class="language-swift">// Finger lifts — hand the gesture's velocity to the spring and aim it somewhere:
+spring.velocity = gestureVelocityInValueSpace   // continuity: no snap
+spring.target   = newDestination
+driver.start()                                   // no-op if already running
+
+// New event arrives while it's still moving — just move the goalpost:
+spring.target = anotherDestination
+// value and velocity are untouched → it arcs smoothly to the new target
+</code></pre>
+<p>That's the "arc" in Wave's PiP demo. The UIKit side looked stiff on interruption because a <code>UIView.animate</code> interrupt has no velocity to carry; here the velocity never leaves the variable, so the redirect is seamless by construction. You don't <em>implement</em> retargeting — you get it for free the instant you stop throwing your state across a process boundary.</p>
+<p>During the drag itself, don't run the spring at all — write <code>value</code> directly (1:1 tracking), same rule as the SwiftUI pattern. The spring only turns on at release.</p>
+<h2>4. The sink — into a Metal uniform</h2>
+<p>This is your specific case. The <code>onFrame</code> callback is where the animated value leaves the solver and enters your render.</p>
+<pre><code class="language-swift">driver.onFrame = { [weak self] v in
+    self?.uniforms.progress = Float(v)   // stash into your uniforms struct
+    self?.metalView.setNeedsDisplay()    // or draw immediately
+}
+</code></pre>
+<pre><code class="language-swift">// In your draw call:
+encoder.setBytes(&amp;uniforms, length: MemoryLayout&lt;Uniforms&gt;.stride, index: 0)
+</code></pre>
+<p>But here's the sharper move for you, and it collapses two loops into one: if you're already using <code>MTKView</code>, you don't need a separate <code>CADisplayLink</code> at all. <code>MTKView</code> is already driven by one internally — <code>draw(in:)</code> is your per-frame tick. Step the spring right there:</p>
+<pre><code class="language-swift">func draw(in view: MTKView) {
+    let dt = min(CACurrentMediaTime() - lastStamp, 1/60); lastStamp = CACurrentMediaTime()
+    _ = spring.step(dt)
+    uniforms.progress = Float(spring.value)
+    // ...encode and present
+}
+</code></pre>
+<p>Set <code>metalView.isPaused = true</code> and <code>enableSetNeedsDisplay = true</code> when nothing's animating (idle, zero GPU), flip to <code>isPaused = false</code> on gesture/retarget to run the loop. So the spring solver and the shader clock become the <strong>same clock</strong> — the cleanest possible version of "client-side," since value-evaluation and rendering literally share a tick.</p>
+<h2>Gotchas that will actually bite you</h2>
+<p><strong><code>dt</code> explosions.</strong> App stalls (a big allocation, coming back from background) → one giant <code>dt</code> → the spring integrates a huge step and detonates the value off-screen. The <code>min(dt, 1/60)</code> clamp is <em>not optional</em>. For very stiff springs (<code>response</code> under ~0.15), even that can shake — the robust fix is <strong>fixed-timestep substepping</strong>: chop the frame's <code>dt</code> into N fixed slices and <code>step</code> each. Accuracy stops depending on frame rate.</p>
+<p><strong>Stopping the link.</strong> A <code>CADisplayLink</code> you forget to <code>invalidate()</code> burns the CPU/GPU at 120 Hz forever and pins the ProMotion display high. Always stop on settle; that's what the <code>Bool</code> return is for. Also <code>invalidate()</code> on <code>deinit</code>/disappear.</p>
+<p><strong>Underdamped vs the exact solution.</strong> Semi-implicit Euler is great and what I'd ship first. The ceiling above it is the <strong>analytic closed form</strong> — for the underdamped case (ζ&lt;1) you can solve the ODE exactly for any <code>dt</code>:</p>
+<pre><code>ω_d = ω₀·√(1−ζ²)
+value(t) = target + e^(−ζω₀t)·[ x₀·cos(ω_d t) + ((v₀+ζω₀x₀)/ω_d)·sin(ω_d t) ]
+</code></pre>
+<p>with a matching derivative for velocity. It's exact regardless of frame rate, so it never explodes and needs no clamp — the tradeoff is you branch on the three damping regimes (under/critical/over) and it's more math. That's the tier Wave's solver and iOS's own live at. Reach for it only if Euler's tiny frame-rate-dependent drift ever shows up; for UI it usually doesn't.</p>
+<p><strong>Vectorizing.</strong> For a <code>CGPoint</code>/<code>CGSize</code>/color, don't run one solver — run the scalar solver <em>per component</em> (x and y each get their own value+velocity) so a diagonal fling curves correctly. A struct-of-<code>SpringValue</code> or a small generic over a "vector arithmetic" protocol is the usual shape. This is precisely what Wave's <code>SpringAnimator&lt;T&gt;</code> generalizes.</p>
+<p><strong>ProMotion.</strong> <code>preferredFrameRateRange</code> requests 120; you also need <code>CADisableMinimumFrameDuration = true</code> in Info.plist or you're capped at 60 (that plist line in Wave's README is exactly this). <code>MTKView</code> uses <code>preferredFramesPerSecond = 120</code> instead.</p>
+<h2>Mental model to lock in</h2>
+<p>The <strong>solver is a pure function of <code>(value, velocity, target, dt)</code>; the display link is just a clock that calls it; the sink is just where the number goes.</strong> Those three are fully decoupled — which is why the same 30-line solver drives a <code>CALayer.position</code>, a SwiftUI value, or a shader uniform without caring. You built the in-process engine the opening passage was praising, and "interruptible" fell out of it as a side effect of keeping two floats in a variable instead of mailing them to another process.</p>
+<h2>Where to go next</h2>
+<ul>
+<li><strong>The generic vector version</strong> — make <code>SpringValue</code> generic over a vector-arithmetic protocol so it drives <code>CGPoint</code>, <code>CGSize</code>, and colors (each component its own value+velocity), the shape of Wave's <code>SpringAnimator&lt;T&gt;</code>.</li>
+<li><strong>Gesture-velocity conversion</strong> — turning a pan's points/sec into the spring's value-space <code>initialVelocity</code>. It's the one genuinely fiddly bit: you divide the gesture velocity by the distance-to-travel (or map screen units → your value units) so the handoff is continuous.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The spring as an ODE, and the knobs: <a class="xref" href="interaction-math.html#06-interpolation-easing-and-springs">Interpolation, Easing &amp; Springs</a></li>
+<li>Why velocity-first (integration &amp; stability): <a class="xref" href="interaction-math.html#12-dynamical-systems">Dynamical Systems</a></li>
+<li>The wider family (SmoothDamp, decay, rubber-band): <a class="xref" href="interaction-math.html#06a-simulations-beyond-the-spring">Simulations Beyond the Spring</a></li>
+<li>Who runs the per-frame loop: <a class="xref" href="interaction-math.html#09-what-drives-the-value">What Drives the Value</a> · <a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">The Run Loop</a></li>
+<li>Feeding the value into the GPU: <a class="xref" href="shaders.html#18a-feeding-data-into-shaders">Feeding Data Into Shaders</a></li>
+<li>Apple's built-in version: <a class="xref" href="coreanimation.html#11-caspringanimation">CASpringAnimation</a></li>
+<li>Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Extras</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>
