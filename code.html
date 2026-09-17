@@ -1,0 +1,1469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code · Learning All things Apple</title>
+<meta name="description" content="Practice quests: read the challenge, write it yourself, then tap to reveal the answer. SwiftUI, UIKit &amp; Shaders.">
+<meta property="og:title" content="Code · Learning All things Apple">
+<meta property="og:description" content="Practice quests: read the challenge, write it yourself, then tap to reveal the answer. SwiftUI, UIKit &amp; Shaders.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1014">
+<link rel="icon" href="assets/favicon.svg">
+<script>try{var t=localStorage.getItem('lar-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-sidebar',localStorage.getItem('lar-sidebar')||'shown');}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="Menu"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="switcher"><a class="home" href="index.html">← All courses</a></div>
+    <div class="coursehead"><div class="ct">Code</div><div class="cs">Practice quests: read the challenge, write it yourself, then tap to reveal the answer. SwiftUI, UIKit &amp; Shaders.</div></div>
+    <div class="coursesel"><select id="coursesel-input"><optgroup label="Courses"><option value="interaction-math.html">Math for Interaction</option><option value="swift.html">Swift</option><option value="swiftui.html">SwiftUI</option><option value="swiftui-dataflow.html">SwiftUI Data Flow</option><option value="coreanimation.html">Core Animation</option><option value="shaders.html">Metal Shaders</option><option value="stack-decisions.html">Stack Decisions</option><option value="wwdc.html">WWDC Sessions</option><option value="extras.html">Extras</option><option value="code.html" selected>Code</option></optgroup><optgroup label="Additional Topics"><option value="uikit.html">UIKit Foundations</option><option value="uikit-workshop.html">UIKit Workshop</option><option value="uikit-internals.html">UIKit Internals</option><option value="core-graphics.html">Core Graphics &amp; Core Image</option><option value="gestures-haptics.html">Gestures &amp; Haptics</option><option value="widgetkit.html">WidgetKit &amp; Live Activities</option><option value="networking.html">Networking</option><option value="persistence.html">Persistence &amp; SwiftData</option><option value="concurrency.html">Concurrency in Practice</option><option value="architecture.html">App Architecture</option><option value="testing.html">Testing &amp; Instruments</option><option value="shipping.html">App Intents, Accessibility &amp; Shipping</option><option value="origami.html">Origami Studio</option><option value="blender.html">Blender for Shader Prototyping</option></optgroup></select></div>
+    <nav><ol id="navlist"></ol></nav>
+  </aside>
+  <main class="content"><div class="col">
+<section class="page" id="00-overview" data-title="Code" data-num="·" data-hasdemo="0" data-group=""><h1>Code</h1>
+<p>Reading about code isn't writing it. This is the practice zone: every topic is a <strong>quest</strong> — a small, concrete thing to build. Try to write it yourself first, <em>then</em> tap <strong>Show the code</strong> to check your answer.</p>
+<h2>How it works</h2>
+<ol>
+<li>Read the <strong>🎯 Quest</strong> at the top of a topic.</li>
+<li>Open Xcode (or a Playground/Preview) and write it yourself.</li>
+<li>Tap <strong>▶ Show the code</strong> to reveal a correct, modern solution + the key idea.</li>
+<li>Compare, fix, move on. The struggle before the reveal is the whole point.</li>
+</ol>
+<h2>Pick your area</h2>
+<ul>
+<li><a class="xref" href="#01-swiftui">SwiftUI quests</a> — views, state, navigation, observables, animation, passing data.</li>
+<li><a class="xref" href="#02-uikit">UIKit quests</a> — programmatic views, Auto Layout, subclassing, tables, navigation, effects.</li>
+<li><a class="xref" href="#03-shaders">Shader quests</a> — stitchable effects, uv, animation, distortion, noise, passing data in.</li>
+</ul>
+<p>Pairs with the theory in <a class="xref" href="swiftui.html#00-roadmap">SwiftUI</a>, <a class="xref" href="uikit.html#00-overview">UIKit</a>, and <a class="xref" href="shaders.html#00-roadmap">Metal Shaders</a> — and with the hands-on <a class="xref" href="uikit-workshop.html#00-overview">UIKit Workshop</a>.</p><div class="pager"><span class="sp"></span><a href="#01-swiftui"><span>Next</span>SwiftUI Quests →</a></div></section>
+<section class="page" id="01-swiftui" data-title="SwiftUI Quests" data-num="01" data-hasdemo="0" data-group=""><h1>SwiftUI Quests</h1>
+<p>Welcome, adventurer. Each quest names one thing to build — try it yourself first, then tap <strong>Show the code</strong> to compare. Targets iOS 26 / Swift 6 with modern SwiftUI (<code>@Observable</code>, <code>NavigationStack</code>).</p>
+<blockquote>
+<p><strong>Work top to bottom.</strong> These quests are a ladder — each one assumes the ones above it, so you build skills <em>and</em> see how the pieces fit together.</p>
+</blockquote>
+<h2>Custom View</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Extract a reusable <code>AvatarBadge</code> that turns a name into its initials inside a colored circle, then use it twice.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct AvatarBadge: View {
+    let name: String
+
+    private var initials: String {
+        name.split(separator: &quot; &quot;)
+            .prefix(2)
+            .compactMap { $0.first }
+            .map(String.init)
+            .joined()
+            .uppercased()
+    }
+
+    var body: some View {
+        Text(initials)
+            .font(.headline)
+            .foregroundStyle(.white)
+            .frame(width: 44, height: 44)
+            .background(.teal, in: .circle)
+    }
+}
+
+#Preview {
+    HStack {
+        AvatarBadge(name: &quot;Ada Lovelace&quot;)
+        AvatarBadge(name: &quot;Grace Hopper&quot;)
+    }
+}
+</code></pre>
+<p>A view is just a struct conforming to <code>View</code>. Pulling repeated UI into its own type makes it reusable and testable.</p>
+</details>
+<h2>State &amp; Binding</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Build a counter with +/− buttons backed by <code>@State</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct CounterView: View {
+    @State private var count = 0
+
+    var body: some View {
+        HStack(spacing: 24) {
+            Button(&quot;−&quot;) { count -= 1 }
+            Text(&quot;\(count)&quot;)
+                .font(.title.monospacedDigit())
+            Button(&quot;+&quot;) { count += 1 }
+        }
+        .font(.title)
+    }
+}
+
+#Preview {
+    CounterView()
+}
+</code></pre>
+<p><code>@State</code> gives a view its own mutable, view-owned source of truth. To let a child edit that same value, pass it as <code>$count</code> and receive it as <code>@Binding var count: Int</code>.</p>
+</details>
+<h2>Forms &amp; Input</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Build a <code>Form</code> with a <code>TextField</code>, a <code>Toggle</code>, and a <code>Picker</code>, all bound to <code>@State</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct SettingsForm: View {
+    @State private var username = &quot;&quot;
+    @State private var notify = true
+    @State private var tier = &quot;Free&quot;
+
+    let tiers = [&quot;Free&quot;, &quot;Pro&quot;, &quot;Team&quot;]
+
+    var body: some View {
+        Form {
+            TextField(&quot;Username&quot;, text: $username)
+            Toggle(&quot;Notifications&quot;, isOn: $notify)
+            Picker(&quot;Plan&quot;, selection: $tier) {
+                ForEach(tiers, id: \.self) { Text($0) }
+            }
+        }
+    }
+}
+
+#Preview {
+    SettingsForm()
+}
+</code></pre>
+<p>Each control takes a binding (<code>$</code>) to its state, so edits flow back automatically. <code>Form</code> gives the grouped, inset look for free.</p>
+</details>
+<h2>Passing an Object to a Subview</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Define a <code>Person</code> struct and render one with a <code>PersonRow</code> subview that receives it.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct Person: Identifiable {
+    let id = UUID()
+    let name: String
+    let role: String
+}
+
+struct PersonRow: View {
+    let person: Person
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(person.name).font(.headline)
+            Text(person.role).font(.subheadline).foregroundStyle(.secondary)
+        }
+    }
+}
+
+#Preview {
+    PersonRow(person: Person(name: &quot;Alan Turing&quot;, role: &quot;Mathematician&quot;))
+}
+</code></pre>
+<p>Pass immutable data down as a plain <code>let</code> property. The child declares exactly what it needs, keeping the dependency explicit.</p>
+</details>
+<h2>A List</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Show a <code>List</code> of <code>Identifiable</code> tasks with swipe-to-delete.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct Task: Identifiable {
+    let id = UUID()
+    var title: String
+}
+
+struct TaskList: View {
+    @State private var tasks = [
+        Task(title: &quot;Buy milk&quot;),
+        Task(title: &quot;Walk dog&quot;),
+        Task(title: &quot;Ship app&quot;)
+    ]
+
+    var body: some View {
+        List {
+            ForEach(tasks) { task in
+                Text(task.title)
+            }
+            .onDelete { tasks.remove(atOffsets: $0) }
+        }
+    }
+}
+
+#Preview {
+    TaskList()
+}
+</code></pre>
+<p><code>ForEach</code> over an <code>Identifiable</code> collection gives each row a stable identity, which <code>.onDelete</code> uses to animate removals via an <code>IndexSet</code>.</p>
+</details>
+<h2>Observables</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Make an <code>@Observable</code> model owned by a parent and read by a child, so mutating it updates both views.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+@Observable
+final class Basket {
+    var items = 0
+}
+
+struct BasketOwner: View {
+    @State private var basket = Basket()
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Button(&quot;Add item&quot;) { basket.items += 1 }
+            BasketBadge(basket: basket)
+        }
+    }
+}
+
+struct BasketBadge: View {
+    let basket: Basket
+
+    var body: some View {
+        Text(&quot;Items: \(basket.items)&quot;)
+    }
+}
+
+#Preview {
+    BasketOwner()
+}
+</code></pre>
+<p><code>@Observable</code> (from the Observation framework) tracks which properties a view actually reads and re-renders only those. The owner holds it with <code>@State</code>; children just take it as a plain <code>let</code>.</p>
+</details>
+<h2>Environment Injection</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Put a <code>Theme</code> object into the environment and read it deep in the view tree.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+@Observable
+final class Theme {
+    var accent: Color = .indigo
+}
+
+struct RootView: View {
+    @State private var theme = Theme()
+
+    var body: some View {
+        DeepChild()
+            .environment(theme)
+    }
+}
+
+struct DeepChild: View {
+    @Environment(Theme.self) private var theme
+
+    var body: some View {
+        Text(&quot;Themed&quot;)
+            .padding()
+            .background(theme.accent, in: .capsule)
+            .foregroundStyle(.white)
+    }
+}
+
+#Preview {
+    RootView()
+}
+</code></pre>
+<p><code>.environment(theme)</code> injects an <code>@Observable</code> once at the top; any descendant reads it with <code>@Environment(Theme.self)</code> without threading it through every initializer.</p>
+</details>
+<h2>Navigation — Push</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Push a detail screen using <code>NavigationStack</code>, <code>NavigationLink(value:)</code>, and <code>.navigationDestination(for:)</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct PushDemo: View {
+    let fruits = [&quot;Apple&quot;, &quot;Banana&quot;, &quot;Cherry&quot;]
+
+    var body: some View {
+        NavigationStack {
+            List(fruits, id: \.self) { fruit in
+                NavigationLink(fruit, value: fruit)
+            }
+            .navigationTitle(&quot;Fruit&quot;)
+            .navigationDestination(for: String.self) { fruit in
+                Text(&quot;You picked \(fruit)&quot;)
+                    .font(.largeTitle)
+            }
+        }
+    }
+}
+
+#Preview {
+    PushDemo()
+}
+</code></pre>
+<p><code>NavigationLink(value:)</code> only carries data; the matching <code>.navigationDestination(for:)</code> decides what view to build. This value-based routing decouples the link from the destination.</p>
+</details>
+<h2>Programmatic Navigation</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Drive a <code>NavigationStack</code> with a <code>@State</code> path so you can push and pop in code.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+enum Route: Hashable {
+    case detail(Int)
+    case settings
+}
+
+struct ProgrammaticNav: View {
+    @State private var path: [Route] = []
+
+    var body: some View {
+        NavigationStack(path: $path) {
+            VStack(spacing: 16) {
+                Button(&quot;Go to detail 42&quot;) { path.append(.detail(42)) }
+                Button(&quot;Go to settings&quot;) { path.append(.settings) }
+            }
+            .navigationDestination(for: Route.self) { route in
+                switch route {
+                case .detail(let id):
+                    Button(&quot;Pop to root&quot;) { path.removeAll() }
+                        .navigationTitle(&quot;Detail \(id)&quot;)
+                case .settings:
+                    Text(&quot;Settings&quot;)
+                }
+            }
+        }
+    }
+}
+
+#Preview {
+    ProgrammaticNav()
+}
+</code></pre>
+<p>Binding the stack to <code>path</code> makes navigation state data you own — appending pushes, removing pops, and <code>removeAll()</code> jumps back to the root.</p>
+</details>
+<h2>Other Nav Patterns</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Combine a <code>TabView</code>, a <code>.sheet(item:)</code>, and a <code>.fullScreenCover</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct Editing: Identifiable { let id = UUID(); let name: String }
+
+struct NavPatterns: View {
+    @State private var editing: Editing?
+    @State private var showCover = false
+
+    var body: some View {
+        TabView {
+            Tab(&quot;Home&quot;, systemImage: &quot;house&quot;) {
+                VStack(spacing: 16) {
+                    Button(&quot;Edit item&quot;) { editing = Editing(name: &quot;Draft&quot;) }
+                    Button(&quot;Full screen&quot;) { showCover = true }
+                }
+            }
+            Tab(&quot;Profile&quot;, systemImage: &quot;person&quot;) {
+                Text(&quot;Profile&quot;)
+            }
+        }
+        .sheet(item: $editing) { item in
+            Text(&quot;Editing \(item.name)&quot;)
+        }
+        .fullScreenCover(isPresented: $showCover) {
+            VStack {
+                Text(&quot;Immersive&quot;)
+                Button(&quot;Close&quot;) { showCover = false }
+            }
+        }
+    }
+}
+
+#Preview {
+    NavPatterns()
+}
+</code></pre>
+<p><code>TabView</code> switches top-level sections; <code>.sheet(item:)</code> presents when an optional becomes non-nil (and hands you the value); <code>.fullScreenCover</code> is a sheet that covers everything.</p>
+</details>
+<h2>Passing Data Back</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Let a child edit the parent's value through <code>@Binding</code>, and have a sheet return a value via a closure.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct NameEditor: View {
+    @Binding var name: String
+
+    var body: some View {
+        TextField(&quot;Name&quot;, text: $name)
+            .textFieldStyle(.roundedBorder)
+    }
+}
+
+struct PickerSheet: View {
+    let onPick: (String) -&gt; Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            ForEach([&quot;Red&quot;, &quot;Green&quot;, &quot;Blue&quot;], id: \.self) { color in
+                Button(color) { onPick(color) }
+            }
+        }
+    }
+}
+
+struct PassBackDemo: View {
+    @State private var name = &quot;Sam&quot;
+    @State private var picked = &quot;—&quot;
+    @State private var showSheet = false
+
+    var body: some View {
+        VStack(spacing: 16) {
+            NameEditor(name: $name)
+            Text(&quot;Picked: \(picked)&quot;)
+            Button(&quot;Pick color&quot;) { showSheet = true }
+        }
+        .padding()
+        .sheet(isPresented: $showSheet) {
+            PickerSheet { color in
+                picked = color
+                showSheet = false
+            }
+        }
+    }
+}
+
+#Preview {
+    PassBackDemo()
+}
+</code></pre>
+<p>A <code>@Binding</code> writes straight back into the parent's <code>@State</code>. A callback closure is the other direction: the sheet reports its result up without owning any parent state.</p>
+</details>
+<h2>Async Load with a Loading State</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Load data in <code>.task { }</code> and model the phases with a <code>.loading / .loaded / .failed</code> enum.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct AsyncDemo: View {
+    enum Phase {
+        case loading
+        case loaded(String)
+        case failed(String)
+    }
+
+    @State private var phase: Phase = .loading
+
+    var body: some View {
+        VStack {
+            switch phase {
+            case .loading:
+                ProgressView(&quot;Loading…&quot;)
+            case .loaded(let text):
+                Text(text).font(.title2)
+            case .failed(let message):
+                Text(&quot;Error: \(message)&quot;).foregroundStyle(.red)
+            }
+        }
+        .task {
+            do {
+                phase = .loaded(try await fetchGreeting())
+            } catch {
+                phase = .failed(error.localizedDescription)
+            }
+        }
+    }
+
+    func fetchGreeting() async throws -&gt; String {
+        try await Task.sleep(for: .seconds(1))
+        return &quot;Hello from async!&quot;
+    }
+}
+
+#Preview {
+    AsyncDemo()
+}
+</code></pre>
+<p><code>.task</code> runs an async job tied to the view's lifetime — it auto-cancels when the view disappears. A phase enum makes every state (including failure) explicit and unrepresentable-when-invalid.</p>
+</details>
+<h2>Animation</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Show three animation styles — <code>withAnimation</code>, implicit <code>.animation(_:value:)</code>, and a <code>.transition</code> on insert/remove.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct AnimationDemo: View {
+    @State private var expanded = false
+    @State private var showBox = false
+
+    var body: some View {
+        VStack(spacing: 24) {
+            // Explicit
+            Button(&quot;Toggle size&quot;) {
+                withAnimation(.spring) { expanded.toggle() }
+            }
+            Circle()
+                .fill(.orange)
+                .frame(width: expanded ? 120 : 60, height: expanded ? 120 : 60)
+
+            // Implicit
+            Rectangle()
+                .fill(expanded ? .green : .blue)
+                .frame(width: 120, height: 20)
+                .animation(.easeInOut, value: expanded)
+
+            // Transition
+            Button(&quot;Toggle box&quot;) { showBox.toggle() }
+            if showBox {
+                Text(&quot;Hello&quot;)
+                    .padding()
+                    .background(.yellow, in: .rect(cornerRadius: 8))
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .animation(.default, value: showBox)
+    }
+}
+
+#Preview {
+    AnimationDemo()
+}
+</code></pre>
+<p><code>withAnimation</code> animates the state change at the call site; <code>.animation(_:value:)</code> animates whenever that value changes; <code>.transition</code> describes how a view enters and leaves when it's inserted or removed.</p>
+</details>
+<h2>matchedGeometryEffect</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Expand a small card into a detail view, with the shape flying between the two using <code>@Namespace</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct MatchedDemo: View {
+    @Namespace private var ns
+    @State private var expanded = false
+
+    var body: some View {
+        ZStack {
+            if expanded {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(.purple)
+                    .matchedGeometryEffect(id: &quot;card&quot;, in: ns)
+                    .frame(width: 300, height: 400)
+                    .onTapGesture { withAnimation(.spring) { expanded = false } }
+            } else {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.purple)
+                    .matchedGeometryEffect(id: &quot;card&quot;, in: ns)
+                    .frame(width: 120, height: 80)
+                    .onTapGesture { withAnimation(.spring) { expanded = true } }
+            }
+        }
+    }
+}
+
+#Preview {
+    MatchedDemo()
+}
+</code></pre>
+<p>Two views sharing the same <code>matchedGeometryEffect</code> id in one <code>@Namespace</code> are treated as the same element, so SwiftUI interpolates position and size between them for a seamless hero transition.</p>
+</details>
+<h2>Custom ViewModifier</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Write a <code>CardStyle: ViewModifier</code> and add a <code>.cardStyle()</code> convenience via a <code>View</code> extension.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+struct CardStyle: ViewModifier {
+    func body(content: Content) -&gt; some View {
+        content
+            .padding()
+            .background(.regularMaterial, in: .rect(cornerRadius: 16))
+            .shadow(radius: 4, y: 2)
+    }
+}
+
+extension View {
+    func cardStyle() -&gt; some View {
+        modifier(CardStyle())
+    }
+}
+
+#Preview {
+    VStack {
+        Text(&quot;Reusable card&quot;)
+            .cardStyle()
+        Text(&quot;Another card&quot;)
+            .cardStyle()
+    }
+    .padding()
+}
+</code></pre>
+<p>A <code>ViewModifier</code> packages a set of modifiers into one named, reusable style; the <code>View</code> extension gives it clean dot-syntax so it reads like a built-in.</p>
+</details>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="swiftui.html#00-roadmap">SwiftUI course</a></li>
+<li>Lessons: <a class="xref" href="swiftui.html#00-roadmap">roadmap</a></li>
+</ul>
+<p>Prev: <a class="xref" href="#00-overview">00-overview</a> · Next: <a class="xref" href="#02-uikit">02-uikit</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#00-overview"><span>Prev</span>← Code</a><a href="#02-uikit"><span>Next</span>UIKit Quests →</a></div></section>
+<section class="page" id="02-uikit" data-title="UIKit Quests" data-num="02" data-hasdemo="0" data-group=""><h1>UIKit Quests</h1>
+<p>Welcome, adventurer — each quest below hands you one concrete UIKit task. Try writing it yourself first, then tap <strong>Show the code</strong> to check your work against a modern, programmatic answer.</p>
+<blockquote>
+<p><strong>Work top to bottom.</strong> These quests are a ladder — each one assumes the ones above it, so you build skills <em>and</em> see how the pieces fit together.</p>
+</blockquote>
+<h2>Bootstrap a programmatic screen</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Delete <code>Main.storyboard</code> and make <code>SceneDelegate</code> build a <code>UIWindow</code> from the scene, set a root view controller, and show it.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">func scene(_ scene: UIScene,
+           willConnectTo session: UISceneSession,
+           options connectionOptions: UIScene.ConnectionOptions) {
+    guard let windowScene = scene as? UIWindowScene else { return }
+    let window = UIWindow(windowScene: windowScene)
+    window.rootViewController = RootViewController()
+    self.window = window
+    window.makeKeyAndVisible()
+}
+</code></pre>
+<p>Delete <code>Main.storyboard</code>, then remove the <code>UISceneStoryboardFile</code> key from <code>Info.plist</code> (and the "Main storyboard file base name" in target settings) so UIKit stops looking for it. The window owns the root controller and must be kept <code>makeKeyAndVisible</code>.</p>
+</details>
+<h2>Create and lay out a view in code</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> In <code>loadView</code>/<code>viewDidLoad</code>, add a centered label above a button and pin them with Auto Layout anchors.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">final class RootViewController: UIViewController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+
+        let label = UILabel()
+        label.text = &quot;Hello, UIKit&quot;
+        label.font = .preferredFont(forTextStyle: .largeTitle)
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        let button = UIButton(configuration: .filled())
+        button.setTitle(&quot;Tap me&quot;, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+
+        view.addSubview(label)
+        view.addSubview(button)
+
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            button.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 24),
+            button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+        ])
+    }
+}
+</code></pre>
+<p>Setting <code>translatesAutoresizingMaskIntoConstraints = false</code> opts each view out of the legacy autoresizing bridge so your anchor constraints are the single source of truth; <code>NSLayoutConstraint.activate</code> batches them efficiently.</p>
+</details>
+<h2>A button that runs code</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Make a filled button whose tap runs a closure — no <code>@objc</code> selectors.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">var config = UIButton.Configuration.filled()
+config.title = &quot;Save&quot;
+config.image = UIImage(systemName: &quot;square.and.arrow.down&quot;)
+config.imagePadding = 8
+config.cornerStyle = .large
+
+let button = UIButton(configuration: config)
+button.addAction(UIAction { _ in
+    print(&quot;Saved!&quot;)
+}, for: .touchUpInside)
+</code></pre>
+<p><code>UIButton.Configuration</code> is the modern styling API (replacing <code>setTitle</code>/<code>setImage</code> pairs), and <code>addAction(_:for:)</code> with a <code>UIAction</code> closure replaces the old target/action <code>@objc</code> selector pattern entirely.</p>
+</details>
+<h2>Subclass a reusable UIView</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Build an <code>AvatarView</code> that works from code, supports both initializers via a shared <code>commonInit</code>, and exposes <code>configure(name:)</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">final class AvatarView: UIView {
+    private let initialsLabel = UILabel()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        commonInit()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    private func commonInit() {
+        backgroundColor = .systemTeal
+        layer.cornerRadius = 24
+        clipsToBounds = true
+
+        initialsLabel.textColor = .white
+        initialsLabel.font = .boldSystemFont(ofSize: 18)
+        initialsLabel.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(initialsLabel)
+        NSLayoutConstraint.activate([
+            initialsLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            initialsLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+    }
+
+    func configure(name: String) {
+        initialsLabel.text = name.split(separator: &quot; &quot;)
+            .compactMap { $0.first }.prefix(2)
+            .map(String.init).joined().uppercased()
+    }
+}
+</code></pre>
+<p>Both <code>init(frame:)</code> and the required <code>init?(coder:)</code> funnel into <code>commonInit</code>, so the view is identical whether created in code or decoded from a nib — the standard way to avoid duplicated setup.</p>
+</details>
+<h2>A table view with a custom cell</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Show a list in a <code>UITableViewController</code> using a registered <code>UITableViewCell</code> subclass with a <code>configure</code> method.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">final class PersonCell: UITableViewCell {
+    static let reuseID = &quot;PersonCell&quot;
+
+    func configure(with person: Person) {
+        var content = defaultContentConfiguration()
+        content.text = person.name
+        content.secondaryText = person.role
+        contentConfiguration = content
+    }
+}
+
+final class PeopleViewController: UITableViewController {
+    private let people: [Person] = Person.sample
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.register(PersonCell.self, forCellReuseIdentifier: PersonCell.reuseID)
+    }
+
+    override func tableView(_ tableView: UITableView,
+                            numberOfRowsInSection section: Int) -&gt; Int {
+        people.count
+    }
+
+    override func tableView(_ tableView: UITableView,
+                            cellForRowAt indexPath: IndexPath) -&gt; UITableViewCell {
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: PersonCell.reuseID, for: indexPath) as! PersonCell
+        cell.configure(with: people[indexPath.row])
+        return cell
+    }
+}
+</code></pre>
+<p><code>dequeueReusableCell</code> recycles offscreen cells for smooth scrolling; <code>defaultContentConfiguration()</code> is the modern replacement for reaching into <code>textLabel</code>/<code>detailTextLabel</code> directly.</p>
+</details>
+<h2>Navigation — push and pass data</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Wrap the list in a <code>UINavigationController</code>, and on row selection push a detail screen that receives its model through <code>init(person:)</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">// Setup (e.g. in SceneDelegate):
+let nav = UINavigationController(rootViewController: PeopleViewController())
+
+// Detail controller:
+final class PersonDetailViewController: UIViewController {
+    private let person: Person
+
+    init(person: Person) {
+        self.person = person
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError(&quot;init(coder:) has not been implemented&quot;) }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        title = person.name
+    }
+}
+
+// In PeopleViewController:
+override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    tableView.deselectRow(at: indexPath, animated: true)
+    let detail = PersonDetailViewController(person: people[indexPath.row])
+    navigationController?.pushViewController(detail, animated: true)
+}
+</code></pre>
+<p>Constructor injection (<code>init(person:)</code>) makes the dependency explicit and non-optional, which is cleaner than setting a <code>var</code> after creation; the navigation controller manages the back button and pop gesture for you.</p>
+</details>
+<h2>Passing data back — delegate and closure</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Send a value from a child controller back to its parent two ways: a <code>weak</code> delegate protocol and a completion closure.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">// 1. Delegate approach
+protocol EditorViewControllerDelegate: AnyObject {
+    func editor(_ editor: EditorViewController, didSave text: String)
+}
+
+final class EditorViewController: UIViewController {
+    weak var delegate: EditorViewControllerDelegate?
+
+    // 2. Closure approach — same job, less ceremony
+    var onSave: ((String) -&gt; Void)?
+
+    private func save(_ text: String) {
+        delegate?.editor(self, didSave: text)   // delegate path
+        onSave?(text)                           // closure path
+    }
+}
+</code></pre>
+<p>The <code>delegate</code> is <code>weak</code> (and the protocol is <code>AnyObject</code>) to break the retain cycle between parent and child. Closures are lighter for one-off callbacks; delegates scale better when the child reports many distinct events.</p>
+</details>
+<h2>A tab bar</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Present two feature screens under a <code>UITabBarController</code>, each with its own tab item.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">let home = PeopleViewController()
+home.tabBarItem = UITabBarItem(
+    title: &quot;People&quot;, image: UIImage(systemName: &quot;person.2&quot;), tag: 0)
+
+let settings = SettingsViewController()
+settings.tabBarItem = UITabBarItem(
+    title: &quot;Settings&quot;, image: UIImage(systemName: &quot;gear&quot;), tag: 1)
+
+let tabBar = UITabBarController()
+tabBar.viewControllers = [
+    UINavigationController(rootViewController: home),
+    UINavigationController(rootViewController: settings),
+]
+</code></pre>
+<p>Each tab typically gets its own <code>UINavigationController</code> so pushing inside one tab doesn't disturb the others; the tab bar keeps each child's navigation stack independent.</p>
+</details>
+<h2>Present a sheet with detents</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Present a controller modally as a resizable sheet that snaps between medium and large heights with a grabber.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">let editor = EditorViewController()
+if let sheet = editor.sheetPresentationController {
+    sheet.detents = [.medium(), .large()]
+    sheet.prefersGrabberVisible = true
+    sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+    sheet.preferredCornerRadius = 24
+}
+present(editor, animated: true)
+</code></pre>
+<p><code>UISheetPresentationController</code> gives you native, interactive resizable sheets; <code>detents</code> define the snap heights, and the grabber hints to users that the sheet can be dragged.</p>
+</details>
+<h2>An alert</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Show a confirmation alert with a cancel action and a destructive delete action.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">let alert = UIAlertController(
+    title: &quot;Delete item?&quot;,
+    message: &quot;This action cannot be undone.&quot;,
+    preferredStyle: .alert)
+
+alert.addAction(UIAlertAction(title: &quot;Cancel&quot;, style: .cancel))
+alert.addAction(UIAlertAction(title: &quot;Delete&quot;, style: .destructive) { _ in
+    self.deleteItem()
+})
+present(alert, animated: true)
+</code></pre>
+<p>Use <code>preferredStyle: .actionSheet</code> instead when the choices relate to a specific on-screen item; the <code>.destructive</code> style renders the button in red to signal an irreversible action.</p>
+</details>
+<h2>Animate a view</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Move and fade a card into place with a bouncy spring animation.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">card.alpha = 0
+card.transform = CGAffineTransform(translationX: 0, y: 40)
+
+UIView.animate(withDuration: 0.6,
+               delay: 0,
+               usingSpringWithDamping: 0.7,
+               initialSpringVelocity: 0.5,
+               options: [.curveEaseOut]) {
+    card.alpha = 1
+    card.transform = .identity
+}
+</code></pre>
+<p>For interruptible or scrubable animations reach for <code>UIViewPropertyAnimator</code> instead — it lets you pause, reverse, and drive <code>fractionComplete</code> from a gesture, which the closure-based <code>UIView.animate</code> can't.</p>
+</details>
+<h2>Gestures</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Let the user drag a view around with a pan, and reset it to center on a tap.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan))
+let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+card.addGestureRecognizer(pan)
+card.addGestureRecognizer(tap)
+
+@objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
+    guard let view = gesture.view else { return }
+    let translation = gesture.translation(in: view.superview)
+    switch gesture.state {
+    case .changed:
+        view.center = CGPoint(x: view.center.x + translation.x,
+                              y: view.center.y + translation.y)
+        gesture.setTranslation(.zero, in: view.superview)
+    case .ended, .cancelled:
+        break
+    default:
+        break
+    }
+}
+
+@objc private func handleTap(_ gesture: UITapGestureRecognizer) {
+    guard let view = gesture.view, let bounds = view.superview?.bounds else { return }
+    UIView.animate(withDuration: 0.3) {
+        view.center = CGPoint(x: bounds.midX, y: bounds.midY)
+    }
+}
+</code></pre>
+<p>Resetting <code>translation</code> to <code>.zero</code> on every <code>.changed</code> makes each callback report only the incremental delta, so you add it to the current center instead of re-applying the total drag each frame.</p>
+</details>
+<h2>Observe a value change</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Broadcast that data updated via <code>NotificationCenter</code>, and observe it elsewhere.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">extension Notification.Name {
+    static let dataDidUpdate = Notification.Name(&quot;dataDidUpdate&quot;)
+}
+
+// Post when something changes:
+NotificationCenter.default.post(name: .dataDidUpdate, object: nil)
+
+// Observe (store the token; it removes the observer when deallocated):
+private var token: NSObjectProtocol?
+
+token = NotificationCenter.default.addObserver(
+    forName: .dataDidUpdate, object: nil, queue: .main) { [weak self] _ in
+    self?.refresh()
+}
+</code></pre>
+<p><code>NotificationCenter</code> is best for one-to-many, loosely coupled events. For watching a single object's property, reach for KVO instead — <code>observe(\.property) { object, change in ... }</code> gives you type-safe old/new values and auto-invalidates when the returned token is released.</p>
+</details>
+<h2>Async load and reload on the main thread</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Fetch rows with async/await and refresh the table safely on the main actor.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">@MainActor
+final class FeedViewController: UITableViewController {
+    private var items: [Item] = []
+    private let service = FeedService()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        Task {
+            do {
+                items = try await service.fetch()
+                tableView.reloadData()
+            } catch {
+                presentError(error)
+            }
+        }
+    }
+}
+</code></pre>
+<p>Marking the controller <code>@MainActor</code> guarantees UI mutations like <code>reloadData()</code> run on the main thread; because the <code>Task</code> inherits that actor, you can <code>await</code> a background fetch and still touch UIKit without a manual <code>DispatchQueue.main</code> hop.</p>
+</details>
+<h2>Apply visual effects</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Style a card with a rounded shadow (using <code>shadowPath</code>), add a gradient layer, and lay a blur over an image.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">// Shadow + rounded corners (keep clipsToBounds = false so the shadow shows)
+card.layer.cornerRadius = 16
+card.layer.shadowColor = UIColor.black.cgColor
+card.layer.shadowOpacity = 0.2
+card.layer.shadowRadius = 12
+card.layer.shadowOffset = CGSize(width: 0, height: 6)
+card.layer.shadowPath = UIBezierPath(
+    roundedRect: card.bounds, cornerRadius: 16).cgPath   // set in layoutSubviews
+
+// Gradient
+let gradient = CAGradientLayer()
+gradient.colors = [UIColor.systemPink.cgColor, UIColor.systemOrange.cgColor]
+gradient.startPoint = CGPoint(x: 0, y: 0)
+gradient.endPoint = CGPoint(x: 1, y: 1)
+gradient.frame = card.bounds        // update in layoutSubviews
+card.layer.insertSublayer(gradient, at: 0)
+
+// Blur
+let blur = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
+blur.frame = imageView.bounds
+blur.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+imageView.addSubview(blur)
+</code></pre>
+<p>Setting an explicit <code>shadowPath</code> lets the system skip computing the shadow from the layer's alpha channel every frame — a big rendering win. <code>CAGradientLayer</code> frames don't auto-resize, so refresh <code>gradient.frame</code> in <code>layoutSubviews()</code>.</p>
+</details>
+<h2>Bridge to SwiftUI</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Embed a SwiftUI view inside a UIKit controller using <code>UIHostingController</code> and view-controller containment.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-swift">import SwiftUI
+
+func embedSwiftUI() {
+    let hosting = UIHostingController(rootView: ProfileView())
+    addChild(hosting)
+    hosting.view.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(hosting.view)
+    NSLayoutConstraint.activate([
+        hosting.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+        hosting.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        hosting.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        hosting.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+    ])
+    hosting.didMove(toParent: self)
+}
+</code></pre>
+<p>Follow the full containment dance — <code>addChild</code>, add the view + constraints, then <code>didMove(toParent:)</code> — so the hosting controller receives lifecycle and trait events correctly. Skipping <code>didMove</code> leaves the child in a half-attached state.</p>
+</details>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="uikit.html#00-overview">UIKit Foundations</a></li>
+<li><a class="xref" href="uikit-internals.html#00-overview">UIKit Internals</a></li>
+<li><a class="xref" href="uikit-workshop.html#00-overview">UIKit Workshop</a></li>
+</ul>
+<p>Prev: <a class="xref" href="#01-swiftui">01-swiftui</a> · Next: <a class="xref" href="#03-shaders">03-shaders</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#01-swiftui"><span>Prev</span>← SwiftUI Quests</a><a href="#03-shaders"><span>Next</span>Shader Quests →</a></div></section>
+<section class="page" id="03-shaders" data-title="Shader Quests" data-num="03" data-hasdemo="0" data-group=""><h1>Shader Quests</h1>
+<p>Write it before you peek. These quests all use modern <strong>stitchable SwiftUI shaders</strong> — <code>[[ stitchable ]]</code> Metal functions loaded through <code>ShaderLibrary</code> and applied with <code>.colorEffect</code>, <code>.distortionEffect</code>, and <code>.layerEffect</code>.</p>
+<blockquote>
+<p><strong>Work top to bottom.</strong> These quests are a ladder — each one assumes the ones above it, so you build skills <em>and</em> see how the pieces fit together.</p>
+</blockquote>
+<h2>Your first colorEffect</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Write a stitchable <code>solidColor</code> shader and fill a <code>Rectangle</code> solid red with <code>.colorEffect</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">#include &lt;metal_stdlib&gt;
+using namespace metal;
+
+[[ stitchable ]]
+half4 solidColor(float2 position, half4 color) {
+    return half4(1.0h, 0.0h, 0.0h, 1.0h);
+}
+</code></pre>
+<pre><code class="language-swift">Rectangle()
+    .frame(width: 200, height: 200)
+    .colorEffect(ShaderLibrary.solidColor())
+</code></pre>
+<p>A <code>colorEffect</code> runs once per pixel: it receives that pixel's <code>position</code> and existing <code>color</code>, and returns the new color. Ignoring the inputs and returning a constant paints everything one flat color.</p>
+</details>
+<h2>A uv gradient</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Fade black on the left to red on the right by normalizing <code>position</code> against the view <code>size</code> you pass in as <code>.float2</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">[[ stitchable ]]
+half4 uvGradient(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;
+    return half4(half(uv.x), 0.0h, 0.0h, 1.0h);
+}
+</code></pre>
+<pre><code class="language-swift">Rectangle()
+    .frame(width: 200, height: 200)
+    .visualEffect { content, proxy in
+        content.colorEffect(
+            ShaderLibrary.uvGradient(.float2(proxy.size))
+        )
+    }
+</code></pre>
+<p><code>position</code> is in pixels, so divide by <code>size</code> to get <code>uv</code> in <code>0...1</code>. Use <code>.visualEffect</code> to read the live layout <code>size</code> from the geometry proxy and hand it to the shader.</p>
+</details>
+<h2>Two-color vertical gradient</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Blend a top color into a bottom color down the view using <code>mix</code> driven by <code>uv.y</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">[[ stitchable ]]
+half4 vGradient(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;
+    half4 top = half4(0.1h, 0.2h, 0.8h, 1.0h);
+    half4 bottom = half4(0.9h, 0.3h, 0.1h, 1.0h);
+    return mix(top, bottom, half(uv.y));
+}
+</code></pre>
+<pre><code class="language-swift">Rectangle()
+    .frame(width: 200, height: 300)
+    .visualEffect { content, proxy in
+        content.colorEffect(
+            ShaderLibrary.vGradient(.float2(proxy.size))
+        )
+    }
+</code></pre>
+<p><code>uv.y</code> runs 0 at the top to 1 at the bottom, so it is a ready-made blend factor. <code>mix(top, bottom, uv.y)</code> gives a linear vertical gradient between the two hard-coded colors.</p>
+</details>
+<h2>Draw a soft circle</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Draw a white circle centered in the view with a soft anti-aliased edge using distance and <code>smoothstep</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">[[ stitchable ]]
+half4 softCircle(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;
+    float d = distance(uv, float2(0.5));
+    float mask = 1.0 - smoothstep(0.3, 0.31, d);
+    return half4(half(mask));
+}
+</code></pre>
+<pre><code class="language-swift">Rectangle()
+    .frame(width: 200, height: 200)
+    .visualEffect { content, proxy in
+        content.colorEffect(
+            ShaderLibrary.softCircle(.float2(proxy.size))
+        )
+    }
+</code></pre>
+<p><code>distance(uv, center)</code> gives a radial field; <code>smoothstep(edge0, edge1, d)</code> turns the hard cutoff into a smooth ramp across one pixel band, which is what makes the edge look anti-aliased.</p>
+</details>
+<h2>Pass parameters</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Tint the view toward a color you pass as <code>.color</code> and control how strong the tint is with an <code>intensity</code> you pass as <code>.float</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">[[ stitchable ]]
+half4 tint(float2 position, half4 color, half4 tintColor, float intensity) {
+    return mix(color, tintColor, half(intensity));
+}
+</code></pre>
+<pre><code class="language-swift">Image(&quot;photo&quot;)
+    .colorEffect(
+        ShaderLibrary.tint(
+            .color(.blue),
+            .float(0.5)
+        )
+    )
+</code></pre>
+<p><code>.color</code> arrives as a <code>half4</code> (premultiplied RGBA), and <code>.float</code> as a scalar. <code>mix(a, b, t)</code> linearly blends the original color toward the tint by <code>intensity</code>.</p>
+</details>
+<h2>Animate with time</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Feed a <code>time</code> value from <code>TimelineView(.animation)</code> into a shader that draws expanding, pulsing rings.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">[[ stitchable ]]
+half4 pulseRings(float2 position, half4 color, float2 size, float time) {
+    float2 uv = position / size;
+    float d = distance(uv, float2(0.5));
+    float rings = sin(d * 40.0 - time * 4.0) * 0.5 + 0.5;
+    return half4(half(rings), 0.0h, half(rings), 1.0h);
+}
+</code></pre>
+<pre><code class="language-swift">TimelineView(.animation) { timeline in
+    let t = timeline.date.timeIntervalSinceReferenceDate
+    Rectangle()
+        .frame(width: 200, height: 200)
+        .visualEffect { content, proxy in
+            content.colorEffect(
+                ShaderLibrary.pulseRings(
+                    .float2(proxy.size),
+                    .float(t)
+                )
+            )
+        }
+}
+</code></pre>
+<p>Shaders have no memory between frames, so animation comes from outside: <code>TimelineView(.animation)</code> re-renders every frame and you pass the current time in. Shifting the phase of <code>sin</code> with <code>time</code> makes the rings travel.</p>
+</details>
+<h2>A distortion ripple</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Use <code>.distortionEffect</code> to push pixels outward in a ring that expands from a tapped <code>origin</code> over <code>time</code>. Remember <code>maxSampleOffset</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">[[ stitchable ]]
+float2 ripple(float2 position, float2 origin, float time) {
+    float d = distance(position, origin);
+    float wave = sin(d * 0.1 - time * 6.0) * exp(-d * 0.01) * 12.0;
+    float2 dir = normalize(position - origin);
+    return position + dir * wave;
+}
+</code></pre>
+<pre><code class="language-swift">Image(&quot;photo&quot;)
+    .distortionEffect(
+        ShaderLibrary.ripple(
+            .float2(tapOrigin),
+            .float(time)
+        ),
+        maxSampleOffset: CGSize(width: 12, height: 12)
+    )
+</code></pre>
+<p>A <code>distortionEffect</code> returns the <em>source</em> position to sample for each output pixel, so you return <code>position + displacement</code>. <code>maxSampleOffset</code> tells SwiftUI the largest distance you'll reach, so it can allocate enough surrounding pixels — undersize it and the ripple gets clipped.</p>
+</details>
+<h2>A layer effect blur/glow</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Use <code>.layerEffect</code> to sample neighboring pixels via <code>SwiftUI::Layer.sample</code> and average them into a soft blur/glow.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">[[ stitchable ]]
+half4 boxBlur(float2 position, SwiftUI::Layer layer) {
+    half4 sum = half4(0.0h);
+    for (float y = -2.0; y &lt;= 2.0; y += 1.0) {
+        for (float x = -2.0; x &lt;= 2.0; x += 1.0) {
+            sum += layer.sample(position + float2(x, y) * 2.0);
+        }
+    }
+    return sum / 25.0;
+}
+</code></pre>
+<pre><code class="language-swift">Image(&quot;photo&quot;)
+    .layerEffect(
+        ShaderLibrary.boxBlur(),
+        maxSampleOffset: CGSize(width: 4, height: 4)
+    )
+</code></pre>
+<p>A <code>layerEffect</code> hands you the whole rendered layer, so you can read <em>other</em> pixels — impossible in a <code>colorEffect</code>. Averaging a grid of <code>layer.sample</code> calls around each pixel is the simplest blur; boosting the sum instead of dividing gives a glow.</p>
+</details>
+<h2>Value noise</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Build a hash-based value noise function and map its output to grayscale.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">float hash(float2 p) {
+    p = fract(p * float2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+float valueNoise(float2 p) {
+    float2 i = floor(p);
+    float2 f = fract(p);
+    float2 u = f * f * (3.0 - 2.0 * f);
+    float a = hash(i);
+    float b = hash(i + float2(1.0, 0.0));
+    float c = hash(i + float2(0.0, 1.0));
+    float d = hash(i + float2(1.0, 1.0));
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+[[ stitchable ]]
+half4 noiseView(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;
+    float n = valueNoise(uv * 8.0);
+    return half4(half(n));
+}
+</code></pre>
+<pre><code class="language-swift">Rectangle()
+    .frame(width: 256, height: 256)
+    .visualEffect { content, proxy in
+        content.colorEffect(
+            ShaderLibrary.noiseView(.float2(proxy.size))
+        )
+    }
+</code></pre>
+<p><code>hash</code> turns a grid corner into a pseudo-random value; <code>valueNoise</code> interpolates between the four surrounding corners with a smooth (<code>3f² - 2f³</code>) curve so the result has no blocky seams. Scaling <code>uv</code> sets the noise frequency.</p>
+</details>
+<h2>fBm</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Sum several octaves of the value noise (fractional Brownian motion) to make soft cloud texture.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">float fbm(float2 p) {
+    float total = 0.0;
+    float amp = 0.5;
+    for (int i = 0; i &lt; 5; i++) {
+        total += valueNoise(p) * amp;
+        p *= 2.0;
+        amp *= 0.5;
+    }
+    return total;
+}
+
+[[ stitchable ]]
+half4 clouds(float2 position, half4 color, float2 size) {
+    float2 uv = position / size;
+    float f = fbm(uv * 4.0);
+    return half4(half(f), half(f), half(f * 1.1), 1.0h);
+}
+</code></pre>
+<pre><code class="language-swift">Rectangle()
+    .frame(width: 256, height: 256)
+    .visualEffect { content, proxy in
+        content.colorEffect(
+            ShaderLibrary.clouds(.float2(proxy.size))
+        )
+    }
+</code></pre>
+<p>fBm layers the same noise at doubling frequency and halving amplitude. Big octaves give the broad shapes, small octaves add fine detail — the sum reads like clouds or smoke.</p>
+</details>
+<h2>Voronoi sparks</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Split the plane into cells, find the distance to the nearest random cell point (F1), and light up bright dots.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">float2 hash2(float2 p) {
+    p = float2(dot(p, float2(127.1, 311.7)),
+               dot(p, float2(269.5, 183.3)));
+    return fract(sin(p) * 43758.5453);
+}
+
+[[ stitchable ]]
+half4 voronoi(float2 position, half4 color, float2 size) {
+    float2 uv = position / size * 8.0;
+    float2 cell = floor(uv);
+    float f1 = 1.0;
+    for (float y = -1.0; y &lt;= 1.0; y += 1.0) {
+        for (float x = -1.0; x &lt;= 1.0; x += 1.0) {
+            float2 neighbor = float2(x, y);
+            float2 point = hash2(cell + neighbor);
+            float d = distance(uv, cell + neighbor + point);
+            f1 = min(f1, d);
+        }
+    }
+    float spark = 1.0 - smoothstep(0.0, 0.08, f1);
+    return half4(half(spark));
+}
+</code></pre>
+<pre><code class="language-swift">Rectangle()
+    .frame(width: 256, height: 256)
+    .visualEffect { content, proxy in
+        content.colorEffect(
+            ShaderLibrary.voronoi(.float2(proxy.size))
+        )
+    }
+</code></pre>
+<p>Each cell owns one random feature point; F1 is the distance to the closest point across the 3×3 neighborhood. Small F1 means you're near a point, so <code>smoothstep</code> near zero paints a bright spark there.</p>
+</details>
+<h2>Domain warping</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Feed fBm back into itself — <code>fbm(uv + fbm(uv))</code> — for a flowing, marbled look.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">[[ stitchable ]]
+half4 domainWarp(float2 position, half4 color, float2 size, float time) {
+    float2 uv = position / size * 4.0;
+    float2 q = float2(fbm(uv + float2(0.0, time * 0.1)),
+                      fbm(uv + float2(5.2, 1.3)));
+    float f = fbm(uv + q);
+    half3 col = mix(half3(0.1h, 0.2h, 0.5h),
+                    half3(0.9h, 0.7h, 0.3h), half(f));
+    return half4(col, 1.0h);
+}
+</code></pre>
+<pre><code class="language-swift">TimelineView(.animation) { timeline in
+    let t = timeline.date.timeIntervalSinceReferenceDate
+    Rectangle()
+        .frame(width: 256, height: 256)
+        .visualEffect { content, proxy in
+            content.colorEffect(
+                ShaderLibrary.domainWarp(
+                    .float2(proxy.size),
+                    .float(t)
+                )
+            )
+        }
+}
+</code></pre>
+<p>Domain warping distorts the <em>input coordinates</em> with noise before sampling more noise. That feedback bends the texture into swirling, organic flows; nudging the warp offset with <code>time</code> makes it drift.</p>
+</details>
+<h2>Pass a touch point in</h2>
+<blockquote>
+<p><strong>🎯 Quest:</strong> Draw a glow that follows the user's finger by passing a <code>.float2</code> tap location from SwiftUI <code>@State</code>.</p>
+</blockquote>
+<details>
+<summary>Show the code</summary>
+<pre><code class="language-cpp">[[ stitchable ]]
+half4 touchGlow(float2 position, half4 color, float2 touch) {
+    float d = distance(position, touch);
+    float glow = exp(-d * 0.01);
+    half4 tint = half4(0.3h, 0.8h, 1.0h, 1.0h) * half(glow);
+    return color + tint;
+}
+</code></pre>
+<pre><code class="language-swift">struct GlowView: View {
+    @State private var touch = CGPoint(x: 100, y: 100)
+
+    var body: some View {
+        Image(&quot;photo&quot;)
+            .colorEffect(
+                ShaderLibrary.touchGlow(.float2(touch))
+            )
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { touch = $0.location }
+            )
+    }
+}
+</code></pre>
+<p>The shader can't read touches itself, so SwiftUI state is the bridge: a <code>DragGesture</code> writes the location into <code>@State</code>, the view re-renders, and the new <code>.float2</code> reaches the shader — an inverse-distance falloff (<code>exp(-d)</code>) makes the glow.</p>
+</details>
+<h2>Related</h2>
+<ul>
+<li><a class="xref" href="shaders.html#00-roadmap">Metal Shaders course</a></li>
+<li><a class="xref" href="shaders.html#18-metal-in-swiftui">Metal in SwiftUI</a></li>
+<li><a class="xref" href="shaders.html#18a-feeding-data-into-shaders">Feeding data in</a></li>
+</ul>
+<p>Prev: <a class="xref" href="#02-uikit">02-uikit</a> · Hub: <a class="xref" href="#00-overview">00-overview</a></p><div class="pager"><a href="#02-uikit"><span>Prev</span>← UIKit Quests</a><span class="sp"></span></div></section>
+  </div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="assets/demos.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+</body>
+</html>

@@ -274,3 +274,14 @@ html[data-theme=dark] .sidebar-show{background:#15171d}
 figure.fig{margin:1.4rem 0;}
 figure.fig svg{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:12px;background:#1e1e20;}
 figure.fig figcaption{font-size:.8rem;color:var(--muted);margin-top:.45rem;text-align:center;line-height:1.45;}
+
+/* --- Code quests: click-to-reveal answers --- */
+.col details{margin:.7rem 0 1.5rem;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.col details > summary{cursor:pointer;list-style:none;padding:.6rem .95rem;font-weight:600;font-size:.9rem;color:#fff;background:#2f9e44;user-select:none;}
+.col details > summary::-webkit-details-marker{display:none;}
+.col details > summary::before{content:"▶  ";font-size:.75em;opacity:.9;}
+.col details[open] > summary::before{content:"▼  ";}
+.col details[open] > summary{background:#268139;}
+.col details > *:not(summary){margin-left:.95rem;margin-right:.95rem;}
+.col details > *:not(summary):last-child{margin-bottom:.9rem;}
+.col blockquote{border-left:3px solid #2f9e44;background:rgba(47,158,68,.07);padding:.5rem .9rem;border-radius:0 8px 8px 0;}
