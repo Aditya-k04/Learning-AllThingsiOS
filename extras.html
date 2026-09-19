@@ -30,6 +30,7 @@
 <h2>The pieces</h2>
 <ol>
 <li><a class="xref" href="#01-hand-rolled-spring-driver">01-hand-rolled-spring-driver</a> — build a real, interruptible spring engine from scratch: the display-link loop, a semi-implicit Euler solver, mid-flight retargeting, and piping the value straight into a Metal uniform.</li>
+<li><a class="xref" href="#02-runtime-reflection-and-private-apis">02-runtime-reflection-and-private-apis</a> — why UIKit is "transparent" to the Obj-C runtime, how to reach underscored classes like <code>_UINavigationBarPalette</code> with <code>NSClassFromString</code>/<code>NSSelectorFromString</code>, how to <em>find</em> private APIs (class-dump the dyld cache, live introspection, LLDB, the View Debugger) — and why you must never ship them.</li>
 </ol>
 <p>More will accrete here over time.</p>
 <h2>Where it connects</h2>
@@ -192,8 +193,122 @@ value(t) = target + e^(−ζω₀t)·[ x₀·cos(ω_d t) + ((v₀+ζω₀x₀)/�
 <li>Who runs the per-frame loop: <a class="xref" href="interaction-math.html#09-what-drives-the-value">What Drives the Value</a> · <a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">The Run Loop</a></li>
 <li>Feeding the value into the GPU: <a class="xref" href="shaders.html#18a-feeding-data-into-shaders">Feeding Data Into Shaders</a></li>
 <li>Apple's built-in version: <a class="xref" href="coreanimation.html#11-caspringanimation">CASpringAnimation</a></li>
+<li>Next: <a class="xref" href="#02-runtime-reflection-and-private-apis">Runtime Reflection &amp; Private APIs</a></li>
 <li>Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Extras</a><span class="sp"></span></div></section>
+</ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Extras</a><a href="#02-runtime-reflection-and-private-apis"><span>Next</span>02 — Runtime Reflection &amp; Private APIs (Reverse-Engineering UIKit) →</a></div></section>
+<section class="page" id="02-runtime-reflection-and-private-apis" data-title="02 — Runtime Reflection &amp; Private APIs (Reverse-Engineering UIKit)" data-num="02" data-hasdemo="0" data-group=""><h1>02 — Runtime Reflection &amp; Private APIs (Reverse-Engineering UIKit)</h1>
+<p><em>By the end you'll understand why UIKit is "transparent," how to find its hidden classes and methods, and how to call them at runtime — plus exactly when you must not ship it.</em></p>
+<h2>Start here — the plain idea</h2>
+<p>Most of Apple's frameworks — UIKit, Foundation, most of the stack you touch daily — are built on <strong>Objective-C</strong>. Thank the NeXT lineage (John Sculley pushed Jobs out of Apple, Jobs built NeXT, Apple bought NeXT, and NeXTSTEP <em>became</em> macOS/iOS). Objective-C's defining trait is that it's <strong>dynamic</strong>: methods aren't hard-wired at compile time, they're looked up <em>by name</em> at runtime through a message dispatcher. Every method call is really "send the message named <code>x</code> to this object."</p>
+<p>That one fact makes UIKit <strong>more-or-less transparent, for those with eyes to see.</strong> If a method is chosen at runtime by its <em>string name</em>, then you can choose that string yourself — including names Apple never put in a public header. The public API is just the part Apple <em>documented</em>; the runtime happily exposes the rest. Reverse-engineering UIKit, in its most straightforward form, is exactly this: <strong>runtime reflection using Objective-C selectors.</strong></p>
+<p>The catch, stated up front so it colors everything below: this is a superb way to <em>understand</em> the platform and prototype, but <strong>shipping private API to the App Store gets you rejected.</strong> Treat this as X-ray vision for learning, not a shipping strategy. (More on the honest limits at the end.)</p>
+<h2>The runtime, in one breath</h2>
+<p>An Objective-C method call <code>[obj doThing:x]</code> compiles to <code>objc_msgSend(obj, @selector(doThing:), x)</code>. Three movable parts:</p>
+<ul>
+<li><strong>The class</strong> — an object itself, findable by name.</li>
+<li><strong>The selector</strong> — the method's name as a token (<code>doThing:</code>), also just a string under the hood.</li>
+<li><strong>The dispatcher</strong> — <code>objc_msgSend</code>, which looks up the selector in the class's method table at call time.</li>
+</ul>
+<p>Because the class and the selector are both resolvable <strong>from strings at runtime</strong>, nothing in the binary actually hides them. Swift never lost this: <code>import ObjectiveC</code> (or just Foundation) and you have <code>NSClassFromString</code>, <code>NSSelectorFromString</code>, <code>perform(_:)</code>, <code>responds(to:)</code>, <code>objc_copyClassList</code>, <code>class_copyMethodList</code>, and the rest of the runtime.</p>
+<figure class="fig">
+<svg viewBox="0 0 780 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="From a name string to a live private call">
+  <rect x="20" y="100" width="150" height="60" rx="8" fill="#2a2d38"/>
+  <text x="95" y="126" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">"_UINavBarPalette"</text>
+  <text x="95" y="144" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">a string</text>
+
+  <rect x="215" y="100" width="160" height="60" rx="8" fill="#3a3420" stroke="#c99a3a" stroke-width="1.5"/>
+  <text x="295" y="126" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">NSClassFromString</text>
+  <text x="295" y="144" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">→ the Class object</text>
+
+  <rect x="420" y="100" width="160" height="60" rx="8" fill="#3a3420" stroke="#c99a3a" stroke-width="1.5"/>
+  <text x="500" y="122" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">NSSelectorFromString</text>
+  <text x="500" y="140" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">+ perform / msgSend</text>
+
+  <rect x="625" y="100" width="135" height="60" rx="8" fill="#2a2d38"/>
+  <text x="692" y="126" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">live private</text>
+  <text x="692" y="144" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">object / call</text>
+
+  <line x1="170" y1="130" x2="213" y2="130" stroke="#9aa0aa" stroke-width="2"/><path d="M213 130 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="375" y1="130" x2="418" y2="130" stroke="#9aa0aa" stroke-width="2"/><path d="M418 130 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="580" y1="130" x2="623" y2="130" stroke="#9aa0aa" stroke-width="2"/><path d="M623 130 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <text x="390" y="40" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">a name is all it takes — the runtime resolves the rest</text>
+</svg>
+<figcaption>Dynamic dispatch means a class and a method are just names. Supply the names and the runtime hands you the object and the call.</figcaption>
+</figure>
+
+<h2>The linchpin: picking selector strings at runtime</h2>
+<p>Here's the whole move in Swift. You never linked against a private header; you <em>named</em> the class and method as strings:</p>
+<pre><code class="language-swift">import UIKit
+
+// 1. Resolve an underscored, undocumented class by its name.
+guard let paletteClass = NSClassFromString(&quot;_UINavigationBarPalette&quot;) as? NSObject.Type
+else { return }   // class not found on this OS version → bail gracefully
+
+// 2. alloc, then call its (discovered) designated initializer that takes a content view.
+let allocated = paletteClass.perform(NSSelectorFromString(&quot;alloc&quot;))?.takeUnretainedValue()
+let initSel   = NSSelectorFromString(&quot;initWithContentView:&quot;)
+guard let palette = allocated?.perform(initSel, with: myBottomBar)?.takeUnretainedValue()
+else { return }
+
+// 3. Attach it to the nav bar via a private UINavigationItem method — guarded.
+let attachSel = NSSelectorFromString(&quot;_setBottomPalette:&quot;)
+if navigationItem.responds(to: attachSel) {
+    navigationItem.perform(attachSel, with: palette)
+}
+</code></pre>
+<p>That's it — <code>_UINavigationBarPalette</code> (Seb's favourite API) is one of these underscored views. It lets you attach <strong>arbitrary views onto a navigation bar</strong> but <em>without</em> losing the useful accessibility, size transitions, and automatic layout that make most hand-rolled chrome look so Temu-esque. Apple leans on it internally in Calendar, Fitness, Photos, and Messages — and jealously guards it from mortals. With reflection, the guard is just a locked door with the key under the mat.</p>
+<p>Two honest wrinkles in that snippet:</p>
+<ul>
+<li><strong>Memory &amp; types.</strong> <code>perform(_:)</code> returns an <code>Unmanaged</code>/<code>AnyObject</code>, and it can't express non-object arguments (a raw <code>CGFloat</code>, a <code>Bool</code>) or multi-argument selectors cleanly. For anything beyond one object argument, the robust patterns are an <strong><code>@objc protocol</code></strong> that declares the private method signature (then <code>unsafeBitCast</code> the instance to it and call it type-safely), or <code>NSInvocation</code> (via a small Obj-C shim), or <code>unsafeBitCast</code>-ing <code>objc_msgSend</code> to a correctly-typed function pointer.</li>
+<li><strong>Exact selector names.</strong> <code>initWithContentView:</code> and <code>_setBottomPalette:</code> are what you <em>discover</em> (next section), not guess. Different iOS versions rename things.</li>
+</ul>
+<h2>How to actually <em>find</em> these things</h2>
+<p>Reflection lets you <em>call</em> a hidden API; you still have to learn its name. Four escalating techniques:</p>
+<p><strong>1. Dump the headers (the map).</strong> Every system framework is packed into one big blob, the <strong>dyld shared cache</strong> (<code>/System/Library/Caches/com.apple.dyld/…</code> on device; the toolchains ship copies). Tools read the Objective-C metadata out of it and regenerate <code>.h</code> files with every class, method, and ivar — public <em>and</em> private:</p>
+<pre><code class="language-bash"># Elias Limneos' classdump-dyld, or blacktop's ipsw:
+ipsw class-dump  dyld_shared_cache_arm64e  UIKitCore --headers -o ./headers/
+grep -R &quot;_UINavigationBarPalette&quot; ./headers/   # read its real init &amp; methods
+</code></pre>
+<p>This is the single highest-leverage step: you get UIKit's <em>actual</em> interface, underscores and all, and can read what each private method takes and returns.</p>
+<p><strong>2. Introspect at runtime (the live probe).</strong> From inside a running app you can list what's really there:</p>
+<pre><code class="language-swift">var count: UInt32 = 0
+if let cls = NSClassFromString(&quot;_UINavigationBarPalette&quot;),
+   let methods = class_copyMethodList(cls, &amp;count) {
+    for i in 0..&lt;Int(count) {
+        print(NSStringFromSelector(method_getName(methods[i])))
+    }
+    free(methods)
+}
+</code></pre>
+<p><code>objc_copyClassList</code>, <code>class_copyMethodList</code>, <code>class_copyIvarList</code>, and <code>class_getSuperclass</code> let you walk the entire live type graph — useful when headers are stale.</p>
+<p><strong>3. Spelunk in the debugger (the interactive way).</strong> Pause in LLDB and poke: <code>po type(of: someView)</code> reveals the real <code>_UISomething</code> class; the <strong>View Debugger</strong> (Debug ▸ View Hierarchy) shows Apple's private view classes in any running app — open Calendar or Photos in the simulator and read the class names off the inspector. <code>image lookup -rn _UINavigationBarPalette</code> and <code>expression</code> let you call methods live.</p>
+<p><strong>4. Read Apple's own apps.</strong> The private views Apple uses are visible in the view hierarchy of <em>their</em> apps. Spotting <code>_UINavigationBarPalette</code> under Photos' nav bar is how you learn it exists in the first place.</p>
+<p>(One modern caveat: <strong>Swift-only</strong> frameworks have no Obj-C metadata, so class-dump comes up empty — there you fall back to <code>nm</code> + <code>swift demangle</code> on the binary to recover symbol names. But UIKit is Obj-C, so it's wide open.)</p>
+<h2>The honest limits — read this before you get ideas</h2>
+<ul>
+<li><strong>App Store review will reject it.</strong> Static analysis scans your binary for known-private selector <em>strings</em>. Obfuscating them (building the string at runtime, XOR'ing it) is itself against the rules and a cat-and-mouse you lose. Private API is fine for: <strong>learning, prototypes, internal/enterprise distribution, jailbreak tweaks, and understanding the platform</strong> — not the public App Store.</li>
+<li><strong>It's undocumented, so it breaks.</strong> A method that exists in iOS 26 can vanish or change signature in 27. <em>Always</em> feature-detect (<code>NSClassFromString != nil</code>, <code>responds(to:)</code>) and have a public-API fallback, so a missing private path degrades instead of crashing.</li>
+<li><strong>It can crash hard.</strong> Wrong argument types to <code>objc_msgSend</code> corrupt the stack. Verify signatures from the dumped headers, not vibes.</li>
+</ul>
+<h2>Why learn it even if you never ship it</h2>
+<p>Reverse-engineering UIKit this way is the fastest route to <em>actually understanding it</em>. You see the real class graph (how <code>UINavigationBar</code>, its palettes, and its layout guides truly relate), you discover the well-designed private APIs Apple uses internally (and can often reimplement the <em>idea</em> with public API), and you stop treating the framework as a black box. It's the same "lid off" instinct as the <a class="xref" href="#01-hand-rolled-spring-driver">hand-rolled spring engine</a> — build/inspect the machine, don't just consume it.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Objective-C is dynamic</strong> = methods are dispatched by <em>name</em> at runtime via <code>objc_msgSend</code>, not fixed at compile time — which is why UIKit is inspectable.</li>
+<li><strong>class + selector are strings</strong> = <code>NSClassFromString</code> / <code>NSSelectorFromString</code> resolve them at runtime, including underscored/private ones.</li>
+<li><strong><code>perform(_:)</code> / <code>@objc protocol</code> / typed <code>objc_msgSend</code></strong> = the ways to actually <em>call</em> a discovered method (with rising robustness for non-object args).</li>
+<li><strong><code>_UINavigationBarPalette</code></strong> = a private view for attaching custom content under the nav bar while keeping a11y, size transitions, and layout — Apple uses it everywhere, guards it from you.</li>
+<li><strong>Finding names</strong> = class-dump the <strong>dyld shared cache</strong> for headers, <code>class_copyMethodList</code> to introspect live, LLDB + the View Debugger to spelunk, and read Apple's own apps.</li>
+<li><strong>Guard everything</strong> = <code>NSClassFromString != nil</code> + <code>responds(to:)</code> + a public fallback, because private API is undocumented and version-fragile.</li>
+<li><strong>Don't ship it</strong> = App Store review rejects private API; this is for learning, prototypes, enterprise, and jailbreak — not the public store.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>The framework you're prying open: <a class="xref" href="uikit-internals.html#00-overview">UIKit Internals</a> — esp. <a class="xref" href="uikit-internals.html#02-responder-chain">the responder chain</a> and <a class="xref" href="uikit-internals.html#01-view-controller-lifecycle">VC lifecycle</a>.</li>
+<li>Same "lid off" spirit: <a class="xref" href="#01-hand-rolled-spring-driver">A Hand-Rolled Spring Engine</a>.</li>
+<li>Source &amp; inspiration: Jacob Bartlett, <em>Forbidden iOS</em> (blog.jacobstechtavern.com); tooling: Elias Limneos' <code>classdump-dyld</code>, blacktop's <code>ipsw</code>.</li>
+<li>Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#01-hand-rolled-spring-driver"><span>Prev</span>← 01 — A Hand-Rolled Spring Engine</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
