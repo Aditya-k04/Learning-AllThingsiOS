@@ -31,6 +31,7 @@
 <ol>
 <li><a class="xref" href="#01-hand-rolled-spring-driver">01-hand-rolled-spring-driver</a> — build a real, interruptible spring engine from scratch: the display-link loop, a semi-implicit Euler solver, mid-flight retargeting, and piping the value straight into a Metal uniform.</li>
 <li><a class="xref" href="#02-runtime-reflection-and-private-apis">02-runtime-reflection-and-private-apis</a> — why UIKit is "transparent" to the Obj-C runtime, how to reach underscored classes like <code>_UINavigationBarPalette</code> with <code>NSClassFromString</code>/<code>NSSelectorFromString</code>, how to <em>find</em> private APIs (class-dump the dyld cache, live introspection, LLDB, the View Debugger) — and why you must never ship them.</li>
+<li><a class="xref" href="#03-stylised-3d-maps-on-mapkit">03-stylised-3d-maps-on-mapkit</a> — how a toy-world Apple Maps render is built: forensic pixel analysis, the VectorKit render stack, and the full swizzling technique for injecting custom Metal into Apple's own private render pass (concrete-class discovery, memoryless-depth substitution, camera &amp; logarithmic-depth recovery, material override) — with the shippable Mapbox/MapLibre alternatives.</li>
 </ol>
 <p>More will accrete here over time.</p>
 <h2>Where it connects</h2>
@@ -193,7 +194,7 @@ value(t) = target + e^(−ζω₀t)·[ x₀·cos(ω_d t) + ((v₀+ζω₀x₀)/�
 <li>Who runs the per-frame loop: <a class="xref" href="interaction-math.html#09-what-drives-the-value">What Drives the Value</a> · <a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">The Run Loop</a></li>
 <li>Feeding the value into the GPU: <a class="xref" href="shaders.html#18a-feeding-data-into-shaders">Feeding Data Into Shaders</a></li>
 <li>Apple's built-in version: <a class="xref" href="coreanimation.html#11-caspringanimation">CASpringAnimation</a></li>
-<li>Next: <a class="xref" href="#02-runtime-reflection-and-private-apis">Runtime Reflection &amp; Private APIs</a></li>
+<li>Next: <a class="xref" href="#02-runtime-reflection-and-private-apis">Runtime Reflection &amp; Private APIs</a> → <a class="xref" href="#03-stylised-3d-maps-on-mapkit">Stylised 3D Maps on MapKit</a></li>
 <li>Hub: <a class="xref" href="#00-overview">00-overview</a></li>
 </ul><div class="pager"><a href="#00-overview"><span>Prev</span>← Extras</a><a href="#02-runtime-reflection-and-private-apis"><span>Next</span>02 — Runtime Reflection &amp; Private APIs (Reverse-Engineering UIKit) →</a></div></section>
 <section class="page" id="02-runtime-reflection-and-private-apis" data-title="02 — Runtime Reflection &amp; Private APIs (Reverse-Engineering UIKit)" data-num="02" data-hasdemo="0" data-group=""><h1>02 — Runtime Reflection &amp; Private APIs (Reverse-Engineering UIKit)</h1>
@@ -307,8 +308,614 @@ if let cls = NSClassFromString(&quot;_UINavigationBarPalette&quot;),
 <li>The framework you're prying open: <a class="xref" href="uikit-internals.html#00-overview">UIKit Internals</a> — esp. <a class="xref" href="uikit-internals.html#02-responder-chain">the responder chain</a> and <a class="xref" href="uikit-internals.html#01-view-controller-lifecycle">VC lifecycle</a>.</li>
 <li>Same "lid off" spirit: <a class="xref" href="#01-hand-rolled-spring-driver">A Hand-Rolled Spring Engine</a>.</li>
 <li>Source &amp; inspiration: Jacob Bartlett, <em>Forbidden iOS</em> (blog.jacobstechtavern.com); tooling: Elias Limneos' <code>classdump-dyld</code>, blacktop's <code>ipsw</code>.</li>
+<li>Prev: <a class="xref" href="#01-hand-rolled-spring-driver">A Hand-Rolled Spring Engine</a> · Next: <a class="xref" href="#03-stylised-3d-maps-on-mapkit">Stylised 3D Maps on MapKit</a></li>
 <li>Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#01-hand-rolled-spring-driver"><span>Prev</span>← 01 — A Hand-Rolled Spring Engine</a><span class="sp"></span></div></section>
+</ul><div class="pager"><a href="#01-hand-rolled-spring-driver"><span>Prev</span>← 01 — A Hand-Rolled Spring Engine</a><a href="#03-stylised-3d-maps-on-mapkit"><span>Next</span>03 — Stylised 3D Maps on Apple MapKit →</a></div></section>
+<section class="page" id="03-stylised-3d-maps-on-mapkit" data-title="03 — Stylised 3D Maps on Apple MapKit" data-num="03" data-hasdemo="0" data-group=""><h1>03 — Stylised 3D Maps on Apple MapKit</h1>
+<p><em>By the end you'll understand exactly how a "toy-world" map render — purple roofs, blobby trees, tiny cars — is painted on top of Apple's own 3D map, why it works, how to build it rung by rung, and why you can't ship it. We start with pixels and end inside Apple's Metal render pass.</em></p>
+<h2>Start here — the one-line answer</h2>
+<p>You've probably seen the clip: Apple Maps, but recoloured into a soft, saturated toy world — cream turned warm, roofs gone blue-purple, foliage a cartoon green, little vehicles rolling around the Louvre. The instinct is "someone wrote a 3D game engine" or "someone slapped a filter on the map." <strong>Both are wrong</strong>, and the whole lesson lives in why.</p>
+<p>Here's the real answer in one breath: <strong>the geometry, labels, trees, street furniture and landmarks are all Apple's</strong> — from MapKit's <em>Detailed City Experience</em>. The toy palette comes from <strong>custom Metal shaders injected into Apple's own private render pass</strong>, by swizzling the Metal command-buffer and encoder classes. There is <strong>no public API</strong> for this. It's a technique to <em>learn from and demo with</em>, not to ship — but everything you learn building it transfers directly to map SDKs that expose the same hook legitimately.</p>
+<p>This lesson is the applied sequel to <a class="xref" href="#02-runtime-reflection-and-private-apis">Runtime Reflection &amp; Private APIs</a>. That one taught you <em>how</em> to reach into a private framework; this one is a full, real-world case study of doing it to the most beautiful 3D data on the platform. We'll climb slowly — forensics first, then the stack, then the hook, then the hard math — so each rung is solid before the next.</p>
+<h2>1. Detective work first — how do we even know?</h2>
+<p>Before any theory, the evidence. The right move with a mystery like this is the one a good reverse engineer always makes: <strong>don't trust your eye, sample the pixels.</strong> Decode the recording to frames and read actual RGB values, because the frame that disproves the obvious readings is easy to miss at full speed.</p>
+<p><strong>The frame that settles it.</strong> At one moment there's a feathered polygon around the Louvre where the stylised render sits directly on top of stock Apple Maps. <em>Inside</em> the polygon: warm ground, purple-blue roofs, saturated green. <em>Outside</em>: Apple's exact default cream land, grey buildings, standard blue water. Same labels, same roads, same geometry — different look, with a visible content boundary between them.</p>
+<figure class="fig">
+<img src="assets/mapkit-fig1-louvre.png" alt="Apple Maps at the Louvre with a feathered polygon: stylised toy palette inside, Apple's default palette outside" loading="lazy">
+<figcaption>Figure 1 (t = 1.00 s). The feathered boundary around the Louvre: purple-blue roofs, orange-tan ground and saturated green inside; Apple's stock cream land, grey buildings and blue water outside. Same labels, same roads, same geometry.</figcaption>
+</figure>
+
+<p>That single frame kills two hypotheses at once:</p>
+<p><strong>It's not a fullscreen filter.</strong> If a shader were applied over the whole map view (SwiftUI's <code>.colorEffect</code>, a <code>CIFilter</code>, a <code>CALayer</code> compositing filter), the grade would be <em>uniform</em> across the viewport. It isn't. Sample it and you see the proof:</p>
+<figure class="fig">
+<svg viewBox="0 0 720 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Measured RGB inside vs outside the polygon">
+  <text x="20" y="28" fill="#cfcfcf" font-family="sans-serif" font-size="13" font-weight="bold">What the pixels say</text>
+  <!-- outside swatches -->
+  <text x="20" y="60" fill="#8a8b93" font-family="sans-serif" font-size="12">OUTSIDE (untouched Apple Maps)</text>
+  <rect x="20" y="70" width="70" height="40" rx="4" fill="rgb(180,230,247)"/>
+  <text x="100" y="88" fill="#cfcfcf" font-family="monospace" font-size="11">water 180,230,247</text>
+  <rect x="320" y="70" width="70" height="40" rx="4" fill="rgb(224,217,200)"/>
+  <text x="400" y="88" fill="#cfcfcf" font-family="monospace" font-size="11">land 224,217,200</text>
+  <!-- inside swatches -->
+  <text x="20" y="145" fill="#8a8b93" font-family="sans-serif" font-size="12">INSIDE (graded)</text>
+  <rect x="20" y="155" width="70" height="40" rx="4" fill="rgb(215,188,159)"/>
+  <text x="100" y="173" fill="#cfcfcf" font-family="monospace" font-size="11">ground 215,188,159</text>
+  <rect x="320" y="155" width="70" height="40" rx="4" fill="rgb(182,151,126)"/>
+  <text x="400" y="173" fill="#cfcfcf" font-family="monospace" font-size="11">roof 182,151,126</text>
+  <text x="20" y="220" fill="#c99a3a" font-family="sans-serif" font-size="11">UI chrome still peaks at 255,255,255 → the effect is NOT fullscreen.</text>
+</svg>
+<figcaption>The 2D map outside the boundary keeps Apple's exact defaults; only content inside is shifted. A screen-space filter cannot do that — it would need to know where the 3D mesh ends, which a fragment shader working on the final image simply doesn't know.</figcaption>
+</figure>
+
+<p><strong>It's not a custom engine, either.</strong> The geometry is unmistakably Apple's: the Louvre pyramid's diamond lattice and its fountains (an Apple landmark mesh), the generic street-furniture kit (lamp posts, bollards, benches, bins, tiny pedestrians), road labels painted flat onto the ground in outlined caps, and POI pins with Apple's circular category glyphs and Apple's POI dataset. Nobody rebuilds all of that <em>and</em> re-implements Apple's label-layout engine to match. He's <strong>wearing Apple's world, not building one.</strong></p>
+<figure class="fig">
+<img src="assets/mapkit-fig2-foliage.png" alt="Apple's DCE foliage and street furniture rendered in a toy palette: blobby tree clusters on square dirt bases, benches, planters, a pedestrian" loading="lazy">
+<figcaption>Figure 2 (t = 3.40 s). Apple's own DCE foliage and street furniture — blobby tree clusters on square dirt bases, benches, planters, a pedestrian — rendered in a palette Apple does not ship. The asset set is Apple's; only the shading is not.</figcaption>
+</figure>
+
+<p><strong>And it's not a tile overlay.</strong> <code>MKTileOverlay</code> is 2D raster images in a Mercator grid. This is pitched 3D with correct depth ordering against buildings. Rules itself out.</p>
+<p><strong>The clincher.</strong> That feathered boundary is <em>Apple's own streaming boundary</em> — DCE meshes load per-region and cross-fade in. Because the custom shading is attached to the draws that render that mesh, the restyle inherits Apple's fade <strong>for free</strong>. That's the strongest positive evidence for render-pass interception rather than any overlay: a layer you composited yourself would never line up with Apple's fade that perfectly.</p>
+<blockquote>
+<p><strong>The general lesson, stated once up front:</strong> when you can't read the spec, <em>measure the system</em>. Sampling pixels instead of trusting your eye is the same skill we'll use later to recover Apple's secret depth formula. Hold onto it.</p>
+</blockquote>
+<h2>2. How Apple Maps actually renders</h2>
+<p>You can't hook something whose shape you don't understand. Here's the stack — all of which you can verify yourself in a GPU frame capture (section 8).</p>
+<figure class="fig">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The MapKit rendering stack">
+  <rect x="250" y="20" width="220" height="42" rx="6" fill="#2a2d38"/>
+  <text x="360" y="40" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle" font-weight="bold">MKMapView</text>
+  <text x="360" y="55" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">thin public façade</text>
+
+  <rect x="250" y="92" width="220" height="42" rx="6" fill="#3a2030" stroke="#c0567a" stroke-width="1.5"/>
+  <text x="360" y="112" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle" font-weight="bold">VectorKit</text>
+  <text x="360" y="127" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">private renderer (also backs Maps.app)</text>
+
+  <rect x="250" y="164" width="220" height="38" rx="6" fill="#2a2d38"/>
+  <text x="360" y="188" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">CAMetalLayer → drawable</text>
+
+  <!-- passes -->
+  <rect x="60" y="232" width="150" height="46" rx="6" fill="#23252e"/>
+  <text x="135" y="252" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">shadow / aux</text>
+  <text x="135" y="268" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">passes</text>
+  <rect x="285" y="232" width="150" height="46" rx="6" fill="#20301f" stroke="#2f9e44" stroke-width="2"/>
+  <text x="360" y="252" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle" font-weight="bold">MAIN SCENE pass</text>
+  <text x="360" y="268" fill="#2f9e44" font-family="sans-serif" font-size="10" text-anchor="middle">← the one you want</text>
+  <rect x="510" y="232" width="150" height="46" rx="6" fill="#23252e"/>
+  <text x="585" y="252" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">label / compositing</text>
+  <text x="585" y="268" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">passes</text>
+
+  <line x1="360" y1="62" x2="360" y2="90" stroke="#9aa0aa" stroke-width="2"/><path d="M360 90 l-4 -8 l8 0 z" fill="#9aa0aa"/>
+  <line x1="360" y1="134" x2="360" y2="162" stroke="#9aa0aa" stroke-width="2"/><path d="M360 162 l-4 -8 l8 0 z" fill="#9aa0aa"/>
+  <line x1="360" y1="202" x2="360" y2="230" stroke="#9aa0aa" stroke-width="2"/>
+  <line x1="135" y1="214" x2="585" y2="214" stroke="#555" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="135" y1="214" x2="135" y2="230" stroke="#555" stroke-width="1"/>
+  <line x1="585" y1="214" x2="585" y2="230" stroke="#555" stroke-width="1"/>
+</svg>
+<figcaption>MKMapView is a façade over VectorKit, a private framework. Each frame VectorKit acquires a drawable from a CAMetalLayer and encodes a sequence of render passes. Your target is the one main scene pass.</figcaption>
+</figure>
+
+<p><strong>Identifying the main scene pass</strong> is the first real skill. It's the pass that has <em>both</em>: a <strong>depth attachment</strong>, and a colour attachment (or MSAA resolve target) that is <strong>the layer's current drawable</strong>. Those two properties together are its fingerprint.</p>
+<h3>The three non-obvious properties of that pass</h3>
+<p>These three are the <em>whole difficulty</em> of the technique, and none of them is documented — all three are recovered by experiment. Understanding them now will make the later code make sense.</p>
+<p><strong>(a) The depth buffer is memoryless.</strong> On Apple GPUs, depth lives in on-chip tile memory and is never written back to system RAM — the attachment's <code>storageMode</code> is <code>.memoryless</code> and/or its <code>storeAction</code> is <code>.dontCare</code>. You can render <em>against</em> it inside the pass, but you cannot read it <em>after</em> the pass to learn how it's encoded. (We fix this in §5.)</p>
+<p><strong>(b) Depth is logarithmic.</strong> Most engines write <code>z/w</code> from a standard perspective matrix, giving depth proportional to <code>1/d</code>. VectorKit does not. The recovered mapping fits <code>depth(d) = a + b·ln(d)</code> far better than <code>a + b/d</code>. This makes sense for a map — you need usable precision from a metre away out to the horizon, across many orders of magnitude. <strong>If you emit ordinary clip-space z, your geometry will z-fight or float through buildings at most distances.</strong> You must emit <em>their</em> encoding.</p>
+<p><strong>(c) The camera is ~29.6° vertical FOV with a principal-point offset.</strong> Not 60°, not 45°. And the principal point is nudged vertically, so the horizon doesn't sit where a textbook symmetric frustum would put it — presumably so that at high pitch more of the ground ahead stays visible. You recover both numerically rather than guessing (§6).</p>
+<h3>Detailed City Experience — the free lunch</h3>
+<p>DCE is Apple's hand-built 3D data: detailed building geometry, landmark meshes, trees, street furniture, elevation. It shipped in Maps.app in iOS 15 and was opened to third-party MapKit apps in <strong>iOS 16</strong> via <code>MKStandardMapConfiguration(elevationStyle: .realistic)</code>. Coverage is a specific city list (Paris, London, New York, San Francisco, Los Angeles and others — Apple publishes it on its iOS Feature Availability page).</p>
+<p>Internalise this: <strong>the expensive part of the effect is free.</strong> Apple spent years and a fortune building that world. You're buying a repaint, not a construction project. That is the entire reason this technique is worth the pain.</p>
+<h2>3. The public ceiling — what you <em>can</em> ship</h2>
+<p>Know exactly where the wall is before you climb over it, because a surprising amount is legitimate and you should exhaust it first.</p>
+<pre><code class="language-swift">let config = MKStandardMapConfiguration(elevationStyle: .realistic,
+                                        emphasisStyle: .muted)
+config.showsTraffic = false
+config.pointOfInterestFilter = .init(including: [.cafe, .restaurant])
+mapView.preferredConfiguration = config
+
+mapView.overrideUserInterfaceStyle = .dark          // night palette
+mapView.camera = MKMapCamera(lookingAtCenter: coord,
+                             fromDistance: 1400,
+                             pitch: 55,
+                             heading: 210)
+</code></pre>
+<p>What the public API gives you:</p>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>API</th>
+<th>Since</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3D buildings, terrain, landmarks</td>
+<td><code>elevationStyle: .realistic</code></td>
+<td>iOS 16</td>
+</tr>
+<tr>
+<td>Overall map emphasis (muted / default)</td>
+<td><code>emphasisStyle</code></td>
+<td>iOS 16</td>
+</tr>
+<tr>
+<td>Day / night palette</td>
+<td><code>overrideUserInterfaceStyle</code></td>
+<td>iOS 13</td>
+</tr>
+<tr>
+<td>Which POI categories appear</td>
+<td><code>MKPointOfInterestFilter</code></td>
+<td>iOS 13</td>
+</tr>
+<tr>
+<td>Custom views for Apple's POIs</td>
+<td><code>MKMapFeatureAnnotation</code>, <code>selectableMapFeatures</code></td>
+<td>iOS 16</td>
+</tr>
+<tr>
+<td>Your own 2D raster tiles</td>
+<td><code>MKTileOverlay</code></td>
+<td>iOS 7</td>
+</tr>
+<tr>
+<td>2D vector overlays</td>
+<td><code>MKOverlayRenderer</code> &amp; friends</td>
+<td>iOS 7</td>
+</tr>
+<tr>
+<td>World → screen projection</td>
+<td><code>convert(_:toPointTo:)</code></td>
+<td>iOS 3</td>
+</tr>
+<tr>
+<td>Camera limits</td>
+<td><code>cameraBoundary</code>, <code>cameraZoomRange</code></td>
+<td>iOS 13</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What you do <em>not</em> get.</strong> Apple Developer Technical Support has said it plainly: <em>"There isn't an API to add your own 3D features to the map."</em> Same for materials, palettes, lighting, or any hook into the render pass. Nothing in iOS 26 changes this.</p>
+<p><strong>The cheap near-miss.</strong> SwiftUI's <code>.colorEffect</code> / <code>.layerEffect</code> (iOS 17+) applies a Metal fragment function to a <em>rasterised</em> view. Wrap <code>MKMapView</code> in a <code>UIViewRepresentable</code> and grade it — do try it, it takes twenty minutes and teaches you something. But it (1) grades <em>everything</em> uniformly, including your own annotations and UI; (2) has access only to final colour — no depth, normals, or material identity, so no "blue roofs, green trees" by category; and (3) forces an offscreen rasterisation of a continuously-animating Metal view every frame. The detective work in §1 already proved this isn't what the video does.</p>
+<h2>4. The big idea: inject into Apple's own pass</h2>
+<p>Here is the pivot from "legitimate" to "forbidden," and it's conceptually simple. Instead of drawing <em>over</em> the map, you get your Metal draws <em>inside the same render pass VectorKit is already encoding</em>. You do that by <strong>swizzling</strong> (method-replacing — see <a class="xref" href="#02-runtime-reflection-and-private-apis">lesson 02</a>) the Metal objects, so that at the moment Apple is about to finish its main pass, <em>your</em> encode runs first.</p>
+<p>The payoff of being inside the pass: you <strong>share Apple's depth buffer</strong>, so occlusion is free in both directions — a sphere you add is correctly hidden behind a building, and correctly hides a tree behind it. No compositing, no manual masking.</p>
+<figure class="fig">
+<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Where the swizzle hooks sit in the frame">
+  <text x="20" y="26" fill="#cfcfcf" font-family="sans-serif" font-size="13" font-weight="bold">The three hooks, per frame</text>
+
+  <rect x="20" y="50" width="200" height="50" rx="6" fill="#3a3420" stroke="#c99a3a" stroke-width="1.5"/>
+  <text x="120" y="72" fill="#cfcfcf" font-family="monospace" font-size="11" text-anchor="middle">CAMetalLayer</text>
+  <text x="120" y="88" fill="#cfcfcf" font-family="monospace" font-size="11" text-anchor="middle">.nextDrawable()</text>
+  <text x="120" y="118" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">"this renders to screen"</text>
+
+  <rect x="260" y="50" width="200" height="50" rx="6" fill="#3a3420" stroke="#c99a3a" stroke-width="1.5"/>
+  <text x="360" y="72" fill="#cfcfcf" font-family="monospace" font-size="10" text-anchor="middle">makeRenderCommand</text>
+  <text x="360" y="88" fill="#cfcfcf" font-family="monospace" font-size="10" text-anchor="middle">Encoder(descriptor:)</text>
+  <text x="360" y="118" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">classify + swap depth</text>
+
+  <rect x="500" y="50" width="200" height="50" rx="6" fill="#3a3420" stroke="#c99a3a" stroke-width="1.5"/>
+  <text x="600" y="72" fill="#cfcfcf" font-family="monospace" font-size="11" text-anchor="middle">encoder</text>
+  <text x="600" y="88" fill="#cfcfcf" font-family="monospace" font-size="11" text-anchor="middle">.endEncoding()</text>
+  <text x="600" y="118" fill="#8a8b93" font-family="sans-serif" font-size="10" text-anchor="middle">draw YOUR stuff, then call through</text>
+
+  <line x1="220" y1="75" x2="258" y2="75" stroke="#9aa0aa" stroke-width="2"/><path d="M258 75 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="460" y1="75" x2="498" y2="75" stroke="#9aa0aa" stroke-width="2"/><path d="M498 75 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+
+  <rect x="140" y="160" width="440" height="60" rx="6" fill="#20301f" stroke="#2f9e44" stroke-width="1.5"/>
+  <text x="360" y="185" fill="#cfcfcf" font-family="sans-serif" font-size="12" text-anchor="middle">Your geometry lands in Apple's main pass,</text>
+  <text x="360" y="205" fill="#2f9e44" font-family="sans-serif" font-size="12" text-anchor="middle" font-weight="bold">sharing Apple's depth buffer → free occlusion.</text>
+</svg>
+<figcaption>Hook where the screen drawable is handed out, where each pass is created (to classify it and substitute depth), and where the pass closes (to inject your draw just before it ends).</figcaption>
+</figure>
+
+<p><strong>Source of the technique, for honesty's sake:</strong> Charly Delaroche (co-founder of Zenly, which built its own C++ map engine) demonstrated this publicly as <em>"same pass · injected geometry."</em> The open reproduction is <strong>milind-soni/mapsphere</strong> (MIT) — it puts the Las Vegas Sphere inside Apple Maps with native building occlusion, ~1,000 lines across two files. The code shapes below follow it. Read the whole repo before writing anything.</p>
+<h2>5. The technique, rung by rung</h2>
+<p>Now the heat rises. Each sub-step below is a real trap that the technique has to solve. Read them in order; they build.</p>
+<h3>5.1 Find the <em>concrete</em> Metal classes</h3>
+<p>First trap: <code>MTLCommandBuffer</code> and <code>MTLRenderCommandEncoder</code> are <strong>protocols</strong>. You can't swizzle a protocol — there's no implementation behind it. The real objects are private concrete classes whose names vary by OS and platform (<code>MTLDebugCommandBuffer</code>, <code>MTLIGAccelCommandBuffer</code>, <code>AGXG…</code>, and so on).</p>
+<p>So: make a throwaway command buffer and encoder yourself, ask <code>object_getClass</code> what they <em>actually</em> are, and swizzle those. Crucially, do this <strong>before</strong> installing any hooks, or your own dummy calls recurse into them.</p>
+<pre><code class="language-swift">guard let dev = MTLCreateSystemDefaultDevice(),
+      let q   = dev.makeCommandQueue(),
+      let cb  = q.makeCommandBuffer() else { return }
+
+let cbCls: AnyClass = object_getClass(cb)!
+
+let td = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: .bgra8Unorm, width: 4, height: 4, mipmapped: false)
+td.usage = [.renderTarget]
+let dummyTex = dev.makeTexture(descriptor: td)!
+
+let rp = MTLRenderPassDescriptor()
+rp.colorAttachments[0].texture     = dummyTex
+rp.colorAttachments[0].loadAction  = .clear
+rp.colorAttachments[0].storeAction = .dontCare
+let dummyEnc = cb.makeRenderCommandEncoder(descriptor: rp)!
+let encCls: AnyClass = object_getClass(dummyEnc)!
+dummyEnc.endEncoding()
+
+// NOW install hooks
+swizzleNextDrawable()
+swizzleEncoderCreation(on: cbCls)
+swizzleEndEncoding(on: encCls)
+</code></pre>
+<h3>5.2 Recognise the screen, then the main pass</h3>
+<p>Hook <code>CAMetalLayer.nextDrawable</code> and record every drawable texture in a weak set. That set <em>is</em> your definition of "this renders to the screen."</p>
+<pre><code class="language-swift">let sel  = #selector(CAMetalLayer.nextDrawable)
+let m    = class_getInstanceMethod(CAMetalLayer.self, sel)!
+typealias Fn = @convention(c) (AnyObject, Selector) -&gt; AnyObject?
+let orig = unsafeBitCast(method_getImplementation(m), to: Fn.self)
+
+let block: @convention(block) (AnyObject) -&gt; AnyObject? = { obj in
+    let r = orig(obj, sel)
+    if let d = r as? CAMetalDrawable { DrawableRegistry.record(d.texture) }
+    return r
+}
+method_setImplementation(m, imp_implementationWithBlock(block))
+</code></pre>
+<p>Then hook <code>renderCommandEncoderWithDescriptor:</code> on the concrete command-buffer class and classify each pass as it's created:</p>
+<pre><code class="language-swift">let hasDepth      = desc.depthAttachment?.texture != nil
+let drawableMatch = DrawableRegistry.contains(colorTex)
+                 || DrawableRegistry.contains(resolveTex)
+let big           = target.width * target.height &gt;= 500_000
+let isMain        = hasDepth &amp;&amp; (drawableMatch || big)
+</code></pre>
+<p>The <code>big</code> fallback catches two cases: MSAA, where the drawable is the <em>resolve</em> target rather than the colour attachment; and a cold registry that hasn't warmed up yet. For each main pass, record <strong>everything</strong> you'll need later: colour format, depth format, stencil format, sample count, dimensions, whether depth is reversed (<code>clearDepth &lt; 0.5</code>), the command buffer, and the depth texture.</p>
+<h3>5.3 Substitute the depth texture</h3>
+<p>Apple's depth is memoryless (§2a), so you can't read it back. The fix: swap in your <em>own</em> persistent depth texture <strong>before the encoder is created</strong> — the descriptor is snapshotted at creation time, so mutating it afterward does nothing.</p>
+<pre><code class="language-swift">private static func substituteDepth(_ desc: MTLRenderPassDescriptor) {
+    guard let da = desc.depthAttachment, let dt = da.texture,
+          da.loadAction != .load,
+          desc.colorAttachments[0]?.texture != nil else { return }
+    guard dt.storageMode == .memoryless || da.storeAction == .dontCare else { return }
+
+    // cache by size × format × sampleCount (lookup elided) ...
+    let td = MTLTextureDescriptor()
+    td.textureType = dt.textureType       // will be .type2DMultisample
+    td.pixelFormat = dt.pixelFormat
+    td.width = dt.width; td.height = dt.height
+    td.sampleCount = dt.sampleCount
+    td.storageMode = .private
+    td.usage = [.renderTarget, .shaderRead]   // shaderRead is the whole point
+    let sub = dt.device.makeTexture(descriptor: td)!
+
+    let sharesStencil = desc.stencilAttachment?.texture === dt
+    da.texture     = sub
+    da.storeAction = .store                     // keep it after the pass
+    if sharesStencil { desc.stencilAttachment?.texture = sub }
+}
+</code></pre>
+<p>Three things to get right: <strong>cache</strong> by size × format × sampleCount and flush on rotation; <strong>preserve</strong> <code>textureType</code> (it'll be <code>.type2DMultisample</code>); and handle the <strong>packed depth-stencil</strong> case where one texture serves both attachments.</p>
+<p>And note the cost you've just taken on: memoryless depth exists <em>because</em> writing it back is expensive. You're now paying that bandwidth every frame. Budget for it.</p>
+<h3>5.4 Reconstruct the camera</h3>
+<p>To draw into the scene correctly you need a view-projection matrix that reproduces MapKit's own projection. Work in a local <strong>ENU</strong> frame (x = East, y = North, z = Up, metres) anchored at your site.</p>
+<pre><code class="language-swift">static func cameraEye(target: SIMD3&lt;Double&gt;, distance: Double,
+                      pitchDeg: Double, headingDeg: Double) -&gt; SIMD3&lt;Double&gt; {
+    let pitch = pitchDeg * .pi / 180
+    let h     = headingDeg * .pi / 180
+    let a     = SIMD3&lt;Double&gt;(sin(h), cos(h), 0)   // azimuth the camera faces
+    return target - a * (distance * sin(pitch))
+                  + SIMD3&lt;Double&gt;(0, 0, distance * cos(pitch))
+}
+</code></pre>
+<p>Feed it <code>target = enu(camera.centerCoordinate)</code>, <code>distance = camera.centerCoordinateDistance</code>, and pitch/heading straight off <code>MKMapCamera</code>. Then a standard look-at with <code>up = (0,0,1)</code>, and a Metal-convention projection (clip z in <code>[0,1]</code>) with an <strong>off-centre principal point</strong>:</p>
+<pre><code class="language-swift">static func perspective(fovYRad: Double, aspect: Double, zn: Double, zf: Double,
+                        cx: Double, cy: Double, reversed: Bool) -&gt; simd_double4x4 {
+    let ys = 1.0 / tan(fovYRad * 0.5)
+    let xs = ys / aspect
+    let zz: Double, zw: Double
+    if reversed { zz = 0;             zw = zn }
+    else        { zz = zf/(zn - zf);  zw = zn*zf/(zn - zf) }
+    return simd_double4x4(columns: (
+        SIMD4&lt;Double&gt;(xs, 0,  0,  0),
+        SIMD4&lt;Double&gt;(0,  ys, 0,  0),
+        SIMD4&lt;Double&gt;(cx, cy, zz, -1),   // cx/cy = principal point offset
+        SIMD4&lt;Double&gt;(0,  0,  zw, 0)
+    ))
+}
+</code></pre>
+<p>Do all of this in <code>double</code> and convert to <code>float</code> only at the very end — at city scale with metre-level geometry, <code>float</code> accumulates visible drift.</p>
+<p><strong>Calibrate <code>fovY</code> and <code>cy</code> by fitting, not guessing.</strong> Two unknowns remain. The trick: <code>mapView.convert(coordinate, toPointTo:)</code> is public and gives you ground truth for any coordinate. So sample a ring of ground points, project them with your candidate matrix, and search for the parameters that minimise the reprojection error.</p>
+<pre><code class="language-swift">// 8 ground points on a 400 m ring + the centre
+for k in 0..&lt;8 {
+    let ang = Double(k)/8.0 * 2 * .pi
+    let dE = 400*cos(ang), dN = 400*sin(ang)
+    let p  = mapView.convert(coordFrom(dE: dE, dN: dN), toPointTo: mapView)
+    samples.append((SIMD3&lt;Double&gt;(dE, dN, 0), p))
+}
+
+func residual(_ fov: Double, _ cyv: Double) -&gt; Double {
+    var m = model; m.fovYDeg = fov; m.cx = 0; m.cy = cyv
+    let vp = MatrixMath.viewProj(cam: m, aspect: aspect, reversed: false)
+    var err = 0.0
+    for (world, pt) in samples {
+        let clip = vp * SIMD4&lt;Double&gt;(world.x, world.y, world.z, 1)
+        if clip.w &lt;= 0 { return 1e9 }
+        let sx = (clip.x/clip.w * 0.5 + 0.5) * Double(size.width)
+        let sy = (1 - (clip.y/clip.w * 0.5 + 0.5)) * Double(size.height)
+        err += hypot(sx - Double(pt.x), sy - Double(pt.y))
+    }
+    return err / Double(samples.count)
+}
+// coarse sweep → offset sweep → fine sweep
+</code></pre>
+<p>Three brute-force passes run in microseconds and converge on ≈29.6° with a mean reprojection residual around 3 px. Re-run it whenever the camera changes substantially, and <strong>put the residual on screen</strong> — if it climbs above ~5 px something in your ENU conversion is wrong and nothing downstream will work.</p>
+<h3>5.5 Recover the depth mapping — the cleverest part</h3>
+<p>This is the rung most worth understanding, because it's the general pattern from §1 applied again: <strong>when you can't read the spec, measure the system.</strong> You can't read how Apple encodes depth — so you'll make Apple encode some depths for you, measure them, and fit the curve.</p>
+<figure class="fig">
+<svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The depth recovery loop">
+  <rect x="15" y="80" width="130" height="54" rx="6" fill="#2a2d38"/>
+  <text x="80" y="102" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">1. Read back</text>
+  <text x="80" y="118" fill="#8a8b93" font-family="sans-serif" font-size="9" text-anchor="middle">probe depth texture</text>
+
+  <rect x="170" y="80" width="130" height="54" rx="6" fill="#2a2d38"/>
+  <text x="235" y="102" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">2. True distance</text>
+  <text x="235" y="118" fill="#8a8b93" font-family="sans-serif" font-size="9" text-anchor="middle">raycast ground z=0</text>
+
+  <rect x="325" y="80" width="130" height="54" rx="6" fill="#20301f" stroke="#2f9e44" stroke-width="1.5"/>
+  <text x="390" y="102" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">3. Fit (Theil–Sen)</text>
+  <text x="390" y="118" fill="#8a8b93" font-family="sans-serif" font-size="9" text-anchor="middle">ln(d) beats 1/d</text>
+
+  <rect x="480" y="80" width="130" height="54" rx="6" fill="#2a2d38"/>
+  <text x="545" y="102" fill="#cfcfcf" font-family="sans-serif" font-size="11" text-anchor="middle">4. Emit their z</text>
+  <text x="545" y="118" fill="#8a8b93" font-family="sans-serif" font-size="9" text-anchor="middle">in vertex shader</text>
+
+  <rect x="630" y="80" width="75" height="54" rx="6" fill="#2a2d38"/>
+  <text x="667" y="100" fill="#cfcfcf" font-family="sans-serif" font-size="10" text-anchor="middle">5-6.</text>
+  <text x="667" y="114" fill="#8a8b93" font-family="sans-serif" font-size="9" text-anchor="middle">compare fn</text>
+  <text x="667" y="126" fill="#8a8b93" font-family="sans-serif" font-size="9" text-anchor="middle">+ hysteresis</text>
+
+  <line x1="145" y1="107" x2="168" y2="107" stroke="#9aa0aa" stroke-width="2"/><path d="M168 107 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="300" y1="107" x2="323" y2="107" stroke="#9aa0aa" stroke-width="2"/><path d="M323 107 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="455" y1="107" x2="478" y2="107" stroke="#9aa0aa" stroke-width="2"/><path d="M478 107 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <line x1="610" y1="107" x2="628" y2="107" stroke="#9aa0aa" stroke-width="2"/><path d="M628 107 l-8 -4 l0 8 z" fill="#9aa0aa"/>
+  <text x="360" y="40" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle" font-weight="bold">Measure the system to recover its hidden depth formula</text>
+</svg>
+<figcaption>You can't read Apple's depth spec, so you let Apple draw depths, read them off your substituted texture, pair each with the true distance you compute yourself, and fit the curve the data demands.</figcaption>
+</figure>
+
+<p><strong>Step 1 — read back.</strong> After <code>endEncoding</code> on a main pass, dispatch a tiny compute kernel against your substituted depth texture, sampling a vertical line of pixels down the lower screen (fractions 0.68 → 0.96, where you can be fairly sure you're looking at flat ground, not buildings or sky).</p>
+<pre><code class="language-cpp">kernel void depthProbeMS(depth2d_ms&lt;float, access::read&gt; dt [[texture(0)]],
+                         device float *outv               [[buffer(0)]],
+                         constant uint2 *coords           [[buffer(1)]],
+                         uint gid [[thread_position_in_grid]]) {
+    outv[gid] = dt.read(coords[gid], 0);
+}
+</code></pre>
+<p><strong>Step 2 — compute true distances.</strong> For each probed pixel, use your <em>own</em> calibrated inverse view-projection to raycast against the ground plane <code>z = 0</code> and get the real eye-to-ground distance. You now have pairs of <code>(distance, depth)</code>.</p>
+<p><strong>Step 3 — fit, robustly.</strong> Fit in <em>both</em> candidate spaces and let the data choose:</p>
+<pre><code class="language-swift">let fitR   = theilSen(xs: ds.map { 1.0 / $0 }, ys: ys)   // depth = a + b/d
+let fitL   = theilSen(xs: ds.map { log($0) },  ys: ys)   // depth = a + b·ln(d)
+let useLog = fitL.resid &lt; fitR.resid * 1.5
+let valid  = f.resid &lt; 8e-4 &amp;&amp; abs(f.b) &gt; 1e-9
+</code></pre>
+<p>Use <strong>Theil–Sen</strong> (median of all pairwise slopes), not least squares, so one probe pixel that happened to land on a bus shelter doesn't drag the fit. Log wins decisively — and <em>that's how you learn</em> VectorKit uses logarithmic depth. You didn't read it anywhere; you measured it.</p>
+<p><strong>Step 4 — emit their depth, not yours.</strong> In your vertex shader, overwrite the clip-space z:</p>
+<pre><code class="language-cpp">o.pos = u.mvp * float4(p.xyz, 1.0);
+if (u.params3.w &gt; 0.5) {                      // depth fit is valid
+    float d   = max(o.pos.w, 0.05);           // view-space distance
+    float dep = (u.params3.x &gt; 0.5)
+              ? (u.params3.y + u.params3.z * log(d))   // a + b·ln(d)
+              : (u.params3.y + u.params3.z / d);        // a + b/d
+    o.pos.z = clamp(dep - 0.0008, 0.0, 0.9999) * o.pos.w;
+}
+</code></pre>
+<p>Multiply by <code>w</code> because the hardware will divide by it. The <code>-0.0008</code> bias wins coincident-surface ties in your favour so your geometry doesn't shimmer against the ground.</p>
+<p><strong>Step 5 — derive the compare function from the sign of b.</strong> If depth increases with distance use <code>.less</code>; if it decreases (reversed-Z) use <code>.greater</code>. Don't hardcode it:</p>
+<pre><code class="language-swift">let increasing = probe.isLog ? (probe.b &gt; 0) : (probe.b &lt; 0)
+mode = increasing ? .less : .rev
+</code></pre>
+<p><strong>Step 6 — hysteresis.</strong> Re-probe every ~20 main passes, and <em>keep the last good fit</em> when a frame's probe is noisy. Dropping to no-fit for even one frame makes your geometry flash through buildings, which reads as a glitch.</p>
+<h3>5.6 Encode your draw</h3>
+<p>Hook <code>endEncoding</code> on the concrete encoder class. If this encoder is a registered main pass, encode your work first, then call through to the original:</p>
+<pre><code class="language-swift">let block: @convention(block) (AnyObject) -&gt; Void = { obj in
+    if let info = PassRegistry.take(obj), let enc = obj as? MTLRenderCommandEncoder {
+        Renderer.shared.encode(on: enc, pass: info)
+        orig(obj, sel)
+        Renderer.shared.probeIfDue(pass: info)   // after the pass closes
+    } else {
+        orig(obj, sel)
+    }
+}
+</code></pre>
+<p>Your pipeline state must match the pass <strong>exactly</strong> or PSO creation fails:</p>
+<pre><code class="language-swift">pd.colorAttachments[0].pixelFormat = pass.colorFormat
+pd.depthAttachmentPixelFormat      = pass.depthFormat
+if pass.stencilFormat != .invalid {
+    pd.stencilAttachmentPixelFormat = pass.stencilFormat
+}
+pd.rasterSampleCount = pass.sampleCount   // MSAA — the usual silent killer
+</code></pre>
+<p>Cache PSOs keyed on that whole tuple (it changes on rotation and resize), and <strong>log the failure path</strong> — a mismatched <code>rasterSampleCount</code> fails <em>quietly</em>, and you'll lose an hour wondering why nothing draws.</p>
+<h3>5.7 Compile shaders at runtime</h3>
+<pre><code class="language-swift">library = try dev.makeLibrary(source: shaderSource, options: nil)
+</code></pre>
+<p>No <code>.metallib</code> build step, no Xcode project — keep the Metal source in a Swift string and recompile on launch. For exploratory work the iteration speed is worth far more than the startup cost. (See <a class="xref" href="shaders.html#18a-feeding-data-into-shaders">feeding data into shaders</a> for the uniform-plumbing side of this.)</p>
+<h2>6. Three things you can do with the hook</h2>
+<p>Same hook, three escalating payloads. <code>mapsphere</code> adds one object; the video restyles everything.</p>
+<p><strong>6.1 Additive geometry (easiest — start here).</strong> Append your own draws at the end of the main pass: cars, boats, birds, a character, a route ribbon, a 3D pin that buildings correctly occlude. Shares Apple's depth buffer, so occlusion is free both ways. This is exactly what <code>mapsphere</code> does and the right first target.</p>
+<p><strong>6.2 Full-pass re-shade (medium).</strong> Draw a fullscreen quad at the end of the pass that re-shades using the colour target <em>plus the depth texture you substituted</em>. With depth you can reconstruct normals → toon banding, depth fog, rim light, palette quantisation. Better than a SwiftUI colour effect because you have depth. Still limited: you know how <em>far</em> a pixel is, not <em>what</em> it is — so no "roofs blue, foliage green" by category, and it grades the whole viewport uniformly (which §1 proved the video does <em>not</em> do).</p>
+<p><strong>6.3 Material override (hardest — what the video appears to do).</strong> Instead of only appending draws, intercept the drawing calls VectorKit itself makes. Hook <code>setRenderPipelineState:</code>, <code>setFragmentTexture:atIndex:</code>, <code>setVertexBuffer:offset:atIndex:</code> and the <code>draw…Primitives</code> family on the encoder, and for draws you've classified as a given category, substitute <em>your</em> pipeline state and uniforms before letting the call through.</p>
+<p>The hard part is <strong>classification</strong> — deciding which draw is a building and which is a tree, with no names, only signatures. What discriminates in practice: which pipeline-state object is bound (VectorKit reuses a small, stable set); vertex buffer stride and attribute layout; bound texture dimensions and formats (label / facade / foliage atlases differ); draw order within the pass; and index-count distributions (a tree-instance batch looks nothing like a ground tile).</p>
+<p>You build the classifier <strong>empirically</strong>: log every draw in the main pass with its full signature, then force one signature to a flat magenta fragment shader and see what turns magenta. Bisect. It's tedious and it's the only way. Two reasons to believe this is what the video does: the restyle respects Apple's DCE streaming boundary (§1), and different material classes are graded differently rather than by one global transform.</p>
+<h2>7. The non-Metal half — don't over-attribute the look to shaders</h2>
+<p>A real share of what makes the clip feel like a <em>product</em> is ordinary UIKit work — and it's the part you <em>can</em> ship.</p>
+<figure class="fig">
+<img src="assets/mapkit-fig3-avatars.png" alt="Friend avatars clamped to the viewport edges with directional tails while the Louvre pyramid renders behind them" loading="lazy">
+<figcaption>Figure 3 (t = 9.5 s). Friend avatars clamped to the viewport edges with directional tails, the stylised Louvre pyramid behind them. The bottom pill toolbar is plain SwiftUI composited above the map — it reaches pure white in every frame, so it never passes through the shader.</figcaption>
+</figure>
+
+<p><strong>Avatar bubbles with edge clamping.</strong> When a friend is on screen, a normal <code>MKAnnotationView</code> works. When off screen, the bubble clamps to the viewport edge with a tail pointing at them — your own layer, driven by a <code>CADisplayLink</code>:</p>
+<ol>
+<li>Project: <code>let p = mapView.convert(friend.coordinate, toPointTo: mapView)</code>.</li>
+<li>If <code>p</code> is inside <code>bounds.insetBy(margin)</code>, place the bubble at <code>p</code> and hide the tail.</li>
+<li>Otherwise cast a ray from screen centre toward <code>p</code>, intersect the inset rect, place the bubble there, show the tail rotated to <code>atan2</code> of the ray direction.</li>
+<li>Watch for <code>clip.w &lt;= 0</code> — a coordinate <em>behind</em> the camera at high pitch projects to a mirrored on-screen point. Check and flip, or friends behind you appear ahead of you.</li>
+</ol>
+<p>Update it <strong>every frame</strong>, not on <code>regionDidChange</code>, or it lags during momentum scrolling and the illusion dies. The toolbar, status chrome and chips are plain SwiftUI composited <em>above</em> the map — keep them above, never inside anything you're grading. (See <a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">the run loop &amp; CADisplayLink</a> for why per-frame updates matter here.)</p>
+<h2>8. Build and debug workflow</h2>
+<p><strong>Start with a GPU frame capture — before writing any code.</strong> This is the highest-leverage hour you can spend. Build a bare <code>MKMapView</code> with <code>.realistic</code> elevation, fly to the Louvre, and take an Xcode GPU frame capture. You'll <em>see</em> VectorKit's entire pass structure, every attachment, every draw call, every bound texture, the depth formats. You learn the thing you're about to hook by <strong>reading it, not guessing.</strong> Then compare the stock palette against the video — whatever differs is the shader.</p>
+<p><strong>Skip the Xcode project.</strong> <code>mapsphere</code> builds with <code>swiftc</code> straight against the simulator SDK, assembles a <code>.app</code>, boots a simulator, installs and launches — one script, no project file to fight. Parameters come in as environment variables at launch, so you can sweep a constant without recompiling — which matters enormously when half the work is <em>finding numbers</em>:</p>
+<pre><code class="language-bash">xcrun simctl launch --console booted com.example.app   # with SIMCTL_CHILD_* set
+#   SHADER_MODE=1 CAM_H=210 CAM_P=55 CAM_D=1400
+#   SPHERE_R=82.5 SPHERE_ALT=33.5 DEPTH_MODE=less PROBE_APPLY=0
+</code></pre>
+<p><strong>Put a HUD on screen.</strong> Your hooks run on MapKit's render thread — breakpoints are miserable and <code>print</code> races. Render a monospaced overlay, every frame: passes seen, main passes identified, draws encoded, the classification string of the last pass, fitted <code>fovY</code>/<code>cy</code>/residual, the probe's <code>a</code>/<code>b</code>/residual and validity, and the raw probe samples. Nearly every bug announces itself in that label before you see it in pixels.</p>
+<p><strong>Validate in the right order.</strong> Depth correctness is easy to fake accidentally. Force <code>DEPTH_MODE=always</code> first to confirm you're drawing <em>at all</em>, then turn the fit on and verify occlusion changes. Two separate failures — wrong camera, wrong depth encoding — look identical if you test them together.</p>
+<h2>9. Pitfalls</h2>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>What happens</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Swizzling a protocol</td>
+<td><code>class_getInstanceMethod</code> returns nil</td>
+<td>Discover concrete classes via <code>object_getClass</code> on real instances</td>
+</tr>
+<tr>
+<td>Hook installed before discovery</td>
+<td>Infinite recursion on your own dummy calls</td>
+<td>Discover first, swizzle second</td>
+</tr>
+<tr>
+<td>Mutating the descriptor after encoder creation</td>
+<td>Silently ignored</td>
+<td>Substitute depth inside the creation hook, before <code>orig(…)</code></td>
+</tr>
+<tr>
+<td><code>rasterSampleCount</code> mismatch</td>
+<td>PSO throws; nothing draws; no visible error</td>
+<td>Match the pass tuple exactly and log the throw</td>
+</tr>
+<tr>
+<td>Linear clip z</td>
+<td>Geometry z-fights / floats through buildings</td>
+<td>Emit the fitted log depth from the vertex shader</td>
+</tr>
+<tr>
+<td>Least-squares depth fit</td>
+<td>One bad probe pixel ruins occlusion</td>
+<td>Theil–Sen median-of-slopes</td>
+</tr>
+<tr>
+<td>No fit hysteresis</td>
+<td>Objects flash through buildings on noisy frames</td>
+<td>Keep the last valid fit</td>
+</tr>
+<tr>
+<td>Stale depth cache after rotation</td>
+<td>Wrong-size texture, corrupt depth</td>
+<td>Key the cache on size/format/samples; evict</td>
+</tr>
+<tr>
+<td>Touching UIKit from the hook</td>
+<td>Crashes, races</td>
+<td>Lock-protected shared state; UIKit only on main</td>
+</tr>
+<tr>
+<td>Float matrices</td>
+<td>Visible drift at city scale</td>
+<td><code>double</code> throughout, convert at the end</td>
+</tr>
+<tr>
+<td>Behind-camera coordinates</td>
+<td>Annotations appear mirrored</td>
+<td>Check <code>clip.w &lt;= 0</code></td>
+</tr>
+</tbody>
+</table>
+<h2>10. A ladder to climb — eight milestones</h2>
+<p>Each is independently verifiable, which matters because debugging two unknowns at once in a render-thread hook is brutal.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Milestone</th>
+<th>You've succeeded when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Bare <code>MKMapView</code>, <code>.realistic</code>, flown to the Louvre. GPU frame capture.</td>
+<td>You can name the main pass and read its depth format and sample count off the capture.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Swizzle <code>nextDrawable</code> only; log drawable size each frame.</td>
+<td>Log lines appear at display rate with plausible dimensions.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Swizzle encoder creation; log each descriptor's classification.</td>
+<td>Exactly one pass per frame is tagged main, consistently.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Hook <code>endEncoding</code>; draw a hardcoded fullscreen triangle, compare <code>.always</code>.</td>
+<td>A coloured triangle covers the map. You are <em>inside</em> Apple's pass.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Camera reconstruction; draw an axis gizmo at a known coordinate.</td>
+<td>The gizmo sits where <code>mapView.convert</code> says, and tracks pan &amp; pitch.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>FOV / principal-point calibration with the HUD residual.</td>
+<td>Residual settles under ~5 px; <code>fovY</code> lands near 29.6°.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Depth substitution + compute probe + Theil–Sen fit.</td>
+<td>Your object is correctly hidden behind buildings, near and far.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Real animated content; begin logging draw signatures toward material override.</td>
+<td>You can force one VectorKit draw category to flat magenta on demand.</td>
+</tr>
+</tbody>
+</table>
+<p>Milestones 1–4 are a weekend. 5–7 are where the real learning is, and where most of the time goes. 8 is open-ended.</p>
+<h2>11. Shippable alternatives</h2>
+<p>If the goal is a <em>product</em> rather than a demo, the same architectural idea — draw your own Metal into the map's render pass — is exposed as <strong>public API</strong> elsewhere:</p>
+<ul>
+<li><strong>Mapbox Maps SDK for iOS</strong> — <code>CustomLayerHost</code> / <code>CustomLayer</code>. You get the command buffer, the render pass descriptor, and the map's projection matrix, and you encode normally. Supported, documented, with an official example.</li>
+<li><strong>MapLibre Native</strong> (open source) — <code>MLNCustomStyleLayer</code>, whose <code>drawInMapView:withContext:</code> hands you an <code>MTLRenderCommandEncoder</code> and the projection matrix. Same shape, no vendor lock-in.</li>
+</ul>
+<p>Both also give you full control of the base style — the thing MapKit will <em>not</em> give you at any price. The trade-off is real and worth stating plainly: you lose Apple's DCE data, which is the most beautiful 3D city data on the platform and the entire reason the video looks the way it does. You'd be back to building the world.</p>
+<blockquote>
+<p><strong>That tension is the actual design decision:</strong> Apple's world with no control, or your control with no world. The injection technique is interesting precisely because it refuses to choose — and it pays for that refusal with private API.</p>
+</blockquote>
+<h2>12. The caveat that matters</h2>
+<p>This swizzles the private rendering internals of MapKit and VectorKit. It is <strong>not App Store material</strong> — private API use is a rejection — and separately, any iOS update can change the concrete class names or the pass structure and break it <em>silently</em>. <code>mapsphere</code>'s author notes it was exercised only on the simulator; on device, class names and pass layout may differ and you'll have to re-discover them.</p>
+<p>Treat this as a technique to <strong>learn from and demo with</strong>. If you want to ship the look, use §11. And carry the one skill that outlasts any single hack: when the spec is sealed, <em>measure the system against a hypothesis you can falsify</em> — that's how the boundary polygon and the logarithmic depth were both recovered, and it's the same move whether you're sampling pixels or fitting a depth curve.</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>The look is a repaint, not an engine</strong> = all geometry/labels/trees/landmarks are Apple's DCE; only the <em>shading</em> is custom. The expensive part is free.</li>
+<li><strong>MKMapView → VectorKit → CAMetalLayer</strong> = a thin public façade over a private Metal renderer that encodes a sequence of passes per frame.</li>
+<li><strong>The main scene pass</strong> = the one with both a depth attachment <em>and</em> the layer's drawable as its colour/resolve target. That's your injection point.</li>
+<li><strong>Three undocumented truths</strong> = depth is memoryless (can't read it back), depth is logarithmic (<code>a + b·ln d</code>, not <code>1/d</code>), camera is ~29.6° FOV with a principal-point offset.</li>
+<li><strong>Swizzle three Metal methods</strong> = <code>nextDrawable</code> (recognise the screen), encoder-creation (classify + substitute depth), <code>endEncoding</code> (inject your draw). Swizzle concrete classes, discovered via <code>object_getClass</code>, never protocols.</li>
+<li><strong>Measure the system</strong> = recover the depth curve by probing a substituted depth texture, pairing with raycast distances, and Theil–Sen fitting — the same falsify-a-hypothesis skill as the pixel forensics.</li>
+<li><strong>Share Apple's depth buffer</strong> = free, correct occlusion both ways; the whole reason to be inside the pass.</li>
+<li><strong>Three payloads</strong> = additive geometry (easy) → full-pass reshade (needs depth) → per-category material override (needs empirical classification).</li>
+<li><strong>Ship-ability</strong> = none on the App Store; use Mapbox <code>CustomLayer</code> or MapLibre <code>MLNCustomStyleLayer</code> for the same idea legitimately, trading away Apple's world.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Prerequisite technique: <a class="xref" href="#02-runtime-reflection-and-private-apis">Runtime Reflection &amp; Private APIs</a> — swizzling, <code>NSClassFromString</code>, the private-API caveats this lesson builds on.</li>
+<li>The GPU side: <a class="xref" href="shaders.html#00-roadmap">Metal Shaders</a> and <a class="xref" href="shaders.html#18a-feeding-data-into-shaders">Feeding Data Into Shaders</a> (uniforms, runtime compile).</li>
+<li>Render-thread context: <a class="xref" href="uikit-internals.html#00-overview">UIKit Internals</a> · <a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">The Run Loop &amp; CADisplayLink</a>.</li>
+<li>Same "lid off" spirit: <a class="xref" href="#01-hand-rolled-spring-driver">A Hand-Rolled Spring Engine</a>.</li>
+<li>Sources: milind-soni/mapsphere (MIT, github.com/milind-soni/mapsphere) · Charly Delaroche (Zenly, "same pass · injected geometry") · Apple DTS forum thread 708503 (no public 3D API; DCE for third-party MapKit in iOS 16) · Mapbox &amp; MapLibre custom-layer docs.</li>
+<li>Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#02-runtime-reflection-and-private-apis"><span>Prev</span>← 02 — Runtime Reflection &amp; Private APIs (Reverse-Engineering UIKit)</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
