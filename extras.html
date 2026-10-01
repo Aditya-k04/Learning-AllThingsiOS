@@ -32,6 +32,7 @@
 <li><a class="xref" href="#01-hand-rolled-spring-driver">01-hand-rolled-spring-driver</a> — build a real, interruptible spring engine from scratch: the display-link loop, a semi-implicit Euler solver, mid-flight retargeting, and piping the value straight into a Metal uniform.</li>
 <li><a class="xref" href="#02-runtime-reflection-and-private-apis">02-runtime-reflection-and-private-apis</a> — why UIKit is "transparent" to the Obj-C runtime, how to reach underscored classes like <code>_UINavigationBarPalette</code> with <code>NSClassFromString</code>/<code>NSSelectorFromString</code>, how to <em>find</em> private APIs (class-dump the dyld cache, live introspection, LLDB, the View Debugger) — and why you must never ship them.</li>
 <li><a class="xref" href="#03-stylised-3d-maps-on-mapkit">03-stylised-3d-maps-on-mapkit</a> — how a toy-world Apple Maps render is built: forensic pixel analysis, the VectorKit render stack, and the full swizzling technique for injecting custom Metal into Apple's own private render pass (concrete-class discovery, memoryless-depth substitution, camera &amp; logarithmic-depth recovery, material override) — with the shippable Mapbox/MapLibre alternatives.</li>
+<li><a class="xref" href="#04-stylised-3d-maps-on-mapbox">04-stylised-3d-maps-on-mapbox</a> — the shippable sequel: inject your own animated, depth-correct Metal into a Mapbox map via the supported <code>CustomLayerHost</code> hook. No swizzling, no camera reconstruction — but you must master the coordinate system (Mercator world-pixels, metres-for-Z, the latitude correction). Minimal pass, animation loop, route/water/instancing recipes, slots, triple-buffering, and the honest MapKit-vs-Mapbox trade.</li>
 </ol>
 <p>More will accrete here over time.</p>
 <h2>Where it connects</h2>
@@ -914,8 +915,620 @@ pd.rasterSampleCount = pass.sampleCount   // MSAA — the usual silent killer
 <li>Render-thread context: <a class="xref" href="uikit-internals.html#00-overview">UIKit Internals</a> · <a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">The Run Loop &amp; CADisplayLink</a>.</li>
 <li>Same "lid off" spirit: <a class="xref" href="#01-hand-rolled-spring-driver">A Hand-Rolled Spring Engine</a>.</li>
 <li>Sources: milind-soni/mapsphere (MIT, github.com/milind-soni/mapsphere) · Charly Delaroche (Zenly, "same pass · injected geometry") · Apple DTS forum thread 708503 (no public 3D API; DCE for third-party MapKit in iOS 16) · Mapbox &amp; MapLibre custom-layer docs.</li>
+<li>Next: <a class="xref" href="#04-stylised-3d-maps-on-mapbox">Custom Metal on Mapbox Maps</a> — the shippable version of this same idea.</li>
+<li>Prev: <a class="xref" href="#02-runtime-reflection-and-private-apis">Runtime Reflection &amp; Private APIs</a></li>
 <li>Hub: <a class="xref" href="#00-overview">00-overview</a></li>
-</ul><div class="pager"><a href="#02-runtime-reflection-and-private-apis"><span>Prev</span>← 02 — Runtime Reflection &amp; Private APIs (Reverse-Engineering UIKit)</a><span class="sp"></span></div></section>
+</ul><div class="pager"><a href="#02-runtime-reflection-and-private-apis"><span>Prev</span>← 02 — Runtime Reflection &amp; Private APIs (Reverse-Engineering UIKit)</a><a href="#04-stylised-3d-maps-on-mapbox"><span>Next</span>04 — Custom Metal on Mapbox Maps (the shippable way) →</a></div></section>
+<section class="page" id="04-stylised-3d-maps-on-mapbox" data-title="04 — Custom Metal on Mapbox Maps (the shippable way)" data-num="04" data-hasdemo="0" data-group=""><h1>04 — Custom Metal on Mapbox Maps (the shippable way)</h1>
+<p><em>By the end you'll know how to draw your own animated, depth-correct Metal into a Mapbox map — a moving boat, a sheet of animated water, a fleet of instanced objects — using a fully supported, App-Store-safe hook. This is the sequel to <a class="xref" href="#03-stylised-3d-maps-on-mapkit">the MapKit lesson</a>: same dream, none of the swizzling.</em></p>
+<h2>Start here — the short version</h2>
+<p>In <a class="xref" href="#03-stylised-3d-maps-on-mapkit">the previous lesson</a> we injected Metal into Apple Maps by swizzling private classes, reconstructing the camera, and reverse-engineering the depth buffer — brilliant, but unshippable. Mapbox hands you the exact same power <em>as public API</em>.</p>
+<p>Here's the whole thing in one breath: <strong>Mapbox gives you the command buffer, the render pass descriptor, and the projection matrix. You make an encoder, set a pipeline, draw.</strong> The three hardest parts of the MapKit technique — swizzling, camera reconstruction, depth recovery — simply don't exist here. They're replaced by one thing you <em>do</em> have to learn: <strong>a coordinate system.</strong> Mercator world-pixels for XY, metres for Z, with a latitude-dependent scale correction. That's where the bugs live, and that's where this lesson spends its heat.</p>
+<p>The trade is the mirror image of MapKit's. There you got Apple's gorgeous hand-built city (Detailed City Experience) for free but had to break in through the window. Here the door is open and everything is supported — but you're populating a world, not repainting Apple's. Written against Maps SDK for iOS 11.31.0; the hook is <code>CustomLayerHost</code>.</p>
+<h2>1. First decide: do you even need Metal?</h2>
+<p>The custom layer is the most <em>expensive</em> way to put something on a map, in both effort and runtime. Mapbox's style-and-layer system already does an enormous amount, and anything it can express will be less code, run faster, and interact correctly with lighting, terrain, fog and draw-order for free. Exhaust the declarative path first.</p>
+<figure class="fig">
+<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Object vs effect decision">
+  <rect x="270" y="14" width="180" height="40" rx="8" fill="#2a2d38"/>
+  <text x="360" y="39" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle">What are you adding?</text>
+
+  <rect x="70" y="110" width="250" height="66" rx="8" fill="#20301f" stroke="#2f9e44" stroke-width="1.5"/>
+  <text x="195" y="135" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle" font-weight="bold">An OBJECT</text>
+  <text x="195" y="155" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">car, building, model, marker</text>
+  <text x="195" y="170" fill="#2f9e44" font-family="monospace" font-size="11" text-anchor="middle">→ ModelLayer, no Metal</text>
+
+  <rect x="400" y="110" width="250" height="66" rx="8" fill="#301f2a" stroke="#c0567a" stroke-width="1.5"/>
+  <text x="525" y="135" fill="#cfcfcf" font-family="sans-serif" font-size="13" text-anchor="middle" font-weight="bold">An EFFECT</text>
+  <text x="525" y="155" fill="#8a8b93" font-family="sans-serif" font-size="11" text-anchor="middle">water, trails, particles, shimmer</text>
+  <text x="525" y="170" fill="#c0567a" font-family="monospace" font-size="11" text-anchor="middle">→ Custom layer (Metal)</text>
+
+  <line x1="330" y1="54" x2="195" y2="108" stroke="#9aa0aa" stroke-width="2"/><path d="M195 108 l-1 -9 l6 5 z" fill="#9aa0aa"/>
+  <line x1="390" y1="54" x2="525" y2="108" stroke="#9aa0aa" stroke-width="2"/><path d="M525 108 l5 -5 l-1 9 z" fill="#9aa0aa"/>
+  <text x="360" y="220" fill="#8a8b93" font-family="sans-serif" font-size="12" text-anchor="middle">Rule of thumb: object → ModelLayer. Effect → custom layer.</text>
+</svg>
+<figcaption>The single most useful decision in the whole lesson. If the thing is an object, the style system places it for you (with correct lighting and shadows). Metal is for effects the style spec can't express.</figcaption>
+</figure>
+
+<table>
+<thead>
+<tr>
+<th>You want…</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 3D model (car, building, character) at coordinates</td>
+<td><code>ModelLayer</code> + glTF/GLB — no Metal</td>
+</tr>
+<tr>
+<td>A 3D model following the user</td>
+<td><code>Puck3DConfiguration</code> — no Metal</td>
+</tr>
+<tr>
+<td>Extruded buildings in your own colours</td>
+<td><code>FillExtrusionLayer</code> with expressions — no Metal</td>
+</tr>
+<tr>
+<td>Time-of-day lighting, shadows, atmosphere</td>
+<td><code>DirectionalLight</code>, <code>AmbientLight</code>, <code>Atmosphere</code>, Standard's <code>lightPreset</code> — no Metal</td>
+</tr>
+<tr>
+<td>Animated icons or markers in 2D</td>
+<td>Annotations or an image-source animation — no Metal</td>
+</tr>
+<tr>
+<td>A custom shaded surface (animated water, caustics, heat shimmer, a scanning sweep)</td>
+<td><strong>Custom layer</strong></td>
+</tr>
+<tr>
+<td>Thousands of GPU-driven animated instances</td>
+<td><strong>Custom layer</strong> (instanced draws)</td>
+</tr>
+<tr>
+<td>Particles, trails, weather</td>
+<td><strong>Custom layer</strong></td>
+</tr>
+<tr>
+<td>Geometry generated per-frame on the GPU</td>
+<td><strong>Custom layer</strong></td>
+</tr>
+<tr>
+<td>Any material the style spec can't express</td>
+<td><strong>Custom layer</strong></td>
+</tr>
+</tbody>
+</table>
+<h2>2. Setup — tokens, SPM, first map</h2>
+<p><strong>Two tokens, and conflating them is the classic first-hour failure.</strong></p>
+<ul>
+<li><strong>Public token</strong> — used at runtime to fetch tiles. Goes in <code>Info.plist</code> under <code>MBXAccessToken</code>.</li>
+<li><strong>Secret token</strong> with the <code>Downloads:Read</code> scope — used <em>only</em> to download the SDK. Goes in <code>~/.netrc</code> (never in source control). You get one chance to copy it when you create it.</li>
+</ul>
+<pre><code># ~/.netrc  (chmod 600)
+machine api.mapbox.com
+  login mapbox
+  password sk.YOUR_SECRET_TOKEN_HERE
+</code></pre>
+<p>The <code>login</code> is literally the word <code>mapbox</code>, not your username — that trips everyone up.</p>
+<p><strong>Install</strong> via Swift Package Manager from <code>https://github.com/mapbox/mapbox-maps-ios.git</code> (or the <code>-binary</code> variant for a pre-built XCFramework that builds far faster). You get four packages: MapboxMaps, MapboxCoreMaps, MapboxCommon, Turf.</p>
+<p><strong>A map in ten lines:</strong></p>
+<pre><code class="language-swift">import UIKit
+import MapboxMaps
+
+final class ViewController: UIViewController {
+    private var mapView: MapView!
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        let camera = CameraOptions(
+            center: CLLocationCoordinate2D(latitude: 48.8606, longitude: 2.3376),
+            zoom: 16, bearing: 20, pitch: 60)
+        mapView = MapView(frame: view.bounds,
+                          mapInitOptions: MapInitOptions(cameraOptions: camera))
+        mapView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        mapView.mapboxMap.mapStyle = .standard(lightPreset: .dusk)
+        view.addSubview(mapView)
+    }
+}
+</code></pre>
+<p><strong>One import gotcha:</strong> <code>CustomLayer</code> and <code>CustomLayerHost</code> live behind <code>@_spi(Experimental)</code>. Any file that touches them needs <code>@_spi(Experimental) import MapboxMaps</code>. It's public, shippable API — but signatures can shift between minor versions, so pin your SDK version and read the changelog on upgrade.</p>
+<h2>3. The <code>CustomLayerHost</code> lifecycle — three methods</h2>
+<p>That's the entire protocol:</p>
+<pre><code class="language-swift">func renderingWillStart(_ metalDevice: MTLDevice,
+                        colorPixelFormat: UInt,
+                        depthStencilPixelFormat: UInt)
+
+func render(_ parameters: CustomLayerRenderParameters,
+            mtlCommandBuffer: MTLCommandBuffer,
+            mtlRenderPassDescriptor: MTLRenderPassDescriptor)
+
+func renderingWillEnd()
+</code></pre>
+<ul>
+<li><strong><code>renderingWillStart</code></strong> — called once when the layer is added. Compile shaders, build pipeline states, allocate buffers here. The pixel formats arrive as <code>UInt</code>; wrap with <code>MTLPixelFormat(rawValue:)</code>. <strong>Everything your PSO needs to match the pass is handed to you in this call</strong> — that one fact is the whole difference from MapKit, where you had to <em>discover</em> the formats by frame-capturing a private pass.</li>
+<li><strong><code>render</code></strong> — called once per frame. You make your own encoder from the descriptor Mapbox gives you, which drops you into <em>its</em> attachments: same colour target, same depth buffer, correct occlusion for free.</li>
+<li><strong><code>renderingWillEnd</code></strong> — teardown; release GPU resources.</li>
+</ul>
+<p><strong>Register it once — not inside the style closure</strong>, which re-runs on every style update and would rebuild every buffer and pipeline:</p>
+<pre><code class="language-swift">// Create the host ONCE and store it.
+let renderer = VehicleLayerHost(route: route)
+mapView.mapboxMap.setMapStyleContent {
+    CustomLayer(id: &quot;vehicles&quot;, renderer: renderer, slot: .middle)
+}
+</code></pre>
+<p>The full initialiser is <code>init(id:renderer:slot:minZoom:maxZoom:visibility:)</code>. <code>minZoom</code>/<code>maxZoom</code> are free performance — if your effect only matters at street level, say so and Mapbox won't call you when zoomed out.</p>
+<h3>What <code>CustomLayerRenderParameters</code> gives you</h3>
+<p>This struct is the gift that replaces ~200 lines of MapKit reverse-engineering:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>projectionMatrix</code></td>
+<td><code>[NSNumber]</code>, column-major → convert to <code>simd_float4x4</code>. <strong>This is the view-projection you spent a whole chapter reconstructing on MapKit.</strong></td>
+</tr>
+<tr>
+<td><code>width</code>, <code>height</code></td>
+<td>Logical points. Multiply by <code>UIScreen.main.scale</code> for the viewport.</td>
+</tr>
+<tr>
+<td><code>latitude</code>, <code>longitude</code></td>
+<td>Camera centre — needed for the latitude height correction (§4.3).</td>
+</tr>
+<tr>
+<td><code>zoom</code></td>
+<td>Drives world size: <code>Projection.worldSize(scale: pow(2, zoom))</code>.</td>
+</tr>
+<tr>
+<td><code>bearing</code>, <code>pitch</code>, <code>fieldOfView</code></td>
+<td>Billboarding and LOD decisions.</td>
+</tr>
+<tr>
+<td><code>projection</code></td>
+<td>Mercator/globe transition helpers (§4.4).</td>
+</tr>
+<tr>
+<td><code>elevationData</code></td>
+<td>Terrain height queries, if 3D terrain is enabled.</td>
+</tr>
+</tbody>
+</table>
+<h2>4. Coordinate systems — the part that bites</h2>
+<p>This is the real learning curve, and the one place to slow down. Mapbox does <strong>not</strong> work in metres, and the Z axis does <strong>not</strong> behave like X and Y.</p>
+<h3>4.1 XY is Mercator world-pixels</h3>
+<p>Two steps: project the coordinate into normalised Web Mercator (0…1 across the whole world), then scale by the world size at the current zoom.</p>
+<pre><code class="language-swift">let merc      = Projection.latLngToMercatorXY(coordinate: location)   // 0...1
+let worldSize = Projection.worldSize(scale: pow(2, parameters.zoom))
+let worldX    = Float(merc.x * worldSize)
+let worldY    = Float(merc.y * worldSize)
+</code></pre>
+<p>The consequence is subtle and important: <strong>your world-space coordinates change every time the zoom changes.</strong> You cannot bake vertex positions once at load and reuse them across zooms. The fix the recipes use: keep geometry in <strong>local model space</strong> and push all positioning into the <em>model matrix</em>. Build the mesh once, move the matrix every frame.</p>
+<h3>4.2 Z is metres</h3>
+<p>Altitude is in metres, and the metres→pixels conversion is <em>baked into the projection matrix Mapbox hands you</em>. So you convert horizontal sizes yourself but leave vertical ones alone:</p>
+<pre><code class="language-swift">let metersToPixels = 1.0 / Float(Projection.metersPerPoint(for: location.latitude,
+                                                           zoom: parameters.zoom))
+let xSize = sizeInMeters * metersToPixels   // horizontal: convert
+let ySize = sizeInMeters * metersToPixels   // horizontal: convert
+let zSize = sizeInMeters                     // vertical: leave in metres
+</code></pre>
+<h3>4.3 The latitude correction nobody mentions</h3>
+<p>This is the Mapbox equivalent of MapKit's logarithmic-depth trap — the silent bug that costs you an afternoon. The metres→pixels factor baked into the projection matrix is computed at <strong>the map centre's latitude</strong>. But the true factor varies with latitude (that's Mercator). So an object far from the camera centre <em>in latitude</em> gets the wrong vertical scale — correct at the screen centre, wrong at the edges, and the error grows as you pan north or south.</p>
+<pre><code class="language-swift">func heightScalerForLatitude(_ latitude: CLLocationDegrees,
+                             centerLatitude: CLLocationDegrees) -&gt; Float {
+    Float(Projection.getLatitudeScale(centerLatitude)
+        / Projection.getLatitudeScale(latitude))
+}
+</code></pre>
+<p>Multiply your Z scale <em>and</em> Z translation by this. Skip it and your objects are subtly the wrong height — it looks like a modelling mistake, not a projection bug, which is exactly why it eats time.</p>
+<h3>4.4 Globe vs Mercator</h3>
+<p>Below roughly zoom 6, Mapbox renders a <strong>globe</strong>, not a plane. If your layer is visible that far out you must compute both an ECEF position and a Mercator position per vertex and blend between them by the transition phase:</p>
+<pre><code class="language-swift">let globeWvp = parameters.projectionMatrix.simdFloat4x4
+             * parameters.projection.getModelMatrix().simdFloat4x4
+let mercWvp  = parameters.projectionMatrix.simdFloat4x4
+             * parameters.projection.getTransitionMatrix().simdFloat4x4
+let phase    = parameters.projection.getTransitionPhase()
+</code></pre>
+<pre><code class="language-cpp">// in the vertex shader
+float4 pos_merc = uniforms.u_matrix_merc * float4(v.pos_merc, 1.0);
+float4 pos_ecef = uniforms.u_matrix_ecef * float4(v.pos_ecef, 1.0);
+float  t        = clamp(uniforms.u_transition, 0.0, 1.0);
+out.position    = mix(pos_merc, pos_ecef, t);
+</code></pre>
+<p>If your effect only matters at street zoom, set <code>minZoom</code> on the layer and ignore all of this — most street-level work never sees the globe.</p>
+<blockquote>
+<p><strong>Where the helpers come from.</strong> <code>createModelMatrixMeters</code>, <code>heightScalerForLatitude</code>, <code>convertMercatorModelMatrix</code>, and the <code>simdFloat4x4</code> / <code>nsNumberArray</code> bridges used below are <strong>not SDK API</strong> — they're helper code published in Mapbox's own <code>CustomLayerExample.swift</code>. Copy them into your project verbatim; they encode these conversions correctly and there's no reason to rewrite them.</p>
+</blockquote>
+<h2>5. A minimal working pass, end to end</h2>
+<p>Get a static cube drawing <em>before</em> you attempt anything animated. Four pieces.</p>
+<p><strong>(1) A shared types header</strong> bridges the Swift and Metal sides so buffer indices can't drift apart (add it to your bridging header):</p>
+<pre><code class="language-c">typedef enum {
+    VertexInputIndexVertices       = 0,
+    VertexInputIndexTransformation = 1,
+    VertexInputIndexUniforms       = 2,
+} VertexInputIndex;
+
+typedef struct { simd_float3 position; simd_float4 color; } VertexData;
+typedef struct { float time; float opacity; } FxUniforms;
+</code></pre>
+<p><strong>(2) The shaders</strong> — note the vertex shader just multiplies by the transform you pass in; all the projection magic is already in that matrix:</p>
+<pre><code class="language-cpp">vertex RasterizerData vertexShader(
+    uint vertexID                       [[vertex_id]],
+    constant VertexData *vertices       [[buffer(VertexInputIndexVertices)]],
+    constant float4x4 &amp;transformation   [[buffer(VertexInputIndexTransformation)]])
+{
+    RasterizerData out;
+    VertexData v = vertices[vertexID];
+    out.position = transformation * float4(v.position, 1.0);
+    out.color    = v.color;
+    out.local    = v.position;                 // model-space, for the fragment effect
+    return out;
+}
+
+fragment float4 fragmentShader(RasterizerData in [[stage_in]],
+                               constant FxUniforms &amp;u [[buffer(0)]])
+{
+    // A slow pulse so you can see instantly that the frame loop is live.
+    float pulse = 0.5 + 0.5 * sin(u.time * 2.0 + in.local.z * 4.0);
+    return float4(in.color.rgb * (0.6 + 0.4 * pulse), in.color.a * u.opacity);
+}
+</code></pre>
+<p>Unlike MapKit, shaders live in a real <code>.metal</code> file reached with <code>metalDevice.makeDefaultLibrary()</code> — you have a build phase, so no runtime string compilation needed (though <code>makeLibrary(source:options:)</code> is still there if you want hot-iteration).</p>
+<p><strong>(3) Setup, in <code>renderingWillStart</code></strong> — build the PSO to match the pass. The one non-obvious bit is the <em>combined depth-stencil format</em>: set <strong>both</strong> attachments to it, or PSO creation returns nil silently.</p>
+<pre><code class="language-swift">let color = desc.colorAttachments[0]!
+color.pixelFormat = MTLPixelFormat(rawValue: colorPixelFormat)!
+color.isBlendingEnabled       = true
+color.rgbBlendOperation       = .add
+color.sourceRGBBlendFactor    = .sourceAlpha
+color.destinationRGBBlendFactor = .oneMinusSourceAlpha
+// ...matching alpha factors...
+
+let dsFormat = MTLPixelFormat(rawValue: depthStencilPixelFormat)!
+desc.depthAttachmentPixelFormat   = dsFormat
+desc.stencilAttachmentPixelFormat = dsFormat     // BOTH — Mapbox uses a combined format
+pso = try? metalDevice.makeRenderPipelineState(descriptor: desc)
+
+let dsDesc = MTLDepthStencilDescriptor()
+dsDesc.depthCompareFunction = .less
+dsDesc.isDepthWriteEnabled  = true
+depthState = metalDevice.makeDepthStencilState(descriptor: dsDesc)
+
+// Geometry in LOCAL model space — a unit cube at the origin. Never rebuilt;
+// the model matrix does all positioning (§4.1).
+let verts = unitCubeVertices(color: SIMD4(0.26, 0.72, 0.85, 0.85))
+vertexBuffer = metalDevice.makeBuffer(bytes: verts,
+    length: MemoryLayout&lt;VertexData&gt;.stride * verts.count, options: [])
+</code></pre>
+<p><strong>(4) The frame, in <code>render</code></strong> — make an encoder from Mapbox's descriptor, build the MVP from the supplied projection matrix, draw, and <strong>end the encoder yourself</strong>:</p>
+<pre><code class="language-swift">guard let pso,
+      let encoder = mtlCommandBuffer.makeRenderCommandEncoder(
+          descriptor: mtlRenderPassDescriptor) else { return }
+
+let scale = UIScreen.main.scale                  // viewport is in PIXELS, not points
+encoder.setViewport(MTLViewport(originX: 0, originY: 0,
+    width: parameters.width * scale, height: parameters.height * scale,
+    znear: 0, zfar: 1))
+
+// model (metres) -&gt; mercator/globe-aware -&gt; clip
+let model = parameters.createModelMatrixMeters(location: location, altitude: 0, size: sizeMeters)
+let mercatorModel = parameters.projection
+    .convertMercatorModelMatrix(forMatrix: model.nsNumberArray, ignoreDistortion: false)!
+    .simdFloat4x4
+var mvp = parameters.projectionMatrix.simdFloat4x4 * mercatorModel
+var fx  = FxUniforms(time: Float(CACurrentMediaTime() - startTime), opacity: 1.0)
+
+encoder.setRenderPipelineState(pso)
+encoder.setDepthStencilState(depthState)
+encoder.setCullMode(.back)
+encoder.setVertexBuffer(vertexBuffer, offset: 0, index: Int(VertexInputIndexVertices.rawValue))
+encoder.setVertexBytes(&amp;mvp, length: MemoryLayout&lt;simd_float4x4&gt;.stride,
+                       index: Int(VertexInputIndexTransformation.rawValue))
+encoder.setFragmentBytes(&amp;fx, length: MemoryLayout&lt;FxUniforms&gt;.stride, index: 0)
+encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertexCount)
+encoder.endEncoding()        // you own this encoder — you MUST end it, or the frame never submits
+</code></pre>
+<p>Two lines worth remembering forever: <code>encoder.endEncoding()</code> is <em>yours</em> to call, and <code>setVertexBytes</code> (not an <code>MTLBuffer</code>) is the right call for anything under 4 KB like a single matrix.</p>
+<h2>6. Driving the animation loop</h2>
+<p><strong>Mapbox does not render continuously</strong> — only when the camera moves or the style changes. If your effect is time-based and you don't ask for frames, you'll see exactly <em>one</em> frame and conclude your shader is broken. Pump it with a display link that calls <code>triggerRepaint()</code>:</p>
+<pre><code class="language-swift">mapView.mapboxMap.onRenderFrameStarted.observeNext { [weak self] _ in
+    guard let self else { return }
+    self.displayLink = CADisplayLink(target: self, selector: #selector(self.triggerRepaint))
+    self.displayLink.add(to: .main, forMode: .common)
+}.store(in: &amp;cancelables)
+
+@objc private func triggerRepaint() { mapView.mapboxMap.triggerRepaint() }
+
+private var displayLink: CADisplayLink! { didSet { oldValue?.invalidate() } }
+deinit { displayLink?.invalidate() }
+</code></pre>
+<p>The <code>didSet</code> invalidation matters — <code>onRenderFrameStarted</code> can fire more than once, and you'd otherwise stack display links, each triggering its own repaint. Cap the rate with <code>displayLink.preferredFrameRateRange</code> and <strong>stop the link when idle or the view disappears</strong> — a continuously repainting map is a continuously draining battery. And drive timing from <code>CACurrentMediaTime()</code>, never a frame counter (counters run at different speeds on 60 Hz vs 120 Hz and stutter on dropped frames). This is the same per-frame discipline as <a class="xref" href="#01-hand-rolled-spring-driver">the spring engine</a> and <a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">the run loop lesson</a>.</p>
+<h2>7. Three animation recipes</h2>
+<h3>7.1 An object moving along a route (the boat on the Seine)</h3>
+<p>Geometry stays fixed in local space; only the model matrix changes per frame — <strong>no buffer writes at all</strong>, the cheapest possible animation. Interpolate the pose along the route, and compute heading in <em>Mercator</em> space (longitude degrees are shorter than latitude degrees everywhere but the equator):</p>
+<pre><code class="language-swift">let ma = Projection.latLngToMercatorXY(coordinate: a)
+let mb = Projection.latLngToMercatorXY(coordinate: b)
+let heading = Float(atan2(mb.y - ma.y, mb.x - ma.x))
+// ...
+let yaw   = simd_float4x4(simd_quatf(angle: -heading, axis: SIMD3&lt;Float&gt;(0, 0, 1)))
+let model = parameters.createModelMatrixMeters(location: coord, altitude: 0,
+                                               size: vehicleMeters) * yaw
+</code></pre>
+<p><strong>Order matters:</strong> <code>model * yaw</code> rotates in local space <em>before</em> translation and scale. Reverse it and your vehicle orbits the map origin instead of turning on the spot.</p>
+<h3>7.2 An animated surface — water, sweep, shimmer</h3>
+<p>Build a geo-anchored quad once in local space, then do all the work in the fragment shader with a <code>time</code> uniform. This is where a custom layer genuinely beats everything declarative:</p>
+<pre><code class="language-cpp">fragment float4 waterFragment(RasterizerData in [[stage_in]],
+                              constant FxUniforms &amp;u [[buffer(0)]])
+{
+    float2 p = in.local.xy;
+    float w = 0.0;                                   // three drifting wave trains
+    w += sin(dot(p, float2( 0.90,  0.44)) * 22.0 + u.time * 1.30);
+    w += sin(dot(p, float2(-0.31,  0.95)) * 31.0 - u.time * 0.90);
+    w += sin(dot(p, float2( 0.71, -0.71)) * 47.0 + u.time * 1.70);
+    w /= 3.0;
+    float3 col  = mix(float3(0.09,0.42,0.56), float3(0.33,0.75,0.85), 0.5 + 0.5*w);
+    col += smoothstep(0.86, 0.97, w) * 0.35;         // quantised highlight dashes
+    return float4(col, u.opacity);
+}
+</code></pre>
+<p>Three sine waves rather than noise because it's cheap, needs no texture, and — since the frequencies are irrational relative to each other — it never visibly repeats. Swap in FBM noise (see <a class="xref" href="shaders.html#00-roadmap">Metal Shaders</a>) when you want organic rather than rhythmic.</p>
+<h3>7.3 Many instances at once</h3>
+<p>One draw call for a whole fleet: upload per-instance transforms into a buffer, index by <code>[[instance_id]]</code>:</p>
+<pre><code class="language-swift">let ptr = instanceBuffer.contents().bindMemory(to: InstanceData.self, capacity: instanceCount)
+for i in 0..&lt;instanceCount {
+    ptr[i] = InstanceData(modelViewProjection: mvp(for: i, at: t), tint: tint(for: i))
+}
+encoder.setVertexBuffer(vertexBuffer,   offset: 0, index: 0)
+encoder.setVertexBuffer(instanceBuffer, offset: 0, index: 1)
+encoder.drawPrimitives(type: .triangle, vertexStart: 0,
+                       vertexCount: vertexCount, instanceCount: instanceCount)
+</code></pre>
+<p>Beyond a few thousand instances, move the transform computation into a <em>compute</em> shader dispatched on the same command buffer and skip the CPU write entirely.</p>
+<h2>8. Depth, blending and slots</h2>
+<p><strong>Depth.</strong> Standard Metal rules — <code>.less</code> with depth write on — because you share Mapbox's depth buffer: your geometry correctly occludes and is occluded by 3D buildings and terrain. For <em>transparent</em> effects, keep the depth <strong>test</strong> but turn <strong>write off</strong>:</p>
+<pre><code class="language-swift">dsDesc.depthCompareFunction = .less
+dsDesc.isDepthWriteEnabled  = false     // transparent: test, don't write
+</code></pre>
+<p>Leave write on with blending and translucent fragments punch holes in each other — the classic dark halo around a glow.</p>
+<p><strong>Slots.</strong> In the Standard style, <code>slot</code> decides where your layer sits in Mapbox's own draw order — a genuine advantage over MapKit, where draw order was whatever you could negotiate by hooking <code>endEncoding</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>Position</th>
+<th>Use for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.bottom</code></td>
+<td>Above polygons/water, below everything else</td>
+<td>Ground effects, route ribbons, heat overlays</td>
+</tr>
+<tr>
+<td><code>.middle</code></td>
+<td>Above lines/fills, below 3D buildings and labels</td>
+<td>Most custom geometry — the sane default</td>
+</tr>
+<tr>
+<td><code>.top</code></td>
+<td>Above everything except labels</td>
+<td>Effects that must always be seen</td>
+</tr>
+</tbody>
+</table>
+<h2>9. Buffer management for per-frame updates</h2>
+<p>If you write an <code>MTLBuffer</code> every frame (the instanced case), you have a hazard: the GPU may still be reading frame N while the CPU writes frame N+1. Use a <strong>ring of three buffers and a semaphore</strong>:</p>
+<pre><code class="language-swift">private let inFlight = DispatchSemaphore(value: 3)
+// in render(...)
+_ = inFlight.wait(timeout: .distantFuture)
+let buffer = buffers[frameIndex % 3]; frameIndex += 1
+// ...write into `buffer`, encode the draw...
+mtlCommandBuffer.addCompletedHandler { [inFlight] _ in inFlight.signal() }
+</code></pre>
+<p>You may attach a completion handler to Mapbox's command buffer — you just must <strong>not commit it</strong>; Mapbox owns submission. Three buffers is the usual number: enough to keep the GPU fed, few enough that latency stays low. (This is the standard Metal triple-buffering pattern from Apple's <em>Metal Best Practices Guide</em>.)</p>
+<h2>10. What to do declaratively instead</h2>
+<p>Before writing a line of Metal, check whether the style system already does it — each of these is less code and better integrated.</p>
+<p><strong>3D models at coordinates</strong> (<code>ModelLayer</code> + GeoJSON source; animate by updating the source — correct lighting and shadows for free). <strong>Lighting and time of day</strong> (<code>DirectionalLight</code> + <code>AmbientLight</code> + <code>Atmosphere</code>; animate the azimuth for a day cycle with moving shadows). <strong>Stylised buildings</strong> (<code>FillExtrusionLayer</code> with expression-driven colour, height, and ambient occlusion). <strong>Whole-map mood</strong> (<code>.standard(lightPreset: .dusk, …)</code> with per-category label toggles).</p>
+<p>The toy palette from the MapKit video is <em>mostly</em> reachable from those four blocks alone. The custom layer is only for the parts that aren't — the animated water, the trails, the particles.</p>
+<pre><code class="language-swift">mapView.mapboxMap.mapStyle = .standard(
+    lightPreset: .dusk,              // .dawn .day .dusk .night
+    showPointOfInterestLabels: false,
+    showRoadLabels: false)
+</code></pre>
+<h2>11. Gotchas</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Renders one frame, then freezes</td>
+<td>Mapbox renders on demand</td>
+<td><code>triggerRepaint()</code> from a <code>CADisplayLink</code></td>
+</tr>
+<tr>
+<td>Nothing renders at all</td>
+<td>Missing <code>endEncoding()</code></td>
+<td>You own the encoder; end it</td>
+</tr>
+<tr>
+<td>PSO creation returns nil</td>
+<td>Stencil format not set</td>
+<td>Set <em>both</em> depth and stencil to the combined format</td>
+</tr>
+<tr>
+<td>Object half-size on device, right on simulator</td>
+<td>Viewport in points</td>
+<td>Multiply by <code>UIScreen.main.scale</code></td>
+</tr>
+<tr>
+<td>Object in the wrong place entirely</td>
+<td>Metres used as XY</td>
+<td>Mercator world-pixels for XY (§4.1)</td>
+</tr>
+<tr>
+<td>Height subtly wrong, worse away from centre</td>
+<td>No latitude correction</td>
+<td><code>heightScalerForLatitude</code> (§4.3)</td>
+</tr>
+<tr>
+<td>Object flies off at low zoom</td>
+<td>Globe projection</td>
+<td>ECEF blend (§4.4), or set <code>minZoom</code></td>
+</tr>
+<tr>
+<td>Buffers rebuilt constantly, stutter</td>
+<td>Host built inside the style closure</td>
+<td>Create once, store on the view controller</td>
+</tr>
+<tr>
+<td>Dark halos on translucent geometry</td>
+<td>Depth write with blending</td>
+<td><code>isDepthWriteEnabled = false</code></td>
+</tr>
+<tr>
+<td>Flicker/tearing on instanced draws</td>
+<td>CPU writing a buffer the GPU is reading</td>
+<td>Triple-buffer with a semaphore (§9)</td>
+</tr>
+<tr>
+<td>Animation speed differs across devices</td>
+<td>Frame counter as clock</td>
+<td><code>CACurrentMediaTime()</code></td>
+</tr>
+<tr>
+<td>Compile error on <code>CustomLayer</code></td>
+<td>Missing SPI import</td>
+<td><code>@_spi(Experimental) import MapboxMaps</code></td>
+</tr>
+<tr>
+<td>SPM can't download the SDK</td>
+<td>No secret token</td>
+<td><code>.netrc</code> with <code>login mapbox</code> and an <code>sk.</code> token</td>
+</tr>
+<tr>
+<td>Battery drain</td>
+<td>Display link never stops</td>
+<td>Invalidate on <code>viewDidDisappear</code> and when idle</td>
+</tr>
+</tbody>
+</table>
+<h2>12. A ladder to climb — ten milestones</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Milestone</th>
+<th>Done when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Map on screen, Standard style, pitched camera</td>
+<td>Tiles load; no token errors</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Empty <code>CustomLayerHost</code> registered, <code>render</code> logs</td>
+<td>Logs appear only when you pan — proves on-demand rendering</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Display link + <code>triggerRepaint</code></td>
+<td>Logs at display rate with the map still</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Hardcoded triangle in clip space, depth <code>.always</code></td>
+<td>Triangle visible — you're in the pass</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Wire <code>projectionMatrix</code>; place a cube at a real coordinate</td>
+<td>Cube stays glued to the ground through pan, zoom, pitch, rotate</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Depth <code>.less</code> with write on</td>
+<td>Buildings correctly occlude the cube</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Time uniform; the pulse shader</td>
+<td>Smooth animation at a device-independent rate</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Route motion (§7.1)</td>
+<td>Object follows the path and faces its direction of travel</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Instanced fleet (§7.3) with triple buffering</td>
+<td>500 objects, no flicker, stable frame time</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Replace the cube with your real effect</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Milestones 1–6 are an evening. <strong>Milestone 5 is the one that teaches you the coordinate system</strong> — budget to lose time there rather than being surprised by it.</p>
+<h2>13. Mapbox vs MapKit — the honest comparison</h2>
+<figure class="fig">
+<svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MapKit vs Mapbox trade-off">
+  <rect x="30" y="30" width="310" height="180" rx="10" fill="#301f2a" stroke="#c0567a" stroke-width="1.5"/>
+  <text x="185" y="56" fill="#cfcfcf" font-family="sans-serif" font-size="14" text-anchor="middle" font-weight="bold">MapKit (lesson 03)</text>
+  <text x="50" y="84" fill="#8a8b93" font-family="sans-serif" font-size="11">✓ Apple's Detailed City Experience — free</text>
+  <text x="50" y="106" fill="#8a8b93" font-family="sans-serif" font-size="11">✗ Swizzle private classes</text>
+  <text x="50" y="128" fill="#8a8b93" font-family="sans-serif" font-size="11">✗ Reconstruct the camera (~fit)</text>
+  <text x="50" y="150" fill="#8a8b93" font-family="sans-serif" font-size="11">✗ Reverse-engineer the depth buffer</text>
+  <text x="50" y="172" fill="#8a8b93" font-family="sans-serif" font-size="11">✗ Breaks on OS updates</text>
+  <text x="50" y="196" fill="#c0567a" font-family="sans-serif" font-size="12" font-weight="bold">Not App Store safe</text>
+
+  <rect x="380" y="30" width="310" height="180" rx="10" fill="#20301f" stroke="#2f9e44" stroke-width="1.5"/>
+  <text x="535" y="56" fill="#cfcfcf" font-family="sans-serif" font-size="14" text-anchor="middle" font-weight="bold">Mapbox (this lesson)</text>
+  <text x="400" y="84" fill="#8a8b93" font-family="sans-serif" font-size="11">✓ Command buffer + descriptor handed to you</text>
+  <text x="400" y="106" fill="#8a8b93" font-family="sans-serif" font-size="11">✓ Projection matrix supplied</text>
+  <text x="400" y="128" fill="#8a8b93" font-family="sans-serif" font-size="11">✓ Shared depth buffer, slots for order</text>
+  <text x="400" y="150" fill="#8a8b93" font-family="sans-serif" font-size="11">✗ Learn Mercator/metres/latitude coords</text>
+  <text x="400" y="172" fill="#8a8b93" font-family="sans-serif" font-size="11">✗ You populate the world, not repaint it</text>
+  <text x="400" y="196" fill="#2f9e44" font-family="sans-serif" font-size="12" font-weight="bold">Fully supported &amp; shippable</text>
+</svg>
+<figcaption>Milestone 5 here — one matrix multiply — replaces MapKit's camera reconstruction and depth recovery (~200 lines of calibration, ray-casting and robust curve fitting). Milestone 6 replaces the entire depth-substitution swizzle. That's the value of a supported hook.</figcaption>
+</figure>
+
+<p>The lesson to carry away: <strong>a supported hook is worth an enormous amount.</strong> The entire hard half of the MapKit technique — the swizzle, the camera fit, the Theil–Sen depth recovery — collapses into "read the projection matrix Mapbox handed you." Remember that the next time a private API looks tempting. What you <em>don't</em> get back is Apple's hand-built city: on Mapbox you're populating a world rather than repainting one. That tension — Apple's world with no control, or your control with no world — is the real design decision, and it's the same one that closed <a class="xref" href="#03-stylised-3d-maps-on-mapkit">lesson 03</a>.</p>
+<p>(MapLibre Native exposes the identical architecture via <code>MLNCustomStyleLayer</code> / <code>drawInMapView:withContext:</code> — open source, no token — if you want the same hook without the vendor.)</p>
+<h2>The foundation</h2>
+<ul>
+<li><strong>Object vs effect</strong> = if it's an object use <code>ModelLayer</code> (free lighting/shadows); Metal is only for effects the style spec can't express.</li>
+<li><strong><code>CustomLayerHost</code> = three methods</strong> = <code>renderingWillStart</code> (build PSO/buffers, formats handed to you), <code>render</code> (make an encoder, draw, <code>endEncoding</code> yourself), <code>renderingWillEnd</code> (teardown).</li>
+<li><strong>The projection matrix is given</strong> = <code>CustomLayerRenderParameters.projectionMatrix</code> is the view-projection you reverse-engineered on MapKit; no reconstruction.</li>
+<li><strong>Coordinates are the hard part</strong> = XY in Mercator world-pixels (recompute every zoom → keep geometry local, move the model matrix), Z in metres, and a latitude scale correction that's the silent height bug.</li>
+<li><strong>Share Mapbox's depth</strong> = <code>.less</code> + write on for solids (free occlusion vs buildings/terrain); write <strong>off</strong> for translucent; <code>slot</code> picks draw order.</li>
+<li><strong>Pump the loop</strong> = Mapbox renders on demand, so drive a <code>CADisplayLink</code> → <code>triggerRepaint()</code>, time with <code>CACurrentMediaTime()</code>, stop when idle.</li>
+<li><strong>Per-frame buffers</strong> = triple-buffer with a semaphore; add a completion handler but never commit Mapbox's command buffer.</li>
+<li><strong>Shippable</strong> = public SPI, App-Store-safe — the opposite of the MapKit route; the trade is you build the world instead of inheriting Apple's.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li>Prerequisite / counterpart: <a class="xref" href="#03-stylised-3d-maps-on-mapkit">Stylised 3D Maps on Apple MapKit</a> — the private-API version of this same idea.</li>
+<li>The technique it avoids: <a class="xref" href="#02-runtime-reflection-and-private-apis">Runtime Reflection &amp; Private APIs</a>.</li>
+<li>The GPU side: <a class="xref" href="shaders.html#00-roadmap">Metal Shaders</a> · <a class="xref" href="shaders.html#18a-feeding-data-into-shaders">Feeding Data Into Shaders</a>.</li>
+<li>Per-frame loop &amp; timing: <a class="xref" href="#01-hand-rolled-spring-driver">A Hand-Rolled Spring Engine</a> · <a class="xref" href="uikit-internals.html#01a-run-loop-and-main-thread">The Run Loop &amp; CADisplayLink</a>.</li>
+<li>Sources: Mapbox custom-layer example (docs.mapbox.com/ios/maps/examples/custom-layer) · mapbox/mapbox-maps-ios (<code>CustomLayerExample.swift</code>, <code>CustomLayerExampleShaders.metal</code>) · Mapbox install guide &amp; API reference (<code>CustomLayerHost</code>, <code>CustomLayerRenderParameters</code>, <code>Projection</code>, <code>ModelLayer</code>, <code>Slot</code>) · MapLibre Native <code>MLNCustomStyleLayer</code> · Apple <em>Metal Best Practices Guide</em>.</li>
+<li>Hub: <a class="xref" href="#00-overview">00-overview</a></li>
+</ul><div class="pager"><a href="#03-stylised-3d-maps-on-mapkit"><span>Prev</span>← 03 — Stylised 3D Maps on Apple MapKit</a><span class="sp"></span></div></section>
   </div></main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
